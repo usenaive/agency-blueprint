@@ -1,0 +1,103 @@
+/**
+ * The local dashboard server: serves the built static app from `dist/` and answers `/mcp` and
+ * `/api/*` from `server/routes.ts` — the same route table the deployed function runs, over the
+ * JSON file store instead of the app database. The org API key stays in this process
+ * (`NAIVE_API_KEY`); the browser only ever talks to `/api/*`.
+ *
+ * Run: `pnpm build && pnpm serve` (node's own type stripping; zero deps).
+ */
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, join, normalize } from "node:path";
+import { fileURLToPath } from "node:url";
+import { configFromEnv } from "./proxy.ts";
+import { handleRequest, isLoopback, SSE_RETRY, type ApiContext } from "./routes.ts";
+import { openStore } from "./store.ts";
+
+const root = fileURLToPath(new URL("..", import.meta.url));
+const store = openStore(join(root, "data", "store.json"));
+/** Local runs mint their own tokens from Settings; the platform's bearer is injected on the deploy. */
+const base = {
+  store: () => Promise.resolve(store),
+  config: configFromEnv(process.env),
+  mcpToken: process.env.VETTA_MCP_TOKEN,
+  /** Optional here and required on the deploy: only a loopback caller may go without it. */
+  dashboardToken: process.env.DASHBOARD_TOKEN,
+};
+
+/**
+ * `local` is decided per request, not per process: this server binds every interface, so a LAN peer
+ * or a tunnel reaches it too, and only a loopback peer is the developer the `/api/*` bypass is for.
+ */
+const contextFor = (req: IncomingMessage): ApiContext =>
+  ({ ...base, local: isLoopback(req.socket.remoteAddress) });
+
+const MIME: Record<string, string> = {
+  ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
+  ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".png": "image/png", ".woff2": "font/woff2",
+};
+
+const send = (res: ServerResponse, status: number, body: unknown) => {
+  res.writeHead(status, { "content-type": "application/json" });
+  res.end(JSON.stringify(body));
+};
+
+const readBody = (req: IncomingMessage): Promise<string> =>
+  new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (chunk: Buffer) => { raw += chunk.toString("utf8"); });
+    req.on("end", () => resolve(raw));
+    req.on("error", reject);
+  });
+
+async function relay(res: ServerResponse, upstream: Response): Promise<void> {
+  res.writeHead(upstream.status, { "content-type": "text/event-stream", "cache-control": "no-cache" });
+  res.write(SSE_RETRY);
+  if (upstream.body !== null) {
+    const reader = upstream.body.getReader();
+    for (let next = await reader.read(); !next.done; next = await reader.read()) res.write(next.value);
+  }
+  res.end();
+}
+
+async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
+  const headers: Record<string, string | undefined> = {};
+  for (const [name, value] of Object.entries(req.headers)) {
+    headers[name.toLowerCase()] = Array.isArray(value) ? value[0] : value;
+  }
+  const reply = await handleRequest({
+    method: (req.method ?? "GET").toUpperCase(),
+    path: url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : url.pathname,
+    query: url.searchParams,
+    headers,
+    body: await readBody(req),
+  }, contextFor(req));
+
+  if (reply.stream) return relay(res, reply.stream);
+  if (reply.body === undefined) return void res.writeHead(reply.status).end();
+  return send(res, reply.status, reply.body);
+}
+
+async function handleStatic(res: ServerResponse, path: string): Promise<void> {
+  const clean = normalize(path).replace(/^(\.\.[/\\])+/, "");
+  const file = join(root, "dist", clean === "/" ? "index.html" : clean);
+  try {
+    const content = await readFile(file);
+    res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
+    res.end(content);
+  } catch {
+    res.writeHead(200, { "content-type": "text/html" });
+    res.end(await readFile(join(root, "dist", "index.html")));
+  }
+}
+
+const server = createServer((req, res) => {
+  const url = new URL(req.url ?? "/", "http://localhost");
+  const handled = url.pathname === "/mcp" || url.pathname.startsWith("/api/")
+    ? handleApi(req, res, url)
+    : handleStatic(res, url.pathname);
+  handled.catch(() => send(res, 502, { error: "upstream unavailable" }));
+});
+
+const port = Number(process.env.PORT ?? 8789);
+server.listen(port, () => console.log(`dashboard on :${port} (${base.config === null ? "no NAIVE_API_KEY — store routes only" : "platform mode"})`));

@@ -1,0 +1,64 @@
+/**
+ * What `deploy_dir` ships is what the host runs, so the three files `build-api.mjs` writes are the
+ * whole server contract — and the rewrites are the only thing that puts a path in front of the
+ * function. This runs the real script into a temp `dist/` copy of the blueprint's own tree.
+ */
+import { execFileSync } from "node:child_process";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+const root = dirname(fileURLToPath(import.meta.url));
+let dist = "";
+let work = "";
+
+beforeAll(() => {
+  work = mkdtempSync(join(tmpdir(), "sga-build-"));
+  // `templates` too: the server reads the active template's crew, seed and kinds from it.
+  for (const entry of ["build-api.mjs", "server", "seed", "templates"]) {
+    cpSync(join(root, entry), join(work, entry), { recursive: true });
+  }
+  // Symlinked, not copied: the script only needs esbuild to resolve from beside itself.
+  symlinkSync(join(root, "node_modules"), join(work, "node_modules"), "dir");
+  dist = join(work, "dist");
+  // The predecessor's function, to prove the build no longer leaves a second one behind.
+  mkdirSync(join(dist, "api"), { recursive: true });
+  writeFileSync(join(dist, "api", "mcp.js"), "stale");
+  execFileSync("node", ["build-api.mjs"], { cwd: work });
+}, 60_000);
+
+afterAll(() => rmSync(work, { recursive: true, force: true }));
+
+describe("build-api.mjs", () => {
+  it("emits one function, at the name the host maps to /api/app", () => {
+    expect(existsSync(join(dist, "api", "app.js"))).toBe(true);
+    expect(existsSync(join(dist, "api", "mcp.js"))).toBe(false);
+    // `pg` is installed from the manifest, not inlined: its internals do not survive bundling.
+    expect(readFileSync(join(dist, "package.json"), "utf8")).toContain("\"pg\"");
+    expect(readFileSync(join(dist, "api", "app.js"), "utf8")).toContain('from "pg"');
+  });
+
+  it("writes the three rewrites in the order that makes them work", () => {
+    const { rewrites } = JSON.parse(readFileSync(join(dist, "vercel.json"), "utf8")) as {
+      rewrites: { source: string; destination: string }[];
+    };
+    expect(rewrites).toEqual([
+      { source: "/mcp", destination: "/api/app?__path=/mcp" },
+      { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
+      { source: "/((?!api/).*)", destination: "/index.html" },
+    ]);
+    // The SPA fallback must come last and must never swallow a function.
+    expect(rewrites[2]!.source).toBe("/((?!api/).*)");
+    expect(new RegExp(`^${rewrites[2]!.source}$`).test("/api/clients")).toBe(false);
+    expect(new RegExp(`^${rewrites[2]!.source}$`).test("/clients/cli_1/posts")).toBe(true);
+  });
+
+  it("bundles the whole route table, not just /mcp", () => {
+    const bundle = readFileSync(join(dist, "api", "app.js"), "utf8");
+    for (const path of ["/api/clients", "/api/posts", "/api/leads", "/api/mcp/tokens", "/mcp"]) {
+      expect(bundle).toContain(path);
+    }
+  });
+});
