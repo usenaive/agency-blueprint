@@ -14,7 +14,7 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { blank, budget, crm, gate, model, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, blank, budget, crm, gate, model, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -29,11 +29,6 @@ const FOCUS: Record<string, string> = {
 const clientGate = `You work for an SEO/GEO agency on one client's account. ${gate}`;
 
 /**
- * The per-client crew. `server/proxy.ts` appends the client slug to each name at onboarding
- * (`seo-writer--acme-dental`), which is how one organization hosts many clients' agents. Model,
- * budget and allow-list are template data — the server holds none of them.
- */
-/**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
  * reaches a turn (`<connector>.<tool>`; see `MAILBOX_READ` in `blank.ts` for the rule). Every one is
  * a read, so every one is `allow`: this crew works inside one client's property and changes nothing
@@ -47,6 +42,18 @@ const SEARCH_READ = [
   "googleanalytics.run_report",
 ];
 
+/**
+ * The per-client crew. `server/proxy.ts` appends the client slug to each name at onboarding
+ * (`seo-writer--acme-dental`), which is how one organization hosts many clients' agents. Model,
+ * budget, allow-list and persona are template data — the server holds none of them.
+ *
+ * Every member names `AGENCY_IDENTITY` for the reason the agency's own pair does: without a persona
+ * the search and analytics names above resolve to nothing, and a crew sold on working against the
+ * client's own numbers can call `web_search` and `web_fetch` and no more. `POST /v1/agents` carries
+ * no identity field, so the grant is a second call — `server/proxy.ts` makes it, and reports the
+ * member `failed` when it does not land rather than leaving an agent running as nobody behind a
+ * toolset that says otherwise.
+ */
 const crew: AgentDecl[] = [
   {
     name: "seo-writer",
@@ -55,6 +62,7 @@ const crew: AgentDecl[] = [
     description: "Briefs, articles and landing copy from the client's keywords and site.",
     system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank. Start from what the client already ranks for rather than from a guess.`,
     tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"]),
+    identity: AGENCY_IDENTITY,
   },
   {
     name: "geo-optimizer",
@@ -63,6 +71,7 @@ const crew: AgentDecl[] = [
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
     system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt.`,
     tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"]),
+    identity: AGENCY_IDENTITY,
   },
   {
     name: "audit-runner",
@@ -71,6 +80,7 @@ const crew: AgentDecl[] = [
     description: "Recurring technical and content audits of the client's site and rankings.",
     system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings.`,
     tools: tools(["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_draft_post"), ...SEARCH_READ]),
+    identity: AGENCY_IDENTITY,
   },
 ];
 

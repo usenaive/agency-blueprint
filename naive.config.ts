@@ -26,6 +26,7 @@
  */
 import { defineProject } from "@usenaive-sdk/blueprints";
 import { TEMPLATES } from "./templates/active.ts";
+import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { TEMPLATE } from "./templates/index.ts";
 
 export default defineProject({
@@ -35,6 +36,31 @@ export default defineProject({
   template: TEMPLATE,
   /** Every template this repo carries; the chosen one's agents become this project's crew. */
   templates: Object.values(TEMPLATES),
+
+  /**
+   * The agency's persona, and the reason a connected account is reachable from an agent at all.
+   *
+   * Connection tools resolve `session → agent → agent_identity → identity → connected accounts`, so
+   * an agent holding no identity is offered none of them — which is what every agent of this
+   * blueprint was. The mailbox names in `templates/blank.ts` and the search and analytics names in
+   * `templates/seo-geo.ts` were written, allow-listed and never once offered to a turn, and nothing
+   * reported it: the resolver simply returned an empty list.
+   *
+   * Declaring the persona here and naming it on each agent (and on each schedule, which fires with
+   * no operator behind it and would otherwise speak as nobody) is the grant. `up` refuses an agent
+   * whose identity was not provisioned rather than creating one that runs as nobody, so a persona
+   * dropped from this list fails the apply by name instead of quietly emptying every toolset.
+   *
+   * It is also the persona the dashboard's own connection routes act as: export its `idn_` id as
+   * `NAIVE_IDENTITY_ID` and the accounts a client's Connections tab lists are exactly the accounts
+   * its agents can reach.
+   */
+  identities: [
+    {
+      name: AGENCY_IDENTITY,
+      description: "The agency itself — the persona its agents read, draft and connect accounts as.",
+    },
+  ],
 
   apps: [
     {

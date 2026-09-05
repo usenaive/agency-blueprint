@@ -99,9 +99,14 @@ export function Settings() {
           </p>
         </div>
         <div className="px-3 py-2.5">
-          <div className="font-medium">Client identities</div>
+          <div className="font-medium">The agency identity</div>
           <p className="mt-0.5 text-xs text-ink-2">
-            Each client gets one platform identity at onboarding; its connections live on the client's Connections tab.
+            One platform persona — <span className="font-mono">agency</span>, declared in
+            <span className="font-mono"> naive.config.ts</span> — holds the connected accounts, and every agent and every
+            schedule is named on it. An agent holding no persona is offered none of an account's tools at all, so this is what
+            makes a mailbox or a search property reachable from a turn. Export its <span className="font-mono">idn_</span> id
+            as <span className="font-mono">NAIVE_IDENTITY_ID</span> and a client's Connections tab lists exactly the accounts
+            its agents can reach.
           </p>
         </div>
         <div className="px-3 py-2.5">

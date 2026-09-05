@@ -146,15 +146,55 @@ export interface ProvisionReport {
 }
 
 /**
+ * Grants one crew agent the persona its declaration names, and answers whether it landed.
+ *
+ * `POST /v1/agents` has no `identity` field — it strips what it does not declare — so an agent
+ * created with `identity:` in its body holds no persona and is told nothing. The grant is its own
+ * call (§22), it resolves the persona by name, and it is idempotent by design, so it is safe to
+ * re-assert on a crew agent that already exists. Without it the member's connection tools resolve
+ * to an empty list: the whole point of a crew that reads the client's own accounts.
+ */
+async function grantIdentity(
+  config: ProxyConfig,
+  agentId: string,
+  identity: string,
+  fetchImpl: typeof fetch,
+): Promise<boolean> {
+  const res = await proxyFetch(config, { method: "POST", path: `/v1/agents/${agentId}/identities` },
+    JSON.stringify({ identity }), fetchImpl);
+  return res.ok;
+}
+
+/** The `agt_` id of a freshly created agent, or null when the platform answered something else. */
+async function createdId(res: Response): Promise<string | null> {
+  try {
+    const body = (await res.json()) as { id?: unknown };
+    return typeof body.id === "string" ? body.id : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Upserts the active template's per-client crew (`seo-writer--<slug>`, …) by name — the same
  * semantics the blueprints reconciler uses: an agent that already exists is left untouched, a
- * missing one is created. The crew, its prompts, its model, its budget and its allow-list are all
- * template data (`templates/*.ts`); none of it is decided here.
+ * missing one is created. The crew, its prompts, its model, its budget, its allow-list and its
+ * persona are all template data (`templates/*.ts`); none of it is decided here.
  *
  * **Widen, never narrow.** A crew agent this client already has that the *active* template does not
  * declare — the operator switched template, or switched to `blank`, which declares no crew — is
  * reported as `kept` and never touched. Deleting an agent is an explicit act, exactly as it is in
  * the reconciler, where only a `removed:` tombstone deletes anything.
+ *
+ * **The persona is re-asserted every time**, on a member that was just created and on one that was
+ * already there, exactly as the reconciler does for the agency's own agents: the grant is
+ * idempotent, and a crew provisioned before this blueprint declared a persona would otherwise stay
+ * unable to reach a single connected account for as long as it existed. `unchanged` therefore
+ * describes the agent's own configuration — never re-posted — and not the grant.
+ *
+ * A member whose persona did not land is reported `failed` even when the agent itself was created:
+ * an agent with a search toolset and no identity is offered none of those tools, and reporting that
+ * as a success is how the blueprint hid this in the first place.
  *
  * Answers null when the roster itself cannot be read.
  */
@@ -169,19 +209,30 @@ export async function provisionClientAgents(
   // again under the same name on every onboard.
   const roster = await listAgents(config, fetchImpl);
   if (roster === null) return null;
-  const existing = new Set(roster.map((a) => a.name));
+  const existing = new Map(roster.map((a) => [a.name, a.id]));
   const reports: ProvisionReport[] = [];
   const declared = new Set<string>();
   for (const member of crew) {
     const name = `${member.name}--${slug}`;
     declared.add(name);
-    if (existing.has(name)) {
-      reports.push({ name, action: "unchanged" });
-      continue;
+    const present = existing.has(name);
+    let id = existing.get(name) ?? null;
+    if (!present) {
+      // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
+      // declare: sending it would read as a grant and be none. It is the call below.
+      const { identity: _persona, ...decl } = member;
+      const created = await proxyFetch(config, { method: "POST", path: "/v1/agents" },
+        JSON.stringify({ ...decl, name }), fetchImpl);
+      if (!created.ok) {
+        reports.push({ name, action: "failed" });
+        continue;
+      }
+      id = await createdId(created);
     }
-    const created = await proxyFetch(config, { method: "POST", path: "/v1/agents" },
-      JSON.stringify({ ...member, name }), fetchImpl);
-    reports.push({ name, action: created.ok ? "created" : "failed" });
+    const granted =
+      member.identity === undefined ||
+      (id !== null && (await grantIdentity(config, id, member.identity, fetchImpl)));
+    reports.push({ name, action: granted ? (present ? "unchanged" : "created") : "failed" });
   }
   for (const agent of roster) {
     if (agent.name.endsWith(`--${slug}`) && !declared.has(agent.name)) reports.push({ name: agent.name, action: "kept" });

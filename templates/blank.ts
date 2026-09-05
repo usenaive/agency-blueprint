@@ -2,8 +2,10 @@
  * `blank` — a working agency with no specialism, and the base every other template of this
  * blueprint is a delta on.
  *
- * Everything here is data: two agents with generic prompts, generic deliverable kinds, one weekly
- * schedule, and a demo seed that is plainly a demo. There is no per-client crew: this agency runs
+ * Everything here is data: two agents with generic prompts, generic deliverable kinds, the two
+ * schedules an agency runs on — a weekly review and a daily pipeline pass, each in the agency's own
+ * zone and speaking as the agency's own persona — and a demo seed that is plainly a demo. There is
+ * no per-client crew: this agency runs
  * every client through its own pair, which is a complete agency and the safe thing to get by
  * accident (`BLUEPRINTS.agency.default`).
  *
@@ -30,6 +32,34 @@ export interface AgencyTemplate extends Template {
 export const budget = { cap_micro_usd: 10_000_000, max_task_micro_usd: 2_000_000, period: "day" } as const;
 
 export const model = "anthropic/claude-sonnet-5";
+
+/**
+ * The agency's own persona, and the whole reason a connected account is reachable from a turn.
+ *
+ * A turn's connection tools resolve along `session → agent → agent_identity → identity → connected
+ * accounts`, so an agent that holds no identity is offered NONE of them, however carefully its
+ * toolset names them — the resolver answers an empty list, and nothing anywhere says so. Every
+ * `gmail.*` entry below and every `googlesearchconsole.*` / `googleanalytics.*` entry in
+ * `seo-geo.ts` was exactly that: written, filtered by an allow-list, and never once offered.
+ *
+ * The persona is declared in `naive.config.ts` (`identities:`) and named here on every agent that
+ * holds a connector tool — `up` refuses an agent naming a persona the project does not declare,
+ * rather than creating one that runs as nobody. The per-client crew is granted the same persona by
+ * `server/proxy.ts` at onboarding, because `POST /v1/agents` carries no identity field of its own.
+ * It is the persona the dashboard's own connection routes already act as (`NAIVE_IDENTITY_ID`), so
+ * what an agent reaches is exactly what a client's Connections tab shows.
+ */
+export const AGENCY_IDENTITY = "agency";
+
+/**
+ * The zone every schedule in this repo fires in, and the one line to edit to move all of them.
+ *
+ * `POST /v1/deployments` defaults `timezone` to `"UTC"`, so omitting it is not "no opinion" — it is
+ * UTC, chosen for the operator by a default nobody read. A Monday-08:00 review declared without a
+ * zone lands mid-evening or mid-afternoon for the agency that has to act on it, and slides by an
+ * hour twice a year against the clients it is about. Name the zone the agency works in instead.
+ */
+export const AGENCY_TIMEZONE = "America/New_York";
 
 /**
  * Everything off except the named tools — an agency agent needs no sandbox. `ask` is the second
@@ -136,6 +166,24 @@ export const blank: AgencyTemplate = {
         ["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "advance_pipeline", "create_draft_post"), ...MAILBOX_READ],
         MAILBOX_SEND,
       ),
+      /** Without this the two `gmail.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
+      identity: AGENCY_IDENTITY,
+      schedules: [
+        {
+          /**
+           * The daily pass. A pipeline goes stale in days, not weeks: a lead that replied on
+           * Tuesday and heard nothing until the Monday review is a lead the agency lost to its own
+           * calendar. Weekday mornings only — an agency that drafts follow-ups on a Sunday has
+           * nobody to approve them on the Approvals screen until Monday anyway.
+           */
+          cron: "30 8 * * 1-5",
+          timezone: AGENCY_TIMEZONE,
+          identity: AGENCY_IDENTITY,
+          input:
+            "Daily pipeline pass: read the agency mailbox for replies that arrived since yesterday, check every lead and proposal against what it is waiting on, and draft the follow-ups for anything that has gone quiet. File them for the operator and send nothing.",
+          budget_micro_usd: 1_000_000, // $1 a weekday, under the agent's own $2 per-task ceiling
+        },
+      ],
     },
     {
       name: "client-manager",
@@ -148,9 +196,19 @@ export const blank: AgencyTemplate = {
         ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "schedule_post"), ...MAILBOX_READ],
         MAILBOX_SEND,
       ),
+      /** Without this the two `gmail.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
+      identity: AGENCY_IDENTITY,
       schedules: [
         {
+          /** The weekly review, on Monday morning where the agency is, not where the platform is. */
           cron: "0 8 * * 1",
+          timezone: AGENCY_TIMEZONE,
+          /**
+           * The persona the fire speaks as. A scheduled run has no operator sitting behind it, so
+           * without this it runs as nobody: it resolves no connected account, and the review that
+           * is supposed to read the agency's mailbox and file the week's plan reads nothing.
+           */
+          identity: AGENCY_IDENTITY,
           input:
             "Weekly review: for every active client, check the calendar against what shipped last week, list anything overdue or unscheduled, and draft the week's plan for the operator.",
           budget_micro_usd: 2_000_000, // $2 per weekly review
