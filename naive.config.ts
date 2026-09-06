@@ -83,17 +83,25 @@ export default defineProject({
        *
        * `DASHBOARD_TOKEN` is the operator's own bearer for `/api/*` — the CRM holds client
        * contacts and their email addresses, the roster holds system prompts, and the queue and the
-       * session relay are writable, so the deployed URL cannot be open. Generate one yourself
-       * (`openssl rand -hex 32`) and export it before `naive up`; the dashboard asks for it once
-       * and keeps it for the tab. `{ from_env }` again, so it is never written down here, and an
-       * unset variable refuses the apply by name rather than deploying an open dashboard — the
-       * server itself answers 503 on every `/api/*` route if it ever arrives without one.
+       * session relay are writable, so the deployed URL cannot be open. It is `{ generate: true }`
+       * (`canonical-spec §29.7`): the value is "any long random string", asking a person to invent
+       * entropy was never a setup question, and a hosted install has no shell to read one out of.
+       * The platform makes one, once, on the apply that creates the app, and no later apply rolls
+       * it out from under the running build. It is unreadable by design — no route returns an app
+       * secret — so the dashboard comes up CLOSED rather than open, and an operator who wants a
+       * token they know sets their own with `POST /v1/apps/{id}/secrets`, once.
+       *
+       * `NAIVE_API_URL` and `NAIVE_IDENTITY_ID` are deliberately NOT here. They were `process.env`
+       * reads, evaluated when this declaration is BUILT — so the publisher's shell was baked into
+       * the bytes every customer installs — and on a hosted apply there is no shell at all, so both
+       * silently vanished and the dashboard fell back to the production base URL with no persona.
+       * Declaring them with `{ from_env }` would be worse: a laptop apply would then refuse for
+       * want of two variables nobody has. The platform knows both and writes them into this app
+       * itself, the way it already writes `VETTA_MCP_TOKEN`.
        */
       env: {
         NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
-        DASHBOARD_TOKEN: { from_env: "DASHBOARD_TOKEN" },
-        ...(process.env["NAIVE_API_URL"] ? { NAIVE_API_URL: process.env["NAIVE_API_URL"] } : {}),
-        ...(process.env["NAIVE_IDENTITY_ID"] ? { NAIVE_IDENTITY_ID: process.env["NAIVE_IDENTITY_ID"] } : {}),
+        DASHBOARD_TOKEN: { generate: true },
       },
     },
     {
