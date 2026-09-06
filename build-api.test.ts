@@ -4,6 +4,7 @@
  * function. This runs the real script into a temp `dist/` copy of the blueprint's own tree.
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -13,6 +14,15 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 const root = dirname(fileURLToPath(import.meta.url));
 let dist = "";
 let work = "";
+let blank = "";
+let seoGeo = "";
+
+/** One run of the real script, and the function it emitted. `NAIVE_TEMPLATE` is the override. */
+function buildApi(template?: string): string {
+  const env = template === undefined ? process.env : { ...process.env, NAIVE_TEMPLATE: template };
+  execFileSync("node", ["build-api.mjs"], { cwd: work, env });
+  return readFileSync(join(dist, "api", "app.js"), "utf8");
+}
 
 beforeAll(() => {
   work = mkdtempSync(join(tmpdir(), "sga-build-"));
@@ -26,8 +36,11 @@ beforeAll(() => {
   // The predecessor's function, to prove the build no longer leaves a second one behind.
   mkdirSync(join(dist, "api"), { recursive: true });
   writeFileSync(join(dist, "api", "mcp.js"), "stale");
-  execFileSync("node", ["build-api.mjs"], { cwd: work });
-}, 60_000);
+  blank = buildApi("blank");
+  seoGeo = buildApi("seo-geo");
+  // The default build last, so every assertion below reads the tree `pnpm build` leaves behind.
+  buildApi();
+}, 120_000);
 
 afterAll(() => rmSync(work, { recursive: true, force: true }));
 
@@ -53,6 +66,16 @@ describe("build-api.mjs", () => {
     expect(rewrites[2]!.source).toBe("/((?!api/).*)");
     expect(new RegExp(`^${rewrites[2]!.source}$`).test("/api/clients")).toBe(false);
     expect(new RegExp(`^${rewrites[2]!.source}$`).test("/clients/cli_1/posts")).toBe(true);
+  });
+
+  it("compiles the template it was built for, rather than reading it on a host that has none", () => {
+    // The server half imports `templates/active.ts` for the crew, the deliverable kinds and the
+    // seed. On the deployed host `NAIVE_TEMPLATE` is not in the environment, so a runtime read
+    // there answers with this repository's default while the screens beside it show the built one
+    // — two halves of one deployment disagreeing about which template is running.
+    const digest = (code: string) => createHash("sha256").update(code).digest("hex");
+    expect(digest(blank)).not.toEqual(digest(seoGeo));
+    expect(blank).not.toContain("NAIVE_TEMPLATE");
   });
 
   it("bundles the whole route table, not just /mcp", () => {
