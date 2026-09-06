@@ -37,8 +37,8 @@ const MIME: Record<string, string> = {
   ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".png": "image/png", ".woff2": "font/woff2",
 };
 
-const send = (res: ServerResponse, status: number, body: unknown) => {
-  res.writeHead(status, { "content-type": "application/json" });
+const send = (res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}) => {
+  res.writeHead(status, { "content-type": "application/json", ...headers });
   res.end(JSON.stringify(body));
 };
 
@@ -74,8 +74,9 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
   }, contextFor(req));
 
   if (reply.stream) return relay(res, reply.stream);
-  if (reply.body === undefined) return void res.writeHead(reply.status).end();
-  return send(res, reply.status, reply.body);
+  // `/api/enter` answers with a cookie and a `location` and nothing else; every other route sets none.
+  if (reply.body === undefined) return void res.writeHead(reply.status, reply.headers ?? {}).end();
+  return send(res, reply.status, reply.body, reply.headers);
 }
 
 async function handleStatic(res: ServerResponse, path: string): Promise<void> {

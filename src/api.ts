@@ -20,67 +20,25 @@ export class ApiError extends Error {
 const UNREACHABLE = "the dashboard server is unreachable";
 
 /**
- * The operator's access token for `/api/*` — the app's `DASHBOARD_TOKEN`.
+ * NOTHING HERE HOLDS A CREDENTIAL, AND THAT IS THE POINT.
  *
- * Kept in `sessionStorage`: it lives as long as the tab, never lands in a URL, a bookmark or a
- * server log, and closing the tab ends the session. It is asked for on the first 401 rather than at
- * boot, so a local `pnpm serve` with no token set never sees a prompt and the deployment asks
- * exactly once. A 401 clears it and asks again, so a rotated token is one answer, not a dead tab.
+ * This module used to keep the app's `DASHBOARD_TOKEN` in `sessionStorage` and `prompt()` for it on
+ * the first 401. That was the only way in while the token was something an operator invented — and
+ * it stopped being one: the platform generates it (`canonical-spec §29.7`) and no route returns it,
+ * so there is no value for a person to be asked for. What replaced the box is one click in the
+ * studio, which posts a short-lived ticket to `/api/enter`; the server answers with an `HttpOnly`
+ * cookie the browser then attaches to every same-origin call below on its own.
+ *
+ * So no `authorization` header is sent, and a 401 is not a prompt any more — it is the honest
+ * sentence the server wrote, rendered by whichever screen asked.
  */
-const TOKEN_KEY = "dashboard-token";
 
-/** Every access is guarded: a private window, or no DOM at all under the unit tests. */
-const readToken = (): string | null => {
-  try {
-    return sessionStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-};
-
-const writeToken = (token: string | null): void => {
-  try {
-    if (token === null) sessionStorage.removeItem(TOKEN_KEY);
-    else sessionStorage.setItem(TOKEN_KEY, token);
-  } catch {
-    // Nothing is kept; the next 401 asks again.
-  }
-};
-
-/** Plain on purpose — this is an operator tool, and a login screen would be a lie about it. */
-const askForToken = (): string | null => {
-  const ask = (globalThis as { prompt?: (message: string) => string | null }).prompt;
-  const asked = ask?.("Dashboard access token")?.trim();
-  if (!asked) return null;
-  writeToken(asked);
-  return asked;
-};
-
-async function call<T>(path: string, init: RequestInit, retry = true): Promise<T> {
-  const sent = readToken();
+async function call<T>(path: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, {
-      ...init,
-      headers: {
-        ...(init.headers as Record<string, string> | undefined),
-        ...(sent === null ? {} : { authorization: `Bearer ${sent}` }),
-      },
-    });
+    res = await fetch(`/api${path}`, init);
   } catch {
     throw new ApiError(0, UNREACHABLE);
-  }
-  if (res.status === 401) {
-    // Screens load in parallel, so several calls can 401 at once. If one of them has already been
-    // given a fresh token, use it instead of clearing that answer and asking a second time.
-    const stored = readToken();
-    let fresh = stored !== null && stored !== sent ? stored : null;
-    if (fresh === null) {
-      writeToken(null);
-      fresh = askForToken();
-    }
-    if (retry && fresh !== null) return call<T>(path, init, false);
-    throw new ApiError(401, "an access token is required");
   }
   let parsed: unknown = null;
   try {

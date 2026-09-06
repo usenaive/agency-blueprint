@@ -101,7 +101,7 @@ export default defineProject({
        */
       env: {
         NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
-        DASHBOARD_TOKEN: { generate: true },
+        DASHBOARD_TOKEN: { generate: true as const },
       },
     },
     {
