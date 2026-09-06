@@ -36,12 +36,19 @@ describe("naive.config.ts", () => {
     // The `/api/*` gate. Required, not optional: the CRM holds client contacts and their email
     // addresses and the queue is writable, so an apply that cannot read a token must refuse rather
     // than deploy a dashboard anyone who finds the URL can read and mutate.
-    expect(result.config.apps[0].env).toMatchObject({ DASHBOARD_TOKEN: { from_env: "DASHBOARD_TOKEN" } });
-    // The optional two are literals and only when set — a `{ from_env }` on an unset optional
-    // variable would refuse the whole apply.
-    // `?? {}`: the variable is normally unset (it is in CI), so the key is absent and
-    // `toHaveProperty` on `undefined` throws before it can assert anything.
-    expect(result.config.apps[0].env?.NAIVE_API_URL ?? {}).not.toHaveProperty("from_env");
+    // The `/api/*` gate, invented by the platform rather than by a person (`canonical-spec §29.7`):
+    // "any long random string" was never a setup question, and a hosted install has no shell to
+    // read one out of. Made once, on the apply that creates the app, and never rolled after.
+    expect(result.config.apps[0].env).toEqual({
+      NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
+      DASHBOARD_TOKEN: { generate: true },
+    });
+    // And the platform's own two values are the platform's to write. As `process.env` reads they
+    // baked the PUBLISHER'S shell into the declaration every customer installs, and vanished
+    // entirely on a hosted apply, which has no shell — leaving the dashboard pointed at the
+    // production base URL with no persona.
+    expect(result.config.apps[0].env).not.toHaveProperty("NAIVE_API_URL");
+    expect(result.config.apps[0].env).not.toHaveProperty("NAIVE_IDENTITY_ID");
     // The agents are the chosen template's, folded in by `defineProject` — the config declares none
     // of its own, so switching template is the only thing that changes this list.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
