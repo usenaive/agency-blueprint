@@ -171,7 +171,19 @@ export const VOCABULARY: Record<TemplateName, TemplateVocabulary> = { blank, "se
  * platform and every screen reads it from here, so the dashboard, the site, the MCP tool schema and
  * the crew provisioned at onboarding can never disagree about which template is running.
  */
-export const TEMPLATE: TemplateName = "seo-geo";
+/**
+ * The template this repository runs. Editing this line and running `naive up` is the switch, and
+ * for an operator that is the whole story.
+ *
+ * `NAIVE_TEMPLATE` overrides it, and exists for exactly one caller: the platform's artifact
+ * publisher builds EVERY template of this repository in one pass and cannot edit a file it does not
+ * own between builds. Without the override it asked for `blank` and got this line's answer back, so
+ * only the default template could ever be published. Unset — every run that is not that publisher —
+ * nothing changes.
+ */
+const chosen = process.env["NAIVE_TEMPLATE"];
+export const TEMPLATE: TemplateName =
+  chosen === "blank" || chosen === "seo-geo" ? chosen : "seo-geo";
 
 export const ACTIVE = VOCABULARY[TEMPLATE];
 
