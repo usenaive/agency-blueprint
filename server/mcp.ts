@@ -9,7 +9,7 @@
  * own agents (`VETTA_MCP_TOKEN`, handed in by the entry point). The
  * platform API key is never an MCP credential.
  */
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { listAgents, proxyFetch, type AgentRow, type ProxyConfig } from "./proxy.ts";
 import { ACTIVE } from "../templates/index.ts";
 import type { DraftPostInput, Store } from "./store.ts";
@@ -34,6 +34,23 @@ export function mintToken(store: Store, name: string): { id: string; name: strin
 /** The token out of an `Authorization: Bearer …` header, or null when there is not one. */
 export const bearerOf = (authHeader: string | undefined): string | null =>
   /^Bearer\s+(\S+)$/i.exec(authHeader ?? "")?.[1] ?? null;
+
+/**
+ * A PLATFORM ENTRY TICKET: `<expiry-ms>.<base64url HMAC-SHA256>`, keyed by this app's own
+ * `DASHBOARD_TOKEN` over `vetta.app-entry.v1:<expiry-ms>` (`canonical-spec §29.7`).
+ *
+ * The point of the shape is what it is NOT. The operator's browser is handed a ticket and never the
+ * token: the ticket is a one-way function of it, so one read out of a log, a history entry or a
+ * `Referer` is worth two minutes and cannot be turned back into the bearer this app compares. The
+ * expiry rides in the clear because this function has to read it before it can reject a stale one,
+ * and inside the MAC because otherwise it would be the one field a holder could edit.
+ */
+export function ticketMatches(token: string, ticket: string, now: number): boolean {
+  const [expiry, mac] = ticket.split(".");
+  const expiresAt = Number(expiry);
+  if (mac === undefined || !Number.isSafeInteger(expiresAt) || now >= expiresAt) return false;
+  return sameSecret(createHmac("sha256", token).update(`vetta.app-entry.v1:${expiresAt}`).digest("base64url"), mac);
+}
 
 /**
  * True when the Authorization header carries a minted, unrevoked token, or

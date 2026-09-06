@@ -61,64 +61,40 @@ describe("the happy path", () => {
  * `/api/*` is gated by the app's `DASHBOARD_TOKEN` — without it the deployed dashboard hands the
  * CRM, the agent roster and the content queue to anyone who finds the URL.
  */
-describe("the operator's access token", () => {
-  /** sessionStorage in a sentence: the tests run in node, which has none of its own. */
-  const session = () => {
-    const kept = new Map<string, string>();
-    return {
-      getItem: (k: string) => kept.get(k) ?? null,
-      setItem: (k: string, v: string) => void kept.set(k, v),
-      removeItem: (k: string) => void kept.delete(k),
-      kept,
-    };
-  };
-
-  it("sends the kept token as the bearer on every call", async () => {
-    const store = session();
-    store.kept.set("dashboard-token", "dash");
-    vi.stubGlobal("sessionStorage", store);
-    const fetchImpl = vi.fn().mockResolvedValue(json([]));
-    vi.stubGlobal("fetch", fetchImpl);
+/**
+ * THE OPERATOR IS NEVER ASKED FOR A CREDENTIAL, BECAUSE THERE IS NO LONGER ONE TO ASK FOR.
+ *
+ * This module used to keep `DASHBOARD_TOKEN` in `sessionStorage` and prompt for it on a 401. The
+ * platform now generates that value (`canonical-spec §29.7`) and no route returns it, so the box
+ * was asking a person for something nobody can read: the studio's one click posts a ticket to
+ * `/api/enter` and the server answers with an `HttpOnly` cookie the browser sends by itself.
+ */
+describe("no credential passes through the browser", () => {
+  it("never asks for a token and never sends an authorization header", async () => {
+    const ask = vi.fn();
+    vi.stubGlobal("prompt", ask);
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(json([])));
+    vi.stubGlobal("fetch", fetchMock);
 
     await apiGet("/clients");
-    expect(fetchImpl.mock.calls[0]?.[1]).toMatchObject({ headers: { authorization: "Bearer dash" } });
-    // And the caller's own headers survive alongside it.
-    expect(fetchImpl.mock.calls[0]?.[1]).toMatchObject({ headers: { accept: "application/json" } });
+    await apiSend("POST", "/clients", { name: "Acme" });
+
+    expect(ask).not.toHaveBeenCalled();
+    for (const call of fetchMock.mock.calls) {
+      const headers = (call[1] as { headers?: Record<string, string> }).headers ?? {};
+      expect(Object.keys(headers).map((name) => name.toLowerCase())).not.toContain("authorization");
+    }
   });
 
-  it("clears a rejected token, asks once, and retries with the answer", async () => {
-    const store = session();
-    store.kept.set("dashboard-token", "stale");
-    vi.stubGlobal("sessionStorage", store);
-    vi.stubGlobal("prompt", vi.fn().mockReturnValue("  fresh  "));
-    const fetchImpl = vi.fn()
-      .mockResolvedValueOnce(json({ error: "missing or invalid access token" }, 401))
-      .mockResolvedValueOnce(json([{ id: "cli_1" }]));
-    vi.stubGlobal("fetch", fetchImpl);
-
-    expect(await apiGet("/clients")).toEqual([{ id: "cli_1" }]);
-    expect(globalThis.prompt).toHaveBeenCalledTimes(1);
-    // Trimmed, kept for the tab, and sent on the retry.
-    expect(store.kept.get("dashboard-token")).toBe("fresh");
-    expect(fetchImpl.mock.calls[1]?.[1]).toMatchObject({ headers: { authorization: "Bearer fresh" } });
-  });
-
-  it("throws 401 rather than looping when there is no answer, and keeps nothing", async () => {
-    const store = session();
-    store.kept.set("dashboard-token", "stale");
-    vi.stubGlobal("sessionStorage", store);
-    vi.stubGlobal("prompt", vi.fn().mockReturnValue(null));
-    const fetchImpl = vi.fn().mockResolvedValue(json({ error: "missing or invalid access token" }, 401));
-    vi.stubGlobal("fetch", fetchImpl);
+  it("surfaces a 401 as the server's own sentence rather than a second prompt", async () => {
+    const ask = vi.fn();
+    vi.stubGlobal("prompt", ask);
+    const fetchMock = vi.fn().mockResolvedValue(json({ error: "missing or invalid access token" }, 401));
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(apiGet("/clients")).rejects.toMatchObject({ status: 401 });
-    expect(store.kept.has("dashboard-token")).toBe(false);
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-  });
-
-  it("works with no storage at all — a 503 or a 200 is still the server's own answer", async () => {
-    // node has no sessionStorage, which is also a browser in private mode: every access is guarded.
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json([])));
-    expect(await apiGet("/clients")).toEqual([]);
+    // One call, not two: there is no stale token to forget and no retry to make.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(ask).not.toHaveBeenCalled();
   });
 });
