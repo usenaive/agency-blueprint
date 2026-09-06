@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
-import { blank } from "./blank.ts";
+import { AGENCY_IDENTITY, AGENCY_TIMEZONE, blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 import { seoGeo } from "./seo-geo.ts";
 
@@ -75,6 +75,21 @@ describe("connected accounts", () => {
     }
   });
 
+  /**
+   * The grant itself. A connection reaches a turn along `session → agent → agent_identity →
+   * identity → connected accounts`, so an agent that holds no persona is offered NOTHING from a
+   * connected account — the resolver answers an empty list and no screen, log or apply says a word.
+   * Every name asserted above was in exactly that state: written, allow-listed, unreachable.
+   *
+   * The per-client crew is included because it is where the search and analytics names live, and
+   * because `POST /v1/agents` has no identity field: `server/proxy.ts` reads this and grants it.
+   */
+  it.each(all)("$name names the persona on every agent that has one of them", (template) => {
+    for (const agent of [...template.agents, ...template.crew]) {
+      expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
+    }
+  });
+
   it.each(all)("$name holds every outward one at `ask`, and nothing else outward", (template) => {
     for (const agent of [...template.agents, ...template.crew]) {
       for (const [name, config] of connectionTools(agent)) {
@@ -129,6 +144,40 @@ describe("seo-geo", () => {
   it("widens over blank: it drops no agent blank declares", () => {
     const gone = blank.agents.map((a) => a.name).filter((name) => !seoGeo.agents.some((a) => a.name === name));
     expect(gone).toEqual([]);
+  });
+});
+
+/**
+ * The schedules, which are template data like everything else here — and the one place this
+ * blueprint fires without an operator watching, so the two fields nobody sets by accident matter
+ * most: an absent `timezone` is UTC by the API's default, and an absent `identity` is a fire that
+ * speaks as nobody and resolves no connected account.
+ */
+describe("schedules", () => {
+  const declared = (template: (typeof all)[number]) =>
+    template.agents.flatMap((agent) => (agent.schedules ?? []).map((schedule) => [agent.name, schedule] as const));
+
+  it.each(all)("$name runs the weekly review and the daily pipeline pass", (template) => {
+    expect(declared(template).map(([agent, schedule]) => [agent, schedule.cron])).toEqual([
+      // A pipeline goes stale in days: weekday mornings, before the weekly review it feeds.
+      ["sales", "30 8 * * 1-5"],
+      ["client-manager", "0 8 * * 1"],
+    ]);
+  });
+
+  it.each(all)("$name fires each one in the agency's zone, as the agency", (template) => {
+    for (const [agent, schedule] of declared(template)) {
+      const at = `${agent} @ ${schedule.cron}`;
+      expect([at, schedule.timezone]).toEqual([at, AGENCY_TIMEZONE]);
+      expect([at, schedule.identity]).toEqual([at, AGENCY_IDENTITY]);
+      // A session naming a persona its agent does not hold is refused before it runs, so the
+      // schedule's identity is only reachable because the agent above holds the same one.
+      const holder = template.agents.find((one) => one.name === agent);
+      expect([at, holder?.identity]).toEqual([at, schedule.identity]);
+      // The zone must be one the platform can schedule in: `POST /v1/deployments` validates it
+      // through `Intl` and refuses what it cannot format.
+      expect(() => new Intl.DateTimeFormat("en-US", { timeZone: schedule.timezone })).not.toThrow();
+    }
   });
 });
 

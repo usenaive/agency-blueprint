@@ -4,11 +4,19 @@ import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "@usenaive-sdk/blueprints";
 import { TEMPLATES } from "./templates/active.ts";
+import { AGENCY_IDENTITY, AGENCY_TIMEZONE } from "./templates/blank.ts";
 import { TEMPLATE } from "./templates/index.ts";
+
+/** Loaded once: jiti compiles the config cold, and every test below reads the same apply. */
+const loaded = loadConfig(dirname(fileURLToPath(import.meta.url)));
+
+/** The tools a connected account contributes to a turn — `<connector>.<tool>`, and never the dashboard's own. */
+const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
+  Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard."));
 
 describe("naive.config.ts", () => {
   it("loads and validates via loadConfig", async () => {
-    const result = await loadConfig(dirname(fileURLToPath(import.meta.url)));
+    const result = await loaded;
     expect(result).toMatchObject({ ok: true });
     if (!result.ok) return;
     // The blueprint is the machine and the project is named for it; the template is the data that
@@ -60,10 +68,57 @@ describe("naive.config.ts", () => {
     expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.create_lead");
     expect(result.config.agents[1].tools?.configs).toHaveProperty("dashboard.get_calendar");
     expect(result.config.agents[1].schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);
+    expect(result.config.agents[0].schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);
     // Both templates declare the same pair, so a switch narrows nothing here and `kept` is empty.
     // The part that does differ — the per-client crew — is `server/proxy.ts`'s, because its names
     // carry a client slug and cannot be declared statically.
     expect(result.config.kept.agents).toEqual([]);
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
+  }, 30_000);
+});
+
+/**
+ * The persona, read out of the applied config rather than the template module — this is what `naive
+ * up` provisions, and the loader is where a persona named but not declared is refused.
+ *
+ * Deleting the `identities:` block does not weaken these assertions, it fails the load: an agent
+ * naming an undeclared identity is a define-time refusal. Deleting the block *and* every
+ * `identity:` on the agents loads cleanly and fails here instead — which is the state this
+ * blueprint shipped in, and the reason a fully-written mailbox allow-list reached nothing.
+ */
+describe("the agency persona", () => {
+  it("is declared once, and held by every agent that names a connector tool", async () => {
+    const result = await loaded;
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.config.identities.map((one) => one.name)).toEqual([AGENCY_IDENTITY]);
+    for (const agent of result.config.agents) {
+      // Every agent of this blueprint reads a connected account, so every one must hold the
+      // persona: connection tools resolve `session → agent → identity → connected accounts`, and an
+      // agent holding none is offered none of the names below however they are permissioned.
+      expect([agent.name, connectionTools(agent)]).not.toEqual([agent.name, []]);
+      expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
+    }
+  }, 30_000);
+
+  it("speaks for every scheduled fire, in a zone the platform will accept", async () => {
+    const result = await loaded;
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    const schedules = result.config.agents.flatMap((agent) =>
+      (agent.schedules ?? []).map((schedule) => [agent.name, schedule] as const));
+    expect(schedules.length).toBeGreaterThan(0);
+    for (const [agent, schedule] of schedules) {
+      const at = `${agent} @ ${schedule.cron}`;
+      // A fire has no operator behind it, so an identity-less deployment runs as nobody and
+      // resolves no connected account — the same bug as an identity-less agent, by another road.
+      expect([at, schedule.identity]).toEqual([at, AGENCY_IDENTITY]);
+      // `POST /v1/deployments` defaults an absent `timezone` to UTC, which the operator never
+      // chose: 08:00 in the declaration is then 08:00 nowhere in particular.
+      expect([at, schedule.timezone]).toEqual([at, AGENCY_TIMEZONE]);
+      // And the zone must be one the API's own `assertTimezone` accepts — it validates through
+      // `Intl`, so a typo'd zone is a deployment that cannot be scheduled at all.
+      expect(() => new Intl.DateTimeFormat("en-US", { timeZone: schedule.timezone })).not.toThrow();
+    }
   }, 30_000);
 });

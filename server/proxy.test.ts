@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "../templates/active";
+import { AGENCY_IDENTITY } from "../templates/blank";
 import { configFromEnv, listAgents, provisionClientAgents, proxyFetch, upstreamFor } from "./proxy";
 
 describe("upstreamFor", () => {
@@ -88,6 +89,13 @@ describe("provisionClientAgents", () => {
   const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
   /** Named, not "the active one": the mechanism is the blueprint's and must hold for either template. */
   const crew = TEMPLATES["seo-geo"].crew;
+  type Call = [url: URL | RequestInfo, init?: RequestInit | undefined];
+  const posted = (impl: { mock: { calls: Call[] } }, match: RegExp) =>
+    impl.mock.calls.filter(([url, init]) => init?.method === "POST" && match.test(String(url)));
+  /** `POST /v1/agents` — the agent itself. */
+  const creates = (impl: { mock: { calls: Call[] } }) => posted(impl, /\/v1\/agents$/);
+  /** `POST /v1/agents/{id}/identities` — the persona grant, which is a call of its own (§22). */
+  const grants = (impl: { mock: { calls: Call[] } }) => posted(impl, /\/v1\/agents\/[\w-]+\/identities$/);
 
   it("provisions the active template's crew when none is named", async () => {
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
@@ -98,14 +106,15 @@ describe("provisionClientAgents", () => {
 
   it("creates the missing agents and leaves existing ones untouched", async () => {
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
-      init?.method === "GET" ? json({ data: [{ name: "seo-writer--acme" }] }) : json({ id: "agt_new" }));
+      init?.method === "GET" ? json({ data: [{ id: "agt_1", name: "seo-writer--acme" }] }) : json({ id: "agt_new" }));
     expect(await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew)).toEqual([
       { name: "seo-writer--acme", action: "unchanged" },
       { name: "geo-optimizer--acme", action: "created" },
       { name: "audit-runner--acme", action: "created" },
     ]);
-    // Two creates only — the existing agent is never re-posted.
-    const posts = fetchImpl.mock.calls.filter(([, init]) => init?.method === "POST");
+    // Two creates only — the existing agent is never re-posted. (The persona grants below are
+    // POSTs too, and are counted separately: they are the only write an existing member takes.)
+    const posts = creates(fetchImpl);
     expect(posts).toHaveLength(2);
     const bodies = posts.map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
     expect(bodies.map((b) => b.name)).toEqual(["geo-optimizer--acme", "audit-runner--acme"]);
@@ -119,7 +128,52 @@ describe("provisionClientAgents", () => {
       expect(body.system).toBe(member?.system);
       expect(String(body.system)).toMatch(/never send or publish anything yourself/);
       expect(body.tools).toMatchObject({ default_config: { permission: "deny" } });
+      // The persona is NOT in this body: `POST /v1/agents` declares no `identity` field and strips
+      // what it does not declare, so a body carrying one reads as a grant and is none.
+      expect(body).not.toHaveProperty("identity");
     }
+  });
+
+  /**
+   * The grant, and the reason this function makes a second call at all.
+   *
+   * `POST /v1/agents` declares no `identity` field and strips what it does not declare, so posting
+   * the member's declaration verbatim creates an agent that holds no persona — and says nothing
+   * about it. An agent with no persona is offered NOTHING from a connected account, so every
+   * `googlesearchconsole.*` and `googleanalytics.*` name in this crew's allow-list would resolve to
+   * an empty list on every turn: the crew reads the client's own numbers, or it is `web_search`
+   * with extra prompts.
+   */
+  it("grants every member the persona its declaration names, created or already there", async () => {
+    const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === "GET" ? json({ data: [{ id: "agt_1", name: "seo-writer--acme" }] }) : json({ id: "agt_new" }));
+    const reports = await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
+    expect(reports?.map((r) => r.action)).toEqual(["unchanged", "created", "created"]);
+    // One per member: the one that already existed, by its roster id, and the two just created, by
+    // the id the create answered with. The grant is idempotent, so re-asserting it on the existing
+    // member is how a crew provisioned before this persona existed stops running as nobody.
+    expect(grants(fetchImpl).map(([url]) => String(url))).toEqual([
+      "https://x.test/v1/agents/agt_1/identities",
+      "https://x.test/v1/agents/agt_new/identities",
+      "https://x.test/v1/agents/agt_new/identities",
+    ]);
+    for (const [, init] of grants(fetchImpl)) {
+      expect(JSON.parse(String(init?.body))).toEqual({ identity: AGENCY_IDENTITY });
+    }
+    // And it is the template's persona, not one the server picked: every crew member declares it.
+    expect(crew.map((one) => one.identity)).toEqual(crew.map(() => AGENCY_IDENTITY));
+  });
+
+  it("reports a member `failed` when the persona does not land, however well the agent was created", async () => {
+    // The agent exists and its toolset reads perfectly; it can reach no connected account. Calling
+    // that `created` is precisely how this went unnoticed, so it is reported as the failure it is.
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "GET") return json({ data: [] });
+      return /\/identities$/.test(String(url)) ? new Response("{}", { status: 404 }) : json({ id: "agt_new" });
+    });
+    const reports = await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
+    expect(reports?.every((r) => r.action === "failed")).toBe(true);
+    expect(creates(fetchImpl)).toHaveLength(crew.length);
   });
 
   it("keeps a crew the new template does not declare, and never deletes it", async () => {
@@ -155,7 +209,7 @@ describe("provisionClientAgents", () => {
     });
     const reports = await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
     expect(reports?.every((r) => r.action === "unchanged")).toBe(true);
-    expect(fetchImpl.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    expect(creates(fetchImpl)).toHaveLength(0);
   });
 
   it("answers null when the roster cannot be read, failed when a create is refused", async () => {

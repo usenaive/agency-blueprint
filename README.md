@@ -49,11 +49,21 @@ arrives without one. Rotate it by exporting a new value and re-running
 - **Two agency agents** — the active template's, each with a system prompt, a
   scoped tool policy and a daily budget:
   - `sales` — works the CRM pipeline: researches leads, drafts outreach and
-    proposals. Never sends anything without your approval.
+    proposals. Never sends anything without your approval. Carries a weekday
+    pass that reads the mailbox for replies and drafts the follow-ups for
+    anything that has gone quiet — a pipeline goes stale in days, not weeks.
   - `client-manager` — onboards graduating clients, watches deliverables
     against the calendar, flags stalls before the client notices. Carries a
     Monday-morning schedule that reviews every active client's calendar and
     drafts the week's plan for you.
+
+  Both hold the agency's **identity**, and so does every schedule they carry.
+  That is not decoration: connection tools resolve `session → agent → identity
+  → connected accounts`, so an agent holding no persona is offered nothing at
+  all from a connected account, and a scheduled fire without one runs as
+  nobody. The persona is declared once in `naive.config.ts`; the schedules name
+  it and a real time zone (`templates/blank.ts`), because an omitted zone is
+  UTC by the platform's default and 08:00 UTC is nobody's Monday morning.
 
 A template may also declare a **per-client crew**, provisioned by the dashboard
 server when you onboard a client — their names carry the client's slug, so they
@@ -129,7 +139,9 @@ not send it without you.
   — that demo agency is the local file store's, and it is the only place it
   exists.
   Optional: `NAIVE_API_URL` (defaults to the hosted platform),
-  `NAIVE_IDENTITY_ID` (routes connection calls through that identity), `PORT`,
+  `NAIVE_IDENTITY_ID` (the `idn_` id of the `agency` persona — it routes the
+  dashboard's connection calls through the same identity the agents hold, so
+  what a Connections tab lists is what an agent can reach), `PORT`,
   and `DASHBOARD_TOKEN` — unset, a local server leaves `/api/*` open so
   development needs no token; set, it is enforced here exactly as on the deploy.
   The bypass is keyed to the local server process, never to anything a caller
@@ -194,7 +206,13 @@ stay with you. Nor does either hold the platform's `social.post`.
 The client's **connected accounts** reach an agent the same way, as
 `<connector>.<tool>` — one namespaced name per operation, because
 deny-by-default means a connection nobody named is a connection nobody can
-use. The agency pair reads a connected mailbox (`gmail.fetch_emails`) and may
+use. Naming them is only half of it: the accounts hang off an **identity**, and
+the resolution runs `session → agent → identity → connected accounts`, so an
+agent that holds no persona is offered none of these tools however carefully
+its allow-list reads. This blueprint declares one persona (`agency`) in
+`naive.config.ts` and names it on every agent and every schedule; the
+per-client crew is granted it at onboarding by the dashboard server, since
+`POST /v1/agents` has no identity field and the grant is a call of its own. The agency pair reads a connected mailbox (`gmail.fetch_emails`) and may
 send from it only through you (`gmail.send_email`, `ask`); the `seo-geo` crew
 reads the client's own search and analytics accounts and writes to neither.
 Add your own by naming them in `templates/*.ts`: reads `allow`, and anything
