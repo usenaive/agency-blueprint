@@ -9,6 +9,12 @@ import { defineConfig } from "vite";
 export default defineConfig({
   root: fileURLToPath(new URL(".", import.meta.url)),
   plugins: [react(), tailwindcss()],
+  // The template, substituted at build time. `site/site.config.ts` reads `ACTIVE` out of
+  // `templates/index.ts`, which chooses on `process.env["NAIVE_TEMPLATE"]` — and Vite compiles a
+  // bare `process.env` to `{}` in a client bundle, so without this the site shipped this
+  // repository's default specialism whichever template it was built for. See the long note in
+  // `../vite.config.ts`; unset it is `""`, and the default the file names stands.
+  define: { "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? "") },
   build: { outDir: "dist", emptyOutDir: true },
   server: { proxy: { "/api": "http://localhost:8789" } },
 });
