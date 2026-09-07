@@ -192,12 +192,14 @@ describe("the approval queue", () => {
     expect(screen.text()).toContain("Which address should I read as the agency mailbox?");
     expect(screen.text()).not.toMatch(/Approve — run this call/);
 
-    // A half-answered question is refused here, before the platform refuses it.
+    // A half-answered question is refused here, before the platform refuses it — and a blank made
+    // of spaces is half-answered, since the platform trims before it judges.
+    await screen.type("hello@agency", "   ");
     await screen.press("Answer —");
     expect(screen.text()).toContain("Answer every field before sending: Mailbox address, What to read.");
     expect(screen.calls.some((c) => c.init?.method === "POST")).toBe(false);
 
-    await screen.type("hello@agency", "hello@agency.example");
+    await screen.type("hello@agency", "  hello@agency.example ");
     await screen.press("replies only");
     await screen.press("Answer —");
     expect(screen.text()).toContain("Answered. sales has your answer");
@@ -207,6 +209,38 @@ describe("the approval queue", () => {
       tool_call_id: "call_q",
       answers: { address: "hello@agency.example", scope: "replies only" },
     });
+  });
+
+  /**
+   * `tool_call_id` is derived from the call, not random (§7.1), so two sessions asking the same
+   * question hold the same id. Each card is its own: answering one leaves the other waiting.
+   */
+  it("keeps two sessions holding the same call apart", async () => {
+    const asked = {
+      kind: "question",
+      tool_call_id: "call_same",
+      name: "ask_operator",
+      args: { prompt: "Which inbox?" },
+      question: { prompt: "Which inbox?", fields: [{ key: "address", label: "Address", type: "text", placeholder: "hello@" }] },
+    };
+    const one = { ...parkedSession, id: "ses_a", stop_reason: "awaiting_answer", pending_actions: [asked] };
+    const two = { ...one, id: "ses_b" };
+    const screen = await render("/approvals", (path, init) =>
+      init?.method === "POST" ? { status: 202, body: { ...one, pending_actions: [] } }
+      : path.includes("/api/sessions") ? { body: { data: [one, two] } }
+      : path === "/api/clients" ? { body: [] }
+      : { body: roster });
+    expect(screen.host.querySelectorAll("article")).toHaveLength(2);
+
+    // The first card's field only, then the first card's button.
+    await screen.type("hello@", "a@agency.example");
+    await screen.press("Answer —");
+    const posted = screen.calls.filter((c) => c.init?.method === "POST");
+    expect(posted.map((c) => c.path)).toEqual(["/api/sessions/ses_a/answers"]);
+    // One card reports the answer; the other still has its field and its button.
+    expect(screen.text().match(/Answered\./g)).toHaveLength(1);
+    expect(screen.host.querySelectorAll('input[placeholder^="hello@"]')).toHaveLength(1);
+    expect(screen.button("Answer —")).toBeDefined();
   });
 
   it("is on the rail with a count, so a parked agent is visible from every screen", async () => {

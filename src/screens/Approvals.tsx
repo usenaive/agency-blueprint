@@ -35,12 +35,17 @@ export function Approvals() {
   const names = new Map((roster?.data ?? []).map((a) => [a.id, a.name]));
   const rows = waitingOn(page?.data ?? [], names);
 
+  // Per-card state is keyed by session AND call: `tool_call_id` is derived from the tool name and
+  // its arguments (§7.1), so two sessions holding the same call share it.
+  const keyOf = (row: Waiting) => `${row.session.id}:${row.action.tool_call_id}`;
+
   const decide = async (row: Waiting, decision: "allow" | "deny") => {
     const id = row.action.tool_call_id;
-    setBusy(id);
+    const key = keyOf(row);
+    setBusy(key);
     setError(null);
     try {
-      const reason = (reasons[id] ?? "").trim();
+      const reason = (reasons[key] ?? "").trim();
       const after = await apiSend<PlatformSession>("POST", `/sessions/${row.session.id}/tool_confirmations`, {
         tool_call_id: id,
         decision,
@@ -55,7 +60,7 @@ export function Approvals() {
       // told which way it went.
       setDecided((all) => ({
         ...all,
-        [id]: stillHeld
+        [key]: stillHeld
           ? `The platform still reports ${row.action.name} as waiting — nothing was decided.`
           : decision === "allow"
             ? `Approved. ${row.action.name} is running and ${row.agent} has carried on.`
@@ -70,15 +75,18 @@ export function Approvals() {
 
   const answer = async (row: Waiting) => {
     const id = row.action.tool_call_id;
+    const key = keyOf(row);
     const fields = row.action.question?.fields ?? [];
-    const given = answers[id] ?? {};
+    const given = Object.fromEntries(
+      Object.entries(answers[key] ?? {}).map(([k, v]) => [k, Array.isArray(v) ? v : v.trim()]),
+    );
     // Every field, non-empty (§7.2): the platform refuses a partial answer, so say so here first.
     const missing = fields.filter((f) => (given[f.key] ?? "").length === 0).map((f) => f.label);
     if (missing.length > 0) {
       setError(`Answer every field before sending: ${missing.join(", ")}.`);
       return;
     }
-    setBusy(id);
+    setBusy(key);
     setError(null);
     try {
       const after = await apiSend<PlatformSession>("POST", `/sessions/${row.session.id}/answers`, {
@@ -88,7 +96,7 @@ export function Approvals() {
       const stillHeld = (after.pending_actions ?? []).some((a) => a.tool_call_id === id);
       setDecided((all) => ({
         ...all,
-        [id]: stillHeld
+        [key]: stillHeld
           ? `The platform still reports the question as waiting — nothing was answered.`
           : `Answered. ${row.agent} has your answer and has carried on.`,
       }));
@@ -99,8 +107,8 @@ export function Approvals() {
     }
   };
 
-  const setAnswer = (id: string, key: string, value: string | string[]) =>
-    setAnswers((all) => ({ ...all, [id]: { ...(all[id] ?? {}), [key]: value } }));
+  const setAnswer = (card: string, field: string, value: string | string[]) =>
+    setAnswers((all) => ({ ...all, [card]: { ...(all[card] ?? {}), [field]: value } }));
 
   return (
     <div className="pane-in">
@@ -119,7 +127,7 @@ export function Approvals() {
       ) : (
         <div className="space-y-3">
           {rows.map((row) => {
-            const id = row.action.tool_call_id;
+            const id = keyOf(row);
             const outcome = decided[id];
             const question = row.action.kind === "question" ? row.action.question : undefined;
             if (question) {
