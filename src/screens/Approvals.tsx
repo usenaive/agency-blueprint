@@ -286,7 +286,7 @@ function AnswerField({
             <button
               key={option}
               type="button"
-              className={`chip ${chosen.includes(option) ? "chip-via" : "chip-plain"}`}
+              className={`chip ${chosen.includes(option) ? "chip-chosen" : "chip-plain"}`}
               aria-pressed={chosen.includes(option)}
               onClick={() => pick(option)}
             >
