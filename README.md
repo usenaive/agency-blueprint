@@ -196,12 +196,21 @@ appears on **Approvals** with its arguments, so the agent may compose the email 
 send it without you.
 
 **Approvals is also where an agent asks for what it lacks.** Every agent of this blueprint is
-told that the tools offered in a turn are the complete list of what it can do, and holds
-`ask_operator` as the one sanctioned way to ask for more — a mailbox not yet provisioned, an
-account not yet connected. The question lands on **Approvals** with the session parked behind
-it; your answer wakes the session. What the answer cannot do is change the agent's toolset:
-that is an edit to `templates/*.ts` and a `naive up`, and a session already running keeps the
-version it started with.
+told that the tools offered in a turn are the complete list of what it can do, and holds two
+doors to you. `ask_operator` asks a question — which inbox, which client, whether to proceed;
+it lands on **Approvals** with the session parked behind it, and your answer wakes the session.
+`request_tools` asks for a capability — `generate_video` and a video model, `email.read`, a
+connector's tool — naming the exact tools, permission and reason; it lands on **Approvals** as a
+tool card, and approving it mints a new version of that agent and re-pins the running session, so
+the tool is offered from its next turn. No `naive up` is needed for that — but the next `up`
+writes the template's toolset back, so a grant you want to keep belongs in `templates/*.ts`
+too. What neither door can do is conjure an account or an inbox: a granted `email.read`
+still reads nothing until the persona has an inbox, and a granted `googlesearchconsole.*` still
+needs the property connected to the identity.
+
+The sales agent files what it drafts on the client row: `add_client_note` carries the outreach
+or follow-up in full and restates what the client is waiting on, and shows on the client's page.
+Nothing it files is sent; `email.send` is the send, and it always waits for you.
 
 **A fresh deployment is empty, and that is correct.** The CRM, the calendar and the queue
 start with nothing in them, and fill with what you and your agents put there. No screen has a

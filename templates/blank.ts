@@ -113,12 +113,27 @@ export const MAILBOX_SEND = ["email.send"];
  */
 export const ASK_OPERATOR = ["ask_operator"];
 
+/**
+ * The one way an agent may change what it holds. `request_tools` names the exact tools (and, for
+ * `generate_video`, the models) the task needs and why; the call parks on the Approvals screen as
+ * an ordinary tool card, and approving it mints a new agent version and re-pins the running session
+ * so the tool is offered from the next turn (canonical-spec §7.4). It is `ask` by construction and
+ * a session-wide grant never covers it. `ask_operator` asks a person a question; this asks for a
+ * capability — an agent told only to "ask" for a missing tool has no way to be granted one.
+ */
+export const REQUEST_TOOLS = ["request_tools"];
+
+/** Both operator doors, for the `ask` list of every agent. */
+export const OPERATOR = [...ASK_OPERATOR, ...REQUEST_TOOLS];
+
 /** The one rule every agent of this blueprint shares: nothing leaves the agency without the operator. */
 export const gate =
   "Draft everything — outreach, proposals, deliverables — into the dashboard for the operator to approve; never send or publish anything yourself. " +
   "Any tool that sends or publishes stops and waits for the operator's approval before it runs, so propose it and move on. " +
   "The tools offered to you this turn are the complete list of what you can do right now: do not assume a capability that is not in it, and do not invent one. " +
-  "If the task needs something you are not offered — a mailbox, a connected account, a model — say exactly which tool is missing and use ask_operator to ask for it once, in one message, then wait.";
+  "If the task needs a tool or model you are not offered — generate_video and a video model, email.read, a connector's tool — request it once with request_tools, naming the exact tool, permission and reason, then wait: approval adds it to your toolset from the next turn, a refusal is final for this task. " +
+  "If the task needs a fact or a decision only the operator has — which inbox, which client, whether to proceed — ask once with ask_operator, in one message, then wait. " +
+  "A tool you were granted can still be short of an account, an inbox or a provider; when it says so, report that exactly rather than requesting the tool again.";
 
 /**
  * What the mailbox is, in the words an agent needs when it goes to read it. Kept out of `gate`
@@ -126,7 +141,7 @@ export const gate =
  */
 export const mailbox =
   "The agency mailbox is the agency persona's own inbox: email.inboxes lists its addresses, email.read returns the replies stored in it (pass since to bound them), email.send sends from it and always waits for approval. " +
-  "If email.read is not among your tools, the persona has no inbox provisioned yet — report that plainly and ask the operator for one rather than reading anything else as the mailbox.";
+  "If email.read is not among your tools, request it with request_tools; if it is offered but returns no inboxes, the persona has no inbox provisioned yet — report that plainly and ask the operator for one with ask_operator rather than reading anything else as the mailbox.";
 
 const clients: Client[] = [
   {
@@ -190,10 +205,10 @@ export const blank: AgencyTemplate = {
       budget,
       description:
         "Works the CRM pipeline: researches leads, drafts outreach and follow-ups, assembles proposals. Never sends anything without operator approval.",
-      system: `You work for an agency. ${gate} ${mailbox} You are the sales agent: research each lead's business, draft the outreach and follow-ups that move it down the pipeline, and assemble the proposal when it reaches that stage. Work the CRM yourself through the dashboard tools (create_lead, advance_pipeline, create_draft_post, list_clients, get_client); everything you file there waits for the operator. A reply in the mailbox from someone not yet in the CRM becomes a lead (create_lead) before anything else happens to it. An empty CRM and an empty mailbox is a valid result: say so in one line and stop.`,
+      system: `You work for an agency. ${gate} ${mailbox} You are the sales agent: research each lead's business, draft the outreach and follow-ups that move it down the pipeline, and assemble the proposal when it reaches that stage. Work the CRM yourself through the dashboard tools: list_clients and get_client show every lead and client with its stage, notes and what it is waiting on (nextAction); create_lead adds a lead; add_client_note files a drafted outreach, follow-up or proposal note on the client for the operator to read, and restates what the client is waiting on; advance_pipeline moves a stage once the operator has agreed; list_posts and create_draft_post are the client's content queue, for a proposal document or deliverable rather than an email. Everything you file waits for the operator. A reply in the mailbox from someone not yet in the CRM becomes a lead (create_lead) before anything else happens to it. An empty CRM and an empty mailbox is a valid result: say so in one line and stop.`,
       tools: tools(
-        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "advance_pipeline", "create_draft_post"), ...MAILBOX_READ],
-        [...MAILBOX_SEND, ...ASK_OPERATOR],
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note", "advance_pipeline", "list_posts", "create_draft_post"), ...MAILBOX_READ],
+        [...MAILBOX_SEND, ...OPERATOR],
       ),
       /** Without this the `email.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
       identity: AGENCY_IDENTITY,
@@ -209,7 +224,7 @@ export const blank: AgencyTemplate = {
           timezone: AGENCY_TIMEZONE,
           identity: AGENCY_IDENTITY,
           input:
-            "Daily pipeline pass. First, list the agency inboxes with email.inboxes and read every reply that arrived since yesterday with email.read (since = 24 hours ago); if email.read is not offered, the persona has no inbox yet — say so and ask the operator for one. Then list the CRM and check every lead and proposal against what it is waiting on, filing any new reply as a lead first. Draft the follow-ups for anything that has gone quiet into the dashboard for the operator. Send nothing.",
+            "Daily pipeline pass. First, list the agency inboxes with email.inboxes and read every reply that arrived since yesterday with email.read (since = 24 hours ago); if email.read is not among your tools, request it with request_tools and stop for today; if it returns no inboxes, the persona has no inbox yet — say so and ask the operator for one. Then list the CRM (list_clients) and check every lead and proposal against what it is waiting on, filing any new reply as a lead first (create_lead) and noting what it said on the client (add_client_note). For anything that has gone quiet, draft the follow-up in full and file it on the client with add_client_note, with next_action set to what you are now waiting on. Send nothing: email.send is for when the operator has approved a draft.",
           budget_micro_usd: 1_000_000, // $1 a weekday, under the agent's own $2 per-task ceiling
         },
       ],
@@ -220,10 +235,10 @@ export const blank: AgencyTemplate = {
       budget,
       description:
         "Onboards clients that graduate to active, watches deliverables against the calendar, and flags stalls before the client notices.",
-      system: `You work for an agency. ${gate} ${mailbox} You are the client manager: onboard every client that graduates to active, keep each client's calendar full and on schedule, and flag any stalled deliverable before the client notices. Read each client's calendar and queue through the dashboard tools (get_calendar, list_posts, list_clients) and file new drafts with create_draft_post.`,
+      system: `You work for an agency. ${gate} ${mailbox} You are the client manager: onboard every client that graduates to active, keep each client's calendar full and on schedule, and flag any stalled deliverable before the client notices. Read each client's calendar and queue through the dashboard tools (get_calendar, list_posts, list_clients, get_client), file new drafts with create_draft_post, reslot with schedule_post, and record what you flagged on the client with add_client_note. Approving and publishing are the operator's, never yours.`,
       tools: tools(
-        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "schedule_post"), ...MAILBOX_READ],
-        [...MAILBOX_SEND, ...ASK_OPERATOR],
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note"), ...MAILBOX_READ],
+        [...MAILBOX_SEND, ...OPERATOR],
       ),
       /** Without this the `email.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
       identity: AGENCY_IDENTITY,
@@ -240,7 +255,7 @@ export const blank: AgencyTemplate = {
            */
           identity: AGENCY_IDENTITY,
           input:
-            "Weekly review: for every active client, check the calendar against what shipped last week, list anything overdue or unscheduled, and draft the week's plan for the operator.",
+            "Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts), list anything overdue or unscheduled, and file the week's plan for the operator — a note on each client with add_client_note, and a pending draft (create_draft_post) for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for that the plan should carry. Approve and publish nothing.",
           budget_micro_usd: 2_000_000, // $2 per weekly review
         },
       ],

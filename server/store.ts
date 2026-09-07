@@ -59,6 +59,8 @@ export interface Store {
   addMcpToken(name: string, hash: string): McpToken;
   removeMcpToken(id: string): boolean;
   advanceClient(id: string): Client | null;
+  /** Appends a working note to the client and, when given, replaces what it is waiting on. */
+  addClientNote(id: string, note: string, nextAction?: string): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
   onboardClient(id: string): Client | null;
   updatePost(id: string, patch: PostPatch): Post | null;
@@ -164,6 +166,14 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const to = next(client.stage);
       if (to === null) return client;
       client.stage = to;
+      save();
+      return client;
+    },
+    addClientNote(id, note, nextAction) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return null;
+      client.notes.push(note);
+      if (nextAction !== undefined) client.nextAction = nextAction;
       save();
       return client;
     },

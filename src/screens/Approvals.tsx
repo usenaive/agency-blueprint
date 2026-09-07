@@ -171,7 +171,7 @@ export function Approvals() {
               <article key={id} className="panel p-4">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <span className="font-mono font-medium">{row.agent}</span>
-                  <span className="text-sm text-ink-2">wants to call</span>
+                  <span className="text-sm text-ink-2">{row.action.name === "request_tools" ? "asks to be granted tools via" : "wants to call"}</span>
                   <span className="chip chip-plain font-mono">{row.action.name}</span>
                 </div>
                 <div className="mt-1 font-mono text-xs text-ink-3">
@@ -181,7 +181,9 @@ export function Approvals() {
                     : null}
                 </div>
 
-                <div className="eyebrow mb-2 mt-4">What it would do</div>
+                <div className="eyebrow mb-2 mt-4">
+                  {row.action.name === "request_tools" ? "What it asks to hold — approving changes this agent's toolset from its next turn" : "What it would do"}
+                </div>
                 {argRows(row.action.args).length === 0 ? (
                   <p className="absence">The agent proposed this call with no arguments.</p>
                 ) : (

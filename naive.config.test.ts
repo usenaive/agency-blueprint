@@ -76,10 +76,18 @@ describe("naive.config.ts", () => {
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
       // the pause), so it is `ask`; a prompt that says "ask the operator" without it is a dead letter.
       expect(agent.tools?.configs["ask_operator"]).toEqual({ enabled: true, permission: "ask" });
+      // And the sanctioned way to be GRANTED one: `request_tools` parks a toolset change on the same
+      // screen, and approving it changes what this agent holds (canonical-spec §7.4). Also `ask`.
+      expect(agent.tools?.configs["request_tools"]).toEqual({ enabled: true, permission: "ask" });
       expect(agent.system).toMatch(/complete list of what you can do right now/);
-      expect(agent.system).toMatch(/email\.read is not among your tools/);
+      expect(agent.system).toMatch(/request it once with request_tools/);
+      expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
     }
+    // The daily pass files follow-ups on the client row, so the sales agent must hold the tool that does.
     expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.create_lead");
+    expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.add_client_note");
+    expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.list_posts");
+    expect(result.config.agents[0].schedules?.[0]?.input).toMatch(/add_client_note/);
     expect(result.config.agents[1].tools?.configs).toHaveProperty("dashboard.get_calendar");
     expect(result.config.agents[1].schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);
     expect(result.config.agents[0].schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);

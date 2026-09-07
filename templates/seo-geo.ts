@@ -14,7 +14,7 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, ASK_OPERATOR, blank, budget, crm, gate, model, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, blank, budget, crm, gate, model, OPERATOR, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -26,17 +26,20 @@ const FOCUS: Record<string, string> = {
 };
 
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
-const clientGate = `You work for an SEO/GEO agency on one client's account. ${gate}`;
+const clientGate =
+  `You work for an SEO/GEO agency on one client's account. ${gate} ` +
+  "The client is the CRM row your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
+  "The client's own Search Console and Analytics reach you only once the operator has connected them; if none of the search tools you were granted is offered this turn, say which account is missing and ask the operator to connect it with ask_operator rather than estimating a number.";
 
 /**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
- * reaches a turn (`<connector>.<tool>`; see the `gmail.*` note on `MAILBOX_READ` in `blank.ts` for
- * the rule). Every one is a read, so every one is `allow`: this crew works inside one client's
- * property and changes nothing there. Without these names an SEO crew connected to a client's
- * search account still sees only `web_search` and `web_fetch` — the client's own numbers stay out
- * of reach. Each member also carries `ask_operator`, because the gate tells it to ask for what it
- * is missing — an account not yet connected, most often — and a rule that names a tool the agent
- * does not hold is a rule the agent cannot follow.
+ * reaches a turn (`<connector>.<tool>`). A policy row does not create the account: the tool exists
+ * in a turn only once the operator has connected the property to `AGENCY_IDENTITY`. Every one is a
+ * read, so every one is `allow`: this crew works inside one client's property and changes nothing
+ * there. Without these names an SEO crew connected to a client's search account still sees only
+ * `web_search` and `web_fetch` — the client's own numbers stay out of reach. Each member also
+ * carries both operator doors (`OPERATOR`): `ask_operator` for the account not yet connected, and
+ * `request_tools` for a tool the task turns out to need that this list does not name.
  */
 const SEARCH_READ = [
   "googlesearchconsole.query_search_analytics",
@@ -63,8 +66,11 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Briefs, articles and landing copy from the client's keywords and site.",
-    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank. Start from what the client already ranks for rather than from a guess.`,
-    tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"], ASK_OPERATOR),
+    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (googlesearchconsole.query_search_analytics) rather than from a guess.`,
+    tools: tools(
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics"],
+      OPERATOR,
+    ),
     identity: AGENCY_IDENTITY,
   },
   {
@@ -72,8 +78,11 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
-    system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt.`,
-    tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"], ASK_OPERATOR),
+    system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. Search the query yourself and read what IS being cited; the gap is the brief.`,
+    tools: tools(
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics", "googlesearchconsole.inspect_url"],
+      OPERATOR,
+    ),
     identity: AGENCY_IDENTITY,
   },
   {
@@ -81,8 +90,11 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Recurring technical and content audits of the client's site and rankings.",
-    system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings.`,
-    tools: tools(["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_draft_post"), ...SEARCH_READ], ASK_OPERATOR),
+    system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings as an audit or serp-report draft. A number you did not read from the client's account is a number you may not report; say plainly which property was missing.`,
+    tools: tools(
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), ...SEARCH_READ],
+      OPERATOR,
+    ),
     identity: AGENCY_IDENTITY,
   },
 ];
