@@ -3,7 +3,7 @@ import { useState } from "react";
 import { apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
 import type { Agent } from "../data";
-import { argRows, usd, waitingOn, type Answers, type PlatformSession, type QuestionField, type Waiting } from "../platform";
+import { argRows, sendable, usd, waitingOn, type Answers, type PlatformSession, type QuestionField, type Waiting } from "../platform";
 
 /**
  * Every agent in this organization that has stopped and is waiting on you.
@@ -77,10 +77,7 @@ export function Approvals() {
     const id = row.action.tool_call_id;
     const key = keyOf(row);
     const fields = row.action.question?.fields ?? [];
-    const given = Object.fromEntries(
-      Object.entries(answers[key] ?? {}).map(([k, v]) => [k, Array.isArray(v) ? v : v.trim()]),
-    );
-    // Every field, non-empty (§7.2): the platform refuses a partial answer, so say so here first.
+    const given = sendable(fields, answers[key] ?? {});
     const missing = fields.filter((f) => (given[f.key] ?? "").length === 0).map((f) => f.label);
     if (missing.length > 0) {
       setError(`Answer every field before sending: ${missing.join(", ")}.`);

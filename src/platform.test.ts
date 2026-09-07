@@ -4,7 +4,7 @@
  * a claim is what can be wrong.
  */
 import { describe, expect, it } from "vitest";
-import { argRows, parked, stopLabel, usd, waitingOn, type PlatformSession } from "./platform";
+import { argRows, parked, sendable, stopLabel, usd, waitingOn, type PlatformSession } from "./platform";
 
 const session = (over: Partial<PlatformSession> = {}): PlatformSession => ({
   id: "ses_1",
@@ -93,6 +93,21 @@ describe("argRows", () => {
   it("gives a long single-line string its own lines rather than truncating it", () => {
     const [row] = argRows({ subject: "x".repeat(100) });
     expect(row).toEqual({ key: "subject", value: "x".repeat(100), block: true });
+  });
+});
+
+describe("sendable", () => {
+  const fields = [
+    { key: "address", label: "Mailbox address", type: "text" as const },
+    { key: "scope", label: "What to read", type: "choice" as const, options: ["replies only "], multiple: true, other: true },
+  ];
+
+  it("trims free text and drops a blank 'other' entry, alone or beside a listed option", () => {
+    // A multi-select's free-text slot is one more array entry: `["   "]` is as unanswered as
+    // `"   "`, and `["replies only", "   "]` must go out without the blank.
+    expect(sendable(fields, { address: "  a@b.example ", scope: ["   "] })).toEqual({ address: "a@b.example", scope: [] });
+    expect(sendable(fields, { scope: ["replies only ", "   "] })).toEqual({ scope: ["replies only "] });
+    expect(sendable(fields, { scope: ["replies only ", " bounces "] })).toEqual({ scope: ["replies only ", "bounces"] });
   });
 });
 

@@ -29,6 +29,23 @@ export interface PendingAction {
 /** What comes back for a question: one value per field, an array only for a multiple choice. */
 export type Answers = Record<string, string | string[]>;
 
+/**
+ * The answers as they will be sent: free text trimmed, a blank entry of a multiple choice dropped,
+ * a listed option kept exactly as written (the platform checks a closed choice against the option
+ * string, §7.2). A field that comes out empty is unanswered, and the platform refuses a partial
+ * answer — so the card refuses it first.
+ */
+export const sendable = (fields: readonly QuestionField[], answers: Answers): Answers => {
+  const clean = (field: QuestionField | undefined, value: string) =>
+    field?.type === "choice" && field.options.includes(value) ? value : value.trim();
+  return Object.fromEntries(
+    Object.entries(answers).map(([key, value]) => {
+      const field = fields.find((one) => one.key === key);
+      return [key, Array.isArray(value) ? value.map((one) => clean(field, one)).filter((one) => one !== "") : clean(field, value)];
+    }),
+  );
+};
+
 /** A session, in the fields the screens read. `GET /api/sessions` returns these. */
 export interface PlatformSession {
   id: string;
