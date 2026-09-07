@@ -65,12 +65,19 @@ describe("naive.config.ts", () => {
       // this line, not a prompt.
       expect(agent.tools?.configs).not.toHaveProperty("social.post");
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("social."))).toEqual([]);
-      // The client's connected accounts do reach the agent, as `<connector>.<tool>`, because
-      // deny-by-default means an unnamed connection tool is a connection the crew cannot use at
-      // all. Reads run; the one outward act — sending — is `ask`, so the call parks the session and
-      // waits for the operator on the dashboard's Approvals screen instead of leaving.
-      expect(agent.tools?.configs["gmail.fetch_emails"]).toEqual({ enabled: true, permission: "allow" });
-      expect(agent.tools?.configs["gmail.send_email"]).toEqual({ enabled: true, permission: "ask" });
+      // The agency mailbox is the persona's own inbox (`email.*`), not a connected Gmail account:
+      // the platform offers these only to a turn whose identity owns an inbox, and deny-by-default
+      // means they must still be named here. Reads run; the one outward act — sending — is `ask`,
+      // so the call parks the session and waits for the operator on the dashboard's Approvals screen.
+      expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
+      expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
+      expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
+      expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
+      // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
+      // the pause), so it is `ask`; a prompt that says "ask the operator" without it is a dead letter.
+      expect(agent.tools?.configs["ask_operator"]).toEqual({ enabled: true, permission: "ask" });
+      expect(agent.system).toMatch(/complete list of what you can do right now/);
+      expect(agent.system).toMatch(/email\.read is not among your tools/);
     }
     expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.create_lead");
     expect(result.config.agents[1].tools?.configs).toHaveProperty("dashboard.get_calendar");

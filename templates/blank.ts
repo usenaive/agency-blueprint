@@ -34,13 +34,15 @@ export const budget = { cap_micro_usd: 10_000_000, max_task_micro_usd: 2_000_000
 export const model = "anthropic/claude-sonnet-5";
 
 /**
- * The agency's own persona, and the whole reason a connected account is reachable from a turn.
+ * The agency's own persona, and the whole reason a mailbox or a connected account is reachable
+ * from a turn.
  *
- * A turn's connection tools resolve along `session → agent → agent_identity → identity → connected
- * accounts`, so an agent that holds no identity is offered NONE of them, however carefully its
- * toolset names them — the resolver answers an empty list, and nothing anywhere says so. Every
- * `gmail.*` entry below and every `googlesearchconsole.*` / `googleanalytics.*` entry in
- * `seo-geo.ts` was exactly that: written, filtered by an allow-list, and never once offered.
+ * A turn's identity tools resolve along `session → agent → agent_identity → identity → {inboxes,
+ * connected accounts}`, so an agent that holds no identity is offered NONE of them, however
+ * carefully its toolset names them — the resolver answers an empty list, and nothing anywhere
+ * says so. Every mailbox entry below and every `googlesearchconsole.*` / `googleanalytics.*`
+ * entry in `seo-geo.ts` was exactly that: written, filtered by an allow-list, and never once
+ * offered.
  *
  * The persona is declared in `naive.config.ts` (`identities:`) and named here on every agent that
  * holds a connector tool — `up` refuses an agent naming a persona the project does not declare,
@@ -78,26 +80,53 @@ export const tools = (allow: string[], ask: string[] = []): AgentDecl["tools"] =
 export const crm = (...names: string[]): string[] => names.map((name) => `dashboard.${name}`);
 
 /**
- * The client's connected accounts, as an agent actually sees them.
+ * The agency mailbox, as an agent actually sees it.
  *
- * Every active connection an agent's identity holds contributes its catalogue to the turn as
- * `<connector>.<tool>` — the connector is the app id the aggregator reports for the account, the
- * tool the operation with that app's prefix stripped (`apps/runtime-do/src/connection-tools.ts`).
- * Those names run through the *same* allow/ask/deny filter as `bash`, so deny-by-default means each
- * one is named here or the crew reaches nothing: connecting an account grants an agency agent
- * exactly the operations below and no other.
+ * The mailbox is the persona's OWN inbox on the platform's mail layer — provisioned once on the
+ * `agency` identity (`vetta identity email provision`, or the platform dashboard), addressed on the
+ * org's system domain or a domain the agency verified, with inbound mail stored per identity. A
+ * turn whose identity owns an inbox is offered `email.inboxes` (which addresses exist),
+ * `email.read` (stored replies, newest first, `since` to bound them) and, where the deployment's
+ * mail provider is configured, `email.send`. A turn whose identity owns no inbox is offered none
+ * of the three — the tools are not "present but empty", they are absent, and the prompt below
+ * tells the agent what that absence means.
+ *
+ * `gmail.*` is NOT this. Gmail is one toolkit of the connections aggregator: it reads the
+ * operator's own Google account after they OAuth it into the persona from the Connections tab, and
+ * reaches a turn as `<connector>.<tool>` (`apps/runtime-do/src/connection-tools.ts`). An agency
+ * that wants its agents in a real Gmail account names those operations here too — they run
+ * through the same allow/ask/deny filter, so an unnamed one is a connection nobody can use.
  *
  * Reading is `allow`. Sending is the one outward, irreversible act this blueprint grants at all,
  * and it takes `ask` — the same rule `social.post` follows — so an agent may compose the message
  * the operator asked for and may not put it in front of a client without them.
  */
-export const MAILBOX_READ = ["gmail.fetch_emails"];
-export const MAILBOX_SEND = ["gmail.send_email"];
+export const MAILBOX_READ = ["email.inboxes", "email.read"];
+export const MAILBOX_SEND = ["email.send"];
+
+/**
+ * The one way an agent may ask for something it does not have. The call parks the session on the
+ * Approvals screen with the question attached; the operator's answer wakes it. It is `ask` by
+ * construction — `allow` is not a coherent policy for a tool whose body is the pause — so it goes
+ * in the second list. Without it, an agent missing a tool has exactly two options: guess, or write
+ * a paragraph into its final answer that nobody is waiting for.
+ */
+export const ASK_OPERATOR = ["ask_operator"];
 
 /** The one rule every agent of this blueprint shares: nothing leaves the agency without the operator. */
 export const gate =
   "Draft everything — outreach, proposals, deliverables — into the dashboard for the operator to approve; never send or publish anything yourself. " +
-  "You may read the accounts this client has connected; any tool that sends or publishes stops and waits for the operator's approval before it runs, so propose it and move on.";
+  "Any tool that sends or publishes stops and waits for the operator's approval before it runs, so propose it and move on. " +
+  "The tools offered to you this turn are the complete list of what you can do right now: do not assume a capability that is not in it, and do not invent one. " +
+  "If the task needs something you are not offered — a mailbox, a connected account, a model — say exactly which tool is missing and use ask_operator to ask for it once, in one message, then wait.";
+
+/**
+ * What the mailbox is, in the words an agent needs when it goes to read it. Kept out of `gate`
+ * because the per-client crew (`seo-geo.ts`) holds no mailbox and should not be told it does.
+ */
+export const mailbox =
+  "The agency mailbox is the agency persona's own inbox: email.inboxes lists its addresses, email.read returns the replies stored in it (pass since to bound them), email.send sends from it and always waits for approval. " +
+  "If email.read is not among your tools, the persona has no inbox provisioned yet — report that plainly and ask the operator for one rather than reading anything else as the mailbox.";
 
 const clients: Client[] = [
   {
@@ -161,12 +190,12 @@ export const blank: AgencyTemplate = {
       budget,
       description:
         "Works the CRM pipeline: researches leads, drafts outreach and follow-ups, assembles proposals. Never sends anything without operator approval.",
-      system: `You work for an agency. ${gate} You are the sales agent: research each lead's business, draft the outreach and follow-ups that move it down the pipeline, and assemble the proposal when it reaches that stage. Work the CRM yourself through the dashboard tools (create_lead, advance_pipeline, create_draft_post, list_clients, get_client); everything you file there waits for the operator.`,
+      system: `You work for an agency. ${gate} ${mailbox} You are the sales agent: research each lead's business, draft the outreach and follow-ups that move it down the pipeline, and assemble the proposal when it reaches that stage. Work the CRM yourself through the dashboard tools (create_lead, advance_pipeline, create_draft_post, list_clients, get_client); everything you file there waits for the operator. A reply in the mailbox from someone not yet in the CRM becomes a lead (create_lead) before anything else happens to it. An empty CRM and an empty mailbox is a valid result: say so in one line and stop.`,
       tools: tools(
         ["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "advance_pipeline", "create_draft_post"), ...MAILBOX_READ],
-        MAILBOX_SEND,
+        [...MAILBOX_SEND, ...ASK_OPERATOR],
       ),
-      /** Without this the two `gmail.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
+      /** Without this the `email.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
       identity: AGENCY_IDENTITY,
       schedules: [
         {
@@ -180,7 +209,7 @@ export const blank: AgencyTemplate = {
           timezone: AGENCY_TIMEZONE,
           identity: AGENCY_IDENTITY,
           input:
-            "Daily pipeline pass: read the agency mailbox for replies that arrived since yesterday, check every lead and proposal against what it is waiting on, and draft the follow-ups for anything that has gone quiet. File them for the operator and send nothing.",
+            "Daily pipeline pass. First, list the agency inboxes with email.inboxes and read every reply that arrived since yesterday with email.read (since = 24 hours ago); if email.read is not offered, the persona has no inbox yet — say so and ask the operator for one. Then list the CRM and check every lead and proposal against what it is waiting on, filing any new reply as a lead first. Draft the follow-ups for anything that has gone quiet into the dashboard for the operator. Send nothing.",
           budget_micro_usd: 1_000_000, // $1 a weekday, under the agent's own $2 per-task ceiling
         },
       ],
@@ -191,12 +220,12 @@ export const blank: AgencyTemplate = {
       budget,
       description:
         "Onboards clients that graduate to active, watches deliverables against the calendar, and flags stalls before the client notices.",
-      system: `You work for an agency. ${gate} You are the client manager: onboard every client that graduates to active, keep each client's calendar full and on schedule, and flag any stalled deliverable before the client notices. Read each client's calendar and queue through the dashboard tools (get_calendar, list_posts, list_clients) and file new drafts with create_draft_post.`,
+      system: `You work for an agency. ${gate} ${mailbox} You are the client manager: onboard every client that graduates to active, keep each client's calendar full and on schedule, and flag any stalled deliverable before the client notices. Read each client's calendar and queue through the dashboard tools (get_calendar, list_posts, list_clients) and file new drafts with create_draft_post.`,
       tools: tools(
         ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "schedule_post"), ...MAILBOX_READ],
-        MAILBOX_SEND,
+        [...MAILBOX_SEND, ...ASK_OPERATOR],
       ),
-      /** Without this the two `gmail.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
+      /** Without this the `email.*` names above reach nothing at all — see `AGENCY_IDENTITY`. */
       identity: AGENCY_IDENTITY,
       schedules: [
         {
@@ -205,8 +234,9 @@ export const blank: AgencyTemplate = {
           timezone: AGENCY_TIMEZONE,
           /**
            * The persona the fire speaks as. A scheduled run has no operator sitting behind it, so
-           * without this it runs as nobody: it resolves no connected account, and the review that
-           * is supposed to read the agency's mailbox and file the week's plan reads nothing.
+           * without this it runs as nobody: it resolves no inbox and no connected account, and the
+           * review that is supposed to read the agency's mailbox and file the week's plan reads
+           * nothing.
            */
           identity: AGENCY_IDENTITY,
           input:

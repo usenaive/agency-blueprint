@@ -32,6 +32,17 @@ describe("parked", () => {
     expect(parked(session({ stop_reason: "end_turn", pending_actions: [held] }))).toBe(false);
     expect(parked(session({ stop_reason: "awaiting_approval" }))).toBe(false);
   });
+
+  /**
+   * `ask_operator` parks the session with a different stop reason and a `kind: "question"` row. An
+   * agent told to ask for the tool it lacks, whose question then reached nobody, is the mailbox
+   * silence over again.
+   */
+  it("is also the session parked on a question, so ask_operator reaches the operator", () => {
+    const asked = { kind: "question" as const, tool_call_id: "call_q", name: "ask_operator", args: {}, question: { prompt: "Which inbox?", fields: [] } };
+    expect(parked(session({ stop_reason: "awaiting_answer", pending_actions: [asked] }))).toBe(true);
+    expect(stopLabel(session({ stop_reason: "awaiting_answer" }))).toBe("Waiting for your answer");
+  });
 });
 
 describe("waitingOn", () => {

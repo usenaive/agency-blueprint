@@ -3,7 +3,7 @@ import { useState } from "react";
 import { apiMessage, apiSend, useApi } from "../api";
 import { PageHeader } from "../components/kit";
 import type { Agent } from "../data";
-import { argRows, usd, waitingOn, type PlatformSession, type Waiting } from "../platform";
+import { argRows, usd, waitingOn, type Answers, type PlatformSession, type QuestionField, type Waiting } from "../platform";
 
 /**
  * Every agent in this organization that has stopped and is waiting on you.
@@ -12,10 +12,12 @@ import { argRows, usd, waitingOn, type PlatformSession, type Waiting } from "../
  * `stop_reason: "awaiting_approval"`, and the blocked call waits in `pending_actions`
  * (`canonical-spec §6, §7`). Nothing in this product showed one, so the exact moment the approval
  * gate exists for arrived as silence and could only be resolved from a terminal. This screen is
- * that moment.
+ * that moment. A question the agent asked you (`ask_operator`, `stop_reason: "awaiting_answer"`,
+ * a `kind: "question"` row — §7.1) parks the same way and lands here too, answered through
+ * `/answers` rather than approved: a question has no "run this call".
  *
  * Three rules it does not bend:
- *   * **The arguments are the decision.** What is being approved is not "gmail.send_email", it is
+ *   * **The arguments are the decision.** What is being approved is not "email.send", it is
  *     *this message to this address*, so the arguments are rendered to be read.
  *   * **Nothing is claimed that the platform did not confirm.** A decision is reported from the
  *     session the platform answers with — if the call is still pending in that answer, it says so.
@@ -27,6 +29,7 @@ export function Approvals() {
   const { data: roster } = useApi<{ data?: Agent[] }>("/agents");
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [decided, setDecided] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, Answers>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
   const names = new Map((roster?.data ?? []).map((a) => [a.id, a.name]));
@@ -65,6 +68,40 @@ export function Approvals() {
     }
   };
 
+  const answer = async (row: Waiting) => {
+    const id = row.action.tool_call_id;
+    const fields = row.action.question?.fields ?? [];
+    const given = answers[id] ?? {};
+    // Every field, non-empty (§7.2): the platform refuses a partial answer, so say so here first.
+    const missing = fields.filter((f) => (given[f.key] ?? "").length === 0).map((f) => f.label);
+    if (missing.length > 0) {
+      setError(`Answer every field before sending: ${missing.join(", ")}.`);
+      return;
+    }
+    setBusy(id);
+    setError(null);
+    try {
+      const after = await apiSend<PlatformSession>("POST", `/sessions/${row.session.id}/answers`, {
+        tool_call_id: id,
+        answers: given,
+      });
+      const stillHeld = (after.pending_actions ?? []).some((a) => a.tool_call_id === id);
+      setDecided((all) => ({
+        ...all,
+        [id]: stillHeld
+          ? `The platform still reports the question as waiting — nothing was answered.`
+          : `Answered. ${row.agent} has your answer and has carried on.`,
+      }));
+    } catch (err: unknown) {
+      setError(apiMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const setAnswer = (id: string, key: string, value: string | string[]) =>
+    setAnswers((all) => ({ ...all, [id]: { ...(all[id] ?? {}), [key]: value } }));
+
   return (
     <div className="pane-in">
       <PageHeader
@@ -84,6 +121,47 @@ export function Approvals() {
           {rows.map((row) => {
             const id = row.action.tool_call_id;
             const outcome = decided[id];
+            const question = row.action.kind === "question" ? row.action.question : undefined;
+            if (question) {
+              return (
+                <article key={id} className="panel p-4">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="font-mono font-medium">{row.agent}</span>
+                    <span className="text-sm text-ink-2">asks you</span>
+                  </div>
+                  <div className="mt-1 font-mono text-xs text-ink-3">{row.session.id}</div>
+                  <p className="mt-4 whitespace-pre-wrap break-words text-sm">{question.prompt}</p>
+                  {outcome ? (
+                    <p className="mt-4 text-sm text-ink-2">{outcome}</p>
+                  ) : (
+                    <div className="mt-4 space-y-3">
+                      {question.fields.map((field) => (
+                        <AnswerField
+                          key={field.key}
+                          id={`${id}-${field.key}`}
+                          field={field}
+                          value={answers[id]?.[field.key] ?? ""}
+                          onChange={(value) => setAnswer(id, field.key, value)}
+                        />
+                      ))}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          disabled={busy !== null}
+                          onClick={() => void answer(row)}
+                        >
+                          <Check size={14} strokeWidth={1.75} /> Answer — wake the agent
+                        </button>
+                        <span className="text-xs text-ink-3">
+                          {busy === id ? "Sending your answer…" : "Your answer goes back to the agent as the result of its question, and its turn resumes."}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            }
             return (
               <article key={id} className="panel p-4">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -154,6 +232,75 @@ export function Approvals() {
               </article>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One field of a question. `text` is an input; `choice` is the options as buttons (the words are
+ * the value — §7.1) plus, when the agent left `other` on (the default), a free-text escape, because
+ * the agent wrote the options and is the one who does not know the answer.
+ */
+function AnswerField({
+  id,
+  field,
+  value,
+  onChange,
+}: {
+  id: string;
+  field: QuestionField;
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
+}) {
+  const chosen = Array.isArray(value) ? value : value === "" ? [] : [value];
+  const pick = (option: string) => {
+    if (field.type !== "choice") return;
+    if (!field.multiple) return onChange(chosen[0] === option ? "" : option);
+    onChange(chosen.includes(option) ? chosen.filter((c) => c !== option) : [...chosen, option]);
+  };
+  const other = field.type === "choice" ? chosen.find((c) => !field.options.includes(c)) ?? "" : "";
+  return (
+    <div>
+      <label className="field-label" htmlFor={id}>
+        {field.label}
+      </label>
+      {field.help ? <p className="mb-1 text-xs text-ink-3">{field.help}</p> : null}
+      {field.type === "text" ? (
+        <input
+          id={id}
+          className="input"
+          placeholder={field.placeholder ?? ""}
+          value={typeof value === "string" ? value : ""}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {field.options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={`chip ${chosen.includes(option) ? "chip-via" : "chip-plain"}`}
+              aria-pressed={chosen.includes(option)}
+              onClick={() => pick(option)}
+            >
+              {option}
+            </button>
+          ))}
+          {field.other !== false ? (
+            <input
+              id={id}
+              className="input"
+              placeholder="Something else…"
+              value={other}
+              onChange={(e) => {
+                const listed = chosen.filter((c) => field.options.includes(c));
+                const text = e.target.value;
+                onChange(field.multiple ? (text === "" ? listed : [...listed, text]) : text);
+              }}
+            />
+          ) : null}
         </div>
       )}
     </div>

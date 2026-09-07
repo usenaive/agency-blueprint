@@ -7,12 +7,27 @@
  * platform's numbers and not this dashboard's guess at them.
  */
 
-/** One tool call blocking a session (`packages/core/src/schema/session.ts`). */
+/** One field of a question an agent asked (`canonical-spec §7.1`); the answer is keyed by `key`. */
+export type QuestionField = { key: string; label: string; help?: string } & (
+  | { type: "text"; placeholder?: string }
+  | { type: "choice"; options: string[]; multiple?: boolean; other?: boolean }
+);
+
+/**
+ * One row blocking a session (`packages/core/src/schema/session.ts`): a tool call held at `ask`
+ * (`kind` absent or `"tool"`), or a question the agent parked on you (`kind: "question"`, and then
+ * `question` is the parse of `args`). Both are addressed by the same `tool_call_id`.
+ */
 export interface PendingAction {
+  kind?: "tool" | "question";
   tool_call_id: string;
   name: string;
   args: Record<string, unknown>;
+  question?: { prompt: string; fields: QuestionField[] };
 }
+
+/** What comes back for a question: one value per field, an array only for a multiple choice. */
+export type Answers = Record<string, string | string[]>;
 
 /** A session, in the fields the screens read. `GET /api/sessions` returns these. */
 export interface PlatformSession {
@@ -37,13 +52,14 @@ export interface AgentSpend {
 /**
  * A session parked on a person.
  *
- * `awaiting_approval` is a **stop reason and not a status**: a tool held at `ask` stops the turn,
+ * `awaiting_approval` and `awaiting_answer` are **stop reasons and not statuses**: a tool held at `ask` stops the turn,
  * the session goes `idle`, and the blocked call sits in `pending_actions`. A screen that looked for
  * a status of that name would find nothing at all — which is exactly what the product did, so the
  * one moment it exists to create reached the operator as silence.
  */
 export const parked = (session: PlatformSession): boolean =>
-  session.stop_reason === "awaiting_approval" && (session.pending_actions?.length ?? 0) > 0;
+  (session.stop_reason === "awaiting_approval" || session.stop_reason === "awaiting_answer") &&
+  (session.pending_actions?.length ?? 0) > 0;
 
 /** One row of the approval queue: the call, the session it blocks, and the agent that proposed it. */
 export interface Waiting {
@@ -115,6 +131,7 @@ export const STOP_REASON: Record<string, string> = {
   max_iterations: "Stopped — step limit reached",
   context_exhausted: "Stopped — the turn produced nothing",
   awaiting_delegation: "Waiting on a delegated agent",
+  awaiting_answer: "Waiting for your answer",
 };
 
 /**

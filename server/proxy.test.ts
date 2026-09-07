@@ -16,6 +16,16 @@ describe("upstreamFor", () => {
     expect(upstreamFor("GET", "/api/chat/not-a-session/stream", null)).toBeNull();
   });
 
+  it("resolves a held call and answers a question on their own sibling routes", () => {
+    expect(upstreamFor("POST", "/api/sessions/ses_1/tool_confirmations", null)).toEqual({
+      method: "POST", path: "/v1/sessions/ses_1/tool_confirmations",
+    });
+    expect(upstreamFor("POST", "/api/sessions/ses_1/answers", null)).toEqual({
+      method: "POST", path: "/v1/sessions/ses_1/answers",
+    });
+    expect(upstreamFor("GET", "/api/sessions/ses_1/answers", null)).toBeNull();
+  });
+
   it("routes social paths through the client identity", () => {
     expect(upstreamFor("POST", "/api/social/portal", "idn_1")).toEqual({ method: "POST", path: "/v1/identities/idn_1/social/portal" });
   });

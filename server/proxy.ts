@@ -53,6 +53,12 @@ export function upstreamFor(
   if (method === "POST" && confirm) {
     return { method: "POST", path: `/v1/sessions/${confirm[1]}/tool_confirmations` };
   }
+  // Answering a parked question: `{ tool_call_id, answers }` (`canonical-spec §7.2`) — a sibling
+  // route, because a held call takes a verb and a question takes a payload.
+  const answer = /^\/api\/sessions\/(ses_[\w-]+)\/answers$/.exec(pathname);
+  if (method === "POST" && answer) {
+    return { method: "POST", path: `/v1/sessions/${answer[1]}/answers` };
+  }
   // What an agent has spent this budget period, against the cap the agent itself carries.
   const spend = /^\/api\/agents\/(agt_[\w-]+)\/spend$/.exec(pathname);
   if (method === "GET" && spend) return { method: "GET", path: `/v1/agents/${spend[1]}/spend` };

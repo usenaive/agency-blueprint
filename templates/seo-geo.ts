@@ -14,7 +14,7 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, blank, budget, crm, gate, model, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, ASK_OPERATOR, blank, budget, crm, gate, model, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -30,10 +30,13 @@ const clientGate = `You work for an SEO/GEO agency on one client's account. ${ga
 
 /**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
- * reaches a turn (`<connector>.<tool>`; see `MAILBOX_READ` in `blank.ts` for the rule). Every one is
- * a read, so every one is `allow`: this crew works inside one client's property and changes nothing
- * there. Without these three names an SEO crew connected to a client's search account still sees
- * only `web_search` and `web_fetch` — the client's own numbers stay out of reach.
+ * reaches a turn (`<connector>.<tool>`; see the `gmail.*` note on `MAILBOX_READ` in `blank.ts` for
+ * the rule). Every one is a read, so every one is `allow`: this crew works inside one client's
+ * property and changes nothing there. Without these names an SEO crew connected to a client's
+ * search account still sees only `web_search` and `web_fetch` — the client's own numbers stay out
+ * of reach. Each member also carries `ask_operator`, because the gate tells it to ask for what it
+ * is missing — an account not yet connected, most often — and a rule that names a tool the agent
+ * does not hold is a rule the agent cannot follow.
  */
 const SEARCH_READ = [
   "googlesearchconsole.query_search_analytics",
@@ -61,7 +64,7 @@ const crew: AgentDecl[] = [
     budget,
     description: "Briefs, articles and landing copy from the client's keywords and site.",
     system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank. Start from what the client already ranks for rather than from a guess.`,
-    tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"]),
+    tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"], ASK_OPERATOR),
     identity: AGENCY_IDENTITY,
   },
   {
@@ -70,7 +73,7 @@ const crew: AgentDecl[] = [
     budget,
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
     system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt.`,
-    tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"]),
+    tools: tools(["web_search", "web_fetch", "googlesearchconsole.query_search_analytics"], ASK_OPERATOR),
     identity: AGENCY_IDENTITY,
   },
   {
@@ -79,7 +82,7 @@ const crew: AgentDecl[] = [
     budget,
     description: "Recurring technical and content audits of the client's site and rankings.",
     system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings.`,
-    tools: tools(["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_draft_post"), ...SEARCH_READ]),
+    tools: tools(["web_search", "web_fetch", ...crm("list_clients", "get_client", "create_draft_post"), ...SEARCH_READ], ASK_OPERATOR),
     identity: AGENCY_IDENTITY,
   },
 ];
