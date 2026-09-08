@@ -121,7 +121,7 @@ export interface AgentRow {
  * The organization's **whole** agent roster, following the cursor to the end (spec §9).
  *
  * `GET /v1/agents` pages — 20 by default, 100 at most — and an agency that has been running has one
- * three-agent crew per client on top of its own two, so page one is not the roster. Reading only it
+ * three-agent crew per client on top of its own team, so page one is not the roster. Reading only it
  * is why `sales` and `client-manager` were absent from their own dashboard, why the agency chat
  * could not resolve `client-manager`, and why onboarding re-created a crew it could not see.
  *

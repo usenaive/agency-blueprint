@@ -185,7 +185,7 @@ const clientGate =
  * (`seo-writer--acme-dental`), which is how one organization hosts many clients' agents. Model,
  * budget, allow-list and persona are template data — the server holds none of them.
  *
- * Every member names `AGENCY_IDENTITY` for the reason the agency's own pair does: without a persona
+ * Every member names `AGENCY_IDENTITY` for the reason the agency's own team does: without a persona
  * the search and analytics names above resolve to nothing, and a crew sold on working against the
  * client's own numbers can call `web_search` and `web_fetch` and no more. `POST /v1/agents` carries
  * no identity field, so the grant is a second call — `server/proxy.ts` makes it, and reports the

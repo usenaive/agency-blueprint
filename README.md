@@ -124,7 +124,8 @@ naive identity domain list                                # the system domain's 
 naive identity email provision --identity idn_... --domain dom_... --address hello@<domain>
 ```
 
-From the next turn on, both agents are offered `email.inboxes` and `email.read` for it, and
+From the next turn on, the agents that hold the mailbox (sales, client manager and, on `seo-geo`,
+link outreach) are offered `email.inboxes` and `email.read` for it, and
 `email.send` (held at `ask`) where the deployment's mail provider is configured. Until then the
 sales agent's weekday pass finds no mailbox tool and says so — it will not read anything else
 as the mailbox, and it asks you for one through **Approvals** rather than guessing.

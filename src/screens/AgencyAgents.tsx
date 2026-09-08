@@ -6,7 +6,7 @@ import { PageHeader } from "../components/kit";
 import { TEMPLATE, type Agent } from "../data";
 import { parked, stopLabel, usd, type AgentSpend, type PlatformSession } from "../platform";
 
-/** Every agent in the organization, as the platform holds it — the pair this
+/** Every agent in the organization, as the platform holds it — the team this
  * blueprint declares plus each client's crew. Chat opens a session with the
  * client-manager and streams its events back over `/api/chat/:id/stream`.
  *
