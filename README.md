@@ -30,8 +30,7 @@ flowchart LR
   repo -->|naive up| plat["Naive platform"]
   plat --> dash["dashboard app<br/>fullstack: /api/* and /mcp"]
   plat --> site["site app<br/>frontend only"]
-  plat --> sales["sales agent<br/>cron 08:30 Mon-Fri"]
-  plat --> cm["client-manager agent<br/>cron 08:00 Mon"]
+  plat --> team["the agency team<br/>sales, client-manager, strategist, researcher,<br/>content-writer, editor, analytics-reporter<br/>+ the template's specialists"]
   plat --> idn["agency identity<br/>owns the mailbox, holds the connected accounts"]
 ```
 
@@ -43,16 +42,30 @@ flowchart LR
   where the two apps are separate origins anyway, the form shows its direct-email fallback.
   Opening a lead route to the public web is a decision to make deliberately, with its own
   rate limit and spam handling; this blueprint does not make it for you.
-- **Two agency agents** — the active template's, each with a system prompt, a scoped tool
-  policy and a daily budget:
+- **The agency team** — the active template's `agents`, each with a system prompt, a scoped
+  tool policy, a daily budget and, where the role runs on a rhythm, a schedule. Every template
+  starts from `blank`'s seven:
   - `sales` — works the CRM pipeline: researches leads, drafts outreach and proposals. Never
-    sends anything without your approval. Carries a weekday pass that reads the agency
-    mailbox for replies and drafts the follow-ups for anything that has gone quiet — a
-    pipeline goes stale in days, not weeks.
+    sends anything without your approval. Weekday pass at 08:30 that reads the agency
+    mailbox for replies and drafts the follow-ups for anything that has gone quiet.
   - `client-manager` — onboards graduating clients, watches deliverables against the
-    calendar, flags stalls before the client notices. Carries a Monday-morning schedule that
-    reviews every active client's calendar and drafts the week's plan for you.
-- **The agency identity** (`agency`) — the persona both agents and every schedule act as. It
+    calendar, flags stalls before the client notices. Monday 08:00 review that drafts the
+    week's plan for you.
+  - `strategist` — the baseline audit and the quarterly roadmap the rest of the team works
+    from. Fires on the first morning of each quarter.
+  - `researcher` — market, competitor and audience briefs with sources, filed as notes on the
+    client. Monthly competitor scan on the 15th.
+  - `content-writer` — writes the calendar's deliverables in full, in the client's voice.
+    Tuesday writing pass against Monday's plan.
+  - `editor` — reviews every pending draft against its brief and files the edits; approves
+    nothing. Weekday pass at 16:00, before your approvals.
+  - `analytics-reporter` — the monthly report per client, from connected analytics only.
+    Fires on the 1st.
+
+  `seo-geo` keeps all seven with a sentence of search focus each and adds three specialists:
+  `keyword-researcher` (Monday keyword map), `link-outreach` (Wednesday prospects and pitches,
+  every send gated) and `technical-seo` (Thursday site check).
+- **The agency identity** (`agency`) — the persona every agent and every schedule acts as. It
   is what owns the agency mailbox and holds any connected account.
 
 That persona is not decoration: identity tools resolve `session → agent → identity →
@@ -66,7 +79,12 @@ A template may also declare a **per-client crew**, provisioned by the dashboard 
 you onboard a client — their names carry the client's slug, so they are per-client resources
 and cannot be declared in `naive.config.ts`. `seo-geo` declares three (`seo-writer--<slug>`,
 `geo-optimizer--<slug>`, `audit-runner--<slug>`); `blank` declares none and runs every client
-through the agency's own pair.
+through the agency's own team.
+
+The crew is this repo's field, not the SDK's: `defineProject` folds only a template's `agents`
+into the declaration, and the catalog's template card lists exactly that. So every role the
+agency runs across clients belongs in `agents` — a role kept anywhere else is one the
+dashboard says the template does not have.
 
 ## 🚀 Get started
 
@@ -145,10 +163,10 @@ the operator gate, the build and deploy, the approval flow. A **template** is da
 agents and their prompts, their tool allow-lists, the deliverable kinds, the schedules, the
 demo seed, the words the screens print.
 
-| Template | The agency it runs | Deliverable kinds | Per-client crew |
-|---|---|---|---|
-| `blank` | No specialism — sales and a client manager | post, page, report, audit | none |
-| `seo-geo` | Search: audits, SERP work, answer-engine optimization | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
+| Template | The agency it runs | Agency team (`agents`) | Deliverable kinds | Per-client crew |
+|---|---|---|---|---|
+| `blank` | No specialism | `sales`, `client-manager`, `strategist`, `researcher`, `content-writer`, `editor`, `analytics-reporter` | post, page, report, audit | none |
+| `seo-geo` | Search: keyword research, content, links, technical SEO, SERP reporting, answer-engine optimization | `blank`'s seven, focused on search, plus `keyword-researcher`, `link-outreach`, `technical-seo` | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
 
 This repo carries **both**, so switching is an edit and a re-apply — never a re-clone, and
 never a new app:
@@ -227,8 +245,8 @@ plus a re-apply.
 | To change… | Edit | Then |
 |---|---|---|
 | which template runs | `TEMPLATE` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
-| an agent's prompt, model or budget | [`templates/blank.ts`](templates/blank.ts) — both templates share the pair, `seo-geo` only appends focus to their prompts | `naive up` |
-| add an agent to the crew | the `agents` array of the active template | `naive up` |
+| an agent's prompt, model or budget | [`templates/blank.ts`](templates/blank.ts) — both templates share the team, `seo-geo` appends focus to their prompts (`FOCUS`) and search reads to the reporter (`WIDEN`) | `naive up` |
+| add an agent to the team | the `agents` array of the template — `blank`'s for every template, `specialists` in [`templates/seo-geo.ts`](templates/seo-geo.ts) for that one | `naive up` |
 | the per-client crew | `crew` in [`templates/seo-geo.ts`](templates/seo-geo.ts) | onboard a client |
 | what a tool may do | the `tools(allow, ask)` call on that agent — reads go in `allow`, anything that sends, posts or deletes goes in `ask` | `naive up` |
 | when a schedule fires | the `schedules` on that agent, and `AGENCY_TIMEZONE` for the zone all of them use | `naive up` |

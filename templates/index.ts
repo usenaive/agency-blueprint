@@ -60,7 +60,7 @@ export interface TemplateVocabulary {
 }
 
 const blank: TemplateVocabulary = {
-  description: "A working agency with no specialism: a sales agent and a client manager, generic deliverables.",
+  description: "A working agency with no specialism: sales, client management, strategy, research, writing, editing and reporting, generic deliverables.",
   kinds: [
     { id: "post", label: "Post", description: "A published piece — blog, newsletter or social." },
     { id: "page", label: "Page", description: "A page on the client's own site — landing, service or product." },
@@ -74,9 +74,9 @@ const blank: TemplateVocabulary = {
       "Moving a client to active onboards them: the client manager picks up their calendar and queue, and every deliverable it files waits here for you.",
     clientsSubtitle: "Every active engagement — open one to see its connections, calendar, agents and deliverables.",
     noActiveClients: "No active clients yet — advance one on the CRM.",
-    agentsSubtitle: "Every agent working for this agency.",
+    agentsSubtitle: "Every agent working for this agency — the team that runs it, across every client.",
     noCrew:
-      "No agents of this client's own. This template runs every client through the agency's own pair; a template with a per-client crew provisions one at onboarding.",
+      "No agents of this client's own. This template runs every client through the agency's own team; a template with a per-client crew provisions one at onboarding.",
   },
   site: {
     tagline: "The work, planned and shown before it ships.",
@@ -111,7 +111,7 @@ const blank: TemplateVocabulary = {
 };
 
 const seoGeo: TemplateVocabulary = {
-  description: "The agency, specialised in search: audits, SERP work and answer-engine optimization, with a crew per client.",
+  description: "The agency, specialised in search: keyword research, content, links, technical SEO and SERP reporting on the team, with a crew per client.",
   kinds: [
     { id: "article", label: "Article", description: "A ranking article written against the client's keyword map." },
     { id: "landing-page", label: "Landing page", description: "A page built for one query and one intent." },
@@ -126,7 +126,7 @@ const seoGeo: TemplateVocabulary = {
       "Moving a client to active onboards them and provisions their crew — an SEO writer, a GEO optimizer and an audit runner, each named for the client.",
     clientsSubtitle: "Every active engagement — open one to see its connections, calendar, crew and deliverables.",
     noActiveClients: "No active clients yet — advance one on the CRM.",
-    agentsSubtitle: "Every agent working for this agency — the pair that runs it, and each client's crew.",
+    agentsSubtitle: "Every agent working for this agency — the team that runs it, and each client's crew.",
     noCrew: "No agents for this client yet — onboarding a client provisions its crew.",
   },
   site: {

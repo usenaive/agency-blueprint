@@ -14,6 +14,12 @@ const loaded = loadConfig(dirname(fileURLToPath(import.meta.url)));
 const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
   Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard."));
 
+/** The roles that work the agency mailbox; the rest of the team reads the CRM, the queue and the web. */
+const MAILBOX = new Set(["sales", "client-manager", "link-outreach"]);
+
+/** The desk roles: no mailbox and no client property, so no connector tool and none needed. */
+const DESK = new Set(["strategist", "researcher", "content-writer", "editor"]);
+
 describe("naive.config.ts", () => {
   it("loads and validates via loadConfig", async () => {
     const result = await loaded;
@@ -50,15 +56,20 @@ describe("naive.config.ts", () => {
     expect(result.config.apps[0].env).not.toHaveProperty("NAIVE_API_URL");
     expect(result.config.apps[0].env).not.toHaveProperty("NAIVE_IDENTITY_ID");
     // The agents are the chosen template's, folded in by `defineProject` — the config declares none
-    // of its own, so switching template is the only thing that changes this list.
+    // of its own, so switching template is the only thing that changes this list. This is also the
+    // list the catalog publishes and the dashboard's template card shows, so the whole agency-wide
+    // team must be here: a role kept anywhere else is one the operator is told the template lacks.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
-    expect(result.config.agents.map((a) => a.name)).toEqual(["sales", "client-manager"]);
+    expect(result.config.agents.map((a) => a.name).slice(0, 7)).toEqual([
+      "sales", "client-manager", "strategist", "researcher", "content-writer", "editor", "analytics-reporter",
+    ]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
       expect(agent.system).toMatch(/dashboard tools/);
       expect(agent.tools?.default_config.permission).toBe("deny");
       // Deny-by-default drops unlisted tools, so the dashboard's MCP tools must be named to be usable.
-      expect(Object.keys(agent.tools?.configs ?? {})).toContain("dashboard.create_draft_post");
+      const held = Object.keys(agent.tools?.configs ?? {});
+      expect([agent.name, held.includes("dashboard.create_draft_post") || held.includes("dashboard.add_client_note")]).toEqual([agent.name, true]);
       expect(agent.tools?.configs).not.toHaveProperty("dashboard.approve_post");
       // Nothing publishes: the platform's own publishing tool is not granted, and the dashboard's
       // queue is where a deliverable waits instead. The README's "nothing publishes without you" is
@@ -69,10 +80,16 @@ describe("naive.config.ts", () => {
       // the platform offers these only to a turn whose identity owns an inbox, and deny-by-default
       // means they must still be named here. Reads run; the one outward act — sending — is `ask`,
       // so the call parks the session and waits for the operator on the dashboard's Approvals screen.
-      expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
-      expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
-      expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
-      expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
+      // Only the roles that work the mailbox hold it; a writer told it has an inbox would read one.
+      if (MAILBOX.has(agent.name)) {
+        expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
+        expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
+        expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
+        expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
+      } else {
+        expect([agent.name, held.filter((name) => name.startsWith("email."))]).toEqual([agent.name, []]);
+      }
+      expect(held.filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
       // the pause), so it is `ask`; a prompt that says "ask the operator" without it is a dead letter.
       expect(agent.tools?.configs["ask_operator"]).toEqual({ enabled: true, permission: "ask" });
@@ -81,7 +98,6 @@ describe("naive.config.ts", () => {
       expect(agent.tools?.configs["request_tools"]).toEqual({ enabled: true, permission: "ask" });
       expect(agent.system).toMatch(/complete list of what you can do right now/);
       expect(agent.system).toMatch(/request it once with request_tools/);
-      expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
     }
     // The daily pass files follow-ups on the client row, so the sales agent must hold the tool that does.
     expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.create_lead");
@@ -91,10 +107,11 @@ describe("naive.config.ts", () => {
     expect(result.config.agents[1].tools?.configs).toHaveProperty("dashboard.get_calendar");
     expect(result.config.agents[1].schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);
     expect(result.config.agents[0].schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);
-    // Both templates declare the same pair, so a switch narrows nothing here and `kept` is empty.
-    // The part that does differ — the per-client crew — is `server/proxy.ts`'s, because its names
-    // carry a client slug and cannot be declared statically.
-    expect(result.config.kept.agents).toEqual([]);
+    // `seo-geo` only widens `blank`, so with it active a switch narrows nothing and `kept` is empty;
+    // with `blank` active, `kept` names the specialists the other template would leave standing.
+    // The per-client crew is `server/proxy.ts`'s either way, because its names carry a client slug
+    // and cannot be declared statically.
+    expect(result.config.kept.agents).toEqual(TEMPLATE === "seo-geo" ? [] : ["keyword-researcher", "link-outreach", "technical-seo"]);
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
   }, 30_000);
 });
@@ -115,10 +132,11 @@ describe("the agency persona", () => {
     if (!result.ok) return;
     expect(result.config.identities.map((one) => one.name)).toEqual([AGENCY_IDENTITY]);
     for (const agent of result.config.agents) {
-      // Every agent of this blueprint reads a connected account, so every one must hold the
-      // persona: connection tools resolve `session → agent → identity → connected accounts`, and an
-      // agent holding none is offered none of the names below however they are permissioned.
-      expect([agent.name, connectionTools(agent)]).not.toEqual([agent.name, []]);
+      // Every agent that reads a mailbox or a connected account must hold the persona: connection
+      // tools resolve `session → agent → identity → connected accounts`, and an agent holding none
+      // is offered none of the names however they are permissioned. The desk roles hold it too, so
+      // a connector granted later through `request_tools` reaches something.
+      expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, !DESK.has(agent.name)]);
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
   }, 30_000);

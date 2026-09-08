@@ -112,8 +112,8 @@ export default defineProject({
     },
   ],
 
-  // No `agents:` here. They are the template's — `templates/blank.ts` declares the pair every
-  // agency has, `templates/seo-geo.ts` adds its focus to them, and the per-client crew
+  // No `agents:` here. They are the template's — `templates/blank.ts` declares the team every
+  // agency has, `templates/seo-geo.ts` adds its focus to them and its specialists, and the per-client crew
   // (`seo-writer--<slug>`, …) is provisioned at onboarding by the dashboard server, since its
   // names carry a client slug and cannot be declared statically.
 });

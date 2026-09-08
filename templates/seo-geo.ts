@@ -1,11 +1,13 @@
 /**
  * `seo-geo` — the same agency, specialised in search: technical audits, SERP work and
- * answer-engine optimization, with a three-agent crew provisioned per client.
+ * answer-engine optimization, with three search specialists on the agency team and a three-agent
+ * crew provisioned per client.
  *
- * It is a **delta on `blank`**, and deliberately reads as one. The pair of agency agents is
- * `blank`'s, with one sentence of focus added to each; the machinery around them — model, budget,
- * deny-by-default toolset, approval gate — is shared, so what this file shows is exactly what the
- * specialism changes: the words, the kinds of work, the crew, and the demo seed.
+ * It is a **delta on `blank`**, and deliberately reads as one. `blank`'s seven agency agents are
+ * kept, with one sentence of focus added to each (and the search reads the reporter needs); the
+ * machinery around them — model, budget, deny-by-default toolset, approval gate — is shared, so
+ * what this file shows is exactly what the specialism changes: the words, the kinds of work, the
+ * specialists it adds, the crew, and the demo seed.
  *
  * Switching to it widens: `naive up` creates nothing the operator loses, and the crew below is
  * created per client at onboarding by `server/proxy.ts`. Switching away leaves every crew agent
@@ -14,7 +16,21 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, blank, budget, crm, gate, model, OPERATOR, tools, type AgencyTemplate } from "./blank.ts";
+import {
+  AGENCY_IDENTITY,
+  AGENCY_TIMEZONE,
+  blank,
+  budget,
+  crm,
+  gate,
+  mailbox,
+  MAILBOX_READ,
+  MAILBOX_SEND,
+  model,
+  OPERATOR,
+  tools,
+  type AgencyTemplate,
+} from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -23,13 +39,17 @@ const FOCUS: Record<string, string> = {
     "This agency sells search and answer-engine work, so research each lead's search presence first — what they rank for, where they are cited in AI answers, and what a first audit would find.",
   "client-manager":
     "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's crew pointed at the next one.",
+  strategist:
+    "The plan here is a search plan: which keyword clusters and AI-answer questions the quarter targets, which page carries each, and the technical fixes that gate them; the baseline audit is crawlability, indexing and where the client ranks today.",
+  researcher:
+    "Research here is competitor search presence: who ranks and who is cited in AI answers for the client's questions, what those pages do that the client's do not, and which questions have no authoritative answer indexed.",
+  "content-writer":
+    "Content here is search content — articles and landing pages (kinds article and landing-page) written to the keyword researcher's cluster map: one primary query per piece, answered in the first paragraph, headings that match how people search, internal links to the client's related pages.",
+  editor:
+    "Check every draft against its target query as well as its brief: the query in the title and first paragraph, headings that match its intent, entities and sources an AI engine can cite, and no claim the client's site cannot back.",
+  "analytics-reporter":
+    "The monthly report here is a serp-report: clicks, impressions and position by query and page from googlesearchconsole.query_search_analytics beside the Analytics numbers, the ranking moves against last month, and where the client is cited in AI answers.",
 };
-
-/** The gate again, for an agent that works inside one client's account rather than the agency's. */
-const clientGate =
-  `You work for an SEO/GEO agency on one client's account. ${gate} ` +
-  "The client is the CRM row your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
-  "The client's own Search Console and Analytics reach you only once the operator has connected them; if none of the search tools you were granted is offered this turn, say which account is missing and ask the operator to connect it with ask_operator rather than estimating a number.";
 
 /**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
@@ -47,6 +67,104 @@ const SEARCH_READ = [
   "googlesearchconsole.inspect_url",
   "googleanalytics.run_report",
 ];
+
+/**
+ * Search reads a shared agent gains here. The reporter's month is Search Console as much as
+ * Analytics, and a name not on its allow-list is a number it cannot read.
+ */
+const WIDEN: Record<string, string[]> = {
+  "analytics-reporter": ["googlesearchconsole.query_search_analytics", "googlesearchconsole.list_sites"],
+};
+
+const widen = (agent: AgentDecl): AgentDecl["tools"] => {
+  const extra = WIDEN[agent.name];
+  if (extra === undefined || agent.tools === undefined) return agent.tools;
+  return { ...agent.tools, configs: { ...agent.tools.configs, ...tools(extra)?.configs } };
+};
+
+/**
+ * The specialists the agency itself runs, across every client. They are `agents` — static names,
+ * provisioned by `naive up`, published on the artifact the dashboard's template card reads — where
+ * the crew below is per client and reaches the dashboard only through onboarding.
+ */
+const specialists: AgentDecl[] = [
+  {
+    name: "keyword-researcher",
+    model,
+    budget,
+    description: "Keyword and question research per client: clusters by intent, ranks by opportunity, hands the writers a map.",
+    system: `You work for an SEO/GEO agency. ${gate} You are the keyword researcher: build and maintain the keyword map each client's writers work from, through the dashboard tools. Read what the client already ranks for and what sits on page two (googlesearchconsole.query_search_analytics), the queries competitors rank for that the client does not (web_search, web_fetch), and the questions people put to AI engines about the client's category. Cluster by intent, one target page per cluster, ranked by opportunity — demand against how far the client is from ranking — and file the map as a serp-report draft with create_draft_post and the changes since last time on the client with add_client_note. Read list_posts first so no cluster is briefed twice. Search Console reaches you only once the operator has connected the client's property; if it is not offered, say so and ask with ask_operator rather than guessing demand.`,
+    tools: tools(
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "add_client_note"), "googlesearchconsole.query_search_analytics", "googlesearchconsole.list_sites"],
+      OPERATOR,
+    ),
+    identity: AGENCY_IDENTITY,
+    schedules: [
+      {
+        /** After the Monday review, before Tuesday's writing pass. */
+        cron: "30 9 * * 1",
+        timezone: AGENCY_TIMEZONE,
+        identity: AGENCY_IDENTITY,
+        input:
+          "Weekly keyword pass: for every active client (list_clients), pull the last 28 days of queries by page (googlesearchconsole.query_search_analytics), list the queries at positions 5–20 that a rewrite or a new page could move and any new questions in the category, and file the changes to the map on the client with add_client_note, naming the page each belongs to. Where the property is not connected, say so on the client and move on.",
+        budget_micro_usd: 2_000_000, // $2 per weekly pass
+      },
+    ],
+  },
+  {
+    name: "link-outreach",
+    model,
+    budget,
+    description: "Link building and digital PR: finds prospects worth a link, drafts the pitch, tracks replies — every send waits for approval.",
+    system: `You work for an SEO/GEO agency. ${gate} ${mailbox} You are the link and outreach specialist: earn each client links and mentions that move rankings. Find prospects — sites linking to the client's competitors, resource pages, publications covering the client's category (web_search, web_fetch) — qualify each by relevance and whether it actually links out, and draft the pitch: what the client's page adds to theirs, in three sentences, no template. Work through the dashboard tools: file each prospect list and drafted pitch on the client with add_client_note, and note replies read from the mailbox (email.read) there too. email.send waits for the operator; never pitch a site the operator has not seen on a list.`,
+    tools: tools(
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "add_client_note"), ...MAILBOX_READ],
+      [...MAILBOX_SEND, ...OPERATOR],
+    ),
+    identity: AGENCY_IDENTITY,
+    schedules: [
+      {
+        /** Midweek, once the week's content is known and pitchable. */
+        cron: "0 9 * * 3",
+        timezone: AGENCY_TIMEZONE,
+        identity: AGENCY_IDENTITY,
+        input:
+          "Weekly outreach pass: read replies to earlier pitches (email.read, since = 7 days ago) and note each on its client with add_client_note; if email.read is not among your tools, request it with request_tools and stop for today. Then, for every active client (list_clients), find ten new qualified prospects and draft the pitch for each, filed on the client with add_client_note. Send nothing.",
+        budget_micro_usd: 2_000_000, // $2 per weekly pass
+      },
+    ],
+  },
+  {
+    name: "technical-seo",
+    model,
+    budget,
+    description: "Site health across every client: crawlability, indexing, Core Web Vitals, structured data — files the fixes, ordered by impact.",
+    system: `You work for an SEO/GEO agency. ${gate} You are the technical SEO: keep every client's site crawlable, indexed and fast, through the dashboard tools. Check indexing and coverage for the pages that matter (googlesearchconsole.inspect_url, googlesearchconsole.list_sites), read the pages themselves for canonical, robots, structured data, internal links and rendering problems (web_fetch), and file the findings as an audit draft with create_draft_post — each fix with the pages affected, the expected effect and the exact change, ordered by impact. Record anything urgent on the client with add_client_note so the client manager sees it. A verdict on indexing comes from inspect_url, not from a guess; if the property is not connected, say so and ask the operator with ask_operator.`,
+    tools: tools(
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "add_client_note"), ...SEARCH_READ],
+      OPERATOR,
+    ),
+    identity: AGENCY_IDENTITY,
+    schedules: [
+      {
+        /** Early Thursday, so a regression found this week is fixed before the client's Monday. */
+        cron: "0 7 * * 4",
+        timezone: AGENCY_TIMEZONE,
+        identity: AGENCY_IDENTITY,
+        input:
+          "Weekly site check: for every active client (list_clients), inspect the pages that shipped this month (list_posts) and the ten landing pages with the most clicks (googlesearchconsole.query_search_analytics, googlesearchconsole.inspect_url). File an audit draft with create_draft_post only where something is broken, missing or regressed, and a one-line all-clear on the client with add_client_note otherwise. Where the property is not connected, say so on the client and move on.",
+        budget_micro_usd: 2_000_000, // $2 per weekly check
+      },
+    ],
+  },
+];
+
+/** The gate again, for an agent that works inside one client's account rather than the agency's. */
+const clientGate =
+  `You work for an SEO/GEO agency on one client's account. ${gate} ` +
+  "The client is the CRM row your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
+  "The client's own Search Console and Analytics reach you only once the operator has connected them; if none of the search tools you were granted is offered this turn, say which account is missing and ask the operator to connect it with ask_operator rather than estimating a number.";
+
 
 /**
  * The per-client crew. `server/proxy.ts` appends the client slug to each name at onboarding
@@ -166,7 +284,11 @@ export const seoGeo: AgencyTemplate = {
   words: { ...VOCABULARY["seo-geo"].words },
   seed: { clients, posts },
   crew,
-  // The pair is shared; only its focus is this template's. Every other field of the agent — model,
-  // budget, allow-list, schedule — stays `blank`'s, so a change there reaches both templates.
-  agents: blank.agents.map((agent) => ({ ...agent, system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim() })),
+  // The team is shared; only its focus (and the reporter's search reads) is this template's. Every
+  // other field of a shared agent — model, budget, schedule — stays `blank`'s, so a change there
+  // reaches both templates. The specialists are appended, so a switch to this template only widens.
+  agents: [
+    ...blank.agents.map((agent) => ({ ...agent, system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(), tools: widen(agent) })),
+    ...specialists,
+  ],
 };

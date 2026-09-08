@@ -16,6 +16,16 @@ import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 import { seoGeo } from "./seo-geo.ts";
 
 const all = Object.values(TEMPLATES);
+
+/** The team every template starts from: what `blank` declares, in order. */
+const TEAM = ["sales", "client-manager", "strategist", "researcher", "content-writer", "editor", "analytics-reporter"];
+
+/**
+ * The desk roles: they read the CRM, the queue and the open web and hold no connected account.
+ * Every other agent reaches a mailbox or a client's property, and must be able to.
+ */
+const DESK = new Set(["strategist", "researcher", "content-writer", "editor"]);
+
 const clientsOf = (t: (typeof all)[number]) => t.seed.clients as Client[];
 const postsOf = (t: (typeof all)[number]) => t.seed.posts as Post[];
 
@@ -29,13 +39,32 @@ describe("every template of this blueprint", () => {
     expect(TEMPLATES[TEMPLATE].name).toBe(TEMPLATE);
   });
 
-  it.each(all)("$name declares the pair that runs an agency, with the gate in every prompt", (template) => {
-    expect(template.agents.map((a) => a.name)).toEqual(["sales", "client-manager"]);
+  it.each(all)("$name declares the team that runs an agency, with the gate in every prompt", (template) => {
+    expect(template.agents.map((a) => a.name).slice(0, TEAM.length)).toEqual(TEAM);
+    const names = [...template.agents, ...template.crew].map((a) => a.name);
+    expect(new Set(names).size).toBe(names.length);
     for (const agent of [...template.agents, ...template.crew]) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
+      expect(agent.description).toBeTruthy();
       expect(agent.model).toBeTruthy();
       expect(agent.tools?.default_config.permission).toBe("deny");
+      // Every role files something the operator reads; none approves or publishes it.
+      const held = Object.keys(agent.tools?.configs ?? {});
+      expect([agent.name, held.some((name) => name === "dashboard.create_draft_post" || name === "dashboard.add_client_note")]).toEqual([agent.name, true]);
+      expect(held).not.toContain("dashboard.approve_post");
+      expect(held.filter((name) => name.startsWith("social."))).toEqual([]);
     }
+  });
+
+  /**
+   * The whole team is `agents`. `defineProject` folds only a template's `agents` into the
+   * declaration, and the catalog's template card lists `declaration.agents` — so a role declared
+   * anywhere else is one the dashboard says the template does not have. The per-client crew is the
+   * one exception, because its names carry a client slug and cannot be declared statically.
+   */
+  it.each(all)("$name puts every agency-wide role in `agents`, where the artifact publishes it", (template) => {
+    expect(template.agents.length).toBeGreaterThanOrEqual(TEAM.length);
+    for (const agent of template.agents) expect(agent.name).not.toMatch(/--/);
   });
 
   it.each(all)("$name seeds a demo that says it is one, and files only kinds it declares", (template) => {
@@ -69,9 +98,9 @@ describe("connected accounts", () => {
   const connectionTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
     Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard."));
 
-  it.each(all)("$name grants every agent at least one of them", (template) => {
+  it.each(all)("$name grants every agent that works an account at least one of them", (template) => {
     for (const agent of [...template.agents, ...template.crew]) {
-      expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
+      expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, !DESK.has(agent.name)]);
     }
   });
 
@@ -111,9 +140,10 @@ describe("blank", () => {
     expect(prose(blank)).not.toMatch(/\bSEO\b|\bGEO\b|search engine|generative-engine|SERP|keyword|schema|llms\.txt/i);
   });
 
-  it("declares no per-client crew — the agency's own pair runs every client", () => {
+  it("declares no per-client crew — the agency's own team runs every client", () => {
     expect(blank.crew).toEqual([]);
-    expect(blank.words.noCrew).toMatch(/agency's own pair/);
+    expect(blank.agents.map((a) => a.name)).toEqual(TEAM);
+    expect(blank.words.noCrew).toMatch(/agency's own team/);
   });
 
   it("files generic deliverable kinds", () => {
@@ -123,17 +153,27 @@ describe("blank", () => {
 
 describe("seo-geo", () => {
   it("is a delta on blank, not a fork of it", () => {
-    // Same pair, same model, same budget, same allow-list, same schedule: only the focus differs.
-    expect(seoGeo.agents.map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
-    for (const [i, agent] of seoGeo.agents.entries()) {
-      const base = blank.agents[i]!;
+    // Same team, same model, same budget, same schedule: only the focus differs, and the reporter
+    // gains the Search Console reads its month needs on top of blank's allow-list.
+    expect(seoGeo.agents.map((a) => a.name).slice(0, TEAM.length)).toEqual(blank.agents.map((a) => a.name));
+    for (const [i, base] of blank.agents.entries()) {
+      const agent = seoGeo.agents[i]!;
       expect(agent.system).toContain(base.system);
       expect(agent.system).not.toBe(base.system);
-      expect({ ...agent, system: "" }).toEqual({ ...base, system: "" });
+      expect({ ...agent, system: "", tools: undefined }).toEqual({ ...base, system: "", tools: undefined });
+      for (const [name, config] of Object.entries(base.tools?.configs ?? {})) expect(agent.tools?.configs[name]).toEqual(config);
     }
+    expect(seoGeo.agents.find((a) => a.name === "analytics-reporter")?.tools?.configs).toHaveProperty("googlesearchconsole.query_search_analytics");
   });
 
-  it("adds the specialism: the kinds, and the crew provisioned per client", () => {
+  it("adds the specialism: the specialists, the kinds, and the crew provisioned per client", () => {
+    expect(seoGeo.agents.map((a) => a.name).slice(TEAM.length)).toEqual(["keyword-researcher", "link-outreach", "technical-seo"]);
+    // Each specialist reads the account its job is about, and only outreach may (ask to) send.
+    const specialist = (name: string) => Object.entries(seoGeo.agents.find((a) => a.name === name)!.tools!.configs);
+    expect(specialist("keyword-researcher").map(([name]) => name)).toContain("googlesearchconsole.query_search_analytics");
+    expect(specialist("technical-seo").map(([name]) => name)).toContain("googlesearchconsole.inspect_url");
+    expect(specialist("link-outreach").find(([name]) => name === "email.send")?.[1]).toEqual({ enabled: true, permission: "ask" });
+    expect(seoGeo.agents.filter((a) => a.tools?.configs["email.send"]).map((a) => a.name)).toEqual(["sales", "client-manager", "link-outreach"]);
     expect(seoGeo.kinds.map((k) => k.id)).toEqual(["article", "landing-page", "answer-block", "serp-report", "audit"]);
     expect(seoGeo.crew.map((a) => a.name)).toEqual(["seo-writer", "geo-optimizer", "audit-runner"]);
     // The crew's model is the template's, not the server's — `server/proxy.ts` posts these as they
@@ -157,12 +197,36 @@ describe("schedules", () => {
   const declared = (template: (typeof all)[number]) =>
     template.agents.flatMap((agent) => (agent.schedules ?? []).map((schedule) => [agent.name, schedule] as const));
 
-  it.each(all)("$name runs the weekly review and the daily pipeline pass", (template) => {
-    expect(declared(template).map(([agent, schedule]) => [agent, schedule.cron])).toEqual([
-      // A pipeline goes stale in days: weekday mornings, before the weekly review it feeds.
-      ["sales", "30 8 * * 1-5"],
-      ["client-manager", "0 8 * * 1"],
+  const RHYTHM: [string, string][] = [
+    // A pipeline goes stale in days: weekday mornings, before the weekly review it feeds.
+    ["sales", "30 8 * * 1-5"],
+    ["client-manager", "0 8 * * 1"],
+    ["strategist", "0 9 1 1,4,7,10 *"],
+    ["researcher", "0 9 15 * *"],
+    // The writers write against Monday's review; the editor reads before the operator's evening pass.
+    ["content-writer", "0 9 * * 2"],
+    ["editor", "0 16 * * 1-5"],
+    ["analytics-reporter", "0 9 1 * *"],
+  ];
+
+  it("blank runs the agency's rhythm: daily pipeline and edit passes, weekly review and writing, monthly and quarterly reports", () => {
+    expect(declared(blank).map(([agent, schedule]) => [agent, schedule.cron])).toEqual(RHYTHM);
+  });
+
+  it("seo-geo keeps that rhythm and adds the specialists' weekly passes", () => {
+    expect(declared(seoGeo).map(([agent, schedule]) => [agent, schedule.cron])).toEqual([
+      ...RHYTHM,
+      ["keyword-researcher", "30 9 * * 1"],
+      ["link-outreach", "0 9 * * 3"],
+      ["technical-seo", "0 7 * * 4"],
     ]);
+  });
+
+  it.each(all)("$name keeps every fire under the agent's own per-task ceiling", (template) => {
+    for (const [agent, schedule] of declared(template)) {
+      const holder = template.agents.find((one) => one.name === agent)!;
+      expect([agent, (schedule.budget_micro_usd ?? 0) <= holder.budget!.max_task_micro_usd!]).toEqual([agent, true]);
+    }
   });
 
   it.each(all)("$name fires each one in the agency's zone, as the agency", (template) => {

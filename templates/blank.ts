@@ -2,12 +2,17 @@
  * `blank` — a working agency with no specialism, and the base every other template of this
  * blueprint is a delta on.
  *
- * Everything here is data: two agents with generic prompts, generic deliverable kinds, the two
- * schedules an agency runs on — a weekly review and a daily pipeline pass, each in the agency's own
- * zone and speaking as the agency's own persona — and a demo seed that is plainly a demo. There is
- * no per-client crew: this agency runs
- * every client through its own pair, which is a complete agency and the safe thing to get by
+ * Everything here is data: a seven-agent team with generic prompts — sales, client manager,
+ * strategist, researcher, content writer, editor, analytics reporter — generic deliverable kinds,
+ * the schedules an agency runs on (a daily pipeline pass, a weekly review, the writing and edit
+ * passes, the monthly report), each in the agency's own zone and speaking as the agency's own
+ * persona, and a demo seed that is plainly a demo. There is no per-client crew: this agency runs
+ * every client through its own team, which is a complete agency and the safe thing to get by
  * accident (`BLUEPRINTS.agency.default`).
+ *
+ * The team is `agents`, not `crew`, on purpose: `defineProject` folds only a template's `agents`
+ * into the declaration `naive up` applies and the catalog publishes, so an agent declared anywhere
+ * else is one the dashboard's template card never shows.
  *
  * The demo rows live in this module and never reach the browser bundle (`src/no-seed.test.ts`): a
  * deployed dashboard that showed them would be presenting fiction as the operator's own CRM. The
@@ -22,7 +27,8 @@ import { VOCABULARY } from "./index.ts";
  * The blueprint's `Template` plus the one thing an agency has that a project-level declaration
  * cannot hold: the crew provisioned per client at onboarding, whose names carry the client's slug
  * and so cannot be declared statically. `server/proxy.ts` posts these as they stand, with the slug
- * appended to each `name`.
+ * appended to each `name`. The SDK's `Template` has no such field, so `crew` never reaches the
+ * published artifact — it is this repo's, and the agency-wide team belongs in `agents`.
  */
 export interface AgencyTemplate extends Template {
   crew: AgentDecl[];
@@ -137,7 +143,8 @@ export const gate =
 
 /**
  * What the mailbox is, in the words an agent needs when it goes to read it. Kept out of `gate`
- * because the per-client crew (`seo-geo.ts`) holds no mailbox and should not be told it does.
+ * because only the agents that work the mailbox — sales, the client manager, outreach — hold it,
+ * and the rest of the team should not be told it does.
  */
 export const mailbox =
   "The agency mailbox is the agency persona's own inbox: email.inboxes lists its addresses, email.read returns the replies stored in it (pass since to bound them), email.send sends from it and always waits for approval. " +
@@ -257,6 +264,126 @@ export const blank: AgencyTemplate = {
           input:
             "Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts), list anything overdue or unscheduled, and file the week's plan for the operator — a note on each client with add_client_note, and a pending draft (create_draft_post) for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for that the plan should carry. Approve and publish nothing.",
           budget_micro_usd: 2_000_000, // $2 per weekly review
+        },
+      ],
+    },
+    {
+      name: "strategist",
+      model,
+      budget,
+      description:
+        "Sets each client's plan: a baseline audit at onboarding and a quarterly roadmap the rest of the team works from, ordered by expected impact.",
+      system: `You work for an agency. ${gate} You are the strategist: for each active client, read the CRM row, the site and the market (get_client, web_fetch, web_search) and file the plan the rest of the team works from through the dashboard tools — a baseline audit of the site, positioning and channels as an audit draft, and a quarterly roadmap as a report draft (create_draft_post), each item with the expected effect and a one-line reason, ordered by impact. Read list_posts and get_calendar first so the plan builds on what shipped rather than restating it. File decisions and open questions on the client with add_client_note. Approving and publishing are the operator's.`,
+      tools: tools(
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "add_client_note")],
+        OPERATOR,
+      ),
+      identity: AGENCY_IDENTITY,
+      schedules: [
+        {
+          /** Once a quarter, on the first working morning of it. */
+          cron: "0 9 1 1,4,7,10 *",
+          timezone: AGENCY_TIMEZONE,
+          identity: AGENCY_IDENTITY,
+          input:
+            "Quarterly plan: for every active client (list_clients), read last quarter's calendar and queue (get_calendar, list_posts) and the client's notes (get_client), then file next quarter's roadmap as a pending report draft with create_draft_post — what to keep, what to stop, the three bets and the deliverables each needs — and note the open decisions on the client with add_client_note. Approve and publish nothing.",
+          budget_micro_usd: 2_000_000, // $2 per quarterly plan
+        },
+      ],
+    },
+    {
+      name: "researcher",
+      model,
+      budget,
+      description:
+        "Market, competitor and audience research per client: briefs the writers with sourced facts and uncovered angles, never guesses.",
+      system: `You work for an agency. ${gate} You are the researcher: for the client and question you are given, read the client's site and its competitors' (web_fetch), search the market (web_search), and brief the team through the dashboard tools — a research brief filed on the client with add_client_note: the audience and what it asks, the competitors and what they publish, the angles nobody covers, every claim with its source URL. When the brief is a deliverable in its own right, file it in full as a report draft with create_draft_post. Read list_posts first so you brief what is not already queued. A number without a source does not go in the brief.`,
+      tools: tools(
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "add_client_note")],
+        OPERATOR,
+      ),
+      identity: AGENCY_IDENTITY,
+      schedules: [
+        {
+          /** Mid-month, so the findings land before the writers plan the next one. */
+          cron: "0 9 15 * *",
+          timezone: AGENCY_TIMEZONE,
+          identity: AGENCY_IDENTITY,
+          input:
+            "Monthly competitor scan: for every active client (list_clients, get_client), re-read the three closest competitors' sites and what they published this month (web_search, web_fetch), and file on the client with add_client_note what changed, what it means for next month's work, and the angles still uncovered — each with its source URL.",
+          budget_micro_usd: 2_000_000, // $2 per monthly scan
+        },
+      ],
+    },
+    {
+      name: "content-writer",
+      model,
+      budget,
+      description:
+        "Writes the deliverables on each client's calendar in full — posts, pages and the social copy that repurposes them — from the brief and in the client's voice.",
+      system: `You work for an agency. ${gate} You are the content writer: write the deliverables on each client's calendar in full — posts and pages (kinds post and page) and the LinkedIn or X copy that repurposes them (channels linkedin and x). Work through the dashboard tools: read the client's notes and the researcher's brief (get_client), what is already queued (list_posts), the calendar (get_calendar) and the client's own site for voice (web_fetch), then file each piece with create_draft_post — title, one-line summary, the full body, kind, channel and calendar day. One intent per page, one idea per post, no filler. Approving and publishing are the operator's.`,
+      tools: tools(
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "add_client_note")],
+        OPERATOR,
+      ),
+      identity: AGENCY_IDENTITY,
+      schedules: [
+        {
+          /** The day after the weekly review, so it writes against the plan the review filed. */
+          cron: "0 9 * * 2",
+          timezone: AGENCY_TIMEZONE,
+          identity: AGENCY_IDENTITY,
+          input:
+            "Weekly writing pass: for every active client (list_clients), read the next two weeks of the calendar (get_calendar) and the queue (list_posts), and write in full every deliverable that is due and has no finished draft yet, filing each on its calendar day with create_draft_post. Note what you wrote and what you could not — a missing brief, an unclear audience — on the client with add_client_note. Approve and publish nothing.",
+          budget_micro_usd: 2_000_000, // $2 per weekly writing pass
+        },
+      ],
+    },
+    {
+      name: "editor",
+      model,
+      budget,
+      description:
+        "Reviews every pending draft for accuracy, voice and fit to the brief before the operator sees it; files the edits, approves nothing.",
+      system: `You work for an agency. ${gate} You are the editor: review every pending draft in each client's queue against the client's notes and brief and the client's own site for voice, through the dashboard tools (list_posts, get_client, web_fetch) — facts checked against their sources, claims the client cannot stand behind cut, one intent per piece, a title that says what the piece delivers. File one verdict per draft on the client with add_client_note: ready as it stands, or the exact edits, quoted. Approving and rejecting are the operator's, never yours. Nothing pending is a valid result: say so in one line and stop.`,
+      tools: tools(
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "add_client_note")],
+        OPERATOR,
+      ),
+      identity: AGENCY_IDENTITY,
+      schedules: [
+        {
+          /** End of each weekday, after the writers and before the operator's approvals pass. */
+          cron: "0 16 * * 1-5",
+          timezone: AGENCY_TIMEZONE,
+          identity: AGENCY_IDENTITY,
+          input:
+            "Daily edit pass: for every active client (list_clients), review each draft still pending in the queue (list_posts, state pending) against the client's notes (get_client) and site, and file one note per client with add_client_note listing each draft and its verdict — ready, or the exact edits. Approve and reject nothing.",
+          budget_micro_usd: 1_000_000, // $1 a weekday
+        },
+      ],
+    },
+    {
+      name: "analytics-reporter",
+      model,
+      budget,
+      description:
+        "The monthly report per client — what shipped, what it moved, what to do next — from the client's connected analytics, never from estimates.",
+      system: `You work for an agency. ${gate} You are the analytics reporter: each month, for each active client, turn what shipped and what it moved into a one-page report through the dashboard tools — what shipped from get_calendar and list_posts, what it moved from googleanalytics.run_report on the client's connected property, filed as a report draft with create_draft_post: the numbers against last month, the pieces that did the work, and the three things to do next. A number you did not read from the client's connected account is a number you may not report; if googleanalytics.run_report is not offered or the property is not connected, say which account is missing and ask the operator with ask_operator rather than estimating.`,
+      tools: tools(
+        ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "add_client_note"), "googleanalytics.run_report"],
+        OPERATOR,
+      ),
+      identity: AGENCY_IDENTITY,
+      schedules: [
+        {
+          /** First of the month, so the report covers a whole one. */
+          cron: "0 9 1 * *",
+          timezone: AGENCY_TIMEZONE,
+          identity: AGENCY_IDENTITY,
+          input:
+            "Monthly reports: for every active client (list_clients), read last month's calendar and queue (get_calendar, list_posts) and the property's numbers (googleanalytics.run_report, last month against the month before), and file the month's report as a pending report draft with create_draft_post. Where the property is not connected, file no numbers — note on the client with add_client_note which account is missing and ask the operator for it once with ask_operator. Approve and publish nothing.",
+          budget_micro_usd: 2_000_000, // $2 per monthly report run
         },
       ],
     },
