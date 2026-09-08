@@ -13,7 +13,7 @@ import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE, blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
-import { seoGeo } from "./seo-geo.ts";
+import { rekind, seoGeo } from "./seo-geo.ts";
 
 const all = Object.values(TEMPLATES);
 
@@ -153,17 +153,33 @@ describe("blank", () => {
 
 describe("seo-geo", () => {
   it("is a delta on blank, not a fork of it", () => {
-    // Same team, same model, same budget, same schedule: only the focus differs, and the reporter
-    // gains the Search Console reads its month needs on top of blank's allow-list.
+    // Same team, same model, same budget, same schedule: only the focus and the kinds differ, and
+    // the reporter gains the Search Console reads its month needs on top of blank's allow-list.
     expect(seoGeo.agents.map((a) => a.name).slice(0, TEAM.length)).toEqual(blank.agents.map((a) => a.name));
     for (const [i, base] of blank.agents.entries()) {
       const agent = seoGeo.agents[i]!;
-      expect(agent.system).toContain(base.system);
-      expect(agent.system).not.toBe(base.system);
-      expect({ ...agent, system: "", tools: undefined }).toEqual({ ...base, system: "", tools: undefined });
+      expect(agent.system).toContain(rekind(base.system));
+      expect(agent.system).not.toBe(rekind(base.system));
+      const strip = (a: typeof base) => ({ ...a, description: "", system: "", tools: undefined, schedules: a.schedules?.map((s) => ({ ...s, input: "" })) });
+      expect(strip(agent)).toEqual(strip(base));
       for (const [name, config] of Object.entries(base.tools?.configs ?? {})) expect(agent.tools?.configs[name]).toEqual(config);
     }
     expect(seoGeo.agents.find((a) => a.name === "analytics-reporter")?.tools?.configs).toHaveProperty("googlesearchconsole.query_search_analytics");
+  });
+
+  it("tells every agent to file only the kinds it declares", () => {
+    // The store takes any kind a prompt names, so a prompt that still says `post` files one into a
+    // queue whose screens have no such kind. Blank-only ids may appear nowhere an agent is told
+    // what to file: not the system prompt, not a schedule's input.
+    const declared = new Set(seoGeo.kinds.map((k) => k.id));
+    const foreign = blank.kinds.map((k) => k.id).filter((id) => !declared.has(id));
+    expect(foreign).toEqual(["post", "page", "report"]);
+    const ids = foreign.join("|");
+    const names = new RegExp(`(?<![\\w-])(kinds? [\\w ]*?(${ids})|(${ids}) draft)\\b`);
+    for (const agent of [...seoGeo.agents, ...seoGeo.crew]) {
+      for (const text of [agent.system, ...(agent.schedules ?? []).map((s) => s.input)]) expect(text).not.toMatch(names);
+    }
+    for (const base of blank.agents) expect(base.system).not.toMatch(/\b(article|landing-page|answer-block|serp-report)\b/);
   });
 
   it("adds the specialism: the specialists, the kinds, and the crew provisioned per client", () => {

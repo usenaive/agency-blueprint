@@ -52,6 +52,20 @@ const FOCUS: Record<string, string> = {
 };
 
 /**
+ * `blank`'s prompts file `blank`'s kinds. The same role here files this template's — a post is an
+ * article, a page a landing page, the recurring report a serp-report; an audit is an audit in both.
+ * The store does not check a draft's kind against the template, so a prompt left saying `post`
+ * would file a post into a queue whose screens have no such kind.
+ */
+const REKIND: [RegExp, string][] = [
+  [/\bkinds post and page\b/g, "kinds article and landing-page"],
+  [/\bposts and pages\b/g, "articles and landing pages"],
+  [/\breport draft\b/g, "serp-report draft"],
+];
+export const rekind = <T extends string | undefined>(text: T): T =>
+  (text === undefined ? text : REKIND.reduce<string>((s, [from, to]) => s.replace(from, to), text)) as T;
+
+/**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
  * reaches a turn (`<connector>.<tool>`). A policy row does not create the account: the tool exists
  * in a turn only once the operator has connected the property to `AGENCY_IDENTITY`. Every one is a
@@ -284,11 +298,17 @@ export const seoGeo: AgencyTemplate = {
   words: { ...VOCABULARY["seo-geo"].words },
   seed: { clients, posts },
   crew,
-  // The team is shared; only its focus (and the reporter's search reads) is this template's. Every
-  // other field of a shared agent — model, budget, schedule — stays `blank`'s, so a change there
-  // reaches both templates. The specialists are appended, so a switch to this template only widens.
+  // The team is shared; only its focus, its kinds and the reporter's search reads are this
+  // template's. Every other field of a shared agent — model, budget, schedule — stays `blank`'s, so
+  // a change there reaches both templates. The specialists are appended, so a switch only widens.
   agents: [
-    ...blank.agents.map((agent) => ({ ...agent, system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(), tools: widen(agent) })),
+    ...blank.agents.map((agent) => ({
+      ...agent,
+      description: rekind(agent.description),
+      system: `${rekind(agent.system)} ${FOCUS[agent.name] ?? ""}`.trim(),
+      tools: widen(agent),
+      schedules: agent.schedules?.map((s) => ({ ...s, input: rekind(s.input) })),
+    })),
     ...specialists,
   ],
 };
