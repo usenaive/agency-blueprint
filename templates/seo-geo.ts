@@ -3,9 +3,10 @@
  * answer-engine optimization, with a three-agent crew provisioned per client.
  *
  * It is a **delta on `blank`**, and deliberately reads as one. The pair of agency agents is
- * `blank`'s, with one sentence of focus added to each; the machinery around them — model, budget,
- * deny-by-default toolset, approval gate — is shared, so what this file shows is exactly what the
- * specialism changes: the words, the kinds of work, the crew, and the demo seed.
+ * `blank`'s, with the focus added to each prompt and the words of each fire made the specialism's;
+ * the machinery around them — model, budget, deny-by-default toolset, approval gate, the crons
+ * themselves — is shared, so what this file shows is exactly what the specialism changes: the
+ * words, the kinds of work, the crew, and the demo seed.
  *
  * Switching to it widens: `naive up` creates nothing the operator loses, and the crew below is
  * created per client at onboarding by `server/proxy.ts`. Switching away leaves every crew agent
@@ -20,9 +21,33 @@ import { VOCABULARY } from "./index.ts";
 /** What each shared agent additionally does when the agency's specialism is search. */
 const FOCUS: Record<string, string> = {
   sales:
-    "This agency sells search and answer-engine work, so research each lead's search presence first — what they rank for, where they are cited in AI answers, and what a first audit would find.",
+    "This agency sells search and answer-engine work, so research each lead's search presence before you write a word: what they rank for, whether AI answers cite them or a competitor, and what a first technical audit would find. Lead every outreach with one specific finding about their site. A proposal here is a scoped plan — audit first, then a monthly article and landing-page count, answer blocks, and a monthly ranking and citation report.",
   "client-manager":
-    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's crew pointed at the next one.",
+    "The deliverables here are keyword research, articles, landing pages, answer blocks, technical audits and SERP reports (kinds article, landing-page, answer-block, audit, serp-report). Keep each client's calendar full of them and each client's crew pointed at the next one: a draft you file is the brief, and its summary names the crew member that writes the piece — seo-writer for keyword maps, articles and landing copy, geo-optimizer for answer blocks and citation work, audit-runner for audits and SERP reports — each suffixed with the client's slug, so the operator knows which agent to start.",
+};
+
+/**
+ * The words of each shared fire when the agency's specialism is search. The cron is `blank`'s —
+ * `naive up` matches live rows by exact cron text, so a specialism must never re-spell one — and so
+ * are the budget, the zone and the persona; only what the fire is told to do is this template's.
+ */
+const FIRES: Record<string, Record<string, string>> = {
+  sales: {
+    "30 8 * * 1-5":
+      "Daily pipeline pass for a search agency. First, list the agency inboxes with email.inboxes and read every reply that arrived since yesterday with email.read (since = 24 hours ago); if email.read is not among your tools, request it with request_tools and stop for today; if it returns no inboxes, the persona has no inbox yet — say so and ask the operator for one. Then list the CRM (list_clients) and check every lead and proposal against what it is waiting on, filing any new reply as a lead first (create_lead). For every new lead, research their search presence before anything else: search their brand and their three most obvious commercial terms, note what they rank for, whether AI answers cite them or a competitor, and what a first technical audit would likely find, and file that as a note on the lead (add_client_note). For anything that has gone quiet, draft the follow-up in full — lead with one specific finding about their site — and file it with add_client_note, with next_action set to what you are now waiting on. When a lead has reached proposal, the proposal is a scoped plan: audit first, a monthly article and landing-page count, answer blocks for the questions AI engines answer without them, and a monthly ranking and citation report; file it with create_draft_post. Send nothing: email.send is for when the operator has approved a draft.",
+  },
+  "client-manager": {
+    "0 8 * * 1":
+      "Weekly search review. For every active client (list_clients, get_client), read the calendar for last week and this week (get_calendar) against the queue (list_posts) and list anything overdue or unscheduled. Then file the week's plan for the operator: a note on each client with add_client_note, and a pending draft (create_draft_post) for each deliverable the calendar is missing — the keyword research for the client's next topic cluster (a keyword and topic map, filed as an audit), the blog articles written against that map (kind article), a landing page for one query and one intent (kind landing-page), answer blocks for the questions AI engines are answering without the client (kind answer-block), and the month's technical audit and SERP report (kinds audit and serp-report) if this month's is not queued. Each draft is the brief for the piece — the target query, the intent, what already ranks or is cited, and what the piece must cover — and its summary names the client's crew member that writes it (seo-writer, geo-optimizer or audit-runner, suffixed with the client's slug), so the operator knows which agent to start. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for that the plan should carry. Approve and publish nothing.",
+  },
+};
+
+/** What each shared agent is for, said the way this specialism would say it. */
+const DESCRIPTION: Record<string, string> = {
+  sales:
+    "Works the CRM pipeline for a search agency: researches each lead's rankings and AI-answer citations, drafts outreach and follow-ups led by a finding, scopes proposals as audit, articles, landing pages, answer blocks and reports. Never sends anything without operator approval.",
+  "client-manager":
+    "Onboards clients that graduate to active, and every Monday files the week's keyword research, articles, landing pages, answer blocks, audits and SERP reports as pending briefs, each naming the crew member that writes it.",
 };
 
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
@@ -166,7 +191,13 @@ export const seoGeo: AgencyTemplate = {
   words: { ...VOCABULARY["seo-geo"].words },
   seed: { clients, posts },
   crew,
-  // The pair is shared; only its focus is this template's. Every other field of the agent — model,
-  // budget, allow-list, schedule — stays `blank`'s, so a change there reaches both templates.
-  agents: blank.agents.map((agent) => ({ ...agent, system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim() })),
+  // The pair is shared; its focus, its description and the words of its fires are this template's.
+  // Every other field of the agent — model, budget, allow-list, persona, the crons — stays `blank`'s,
+  // so a change there reaches both templates.
+  agents: blank.agents.map((agent) => ({
+    ...agent,
+    description: DESCRIPTION[agent.name] ?? agent.description,
+    system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
+    schedules: agent.schedules?.map((schedule) => ({ ...schedule, input: FIRES[agent.name]?.[schedule.cron] ?? schedule.input })),
+  })),
 };

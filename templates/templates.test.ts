@@ -123,13 +123,22 @@ describe("blank", () => {
 
 describe("seo-geo", () => {
   it("is a delta on blank, not a fork of it", () => {
-    // Same pair, same model, same budget, same allow-list, same schedule: only the focus differs.
+    // Same pair, same model, same budget, same allow-list, same crons: the focus, the description
+    // and the words of each fire are the specialism's, and each names its deliverables.
     expect(seoGeo.agents.map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
     for (const [i, agent] of seoGeo.agents.entries()) {
       const base = blank.agents[i]!;
       expect(agent.system).toContain(base.system);
       expect(agent.system).not.toBe(base.system);
-      expect({ ...agent, system: "" }).toEqual({ ...base, system: "" });
+      expect(agent.description).not.toBe(base.description);
+      const timers = (a: typeof agent) => (a.schedules ?? []).map(({ input: _, ...rest }) => rest);
+      expect(timers(agent)).toEqual(timers(base));
+      for (const [j, schedule] of (agent.schedules ?? []).entries()) {
+        expect(schedule.input).not.toBe(base.schedules![j]!.input);
+        expect(schedule.input).toMatch(/audit|article|landing|answer block|SERP|citation/);
+      }
+      const rest = (a: typeof agent) => ({ ...a, system: "", description: "", schedules: [] });
+      expect(rest(agent)).toEqual(rest(base));
     }
   });
 

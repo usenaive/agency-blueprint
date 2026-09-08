@@ -234,7 +234,7 @@ export const blank: AgencyTemplate = {
       model,
       budget,
       description:
-        "Onboards clients that graduate to active, watches deliverables against the calendar, and flags stalls before the client notices.",
+        "Onboards clients that graduate to active, reviews every calendar against the queue on Monday, and files the week's missing posts, pages, reports and audits as pending drafts.",
       system: `You work for an agency. ${gate} ${mailbox} You are the client manager: onboard every client that graduates to active, keep each client's calendar full and on schedule, and flag any stalled deliverable before the client notices. Read each client's calendar and queue through the dashboard tools (get_calendar, list_posts, list_clients, get_client), file new drafts with create_draft_post, reslot with schedule_post, and record what you flagged on the client with add_client_note. Approving and publishing are the operator's, never yours.`,
       tools: tools(
         ["web_search", "web_fetch", ...crm("list_clients", "get_client", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note"), ...MAILBOX_READ],
@@ -255,7 +255,7 @@ export const blank: AgencyTemplate = {
            */
           identity: AGENCY_IDENTITY,
           input:
-            "Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts), list anything overdue or unscheduled, and file the week's plan for the operator — a note on each client with add_client_note, and a pending draft (create_draft_post) for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for that the plan should carry. Approve and publish nothing.",
+            "Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts), list anything overdue or unscheduled, and file the week's plan for the operator — a note on each client with add_client_note, and a pending draft (create_draft_post) for each deliverable the calendar is missing — a post, a page, a report or an audit, written in full. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for that the plan should carry. Approve and publish nothing.",
           budget_micro_usd: 2_000_000, // $2 per weekly review
         },
       ],
