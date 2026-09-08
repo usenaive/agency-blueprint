@@ -108,6 +108,17 @@ describe("mcp tools", () => {
     expect(store.read().clients.at(-1)?.id).toBe(lead.id);
   });
 
+  it("add_client_note files the note verbatim and restates the next action when given", async () => {
+    const store = freshStore();
+    const answer = (await handleMcp(call("add_client_note", {
+      id: anyClient, note: "Drafted follow-up: are you still weighing the proposal?", next_action: "Reply to follow-up",
+    }), store, null)) as CallResult;
+    const client = JSON.parse(answer.result.content[0]!.text) as { notes: string[]; nextAction: string };
+    expect(client.notes.at(-1)).toBe("Drafted follow-up: are you still weighing the proposal?");
+    expect(client.nextAction).toBe("Reply to follow-up");
+    expect(store.read().clients.find((c) => c.id === anyClient)?.nextAction).toBe("Reply to follow-up");
+  });
+
   it("walks a post through draft → approve → schedule", async () => {
     const store = freshStore();
     const drafted = (await handleMcp(call("create_draft_post", {

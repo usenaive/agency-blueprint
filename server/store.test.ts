@@ -58,6 +58,24 @@ describe("openStore", () => {
     expect(store.read().clients.some((c) => c.id === lead.id)).toBe(true);
   });
 
+  it("files a note on a client, restating what it waits on only when told to", () => {
+    const file = storeFile();
+    const store = openStore(file);
+    const id = clientAt("lead");
+    const before = store.read().clients.find((c) => c.id === id)!;
+    const notes = before.notes.length;
+    const nextAction = before.nextAction;
+    const noted = store.addClientNote(id, "Follow-up drafted: checking in on the proposal.");
+    expect(noted?.notes.at(-1)).toBe("Follow-up drafted: checking in on the proposal.");
+    expect(noted?.nextAction).toBe(nextAction);
+    expect(store.addClientNote(id, "Replied Tuesday.", "Waiting on their signature")?.nextAction).toBe(
+      "Waiting on their signature",
+    );
+    expect(store.addClientNote("nope", "x")).toBeNull();
+    const onDisk = JSON.parse(readFileSync(file, "utf8")) as { clients: { id: string; notes: string[] }[] };
+    expect(onDisk.clients.find((c) => c.id === id)?.notes).toHaveLength(notes + 2);
+  });
+
   it("advances a client along the pipeline and persists it", () => {
     const file = storeFile();
     const store = openStore(file);

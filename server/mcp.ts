@@ -79,6 +79,10 @@ export const TOOLS = [
     note: str("Optional first note"),
   }, ["name", "domain", "contact_name", "contact_email", "contact_role"]) },
   { name: "advance_pipeline", description: "Move a client to the next pipeline stage.", inputSchema: obj({ id: str("Client id") }, ["id"]) },
+  { name: "add_client_note", description: "File a working note on a client — a drafted outreach or follow-up, a call summary, what a proposal is waiting on — for the operator to read on the client's page. Optionally restate what the client is waiting on next.", inputSchema: obj({
+    id: str("Client id"), note: str("The note in full — a drafted follow-up goes here verbatim"),
+    next_action: str("Optional: what this client is waiting on now, replacing the previous next action"),
+  }, ["id", "note"]) },
   { name: "list_posts", description: "Content queue for a client, optionally filtered by state.", inputSchema: obj({
     client: str("Client id"), state: str("Optional status filter: pending|ready|approved|posted|rejected"),
   }, ["client"]) },
@@ -133,6 +137,12 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       });
     case "advance_pipeline": {
       const client = store.advanceClient(need(params, "id"));
+      if (!client) throw new ToolError("no such client");
+      return client;
+    }
+    case "add_client_note": {
+      const client = store.addClientNote(need(params, "id"), need(params, "note"),
+        typeof params.next_action === "string" && params.next_action !== "" ? params.next_action : undefined);
       if (!client) throw new ToolError("no such client");
       return client;
     }

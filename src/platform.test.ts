@@ -4,7 +4,7 @@
  * a claim is what can be wrong.
  */
 import { describe, expect, it } from "vitest";
-import { argRows, parked, stopLabel, usd, waitingOn, type PlatformSession } from "./platform";
+import { argRows, parked, sendable, stopLabel, usd, waitingOn, type PlatformSession } from "./platform";
 
 const session = (over: Partial<PlatformSession> = {}): PlatformSession => ({
   id: "ses_1",
@@ -31,6 +31,17 @@ describe("parked", () => {
   it("is not an idle session that finished, nor one parked with nothing to decide", () => {
     expect(parked(session({ stop_reason: "end_turn", pending_actions: [held] }))).toBe(false);
     expect(parked(session({ stop_reason: "awaiting_approval" }))).toBe(false);
+  });
+
+  /**
+   * `ask_operator` parks the session with a different stop reason and a `kind: "question"` row. An
+   * agent told to ask for the tool it lacks, whose question then reached nobody, is the mailbox
+   * silence over again.
+   */
+  it("is also the session parked on a question, so ask_operator reaches the operator", () => {
+    const asked = { kind: "question" as const, tool_call_id: "call_q", name: "ask_operator", args: {}, question: { prompt: "Which inbox?", fields: [] } };
+    expect(parked(session({ stop_reason: "awaiting_answer", pending_actions: [asked] }))).toBe(true);
+    expect(stopLabel(session({ stop_reason: "awaiting_answer" }))).toBe("Waiting for your answer");
   });
 });
 
@@ -82,6 +93,21 @@ describe("argRows", () => {
   it("gives a long single-line string its own lines rather than truncating it", () => {
     const [row] = argRows({ subject: "x".repeat(100) });
     expect(row).toEqual({ key: "subject", value: "x".repeat(100), block: true });
+  });
+});
+
+describe("sendable", () => {
+  const fields = [
+    { key: "address", label: "Mailbox address", type: "text" as const },
+    { key: "scope", label: "What to read", type: "choice" as const, options: ["replies only "], multiple: true, other: true },
+  ];
+
+  it("trims free text and drops a blank 'other' entry, alone or beside a listed option", () => {
+    // A multi-select's free-text slot is one more array entry: `["   "]` is as unanswered as
+    // `"   "`, and `["replies only", "   "]` must go out without the blank.
+    expect(sendable(fields, { address: "  a@b.example ", scope: ["   "] })).toEqual({ address: "a@b.example", scope: [] });
+    expect(sendable(fields, { scope: ["replies only ", "   "] })).toEqual({ scope: ["replies only "] });
+    expect(sendable(fields, { scope: ["replies only ", " bounces "] })).toEqual({ scope: ["replies only ", "bounces"] });
   });
 });
 

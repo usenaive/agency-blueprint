@@ -32,7 +32,7 @@ flowchart LR
   plat --> site["site app<br/>frontend only"]
   plat --> sales["sales agent<br/>cron 08:30 Mon-Fri"]
   plat --> cm["client-manager agent<br/>cron 08:00 Mon"]
-  plat --> idn["agency identity<br/>holds the connected accounts"]
+  plat --> idn["agency identity<br/>owns the mailbox, holds the connected accounts"]
 ```
 
 - **The dashboard app** (`dashboard`, fullstack) — this repo's built UI plus a thin server
@@ -46,17 +46,18 @@ flowchart LR
 - **Two agency agents** — the active template's, each with a system prompt, a scoped tool
   policy and a daily budget:
   - `sales` — works the CRM pipeline: researches leads, drafts outreach and proposals. Never
-    sends anything without your approval. Carries a weekday pass that reads the mailbox for
-    replies and drafts the follow-ups for anything that has gone quiet — a pipeline goes
-    stale in days, not weeks.
+    sends anything without your approval. Carries a weekday pass that reads the agency
+    mailbox for replies and drafts the follow-ups for anything that has gone quiet — a
+    pipeline goes stale in days, not weeks.
   - `client-manager` — onboards graduating clients, watches deliverables against the
     calendar, flags stalls before the client notices. Carries a Monday-morning schedule that
     reviews every active client's calendar and drafts the week's plan for you.
-- **The agency identity** (`agency`) — the persona both agents and every schedule act as.
+- **The agency identity** (`agency`) — the persona both agents and every schedule act as. It
+  is what owns the agency mailbox and holds any connected account.
 
-That persona is not decoration: connection tools resolve `session → agent → identity →
-connected accounts`, so an agent holding no persona is offered nothing at all from a
-connected account, and a scheduled fire without one runs as nobody. It is declared once in
+That persona is not decoration: identity tools resolve `session → agent → identity →
+{inboxes, connected accounts}`, so an agent holding no persona is offered nothing at all from
+a mailbox or a connected account, and a scheduled fire without one runs as nobody. It is declared once in
 [`naive.config.ts`](naive.config.ts); the schedules name it and a real time zone
 ([`templates/blank.ts`](templates/blank.ts)), because an omitted zone is UTC by the
 platform's default and 08:00 UTC is nobody's Monday morning.
@@ -94,6 +95,21 @@ comes first.
 `NAIVE_API_KEY` is declared on the dashboard app as `{ from_env }`, so it is read from your
 shell at apply time and never written into this repository. An unset variable refuses the
 apply by name rather than deploying a dashboard that cannot reach the platform.
+
+**Then give the agency a mailbox.** `naive up` provisions the persona but not an inbox on it —
+an inbox is an address, and the address is yours to choose. Provision one on the `agency`
+identity, on your organization's system domain or a domain you have verified:
+
+```sh
+naive identity list                                       # find the agency persona's idn_...
+naive identity domain list                                # the system domain's dom_...
+naive identity email provision --identity idn_... --domain dom_... --address hello@<domain>
+```
+
+From the next turn on, both agents are offered `email.inboxes` and `email.read` for it, and
+`email.send` (held at `ask`) where the deployment's mail provider is configured. Until then the
+sales agent's weekday pass finds no mailbox tool and says so — it will not read anything else
+as the mailbox, and it asks you for one through **Approvals** rather than guessing.
 
 | Script | What it does |
 |---|---|
@@ -163,7 +179,7 @@ plus a re-apply, and a button could not honestly do it.
 | Screen | What it does |
 |---|---|
 | CRM | Pipeline board (lead → proposal → active → churned), contacts, notes, advance-stage, and **Add a client** — the first one included |
-| Approvals | Every agent that has stopped for your approval, the call it wants to make, and the arguments it proposed. Approve or reject each one, with a reason |
+| Approvals | Every agent that has stopped on you: the call it wants to make with the arguments it proposed (approve or reject, with a reason), or the question it asked (answer it, and the agent carries on) |
 | Agents | Every agent in the organization, read from the platform: its budget, what it has spent this period, its sessions and why each one stopped — plus chat with the client-manager |
 | Clients | Active clients; each opens a workspace with Overview · Connections · Calendar · Agents · Posts |
 | Settings | Platform wiring, and MCP access tokens on a local server |
@@ -174,9 +190,27 @@ prompts: no agency agent is granted a tool that can publish — not the dashboar
 the client's Posts tab moves them onward — from inside the draft, not from the row, because a
 deliverable approved off one truncated line is a deliverable nobody read.
 
-An agent's outward *connection* tools work the same way from the other side: they are
-granted, and held at `ask`. The call stops the turn and appears on **Approvals** with its
-arguments, so the agent may compose the email and may not send it without you.
+An agent's outward tools work the same way from the other side: `email.send` (and any
+connector operation that sends) is granted, and held at `ask`. The call stops the turn and
+appears on **Approvals** with its arguments, so the agent may compose the email and may not
+send it without you.
+
+**Approvals is also where an agent asks for what it lacks.** Every agent of this blueprint is
+told that the tools offered in a turn are the complete list of what it can do, and holds two
+doors to you. `ask_operator` asks a question — which inbox, which client, whether to proceed;
+it lands on **Approvals** with the session parked behind it, and your answer wakes the session.
+`request_tools` asks for a capability — `generate_video` and a video model, `email.read`, a
+connector's tool — naming the exact tools, permission and reason; it lands on **Approvals** as a
+tool card, and approving it mints a new version of that agent and re-pins the running session, so
+the tool is offered from its next turn. No `naive up` is needed for that — but the next `up`
+writes the template's toolset back, so a grant you want to keep belongs in `templates/*.ts`
+too. What neither door can do is conjure an account or an inbox: a granted `email.read`
+still reads nothing until the persona has an inbox, and a granted `googlesearchconsole.*` still
+needs the property connected to the identity.
+
+The sales agent files what it drafts on the client row: `add_client_note` carries the outreach
+or follow-up in full and restates what the client is waiting on, and shows on the client's page.
+Nothing it files is sent; `email.send` is the send, and it always waits for you.
 
 **A fresh deployment is empty, and that is correct.** The CRM, the calendar and the queue
 start with nothing in them, and fill with what you and your agents put there. No screen has a
@@ -206,8 +240,8 @@ plus a re-apply.
 Two rules worth knowing before your first edit:
 
 - **An agent needs a persona.** Name `AGENCY_IDENTITY` on any agent you add — and on any
-  schedule you give it. Without it every connector tool in its allow-list resolves to
-  nothing, silently, and a scheduled fire runs as nobody.
+  schedule you give it. Without it every mailbox and connector tool in its allow-list
+  resolves to nothing, silently, and a scheduled fire runs as nobody.
 - **Schedules are the one place where dropping a line deletes.** An agent's `schedules` are
   owned as a complete set and matched to live deployments by their exact cron string, so
   `"0 8 * * 1"` and `"0 08 * * 1"` are a delete plus a create rather than a patch. Change a
@@ -251,17 +285,21 @@ policies are deny-by-default, so each one names the CRM tools it works with; nei
 `approve_post` or `start_agent_session` — approving and spending stay with you. Nor does
 either hold the platform's `social.post`.
 
-The client's **connected accounts** reach an agent the same way, as `<connector>.<tool>` — one
-namespaced name per operation, because deny-by-default means a connection nobody named is a
-connection nobody can use. Naming them is only half of it: the accounts hang off an
-**identity**, and the resolution runs `session → agent → identity → connected accounts`, so
-an agent that holds no persona is offered none of these tools however carefully its
-allow-list reads. This blueprint declares one persona (`agency`) and names it on every agent
-and every schedule; the per-client crew is granted it at onboarding by the dashboard server,
-since `POST /v1/agents` has no identity field and the grant is a call of its own. The agency
-pair reads a connected mailbox (`gmail.fetch_emails`) and may send from it only through you
-(`gmail.send_email`, `ask`); the `seo-geo` crew reads the client's own search and analytics
-accounts and writes to neither.
+The **agency mailbox** reaches an agent as the platform's own `email.*` tools: `email.inboxes`
+and `email.read` (`allow`) and `email.send` (`ask`). They are offered to a turn only when the
+turn's identity owns an inbox — no inbox, no tools, not "tools that return nothing" — which is
+why provisioning one is a Get-started step. The client's **connected accounts** reach an agent
+as `<connector>.<tool>` — one namespaced name per operation, because deny-by-default means a
+connection nobody named is a connection nobody can use. Gmail is one of those connectors, not
+the agency mailbox: an agency that also wants its agents in a real Google account connects it
+from a Connections tab and names `gmail.fetch_emails` / `gmail.send_email` in `blank.ts`.
+Naming is only half of it: inboxes and accounts hang off an **identity**, and the resolution
+runs `session → agent → identity → {inboxes, connected accounts}`, so an agent that holds no
+persona is offered none of these tools however carefully its allow-list reads. This blueprint
+declares one persona (`agency`) and names it on every agent and every schedule; the per-client
+crew is granted it at onboarding by the dashboard server, since `POST /v1/agents` has no
+identity field and the grant is a call of its own. The `seo-geo` crew reads the client's own
+search and analytics accounts and writes to neither.
 
 Outside clients keep using tokens minted from a local server's Settings screen. The platform
 token is never shown in the dashboard and cannot be revoked from it; drop `mcp` from the
