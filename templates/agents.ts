@@ -82,7 +82,7 @@ export const OPERATOR = [...ASK_OPERATOR, ...REQUEST_TOOLS];
  * anything else is inventing a client.
  */
 export const PREAMBLE =
-  "Before anything else, read project_context: it holds what this agency sells and to whom, who its ideal client is and how it prices, in the operator's own words, plus the agency's apps and crew. " +
+  "Before anything else, read project_context: it holds what this agency sells and to whom, who its ideal client is and — when the template asked — how it prices, in the operator's own words, plus the agency's apps and crew. " +
   "Those answers are the client's, not yours to invent — where the context is silent on something you need, ask the operator rather than filling the gap yourself.";
 
 /** The one rule every agent of this blueprint shares: nothing leaves the agency without the operator. */
@@ -134,7 +134,7 @@ export const roster: AgentDecl[] = [
     description:
       "Keeps the public site true to the agency: rewrites hero, services, who-we-serve, process, pricing and FAQ from the project context. Proposes every change through update_site; nothing goes live without you.",
     system: system(
-      "You are the site builder: the public site must describe this agency in its own words. Read the site first with dashboard.get_site, then rewrite the sections that still say generic things from the context answers — the hero from the offer, who-we-serve from the ideal client, pricing from the pricing answer, and services, process and FAQ to match. Propose the whole rewrite as one update_site call, which waits for the operator. Never write a case study, a testimonial, a number or a client name the context does not give you; the proof strip carries facts about how the agency works, never results.",
+      "You are the site builder: the public site must describe this agency in its own words. Read the site first with dashboard.get_site, then rewrite the sections that still say generic things from the context answers — the hero from the offer, who-we-serve from the ideal client, pricing from the pricing answer when the context holds one (when it does not, ask the operator once with ask_operator and leave that section as it stands), and services, process and FAQ to match. Propose the whole rewrite as one update_site call, which waits for the operator. Never write a case study, a testimonial, a number or a client name the context does not give you; the proof strip carries facts about how the agency works, never results.",
     ),
     tools: tools([...CONTEXT, "web_fetch", ...crm("get_site")], [...crm("update_site"), ...OPERATOR]),
     skills: ["naive/landing-page-copy"],
@@ -142,7 +142,7 @@ export const roster: AgentDecl[] = [
     schedules: [],
     intake: {
       message:
-        "Read project_context. Then read the site (dashboard.get_site) and rewrite every section that still says generic things — hero, services, who we serve, process, pricing, FAQ — so it describes THIS agency in its own words, from the answers. Do not invent case studies, testimonials or numbers. Propose the rewrite as one update_site call.",
+        "Read project_context. Then read the site (dashboard.get_site) and rewrite every section that still says generic things — hero, services, who we serve, process, FAQ, and pricing if the context holds a pricing answer (if it does not, ask the operator once with ask_operator and leave that section for now) — so it describes THIS agency in its own words, from the answers. Do not invent case studies, testimonials or numbers. Propose the rewrite as one update_site call.",
       budget_micro_usd: DAY_ONE,
     },
   },
@@ -293,7 +293,7 @@ export const roster: AgentDecl[] = [
     description:
       "Turns a qualified lead into a proposal: scope, three package tiers from the pricing answer, timeline. Works when sales hands one over; files it as a note on the client.",
     system: own(
-      "You are the proposal writer. Read the lead with get_client — its notes, its services, what it is waiting on — and the pricing answer in the context before writing a line. Through the dashboard tools, file each proposal with add_client_note on that client: scope, three package tiers priced from the pricing answer, a timeline, and what the client must provide. Never quote a price the context does not support, never promise a result, and never send the proposal — the operator does.",
+      "You are the proposal writer. Read the lead with get_client — its notes, its services, what it is waiting on — and the pricing answer in the context before writing a line. Through the dashboard tools, file each proposal with add_client_note on that client: scope, three package tiers — priced from the pricing answer when the context holds one; when it does not, scoped without prices, and ask the operator once with ask_operator — a timeline, and what the client must provide. Never quote a price the context does not support, never promise a result, and never send the proposal — the operator does.",
     ),
     tools: tools([...CONTEXT, "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note")], OPERATOR),
     skills: ["naive/proposal-writing"],
@@ -301,7 +301,7 @@ export const roster: AgentDecl[] = [
     schedules: [],
     intake: {
       message:
-        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers from the pricing answer. File it as a note on the agency's own record (list_clients; create it with create_lead if it is not there yet).",
+        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers: priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price. File it as a note on the agency's own record (list_clients; create it with create_lead if it is not there yet).",
       budget_micro_usd: DAY_ONE,
     },
   },

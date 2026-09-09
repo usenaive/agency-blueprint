@@ -84,6 +84,19 @@ describe("every template of this blueprint", () => {
     expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", template.name === "blank" ? "pricing" : "competitors"]);
   });
 
+  it.each(all)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
+    // `seo-geo` spends its third question on competitors, so its context holds no pricing answer;
+    // the site-builder and the proposal-writer, who both write from one, are told to ask the operator
+    // instead — never to read the absence as "free" or to invent a tier.
+    const asked = new Set(template.questions.map((q) => q.key));
+    for (const name of ["site-builder", "proposal-writer"]) {
+      const agent = template.agents.find((a) => a.name === name)!;
+      expect(agent.system, name).toMatch(/pricing answer when the context holds one.*when it does not.*ask_operator/);
+    }
+    const gap = template.agents.find((a) => a.name === "gap-researcher")!;
+    expect(gap.system.includes("third setup answer")).toBe(asked.has("competitors"));
+  });
+
   it.each(all)("$name seeds a demo that says it is one, and files only kinds it declares", (template) => {
     const kinds = new Set(template.kinds.map((k) => k.id));
     expect(kinds.size).toBeGreaterThan(0);
