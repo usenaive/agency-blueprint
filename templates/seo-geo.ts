@@ -2,10 +2,11 @@
  * `seo-geo` — the same agency, specialised in search: technical audits, SERP work and
  * answer-engine optimization, with a three-agent crew provisioned per client.
  *
- * It is a **delta on `blank`**, and deliberately reads as one. The pair of agency agents is
- * `blank`'s, with one sentence of focus added to each; the machinery around them — model, budget,
- * deny-by-default toolset, approval gate — is shared, so what this file shows is exactly what the
- * specialism changes: the words, the kinds of work, the crew, and the demo seed.
+ * It is a **delta on `blank`**, and deliberately reads as one. The seven agency agents are
+ * `blank`'s, with a sentence or two of search focus added to each and the search skills alongside;
+ * the machinery around them — model, budget, deny-by-default toolset, approval gate, timers,
+ * intakes — is shared, so what this file shows is exactly what the specialism changes: the words,
+ * the kinds of work, the third question, the crew, and the demo seed.
  *
  * Switching to it widens: `naive up` creates nothing the operator loses, and the crew below is
  * created per client at onboarding by `server/proxy.ts`. Switching away leaves every crew agent
@@ -14,15 +15,31 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, blank, budget, crm, gate, model, OPERATOR, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, blank, budget, crm, gate, model, OPERATOR, questions, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
 const FOCUS: Record<string, string> = {
+  "site-builder":
+    "This agency sells search and answer-engine work: the services section names SEO, GEO and content; the FAQ answers what GEO is and how citations are measured; every page carries one clear query it is built for.",
   sales:
     "This agency sells search and answer-engine work, so research each lead's search presence first — what they rank for, where they are cited in AI answers, and what a first audit would find.",
   "client-manager":
-    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's crew pointed at the next one.",
+    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one.",
+  "content-writer":
+    "Every post is written for one query and one intent, carries an answer block an AI engine can cite, and names the entity it is about in the first hundred words.",
+  "content-reviser":
+    "Weak here means: no target query, no answer block, thin entity coverage, or a title that no longer matches the query it ranks for.",
+  "gap-researcher":
+    "The competitors are the three the third setup answer names — the ones this agency's clients lose to in search. Compare where each is cited in AI answers as well as where it ranks.",
+  "proposal-writer":
+    "Tiers are scoped in audits, articles, answer blocks and SERP reports per month; a proposal never promises a ranking or a citation.",
+};
+
+/** The search skills each agent reads alongside its generic ones. */
+const SKILLS: Record<string, string[]> = {
+  "content-writer": ["naive/geo-answer-blocks"],
+  "gap-researcher": ["naive/geo-answer-blocks"],
 };
 
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
@@ -53,7 +70,7 @@ const SEARCH_READ = [
  * (`seo-writer--acme-dental`), which is how one organization hosts many clients' agents. Model,
  * budget, allow-list and persona are template data — the server holds none of them.
  *
- * Every member names `AGENCY_IDENTITY` for the reason the agency's own pair does: without a persona
+ * Every member names `AGENCY_IDENTITY` for the reason the agency's own seven do: without a persona
  * the search and analytics names above resolve to nothing, and a crew sold on working against the
  * client's own numbers can call `web_search` and `web_fetch` and no more. `POST /v1/agents` carries
  * no identity field, so the grant is a second call — `server/proxy.ts` makes it, and reports the
@@ -63,6 +80,7 @@ const SEARCH_READ = [
 const crew: AgentDecl[] = [
   {
     name: "seo-writer",
+    role: "SEO writer",
     model,
     budget,
     description: "Briefs, articles and landing copy from the client's keywords and site.",
@@ -75,6 +93,7 @@ const crew: AgentDecl[] = [
   },
   {
     name: "geo-optimizer",
+    role: "GEO optimizer",
     model,
     budget,
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
@@ -87,6 +106,7 @@ const crew: AgentDecl[] = [
   },
   {
     name: "audit-runner",
+    role: "Audit runner",
     model,
     budget,
     description: "Recurring technical and content audits of the client's site and rankings.",
@@ -165,8 +185,29 @@ export const seoGeo: AgencyTemplate = {
   kinds: VOCABULARY["seo-geo"].kinds,
   words: { ...VOCABULARY["seo-geo"].words },
   seed: { clients, posts },
+  questions: [
+    {
+      key: "offer",
+      type: "text",
+      label: "What does your agency sell — SEO, GEO, content — and to whom?",
+      help: questions[0]!.help,
+      placeholder: "Technical SEO and AI-answer optimization for B2B software companies.",
+    },
+    questions[1]!,
+    {
+      key: "competitors",
+      type: "text",
+      label: "Which three competitors do your clients lose to in search?",
+      help: "The gap researcher compares the site against these on day one and every Friday.",
+      placeholder: "Three company names or domains.",
+    },
+  ],
   crew,
-  // The pair is shared; only its focus is this template's. Every other field of the agent — model,
-  // budget, allow-list, schedule — stays `blank`'s, so a change there reaches both templates.
-  agents: blank.agents.map((agent) => ({ ...agent, system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim() })),
+  // The seven are shared; only their focus and search skills are this template's. Every other field
+  // — model, budget, allow-list, timers, intake — stays `blank`'s, so a change there reaches both.
+  agents: blank.agents.map((agent) => ({
+    ...agent,
+    system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
+    skills: [...(agent.skills ?? []), ...(SKILLS[agent.name] ?? [])],
+  })),
 };

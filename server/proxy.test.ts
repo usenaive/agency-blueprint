@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "../templates/active";
 import { AGENCY_IDENTITY } from "../templates/blank";
-import { configFromEnv, listAgents, provisionClientAgents, proxyFetch, upstreamFor } from "./proxy";
+import { collect, configFromEnv, listAgents, provisionClientAgents, proxyFetch, upstreamFor } from "./proxy";
 
 describe("upstreamFor", () => {
   it("does not map the agent roster, which is paged and cannot be relayed one page at a time", () => {
@@ -26,6 +26,14 @@ describe("upstreamFor", () => {
     expect(upstreamFor("GET", "/api/sessions/ses_1/answers", null)).toBeNull();
   });
 
+  it("forwards the parked-session filters and drops anything else", () => {
+    const query = new URLSearchParams({ stop_reason: "awaiting_approval", agent_id: "agt_1", limit: "5", foo: "bar" });
+    expect(upstreamFor("GET", "/api/sessions", null, query)).toEqual({
+      method: "GET",
+      path: "/v1/sessions?limit=100&agent_id=agt_1&stop_reason=awaiting_approval",
+    });
+  });
+
   it("routes social paths through the client identity", () => {
     expect(upstreamFor("POST", "/api/social/portal", "idn_1")).toEqual({ method: "POST", path: "/v1/identities/idn_1/social/portal" });
   });
@@ -44,14 +52,26 @@ describe("configFromEnv", () => {
       apiKey: "k",
       baseUrl: "https://x.test",
       identityId: null,
+      project: "agency",
     });
+  });
+
+  /**
+   * Measured on staging: the install is filed under the customer's slug (`ws12-staging-blank`) and
+   * the dashboard asked for `project=agency`, so `/api/context` was a 404 on every deployed install.
+   * The platform writes the install's own project as `NAIVE_PROJECT`; the declaration's name is
+   * only the fallback for a laptop `naive up`, which files under it.
+   */
+  it("reads the install's project from NAIVE_PROJECT and falls back to the declaration's name", () => {
+    expect(configFromEnv({ NAIVE_API_KEY: "k", NAIVE_PROJECT: "ws12-staging-blank" })?.project).toBe("ws12-staging-blank");
+    expect(configFromEnv({ NAIVE_API_KEY: "k" })?.project).toBe("agency");
   });
 });
 
 describe("proxyFetch", () => {
   it("attaches the key upstream only", async () => {
     const fetchImpl = vi.fn(async () => new Response("{}"));
-    await proxyFetch({ apiKey: "k", baseUrl: "https://x.test", identityId: null }, { method: "GET", path: "/v1/agents" }, null, fetchImpl);
+    await proxyFetch({ apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" }, { method: "GET", path: "/v1/agents" }, null, fetchImpl);
     expect(fetchImpl).toHaveBeenCalledWith("https://x.test/v1/agents", expect.objectContaining({
       method: "GET",
       headers: expect.objectContaining({ authorization: "Bearer k" }),
@@ -60,7 +80,7 @@ describe("proxyFetch", () => {
 });
 
 describe("listAgents", () => {
-  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null };
+  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" };
   const page = (rows: { id: string; name: string }[], next: string | null) =>
     new Response(JSON.stringify({ data: rows, has_more: next !== null, next_cursor: next }), { status: 200 });
 
@@ -92,10 +112,20 @@ describe("listAgents", () => {
       (calls += 1) === 1 ? page([{ id: "agt_1", name: "sales" }], "agt_1") : new Response("nope", { status: 503 }));
     expect(await listAgents(config, flaky as typeof fetch)).toBeNull();
   });
+
+  it("reads the timers the same way — a timer on an unread page is an agent shown with none", async () => {
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL) => {
+      const after = new URL(String(url)).searchParams.get("after");
+      return after === null ? page([{ id: "dep_1", name: "a" }], "dep_1") : page([{ id: "dep_2", name: "b" }], null);
+    });
+    expect(await collect(config, "/v1/deployments", fetchImpl as typeof fetch)).toHaveLength(2);
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe("https://x.test/v1/deployments?limit=100");
+    expect(String(fetchImpl.mock.calls[1]?.[0])).toBe("https://x.test/v1/deployments?limit=100&after=dep_1");
+  });
 });
 
 describe("provisionClientAgents", () => {
-  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null };
+  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" };
   const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
   /** Named, not "the active one": the mechanism is the blueprint's and must hold for either template. */
   const crew = TEMPLATES["seo-geo"].crew;

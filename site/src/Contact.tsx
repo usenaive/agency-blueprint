@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { site } from "../site.config.ts";
+import { useState, type FormEvent, type ReactNode } from "react";
+import type { SiteProfile } from "../site.config.ts";
 import { submitLead, type ContactForm } from "./lead.ts";
 
 const EMPTY: ContactForm = { company: "", website: "", name: "", email: "", services: [], note: "" };
@@ -9,7 +9,7 @@ const EMPTY: ContactForm = { company: "", website: "", name: "", email: "", serv
  * `/api/leads`; when the server isn't reachable (static deploy) it degrades to
  * a direct-email prompt rather than an error — the visitor is never stuck.
  */
-export function Contact() {
+export function Contact({ site }: { site: SiteProfile }) {
   const [form, setForm] = useState(EMPTY);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "offline">("idle");
   const serviceNames = site.services.map((s) => s.name);
@@ -36,7 +36,7 @@ export function Contact() {
   }
 
   return (
-    <Sectionish>
+    <Sectionish site={site}>
       <form onSubmit={onSubmit} className="card mx-auto mt-10 grid max-w-xl gap-4 p-8">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-1 text-sm font-medium">
@@ -87,7 +87,7 @@ export function Contact() {
   );
 }
 
-function Sectionish({ children }: { children: React.ReactNode }) {
+function Sectionish({ site, children }: { site: SiteProfile; children: ReactNode }) {
   return (
     <section id="contact" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-20">
       <div className="text-center">

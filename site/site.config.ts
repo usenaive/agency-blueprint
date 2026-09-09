@@ -1,19 +1,19 @@
 /**
- * THE ONE FILE TO EDIT. Every string and colour on the public site renders from this object —
- * personalizing it to your agency is a single-file rewrite (the README carries a paste-ready
- * prompt for an agent to do it). Components never hard-code copy; they read `site` and nothing
- * else.
+ * THE SEED OF THE PUBLIC SITE. The site is data: this object is the `site_profile` record the
+ * dashboard store is created with (once, for the active template), the public site renders
+ * whatever `GET /api/site` answers, and the site-builder agent rewrites it from the setup answers
+ * through `dashboard.update_site` — every change waiting for the operator's approval. Components
+ * never hard-code copy; they read the profile and nothing else.
  *
  * What the agency *does* is not written here twice: the hero, the services and the footer are the
  * active template's (`templates/index.ts`), so the public site sells the same specialism the
  * dashboard runs, and switching template changes both. Everything below that — your name, your
- * palette, your process and your prices — is yours, and is template-neutral on purpose.
+ * palette, your process and your prices — is a generic starting point the crew replaces.
  *
- * One rule that is not about taste: `caseStudies.items` and `testimonials.items` ship **empty**,
- * and the page tells visitors so. A case study is a factual claim about someone else's business
- * and a testimonial is words in a named person's mouth, so this template carries neither — an
- * unedited deploy must never publish client work nobody did. Add entries only from engagements
- * you actually ran and quotes a client actually gave you.
+ * One rule that is not about taste: the proof strip carries facts about how the agency works and
+ * **no number**, and there is no case study and no testimonial. A result is a factual claim about
+ * someone else's business and a quote is words in a named person's mouth, so this template
+ * carries neither — an unedited deploy must never publish client work nobody did.
  */
 
 import { ACTIVE } from "../templates/index.ts";
@@ -30,26 +30,6 @@ export interface ProcessStep {
   description: string;
 }
 
-/**
- * A real engagement, published with the client's sign-off. The template ships none: a case study
- * is a factual claim about someone else's business, so there is nothing honest to put here until
- * the agency has one. See `caseStudies.empty` for what the page says in the meantime.
- */
-export interface CaseStudy {
-  client: string;
-  industry: string;
-  headline: string;
-  result: string;
-  metrics: { label: string; value: string }[];
-}
-
-/** A quote a named person actually gave you. Ships empty for the same reason case studies do. */
-export interface Testimonial {
-  quote: string;
-  name: string;
-  role: string;
-}
-
 export interface PricingTier {
   name: string;
   price: string;
@@ -59,7 +39,8 @@ export interface PricingTier {
   featured?: boolean;
 }
 
-export interface SiteConfig {
+/** The public site, as one record: `site_profile` in the store, the body of `GET /api/site`. */
+export interface SiteProfile {
   company: string;
   tagline: string;
   /** One sentence of voice guidance for whoever (or whatever) rewrites the copy. */
@@ -67,17 +48,58 @@ export interface SiteConfig {
   /** The site's whole colour budget; everything else is ink on paper. */
   palette: { accent: string; accentInk: string; ground: string; ink: string; muted: string };
   hero: { eyebrow: string; title: string; subtitle: string; cta: string; secondaryCta: string };
+  /** Facts about how the agency works — never a result, a count or a client name. */
+  proof: { facts: string[] };
   services: Service[];
+  whoWeServe: { title: string; subtitle: string; segments: { name: string; description: string }[] };
   process: { title: string; subtitle: string; steps: ProcessStep[] };
-  /** `empty` is what a visitor reads while `items` is empty — say nothing you cannot stand behind. */
-  caseStudies: { title: string; empty: string; items: CaseStudy[] };
-  testimonials: { title: string; empty: string; items: Testimonial[] };
   pricing: { title: string; subtitle: string; tiers: PricingTier[] };
+  faq: { title: string; items: { question: string; answer: string }[] };
   contact: { title: string; subtitle: string; email: string; offlineNote: string };
   footer: { note: string };
 }
 
-export const site: SiteConfig = {
+/** The section names an `update_site` may replace; anything else is refused by name. */
+export const SITE_SECTIONS = [
+  "company", "tagline", "tone", "palette", "hero", "proof", "services", "whoWeServe", "process", "pricing", "faq", "contact", "footer",
+] as const satisfies readonly (keyof SiteProfile)[];
+
+/**
+ * A section is accepted when it has the seed's shape all the way down: the same type, every key
+ * the seed has, and each list's items shaped like the seed's first — so a page never renders a
+ * tier without a price or a step without a title. The store judges an `update_site` by it and the
+ * page judges what `GET /api/site` served by it.
+ */
+export const sameShape = (seed: unknown, value: unknown): boolean => {
+  if (Array.isArray(seed)) {
+    return Array.isArray(value) && (seed.length === 0 || value.every((item) => sameShape(seed[0], item)));
+  }
+  if (typeof seed !== "object" || seed === null) return typeof value === typeof seed;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const given = value as Record<string, unknown>;
+  return Object.entries(seed).every(([key, inner]) => key in given && sameShape(inner, given[key]));
+};
+
+/**
+ * The size a section may be, on top of the shape it must have. `sameShape` judges types and keys
+ * and nothing else, so a perfectly shaped hero whose title is ten megabytes long passes it — and
+ * the writer is a language model working from an operator's answers, so a runaway generation is
+ * the ordinary failure here, not the exotic one. These are the page's own limits, with room to
+ * spare: the longest thing the seed says is a two-sentence FAQ answer, and its longest list is
+ * four items.
+ */
+export const MAX_TEXT = 2_000;
+export const MAX_ITEMS = 24;
+
+/** Every string and every list inside `value` within those bounds, all the way down. */
+export const withinBounds = (value: unknown): boolean => {
+  if (typeof value === "string") return value.length <= MAX_TEXT;
+  if (Array.isArray(value)) return value.length <= MAX_ITEMS && value.every(withinBounds);
+  if (typeof value === "object" && value !== null) return Object.values(value).every(withinBounds);
+  return true;
+};
+
+export const site: SiteProfile = {
   company: ACTIVE.words.brand,
   tagline: ACTIVE.site.tagline,
   tone: "Confident, plain-spoken, evidence-first. No jargon, no hype.",
@@ -89,7 +111,23 @@ export const site: SiteConfig = {
     cta: ACTIVE.site.cta,
     secondaryCta: "See how we work",
   },
+  proof: {
+    facts: [
+      "Every deliverable passes your approval queue before it ships.",
+      "One report a month, tied to the work — not to vanity metrics.",
+      "Month to month after the first quarter; no long lock-in.",
+    ],
+  },
   services: ACTIVE.site.services,
+  whoWeServe: {
+    title: "Who we work with",
+    subtitle: "Companies that want the work shown before it ships, and a number at the end of the month.",
+    segments: [
+      { name: "Founder-led companies", description: "You are the marketing team. We bring the calendar, you keep the last word." },
+      { name: "Small marketing teams", description: "One or two people who need production capacity without losing control of the voice." },
+      { name: "Multi-location businesses", description: "Several sites or markets that need one plan and one report." },
+    ],
+  },
   process: {
     title: "How an engagement runs",
     subtitle: "Four steps, no mystery. You see every deliverable before it ships.",
@@ -99,21 +137,6 @@ export const site: SiteConfig = {
       { title: "Ship", description: "Work goes out weekly. Everything passes through your approval queue first." },
       { title: "Prove", description: "Monthly reports tie the work to what moved — not vanity metrics." },
     ],
-  },
-  /**
-   * Empty on purpose. Fill `items` with engagements you actually ran, and only with the client's
-   * permission — an unedited deploy must never show a visitor a result nobody achieved.
-   */
-  caseStudies: {
-    title: "Client results",
-    empty: "No case studies published yet.",
-    items: [],
-  },
-  /** Empty on purpose: a quote goes here only when a named person actually gave you one. */
-  testimonials: {
-    title: "What clients say",
-    empty: "No client quotes published yet.",
-    items: [],
   },
   pricing: {
     title: "Plain pricing",
@@ -141,6 +164,15 @@ export const site: SiteConfig = {
         blurb: "Multi-site or multi-market programs with embedded reporting.",
         includes: ["Everything in Growth", "Multi-domain programs", "Custom dashboards", "Quarterly on-site planning"],
       },
+    ],
+  },
+  faq: {
+    title: "Questions we get asked",
+    items: [
+      { question: "Who approves what goes out?", answer: "You do. Every draft, post and page waits in an approval queue until you release it; nothing is sent or published on your behalf." },
+      { question: "How quickly does an engagement start?", answer: "The baseline begins the week the contract is signed and is written up within two weeks; the first calendar follows it." },
+      { question: "What do you need from us?", answer: "Access to the accounts we report on, one person who can approve work, and an hour a week." },
+      { question: "Can we stop?", answer: "Yes. Plans run month to month after the first quarter, and every deliverable is yours to keep." },
     ],
   },
   contact: {

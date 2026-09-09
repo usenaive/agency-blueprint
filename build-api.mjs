@@ -44,11 +44,14 @@ await build({
   define: { "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? "") },
 });
 
-// Three rewrites, in this order. `/mcp` is the endpoint `naive.config.ts` declares; `/api/(.*)`
-// carries every dashboard route to the same function with its own path intact; the last is the
-// single-page fallback, without which a reload, a bookmark or a shared deep link into any screen
-// is a hard 404 from the host. The host checks the filesystem before it rewrites, so `/api/app`
-// and every static asset are served directly and the fallback never swallows a function.
+// Four rewrites, in this order. `/mcp` is the endpoint `naive.config.ts` declares; `/api/(.*)`
+// carries every dashboard route to the same function with its own path intact; `/app/:path*` is
+// the operator dashboard's single-page fallback (`dist/app/index.html`), without which a reload, a
+// bookmark or a shared deep link into any screen is a hard 404 from the host; the last sends
+// everything else to the public site. A pre-`/app` operator path lands there too and the site's
+// first line of script forwards it (`site/routing.ts`). The host checks the filesystem before it
+// rewrites, so `/api/app` and every static asset are served directly and no fallback swallows a
+// function.
 writeFileSync(
   join(dist, "vercel.json"),
   `${JSON.stringify(
@@ -56,6 +59,7 @@ writeFileSync(
       rewrites: [
         { source: "/mcp", destination: "/api/app?__path=/mcp" },
         { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
+        { source: "/app/:path*", destination: "/app/index.html" },
         { source: "/((?!api/).*)", destination: "/index.html" },
       ],
     },

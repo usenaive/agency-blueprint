@@ -108,6 +108,15 @@ describe("mcp tools", () => {
     expect(store.read().clients.at(-1)?.id).toBe(lead.id);
   });
 
+  it("create_lead needs only a name: the agency's own record is filed without a contact to ask for", async () => {
+    const store = freshStore();
+    const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio" }), store, null)) as CallResult;
+    const lead = JSON.parse(answer.result.content[0]!.text) as { id: string; domain: string; contact: { email: string } };
+    expect(lead.domain).toBe("");
+    expect(lead.contact.email).toBe("");
+    expect(store.read().clients.at(-1)?.id).toBe(lead.id);
+  });
+
   it("add_client_note files the note verbatim and restates the next action when given", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("add_client_note", {
@@ -158,6 +167,23 @@ describe("mcp tools", () => {
     const posts = JSON.parse(week.result.content[0]!.text) as { scheduledFor: string }[];
     expect(posts.every((p) => p.scheduledFor === day)).toBe(true);
     expect(posts.length).toBeGreaterThan(0);
+  });
+
+  it("get_site reads the page as served, and update_site replaces whole sections or nothing", async () => {
+    const store = freshStore();
+    const before = (await handleMcp(call("get_site", {}), store, null)) as CallResult;
+    const page = JSON.parse(before.result.content[0]!.text) as { hero: { title: string }; pricing: unknown };
+    expect(page).toEqual(store.site());
+    const hero = { ...page.hero, title: "Paid social for skincare brands" };
+    const updated = (await handleMcp(call("update_site", { site: { hero } }), store, null)) as CallResult;
+    expect(updated.result.isError).toBeUndefined();
+    expect(store.site().hero.title).toBe("Paid social for skincare brands");
+    expect(store.site().pricing).toEqual(page.pricing);
+    // A section outside the page, or one that lost its shape, is refused in words the builder can act on.
+    const bad = (await handleMcp(call("update_site", { site: { testimonials: [] } }), store, null)) as CallResult;
+    expect(bad.result.isError).toBe(true);
+    expect(bad.result.content[0]!.text).toMatch(/^site must name only company, tagline, .*each in the shape get_site returns$/);
+    expect(((await handleMcp(call("update_site", {}), store, null)) as CallResult).result.isError).toBe(true);
   });
 
   it("answers tool errors as isError results, not protocol errors", async () => {

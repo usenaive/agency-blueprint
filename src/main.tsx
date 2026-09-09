@@ -14,14 +14,18 @@ import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Clients } from "./screens/Clients";
 import { Crm } from "./screens/Crm";
+import { Home } from "./screens/Home";
 import { Settings } from "./screens/Settings";
 
+// The operator dashboard lives under `/app`; `/` is the agency's public site (`site/`). The basename
+// keeps every link in the screens as it was written, and the redirect from the old root paths is
+// the public bundle's and the servers' (`site/routing.ts`).
 const router = createBrowserRouter([
   {
     path: "/",
     Component: Shell,
     children: [
-      { index: true, element: <Navigate to="/crm" replace /> },
+      { index: true, Component: Home },
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
@@ -41,7 +45,7 @@ const router = createBrowserRouter([
       { path: "settings", Component: Settings },
     ],
   },
-]);
+], { basename: "/app" });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

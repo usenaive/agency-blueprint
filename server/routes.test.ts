@@ -5,7 +5,8 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hashToken } from "./mcp.ts";
-import { handleRequest, isLoopback, type ApiContext, type ApiRequest } from "./routes.ts";
+import { handleRequest, isLoopback, OPEN_LEADS_CAP, type ApiContext, type ApiRequest } from "./routes.ts";
+import { LEAD_WINDOW_MS, LEADS_PER_WINDOW } from "./store.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -57,7 +58,9 @@ describe("the store routes", () => {
     const { call, writes } = fixture();
     const created = await call("POST", "/api/leads", lead);
     expect(created.status).toBe(201);
-    expect(writes()).toBe(1);
+    // Two: the rate window's count and the row itself. Both are the same document, so the deployed
+    // entry still writes it back once — `save()` there only marks the request dirty.
+    expect(writes()).toBe(2);
     expect((await call("GET", "/api/clients")).body).toHaveLength(1);
 
     expect(await call("POST", "/api/leads", { name: "x" })).toEqual({
@@ -66,6 +69,58 @@ describe("the store routes", () => {
     });
     // A body that is not JSON at all is a validation error, never a 502.
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
+  });
+
+  it("bounds what the anonymous form may write: one open row per contact, a cap on open leads, a size on fields", async () => {
+    const { call, writes, store } = fixture();
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    // The same contact again, however it is cased, is the row already filed — not a second write.
+    const again = await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "Jordan@SummitOutdoor.example " } });
+    expect(again.status).toBe(200);
+    // Still the two the first lead cost: a repeat is neither a row nor a count against the window.
+    expect(writes()).toBe(2);
+    // Once the contact is worked past "lead" the address may file a new one.
+    store.advanceClient((again.body as { id: string }).id);
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+
+    expect((await call("POST", "/api/leads", { ...lead, note: "x".repeat(2001) })).status).toBe(400);
+    expect((await call("POST", "/api/leads", { ...lead, services: Array.from({ length: 11 }, () => "seo") })).status).toBe(400);
+
+    for (let i = store.read().clients.filter((c) => c.stage === "lead").length; i < OPEN_LEADS_CAP; i += 1) {
+      store.createLead({ ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
+    }
+    const full = await call("POST", "/api/leads", { ...lead, domain: "late.example", contact: { ...lead.contact, email: "late@late.example" } });
+    expect(full.status).toBe(429);
+    expect(full.headers?.["retry-after"]).toBe("86400");
+    expect(store.read().clients).toHaveLength(OPEN_LEADS_CAP + 1);
+  });
+
+  /**
+   * The cap alone bounds spend, not availability: 200 scripted pairs used to fill the inbox in one
+   * burst and every real lead for the next twenty-four hours was answered `429`. No agent turn
+   * fires on a lead, so what that costs is business, not money — which is why the answer is a rate
+   * and its `retry-after` is an hour, not the inbox-full day.
+   */
+  it("rate-limits the anonymous form, so a burst cannot hold the inbox shut for a day", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(0);
+      const { call, store } = fixture();
+      const file = (i: number) =>
+        call("POST", "/api/leads", { ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
+      for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect((await file(i)).status).toBe(201);
+
+      const limited = await file(LEADS_PER_WINDOW);
+      expect(limited.status).toBe(429);
+      expect(limited.headers?.["retry-after"]).toBe(String(LEAD_WINDOW_MS / 1000));
+      expect(store.read().clients).toHaveLength(LEADS_PER_WINDOW);
+
+      // The next window admits again — the form is shut for an hour, never for the day.
+      vi.setSystemTime(LEAD_WINDOW_MS);
+      expect((await file(LEADS_PER_WINDOW)).status).toBe(201);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("advances, onboards, and refuses to onboard a churned client", async () => {
@@ -135,6 +190,12 @@ describe("/mcp", () => {
     expect(await call("GET", "/mcp")).toEqual({ status: 405, body: { error: "POST only" } });
   });
 
+  it("lets a bare GET fail with the store while the database is unreachable", async () => {
+    const down = new Error("connect ECONNREFUSED");
+    const { call } = fixture({ store: () => Promise.reject(down) });
+    await expect(call("GET", "/mcp")).rejects.toBe(down);
+  });
+
   it("accepts a token minted from Settings and answers a notification with a bodiless 202", async () => {
     const { call, store } = fixture();
     store.addMcpToken("desktop", hashToken("mcp_local"));
@@ -196,12 +257,31 @@ describe("the /api/* gate", () => {
     expect(allowed.body).toHaveLength(1);
   });
 
+  /**
+   * The public site's two routes stand open on purpose: a visitor holds no bearer, the copy is what
+   * the page shows anyway, and the contact form has to land as a lead or the site sells nothing.
+   * Neither reads a row back — the lead is answered as created, and the CRM stays behind the gate.
+   */
+  it("leaves the site's copy and its contact form open to a visitor, and nothing else", async () => {
+    const { call } = fixture(deployed);
+    const copy = await call("GET", "/api/site");
+    expect(copy.status).toBe(200);
+    expect(copy.headers).toEqual({ "cache-control": "public, max-age=60" });
+    expect((copy.body as { hero: { title: string } }).hero.title).toBeTruthy();
+    expect(await call("PATCH", "/api/site", {})).toMatchObject({ status: 405 });
+
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    expect(await call("GET", "/api/leads")).toMatchObject({ status: 405 });
+    // The row it made is still behind the gate.
+    expect(await call("GET", "/api/clients")).toMatchObject({ status: 401 });
+  });
+
   it("gates the writes too — the queue, the pipeline and a billable session alike", async () => {
     const { call, store, writes } = fixture(deployed);
     const client = store.createLead(lead);
     const before = writes();
     for (const [method, path] of [
-      ["POST", "/api/leads"], ["POST", `/api/clients/${client.id}/advance`],
+      ["POST", `/api/clients/${client.id}/advance`],
       ["POST", `/api/clients/${client.id}/onboard`], ["PATCH", "/api/posts/post_1"],
       ["POST", "/api/posts/post_1/post-now"], ["POST", "/api/chat"], ["GET", "/api/chat/ses_1/stream"],
       ["GET", "/api/agents"], ["GET", "/api/social/accounts"],
@@ -257,7 +337,8 @@ describe("the /api/* gate", () => {
       const reply = await enter(new URLSearchParams({ ticket: ticket(Date.now() + 60_000) }).toString());
       expect(reply.status).toBe(303);
       expect(reply.body).toBeUndefined();
-      expect(reply.headers?.["location"]).toBe("/");
+      // To the operator UI, which lives under `/app`; `/` is the public site and needs no cookie.
+      expect(reply.headers?.["location"]).toBe("/app");
       const cookie = reply.headers?.["set-cookie"] ?? "";
       expect(cookie).toContain("dashboard_session=dash");
       expect(cookie).toContain("HttpOnly");
@@ -306,7 +387,7 @@ describe("the /api/* gate", () => {
 });
 
 describe("the platform routes", () => {
-  const config = { baseUrl: "https://api.test", apiKey: "sk_test", identityId: "idn_1" };
+  const config = { baseUrl: "https://api.test", apiKey: "sk_test", identityId: "idn_1", project: "agency" };
 
   it("says the key is missing rather than swallowing it, and only for routes that need one", async () => {
     const { call } = fixture();
@@ -405,6 +486,58 @@ describe("the platform routes", () => {
     const { call } = fixture({ config });
     expect((await call("GET", "/api/agents/agt_1/spend")).body).toMatchObject({ spent_micro_usd: 1_250_000 });
     expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.test/v1/agents/agt_1/spend");
+  });
+
+  /**
+   * The home screen's context card: the setup answers live on the latest APPLIED install of this
+   * project, so the route lists installs narrowed by project, picks the newest applied one, and
+   * reads its context — the day-one lines ride along from that install's report.
+   */
+  it("reads this project's context from its latest applied install, and says when there is none", async () => {
+    const installs = [
+      { id: "bpi_old", status: "applied", applied_at: "2026-09-01T00:00:00Z", report: { intake: [] } },
+      { id: "bpi_failed", status: "failed", applied_at: "2026-09-09T00:00:00Z", report: null },
+      {
+        id: "bpi_new", status: "applied", applied_at: "2026-09-08T00:00:00Z",
+        report: {
+          agents: [{ name: "sales", action: "created", id: "agt_1" }, { name: "site-builder", action: "refused", reason: "no host" }],
+          intake: [{ name: "sales", action: "created", id: "ses_1" }, { name: "site-builder", action: "skipped", reason: "agent refused" }],
+        },
+      },
+    ];
+    const context = { object: "project_context", answers: [{ key: "offer", label: "What does your agency sell?", value: "Paid social" }] };
+    const session = { id: "ses_1", status: "idle", stop_reason: "awaiting_approval", pending_actions: [{ tool_call_id: "c1" }] };
+    const fetchImpl = vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(new Response(JSON.stringify(
+        url.includes("/context") ? context
+        : url.endsWith("/v1/sessions/ses_1") ? session
+        : { data: installs, has_more: false, next_cursor: null }), { status: 200 })));
+    vi.stubGlobal("fetch", fetchImpl);
+    const { call } = fixture({ config });
+    const reply = await call("GET", "/api/context");
+    expect(reply).toEqual({
+      status: 200,
+      body: {
+        context,
+        // The team is the agents the apply left standing — the refused one is not on it.
+        team: [{ name: "sales", id: "agt_1" }],
+        // Each opened intake is read by its own id, so it is found long after it left the recent list.
+        intake: [
+          { name: "sales", action: "created", id: "ses_1", session: { status: "idle", stop_reason: "awaiting_approval", waiting: true } },
+          { name: "site-builder", action: "skipped", reason: "agent refused", session: null },
+        ],
+      },
+    });
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      expect.stringMatching(/^https:\/\/api\.test\/v1\/blueprints\/installs\?project=[\w-]+&limit=100$/),
+      "https://api.test/v1/blueprints/installs/bpi_new/context",
+      "https://api.test/v1/sessions/ses_1",
+    ]);
+
+    fetchImpl.mockResolvedValue(new Response(JSON.stringify({ data: [], has_more: false, next_cursor: null }), { status: 200 }));
+    expect(await call("GET", "/api/context")).toEqual({ status: 404, body: { error: "no applied install for this project" } });
+    // And without a key it is the same 503 as every platform-backed screen — "not configured", not an error.
+    expect(await fixture().call("GET", "/api/context")).toMatchObject({ status: 503 });
   });
 
   it("answers 502 when the platform cannot be reached at all", async () => {

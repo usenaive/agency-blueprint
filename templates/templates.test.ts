@@ -7,21 +7,44 @@
  * be a delta on it and not a fork of it, and neither may declare a row or a kind the other's
  * screens could not render.
  */
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
-import { AGENCY_IDENTITY, AGENCY_TIMEZONE, blank } from "./blank.ts";
+import { AGENCY_IDENTITY, AGENCY_TIMEZONE, PREAMBLE } from "./agents.ts";
+import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 import { seoGeo } from "./seo-geo.ts";
+
+/** Plan §2.1's roster, name and role, in the order the studio lists them. */
+const ROSTER = [
+  ["site-builder", "Public site"],
+  ["sales", "Pipeline"],
+  ["client-manager", "Delivery"],
+  ["content-writer", "Content"],
+  ["content-reviser", "Revisions"],
+  ["gap-researcher", "Research"],
+  ["proposal-writer", "Proposals"],
+];
 
 const all = Object.values(TEMPLATES);
 const clientsOf = (t: (typeof all)[number]) => t.seed.clients as Client[];
 const postsOf = (t: (typeof all)[number]) => t.seed.posts as Post[];
+const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
-/** Every string a template puts in front of a person or a model. */
+/** Every string a template puts in front of a person or a model. Skill refs are catalogue slugs, not prose. */
 const prose = (t: (typeof all)[number]): string =>
-  JSON.stringify([t.description, t.words, t.kinds, t.agents, t.crew, t.seed, VOCABULARY[t.name as keyof typeof VOCABULARY].site]);
+  JSON.stringify([
+    t.description,
+    t.words,
+    t.kinds,
+    t.agents.map(({ skills: _, ...agent }) => agent),
+    t.crew,
+    t.seed,
+    t.questions,
+    VOCABULARY[t.name as keyof typeof VOCABULARY].site,
+  ]);
 
 describe("every template of this blueprint", () => {
   it("carries both, so a switch is an edit and never a re-clone", () => {
@@ -29,13 +52,50 @@ describe("every template of this blueprint", () => {
     expect(TEMPLATES[TEMPLATE].name).toBe(TEMPLATE);
   });
 
-  it.each(all)("$name declares the pair that runs an agency, with the gate in every prompt", (template) => {
-    expect(template.agents.map((a) => a.name)).toEqual(["sales", "client-manager"]);
+  it.each(all)("$name declares the seven that run an agency, with the gate in every prompt", (template) => {
+    expect(template.agents.map((a) => [a.name, a.role])).toEqual(ROSTER);
     for (const agent of [...template.agents, ...template.crew]) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
       expect(agent.model).toBeTruthy();
       expect(agent.tools?.default_config.permission).toBe("deny");
     }
+  });
+
+  /**
+   * Plan §2.1, held per agent: the shared paragraph first (read `project_context` before anything;
+   * the answers are the client's), a two-sentence public description, a private prompt of 150–400
+   * words, skills from the platform catalogue only, and a day-one intake capped at $2.
+   */
+  it.each(all)("$name writes each of the seven to the plan's shape", (template) => {
+    for (const agent of template.agents) {
+      const at = agent.name;
+      expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
+      expect([at, agent.description?.match(/[.!?](\s|$)/g)?.length]).toEqual([at, 2]);
+      const n = words(agent.system ?? "");
+      expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
+      expect([at, (agent.skills ?? []).length > 0]).toEqual([at, true]);
+      for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
+      expect([at, agent.intake?.budget_micro_usd]).toEqual([at, 20_000_000]);
+      for (const schedule of agent.schedules ?? []) expect([at, Number.isInteger(schedule.budget_micro_usd)]).toEqual([at, true]);
+    }
+  });
+
+  it.each(all)("$name asks the three setup questions, as text, and no fourth", (template) => {
+    expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text"]);
+    expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", template.name === "blank" ? "pricing" : "competitors"]);
+  });
+
+  it.each(all)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
+    // `seo-geo` spends its third question on competitors, so its context holds no pricing answer;
+    // the site-builder and the proposal-writer, who both write from one, are told to ask the operator
+    // instead — never to read the absence as "free" or to invent a tier.
+    const asked = new Set(template.questions.map((q) => q.key));
+    for (const name of ["site-builder", "proposal-writer"]) {
+      const agent = template.agents.find((a) => a.name === name)!;
+      expect(agent.system, name).toMatch(/pricing answer when the context holds one.*when it does not.*ask_operator/);
+    }
+    const gap = template.agents.find((a) => a.name === "gap-researcher")!;
+    expect((gap.system ?? "").includes("third setup answer")).toBe(asked.has("competitors"));
   });
 
   it.each(all)("$name seeds a demo that says it is one, and files only kinds it declares", (template) => {
@@ -69,10 +129,14 @@ describe("connected accounts", () => {
   const connectionTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
     Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard."));
 
-  it.each(all)("$name grants every agent at least one of them", (template) => {
-    for (const agent of [...template.agents, ...template.crew]) {
-      expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
+  it.each(all)("$name grants them to the two that reach outward, and to no one who does not", (template) => {
+    // Deny-by-default names only what an agent needs: the mailbox is the pipeline's and delivery's;
+    // a writer, a researcher or the site-builder holds no connected account at all.
+    for (const agent of template.agents) {
+      const outward = agent.name === "sales" || agent.name === "client-manager";
+      expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
+    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
   });
 
   /**
@@ -108,12 +172,14 @@ describe("blank", () => {
    * every prompt and every seed row in it was about SEO.
    */
   it("names no specialism anywhere", () => {
-    expect(prose(blank)).not.toMatch(/\bSEO\b|\bGEO\b|search engine|generative-engine|SERP|keyword|schema|llms\.txt/i);
+    // `keyword` is not on the list: the plan's blank crew has a gap-researcher who compares keywords
+    // and page types — marketing, not search engineering. The specialism's own words stay banned.
+    expect(prose(blank)).not.toMatch(/\bSEO\b|\bGEO\b|search engine|generative-engine|SERP|schema|llms\.txt|citation/i);
   });
 
-  it("declares no per-client crew — the agency's own pair runs every client", () => {
+  it("declares no per-client crew — the agency's own seven run every client", () => {
     expect(blank.crew).toEqual([]);
-    expect(blank.words.noCrew).toMatch(/agency's own pair/);
+    expect(blank.words.noCrew).toMatch(/agency's own seven/);
   });
 
   it("files generic deliverable kinds", () => {
@@ -123,13 +189,15 @@ describe("blank", () => {
 
 describe("seo-geo", () => {
   it("is a delta on blank, not a fork of it", () => {
-    // Same pair, same model, same budget, same allow-list, same schedule: only the focus differs.
+    // Same seven, same model, same budget, same allow-list, same schedule: only the focus and the
+    // search skills differ, and the search skills are added to the generic ones, never in their place.
     expect(seoGeo.agents.map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
     for (const [i, agent] of seoGeo.agents.entries()) {
       const base = blank.agents[i]!;
       expect(agent.system).toContain(base.system);
       expect(agent.system).not.toBe(base.system);
-      expect({ ...agent, system: "" }).toEqual({ ...base, system: "" });
+      expect(agent.skills?.slice(0, base.skills?.length)).toEqual(base.skills);
+      expect({ ...agent, system: "", skills: [] }).toEqual({ ...base, system: "", skills: [] });
     }
   });
 
@@ -157,11 +225,14 @@ describe("schedules", () => {
   const declared = (template: (typeof all)[number]) =>
     template.agents.flatMap((agent) => (agent.schedules ?? []).map((schedule) => [agent.name, schedule] as const));
 
-  it.each(all)("$name runs the weekly review and the daily pipeline pass", (template) => {
+  it.each(all)("$name runs the plan's five timers, and none for the site-builder or the proposal-writer", (template) => {
     expect(declared(template).map(([agent, schedule]) => [agent, schedule.cron])).toEqual([
       // A pipeline goes stale in days: weekday mornings, before the weekly review it feeds.
       ["sales", "30 8 * * 1-5"],
       ["client-manager", "0 8 * * 1"],
+      ["content-writer", "0 7 * * 2,4"],
+      ["content-reviser", "0 9 * * 3"],
+      ["gap-researcher", "0 9 * * 5"],
     ]);
   });
 
@@ -188,5 +259,28 @@ describe("kindLabel", () => {
     // A row filed under another template keeps its kind after a switch; the screen shows the id
     // rather than an empty chip.
     expect(kindLabel("a-kind-from-another-template")).toBe("a-kind-from-another-template");
+  });
+});
+
+/**
+ * The README is where a person reads what an install will cost, before they can read a declaration.
+ * It said an intake was capped at $2 and day one at $14 while `templates/agents.ts` declared
+ * 20_000_000 µUSD and seven agents — so derive both figures from the declarations here, and the
+ * next retune cannot leave the number behind.
+ */
+describe("what the README promises about spend", () => {
+  const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+  const usd = (micro: number) => `$${(micro / 1_000_000).toLocaleString("en-US")}`;
+  const agents = blank.agents ?? [];
+  const intake = agents[0]!.intake!.budget_micro_usd!;
+  const cap = agents[0]!.budget!.cap_micro_usd;
+
+  it("names the one-time intake ceiling, its day-one total, and the separate recurring cap", () => {
+    // One `intake` each, spent once at the apply: the ceiling is per agent and the total is one-off.
+    expect(readme).toContain(`**${usd(intake)}**`);
+    expect(readme).toContain(`**${usd(intake * agents.length)}**`);
+    // The recurring cap is a different number on a different clock, and must be stated as one.
+    expect(readme).toContain(`**${usd(cap)}**`);
+    expect(readme).not.toContain("$14 ");
   });
 });

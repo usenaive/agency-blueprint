@@ -1,19 +1,21 @@
 /**
- * The public site is a template, and it shipped with its Work and Testimonials sections already
- * full: three case studies with result metrics, and two quotes signed by named people at named
- * companies. None of it was real. A customer who runs `naive up` and never opens
- * `site.config.ts` publishes those as claims about their own business — invented client outcomes
- * and invented human endorsements, on a live public page.
+ * The public site is a template, and it once shipped with its Work and Testimonials sections
+ * already full: case studies with result metrics, quotes signed by named people. None of it was
+ * real, and a customer who ran `naive up` published those as claims about their own business.
  *
- * So the rule is not about wording: the template carries **no** client outcome and **no** human
- * endorsement, and the rendered page says plainly that there are none yet.
+ * So the profile carries **no** client outcome and **no** human endorsement: its proof strip states
+ * how the agency works, in sentences a visitor can hold it to, and the page renders exactly the
+ * sections plan §2.5 names — from the profile it is handed, which is what `GET /api/site` serves.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { isValidElement, type ReactNode } from "react";
+import { createElement, isValidElement, type ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { site } from "../site.config.ts";
-import { CaseStudies, Pricing, Testimonials } from "./sections.tsx";
+import { site, SITE_SECTIONS } from "../site.config.ts";
+import { App } from "./App.tsx";
+import { loadSite } from "./profile.ts";
+import { Pricing, ProofStrip } from "./sections.tsx";
 
 /** Everything a visitor would read, flattened out of a section's element tree. */
 function render(node: ReactNode): string {
@@ -27,24 +29,39 @@ function render(node: ReactNode): string {
 }
 
 describe("the site template invents no social proof", () => {
-  it("ships no case study and no testimonial", () => {
-    expect(site.caseStudies.items).toEqual([]);
-    expect(site.testimonials.items).toEqual([]);
-  });
-
-  it("tells a visitor there are none rather than showing invented ones", () => {
-    const work = render(CaseStudies());
-    const quotes = render(Testimonials());
-    expect(work).toContain(site.caseStudies.empty);
-    expect(quotes).toContain(site.testimonials.empty);
+  it("has no case study, testimonial or number in its proof", () => {
+    expect(Object.keys(site)).not.toContain("caseStudies");
+    expect(Object.keys(site)).not.toContain("testimonials");
+    expect(site.proof.facts.length).toBeGreaterThan(0);
     // No result metric anyone could read as an outcome, and no attributed quote.
-    expect(work).not.toMatch(/\d/);
-    expect(quotes).not.toMatch(/[“”]/);
+    expect(render(ProofStrip({ site }))).not.toMatch(/\d|[“”]/);
   });
 
   it("is actually reading the rendered page", () => {
-    // A `render` that returned "" would satisfy both assertions above and prove nothing.
-    expect(render(Pricing())).toContain(site.pricing.tiers[0]?.price ?? "unset");
+    // A `render` that returned "" would satisfy the assertion above and prove nothing.
+    expect(render(Pricing({ site }))).toContain(site.pricing.tiers[0]?.price ?? "unset");
+  });
+
+  it("renders every section of the profile it is handed, in order", () => {
+    // The whole page, contact form included, so this goes through react-dom rather than `render`.
+    const page = renderToStaticMarkup(createElement(App, { site })).replace(/&#x27;/g, "'").replace(/&quot;/g, '"');
+    const marks = [
+      site.hero.title,
+      site.proof.facts[0] ?? "",
+      site.services[0]?.headline ?? "",
+      site.whoWeServe.title,
+      site.process.title,
+      site.pricing.title,
+      site.faq.title,
+      site.contact.subtitle,
+    ];
+    const at = marks.map((mark) => page.indexOf(mark));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+  });
+
+  it("names every section the store lets an agent replace", () => {
+    expect([...SITE_SECTIONS].sort()).toEqual(Object.keys(site).sort());
   });
 
   /**
@@ -57,5 +74,41 @@ describe("the site template invents no social proof", () => {
     expect(readme).not.toMatch(/plausible/i);
     expect(readme).toMatch(/Invent nothing/);
     expect(readme).not.toMatch(/Acme Dental|Priya Shah|Verdant Skincare|Northbeam Legal/);
+  });
+});
+
+describe("the page reads its copy from /api/site", () => {
+  const json = (body: unknown, status = 200) =>
+    Promise.resolve(new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }));
+
+  it("shows what the route serves", async () => {
+    const served = { ...site, hero: { ...site.hero, title: "Approved on Tuesday" } };
+    const calls: string[] = [];
+    const doFetch = ((url: string) => { calls.push(url); return json(served); }) as unknown as typeof fetch;
+    expect((await loadSite(doFetch)).hero.title).toBe("Approved on Tuesday");
+    expect(calls).toEqual(["/api/site"]);
+  });
+
+  it("falls back to the compiled seed when the route is not there", async () => {
+    const html = (() => Promise.resolve(new Response("<!doctype html>", { headers: { "content-type": "text/html" } }))) as unknown as typeof fetch;
+    const down = (() => Promise.reject(new Error("offline"))) as unknown as typeof fetch;
+    expect(await loadSite(html)).toEqual(site);
+    expect(await loadSite(down)).toEqual(site);
+  });
+
+  it("takes a served section only in the seed's shape, and the seed's own for any other", async () => {
+    // A tier without a price and a hero that is a string would each throw in a section; both are the seed's.
+    const served = {
+      ...site,
+      hero: "Approved on Tuesday",
+      pricing: { ...site.pricing, tiers: [{ name: "Growth" }] },
+      contact: { ...site.contact, email: "hello@served.example" },
+    };
+    const got = await loadSite((() => json(served)) as unknown as typeof fetch);
+    expect(got.hero).toEqual(site.hero);
+    expect(got.pricing).toEqual(site.pricing);
+    expect(got.contact.email).toBe("hello@served.example");
+    expect(await loadSite((() => json([1, 2])) as unknown as typeof fetch)).toEqual(site);
+    expect(await loadSite((() => json(null)) as unknown as typeof fetch)).toEqual(site);
   });
 });

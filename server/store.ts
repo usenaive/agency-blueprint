@@ -8,6 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { STAGE_ORDER, type Client, type PipelineStage } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
+import { sameShape, site, SITE_SECTIONS, withinBounds, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 
 /** A minted MCP credential: only the SHA-256 hash of the token is kept. */
@@ -22,7 +23,29 @@ export interface StoreState {
   clients: Client[];
   posts: Post[];
   mcpTokens?: McpToken[];
+  /** The public site. Absent on a document written before the site was data; read as the seed. */
+  site_profile?: SiteProfile;
+  /** The public lead form's fixed window. Absent until the first lead of the first window lands. */
+  lead_window?: { startedAt: number; count: number };
 }
+
+/**
+ * The rate the public contact form may file leads at, and why it is in the document rather than in
+ * a variable. `OPEN_LEADS_CAP` bounds how many leads may be *open* — a spend and clutter bound —
+ * but it bounds nothing about how fast they arrive, so a script filed the cap's worth in one burst
+ * and every genuine lead for the next day was answered `429`. A rate is the missing bound. It
+ * lives in the document because the deployed entry is a function: a per-process counter resets on
+ * every cold start, which is to say it does not count.
+ *
+ * Ten an hour is far above what an agency's own site sees and far below what a script does, and it
+ * puts the better part of a day between an empty inbox and a full one — long enough that the sales
+ * agent's own morning pass (`advance_pipeline`) keeps ahead of it.
+ */
+export const LEAD_WINDOW_MS = 60 * 60 * 1000;
+export const LEADS_PER_WINDOW = 10;
+
+/** Whole sections of the site, each replacing the current one; a key outside `SITE_SECTIONS` is refused. */
+export type SitePatch = Partial<SiteProfile>;
 
 export interface LeadInput {
   name: string;
@@ -64,6 +87,15 @@ export interface Store {
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
   onboardClient(id: string): Client | null;
   updatePost(id: string, patch: PostPatch): Post | null;
+  /**
+   * Counts one public lead against the current window and says whether it may be filed. False is
+   * "not now", never "not ever": the window rolls.
+   */
+  admitLead(now: number): boolean;
+  /** The public site as `GET /api/site` serves it. */
+  site(): SiteProfile;
+  /** Replaces the named sections; null when a key is not a section or a section is not the right shape. */
+  updateSite(patch: Record<string, unknown>): SiteProfile | null;
 }
 
 /**
@@ -75,10 +107,15 @@ export interface Store {
 export const seedState = (): StoreState => ({
   clients: structuredClone(ACTIVE_TEMPLATE.seed.clients as Client[]),
   posts: structuredClone(ACTIVE_TEMPLATE.seed.posts as Post[]),
+  site_profile: structuredClone(site),
 });
 
-/** What a fresh **deployed** document is created with: nothing, because nothing has happened yet. */
-export const emptyState = (): StoreState => ({ clients: [], posts: [] });
+/**
+ * What a fresh **deployed** document is created with: no rows, because nothing has happened yet,
+ * and the active template's generic site — which claims nothing about anyone and is what the
+ * site-builder rewrites from the setup answers on day one.
+ */
+export const emptyState = (): StoreState => ({ clients: [], posts: [], site_profile: structuredClone(site) });
 
 /** The stage after `stage` on the happy path; churned only ever by hand. */
 const next = (stage: PipelineStage): PipelineStage | null => {
@@ -198,6 +235,33 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       if (patch.status === "rejected") post.rejectedReason = patch.rejectedReason ?? "Rejected by you";
       save();
       return post;
+    },
+    admitLead(now) {
+      const window = state.lead_window;
+      if (window === undefined || now - window.startedAt >= LEAD_WINDOW_MS) {
+        state.lead_window = { startedAt: now, count: 1 };
+        save();
+        return true;
+      }
+      if (window.count >= LEADS_PER_WINDOW) return false;
+      window.count += 1;
+      save();
+      return true;
+    },
+    site: () => state.site_profile ?? site,
+    updateSite(patch) {
+      const keys = Object.keys(patch);
+      if (keys.length === 0) return null;
+      const current = state.site_profile ?? structuredClone(site);
+      for (const key of keys) {
+        // Shape first, then size: `sameShape` has no opinion about how long a string may be, and
+        // the section it is judging is about to become the live public page.
+        if (!(SITE_SECTIONS as readonly string[]).includes(key)) return null;
+        if (!sameShape(site[key as keyof SiteProfile], patch[key]) || !withinBounds(patch[key])) return null;
+      }
+      state.site_profile = { ...current, ...(patch as SitePatch) };
+      save();
+      return state.site_profile;
     },
   };
 }

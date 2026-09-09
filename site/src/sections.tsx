@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
-import { site } from "../site.config.ts";
+import type { SiteProfile } from "../site.config.ts";
+
+/** Every section renders the profile it is handed — the body of `GET /api/site` — and nothing else. */
+export interface SectionProps {
+  site: SiteProfile;
+}
 
 function Section({ id, eyebrow, title, subtitle, children }: {
   id: string;
@@ -18,9 +23,32 @@ function Section({ id, eyebrow, title, subtitle, children }: {
   );
 }
 
-export function Services() {
+const Bullet = ({ children }: { children: ReactNode }) => (
+  <li className="flex gap-2">
+    <span aria-hidden className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-accent" />
+    {children}
+  </li>
+);
+
+/** How the agency works — facts a visitor can hold it to. Never a result, a count or a client. */
+export function ProofStrip({ site }: SectionProps) {
   return (
-    <Section id="services" eyebrow="Services" title="Three disciplines, one goal: being found">
+    <section aria-label="How we work" className="border-y border-line bg-white">
+      <ul className="mx-auto grid max-w-6xl gap-4 px-6 py-8 text-sm font-medium sm:grid-cols-3">
+        {site.proof.facts.map((fact) => (
+          <li key={fact} className="flex gap-3">
+            <span aria-hidden className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-accent" />
+            {fact}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function Services({ site }: SectionProps) {
+  return (
+    <Section id="services" eyebrow="Services" title="What we do">
       <div className="grid gap-5 md:grid-cols-3">
         {site.services.map((service) => (
           <article key={service.name} className="card p-7">
@@ -28,12 +56,7 @@ export function Services() {
             <h3 className="mt-2 text-xl font-semibold tracking-tight">{service.headline}</h3>
             <p className="mt-3 text-sm text-muted">{service.description}</p>
             <ul className="mt-5 space-y-2 text-sm">
-              {service.deliverables.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span aria-hidden className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-accent" />
-                  {item}
-                </li>
-              ))}
+              {service.deliverables.map((item) => <Bullet key={item}>{item}</Bullet>)}
             </ul>
           </article>
         ))}
@@ -42,7 +65,23 @@ export function Services() {
   );
 }
 
-export function Process() {
+export function WhoWeServe({ site }: SectionProps) {
+  const { title, subtitle, segments } = site.whoWeServe;
+  return (
+    <Section id="who" eyebrow="Who we serve" title={title} subtitle={subtitle}>
+      <div className="grid gap-5 md:grid-cols-3">
+        {segments.map((segment) => (
+          <article key={segment.name} className="card p-7">
+            <h3 className="font-semibold">{segment.name}</h3>
+            <p className="mt-2 text-sm text-muted">{segment.description}</p>
+          </article>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+export function Process({ site }: SectionProps) {
   return (
     <Section id="process" eyebrow="Process" title={site.process.title} subtitle={site.process.subtitle}>
       <ol className="grid gap-5 md:grid-cols-4">
@@ -58,63 +97,7 @@ export function Process() {
   );
 }
 
-export function CaseStudies() {
-  const { title, empty, items } = site.caseStudies;
-  return (
-    <Section id="work" eyebrow="Work" title={title}>
-      {items.length === 0 ? (
-        <p className="card p-7 text-sm text-muted">{empty}</p>
-      ) : (
-        <div className="grid gap-5 lg:grid-cols-3">
-          {items.map((cs) => (
-            <article key={cs.client} className="card flex flex-col p-7">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted">
-                {cs.client} · {cs.industry}
-              </p>
-              <h3 className="mt-2 text-lg font-semibold tracking-tight">{cs.headline}</h3>
-              <p className="mt-3 flex-1 text-sm text-muted">{cs.result}</p>
-              <dl className="mt-6 grid grid-cols-3 gap-3 border-t border-line pt-5">
-                {cs.metrics.map((m) => (
-                  <div key={m.label}>
-                    <dd className="text-lg font-semibold tracking-tight text-accent">{m.value}</dd>
-                    <dt className="mt-0.5 text-xs text-muted">{m.label}</dt>
-                  </div>
-                ))}
-              </dl>
-            </article>
-          ))}
-        </div>
-      )}
-    </Section>
-  );
-}
-
-export function Testimonials() {
-  const { title, empty, items } = site.testimonials;
-  return (
-    <section className="border-y border-line bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        <p className="eyebrow">{title}</p>
-        {items.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">{empty}</p>
-        ) : (
-          <div className="mt-8 grid gap-10 md:grid-cols-2">
-            {items.map((t) => (
-              <figure key={t.name}>
-                <blockquote className="text-lg font-medium leading-snug tracking-tight">“{t.quote}”</blockquote>
-                <figcaption className="mt-4 text-sm text-muted">
-                  <span className="font-semibold text-ink">{t.name}</span> — {t.role}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-export function Pricing() {
+export function Pricing({ site }: SectionProps) {
   return (
     <Section id="pricing" eyebrow="Pricing" title={site.pricing.title} subtitle={site.pricing.subtitle}>
       <div className="grid gap-5 md:grid-cols-3">
@@ -127,12 +110,7 @@ export function Pricing() {
             </p>
             <p className="mt-3 text-sm text-muted">{tier.blurb}</p>
             <ul className="mt-5 space-y-2 text-sm">
-              {tier.includes.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span aria-hidden className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-accent" />
-                  {item}
-                </li>
-              ))}
+              {tier.includes.map((item) => <Bullet key={item}>{item}</Bullet>)}
             </ul>
             <a href="#contact" className={`btn mt-7 w-full ${tier.featured ? "btn-accent" : "btn-ghost"}`}>
               {site.hero.cta}
@@ -140,6 +118,21 @@ export function Pricing() {
           </article>
         ))}
       </div>
+    </Section>
+  );
+}
+
+export function Faq({ site }: SectionProps) {
+  return (
+    <Section id="faq" eyebrow="FAQ" title={site.faq.title}>
+      <dl className="grid gap-5 md:grid-cols-2">
+        {site.faq.items.map((item) => (
+          <div key={item.question} className="card p-7">
+            <dt className="font-semibold">{item.question}</dt>
+            <dd className="mt-2 text-sm text-muted">{item.answer}</dd>
+          </div>
+        ))}
+      </dl>
     </Section>
   );
 }

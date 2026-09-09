@@ -27,9 +27,13 @@ describe("naive.config.ts", () => {
     // One repo carries every template of its blueprint — that is what makes a switch an edit and
     // never a re-clone, and `defineProject` refuses a repo that carries only some.
     expect(Object.keys(TEMPLATES).sort()).toEqual(["blank", "seo-geo"]);
-    expect(result.config.apps.map((a) => a.name)).toEqual(["dashboard", "site"]);
-    // Only the dashboard serves MCP; the frontend-only site has no server to answer on one.
-    expect(result.config.apps.map((a) => a.mcp)).toEqual(["/mcp", undefined]);
+    // One app: the public site at `/` and the operator UI under `/app` share a server, so the
+    // site's read of its own copy (`/api/site`) is same-origin. The app is what the crew files into
+    // and the operator approves on, so an install cannot leave it out.
+    expect(result.config.apps.map((a) => [a.name, a.mcp, a.required])).toEqual([["dashboard", "/mcp", true]]);
+    // The crew that a template with a per-client trio provisions per client, published for the studio.
+    expect(result.config.crew_per_client?.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].crew.map((a) => a.name));
+    expect(result.config.questions.map((q) => q.key)).toEqual(TEMPLATES[TEMPLATE].questions.map((q) => q.key));
     // Without the key on the app itself the deployed process has none: the chat relay and the
     // per-client crew provisioning cannot work at all, and every platform route answers 503.
     expect(result.config.apps[0].env).toMatchObject({ NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" } });
@@ -52,13 +56,15 @@ describe("naive.config.ts", () => {
     // The agents are the chosen template's, folded in by `defineProject` — the config declares none
     // of its own, so switching template is the only thing that changes this list.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
-    expect(result.config.agents.map((a) => a.name)).toEqual(["sales", "client-manager"]);
+    expect(result.config.agents.map((a) => a.name)).toEqual([
+      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer",
+    ]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
-      expect(agent.system).toMatch(/dashboard tools/);
       expect(agent.tools?.default_config.permission).toBe("deny");
-      // Deny-by-default drops unlisted tools, so the dashboard's MCP tools must be named to be usable.
-      expect(Object.keys(agent.tools?.configs ?? {})).toContain("dashboard.create_draft_post");
+      // Deny-by-default drops unlisted tools, so the dashboard's MCP tools must be named to be usable
+      // — and the approving ones are never named: approval is the operator's, on the screen.
+      expect(Object.keys(agent.tools?.configs ?? {}).some((name) => name.startsWith("dashboard."))).toBe(true);
       expect(agent.tools?.configs).not.toHaveProperty("dashboard.approve_post");
       // Nothing publishes: the platform's own publishing tool is not granted, and the dashboard's
       // queue is where a deliverable waits instead. The README's "nothing publishes without you" is
@@ -69,9 +75,14 @@ describe("naive.config.ts", () => {
       // the platform offers these only to a turn whose identity owns an inbox, and deny-by-default
       // means they must still be named here. Reads run; the one outward act — sending — is `ask`,
       // so the call parks the session and waits for the operator on the dashboard's Approvals screen.
-      expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
-      expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
-      expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
+      if (agent.name === "sales" || agent.name === "client-manager") {
+        expect(agent.tools?.configs["email.inboxes"]).toEqual({ enabled: true, permission: "allow" });
+        expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
+        expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
+        expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
+      } else {
+        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, []]);
+      }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
       // the pause), so it is `ask`; a prompt that says "ask the operator" without it is a dead letter.
@@ -81,17 +92,19 @@ describe("naive.config.ts", () => {
       expect(agent.tools?.configs["request_tools"]).toEqual({ enabled: true, permission: "ask" });
       expect(agent.system).toMatch(/complete list of what you can do right now/);
       expect(agent.system).toMatch(/request it once with request_tools/);
-      expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
     }
+    const byName = Object.fromEntries(result.config.agents.map((a) => [a.name, a]));
     // The daily pass files follow-ups on the client row, so the sales agent must hold the tool that does.
-    expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.create_lead");
-    expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.add_client_note");
-    expect(result.config.agents[0].tools?.configs).toHaveProperty("dashboard.list_posts");
-    expect(result.config.agents[0].schedules?.[0]?.input).toMatch(/add_client_note/);
-    expect(result.config.agents[1].tools?.configs).toHaveProperty("dashboard.get_calendar");
-    expect(result.config.agents[1].schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);
-    expect(result.config.agents[0].schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);
-    // Both templates declare the same pair, so a switch narrows nothing here and `kept` is empty.
+    expect(byName["sales"]?.tools?.configs).toHaveProperty("dashboard.create_lead");
+    expect(byName["sales"]?.tools?.configs).toHaveProperty("dashboard.add_client_note");
+    expect(byName["sales"]?.schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);
+    expect(byName["client-manager"]?.tools?.configs).toHaveProperty("dashboard.get_calendar");
+    expect(byName["client-manager"]?.schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);
+    // The site is edited through the store and only through approval: the builder reads it freely
+    // and its one write is `ask`, so the change is live when the operator approves and not before.
+    expect(byName["site-builder"]?.tools?.configs["dashboard.get_site"]).toEqual({ enabled: true, permission: "allow" });
+    expect(byName["site-builder"]?.tools?.configs["dashboard.update_site"]).toEqual({ enabled: true, permission: "ask" });
+    // Both templates declare the same seven, so a switch narrows nothing here and `kept` is empty.
     // The part that does differ — the per-client crew — is `server/proxy.ts`'s, because its names
     // carry a client slug and cannot be declared statically.
     expect(result.config.kept.agents).toEqual([]);
@@ -115,12 +128,12 @@ describe("the agency persona", () => {
     if (!result.ok) return;
     expect(result.config.identities.map((one) => one.name)).toEqual([AGENCY_IDENTITY]);
     for (const agent of result.config.agents) {
-      // Every agent of this blueprint reads a connected account, so every one must hold the
-      // persona: connection tools resolve `session → agent → identity → connected accounts`, and an
-      // agent holding none is offered none of the names below however they are permissioned.
-      expect([agent.name, connectionTools(agent)]).not.toEqual([agent.name, []]);
+      // Every agent of this blueprint speaks as the agency, so every one holds the persona:
+      // connection tools resolve `session → agent → identity → connected accounts`, and an agent
+      // holding none is offered none of the mailbox names however they are permissioned.
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
+    expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual(["sales", "client-manager"]);
   }, 30_000);
 
   it("speaks for every scheduled fire, in a zone the platform will accept", async () => {

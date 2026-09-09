@@ -3,16 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Agency \u2014 a company blueprint on the Vetta platform, in two templates (blank, seo-geo). CRM + per-client workspaces plus a thin server that proxies the platform API.",
+  "description": "Agency \u2014 a company blueprint on the Vetta platform, in two templates (blank, seo-geo). Public site at /, operator dashboard under /app, CRM + per-client workspaces, and a thin server that proxies the platform API.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && pnpm api:build && pnpm site:build",
+    "build": "vite build && pnpm api:build",
     "serve": "node --experimental-strip-types server/index.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && pnpm site:typecheck",
-    "site:dev": "vite --config site/vite.config.ts",
-    "site:build": "vite build --config site/vite.config.ts",
-    "site:typecheck": "tsc --noEmit -p site",
+    "typecheck": "tsc --noEmit",
     "api:build": "node build-api.mjs"
   },
   "dependencies": {
@@ -25,7 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
-    "@usenaive-sdk/blueprints": "^0.3.0",
+    "@usenaive-sdk/blueprints": "^0.4.0",
     "@usenaive-sdk/vetta-cli": "^0.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "19.2.17",

@@ -10,6 +10,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isOperatorPath, operatorRedirect } from "../site/routing.ts";
 import { configFromEnv } from "./proxy.ts";
 import { handleRequest, isLoopback, SSE_RETRY, type ApiContext } from "./routes.ts";
 import { openStore } from "./store.ts";
@@ -79,7 +80,14 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
   return send(res, reply.status, reply.body, reply.headers);
 }
 
+/**
+ * Two doors out of one `dist/`: the public site is `index.html`, the operator dashboard is
+ * `app/index.html`, and a deep link under `/app` falls back to the latter so a reload of `/app/crm`
+ * is the dashboard and not the site. The old root operator paths are sent to `/app`.
+ */
 async function handleStatic(res: ServerResponse, path: string): Promise<void> {
+  const legacy = operatorRedirect(path);
+  if (legacy !== null) return void res.writeHead(302, { location: legacy }).end();
   const clean = normalize(path).replace(/^(\.\.[/\\])+/, "");
   const file = join(root, "dist", clean === "/" ? "index.html" : clean);
   try {
@@ -88,7 +96,7 @@ async function handleStatic(res: ServerResponse, path: string): Promise<void> {
     res.end(content);
   } catch {
     res.writeHead(200, { "content-type": "text/html" });
-    res.end(await readFile(join(root, "dist", "index.html")));
+    res.end(await readFile(join(root, "dist", isOperatorPath(clean) ? "app/index.html" : "index.html")));
   }
 }
 

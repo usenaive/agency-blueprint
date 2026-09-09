@@ -6,6 +6,7 @@
  */
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
+import { PROJECT } from "../templates/index.ts";
 
 export interface Upstream {
   method: string;
@@ -19,7 +20,7 @@ export interface Upstream {
  * not declare rather than dropping it (spec §9), so this is an allow-list and not a passthrough: a
  * caller cannot smuggle a filter through the dashboard that the platform would then reject.
  */
-const SESSION_FILTERS = ["agent_id", "status"] as const;
+const SESSION_FILTERS = ["agent_id", "status", "stop_reason"] as const;
 
 /**
  * Maps a browser-facing `/api/*` request onto the platform route it fronts.
@@ -62,8 +63,8 @@ export function upstreamFor(
   // What an agent has spent this budget period, against the cap the agent itself carries.
   const spend = /^\/api\/agents\/(agt_[\w-]+)\/spend$/.exec(pathname);
   if (method === "GET" && spend) return { method: "GET", path: `/v1/agents/${spend[1]}/spend` };
-  // `/api/agents` is not here: the roster is cursor-paginated upstream, so it is assembled by
-  // `listAgents` below rather than relayed one page at a time.
+  // `/api/agents` and `/api/deployments` are not here: both are cursor-paginated upstream, so the
+  // route assembles them with `collect` below rather than relaying one page at a time.
   // Segments are strictly [\w-]+ so `..` can never traverse out of the social subtree.
   const social = /^\/api\/social((?:\/[\w-]+)+)$/.exec(pathname);
   if (social) {
@@ -77,6 +78,8 @@ export interface ProxyConfig {
   baseUrl: string;
   apiKey: string;
   identityId: string | null;
+  /** The install this app belongs to (`NAIVE_PROJECT`, §29.7) — the row `/api/context` reads; the declaration's own name when the platform did not say. */
+  project: string;
 }
 
 /** Reads the server's platform config from the environment; null when the key is absent. */
@@ -87,6 +90,7 @@ export function configFromEnv(env: Record<string, string | undefined>): ProxyCon
     apiKey,
     baseUrl: (env.NAIVE_API_URL ?? "https://api.usenaive.ai").replace(/\/$/, ""),
     identityId: env.NAIVE_IDENTITY_ID ?? null,
+    project: env.NAIVE_PROJECT ?? PROJECT,
   };
 }
 
@@ -128,21 +132,86 @@ export interface AgentRow {
  * Null when any page fails, never a partial roster: a half-read roster silently means "that agent
  * does not exist", which is the bug this replaces.
  */
-export async function listAgents(config: ProxyConfig, fetchImpl: typeof fetch = fetch): Promise<AgentRow[] | null> {
-  const all: AgentRow[] = [];
+export const listAgents = (config: ProxyConfig, fetchImpl: typeof fetch = fetch): Promise<AgentRow[] | null> =>
+  collect<AgentRow>(config, "/v1/agents", fetchImpl);
+
+/**
+ * Every row of one cursor-paginated platform list (`canonical-spec §3`), or null when any page
+ * failed. The timers are read this way too: a crew whose timer sat on the page that was not read
+ * would show as "no timer" on its own dashboard.
+ */
+export async function collect<T>(config: ProxyConfig, path: string, fetchImpl: typeof fetch = fetch): Promise<T[] | null> {
+  const all: T[] = [];
   let after: string | null = null;
   // The cursor is the platform's; the bound is ours, so an upstream that always says `has_more`
   // cannot spin a request forever. A hundred pages of a hundred is far past any real organization.
   for (let page = 0; page < 100; page += 1) {
     const query = after === null ? "?limit=100" : `?limit=100&after=${encodeURIComponent(after)}`;
-    const res = await proxyFetch(config, { method: "GET", path: `/v1/agents${query}` }, null, fetchImpl);
+    const res = await proxyFetch(config, { method: "GET", path: `${path}${query}` }, null, fetchImpl);
     if (!res.ok) return null;
-    const body = (await res.json()) as { data?: AgentRow[]; has_more?: boolean; next_cursor?: string | null };
+    const body = (await res.json()) as { data?: T[]; has_more?: boolean; next_cursor?: string | null };
     all.push(...(body.data ?? []));
     if (body.has_more !== true || !body.next_cursor) return all;
     after = body.next_cursor;
   }
   return all;
+}
+
+/** One line of an install report (`canonical-spec §31.4`): an agent the apply touched, or the intake it opened. */
+export interface ReportLine {
+  name: string;
+  action: string;
+  id?: string;
+  reason?: string;
+}
+
+/** An intake line with its session as read by id, or null when that read did not answer. */
+export interface IntakeLine extends ReportLine {
+  session: { status: string; stop_reason: string | null; waiting: boolean } | null;
+}
+
+export interface ContextReply {
+  context: unknown;
+  /** The `agt_` ids this install left standing: every platform figure on the home is cut to them. */
+  team: { name: string; id: string }[];
+  intake: IntakeLine[];
+}
+
+/**
+ * An intake session read by its own id. The apply opened it on install day, and a session list is
+ * the hundred most recent, so once the timers have run a while the list no longer holds it.
+ */
+async function intakeLine(config: ProxyConfig, line: ReportLine, fetchImpl: typeof fetch): Promise<IntakeLine> {
+  if (line.action !== "created" || line.id === undefined) return { ...line, session: null };
+  const res = await proxyFetch(config, { method: "GET", path: `/v1/sessions/${line.id}` }, null, fetchImpl);
+  if (!res.ok) return { ...line, session: null };
+  const session = (await res.json()) as { status: string; stop_reason: string | null; pending_actions?: unknown[] };
+  return { ...line, session: { status: session.status, stop_reason: session.stop_reason, waiting: (session.pending_actions?.length ?? 0) > 0 } };
+}
+
+/**
+ * THIS PROJECT'S CONTEXT (`canonical-spec §31.8`): the setup answers, apps and crew of its latest
+ * applied install, found through the installs list narrowed to `PROJECT`, plus that install's
+ * team and intake lines so the home screen can say which day-one sessions opened and how they
+ * stand. `context: null` when the project has no applied install yet; null altogether when the
+ * platform did not answer.
+ */
+export async function latestContext(config: ProxyConfig, fetchImpl: typeof fetch = fetch): Promise<ContextReply | null> {
+  const list = await proxyFetch(config, { method: "GET", path: `/v1/blueprints/installs?project=${encodeURIComponent(config.project)}&limit=100` }, null, fetchImpl);
+  if (!list.ok) return null;
+  type Row = { id: string; status: string; applied_at: string; report?: { agents?: ReportLine[]; intake?: ReportLine[] } | null };
+  const rows = ((await list.json()) as { data?: Row[] }).data ?? [];
+  const latest = rows.filter((row) => row.status === "applied").sort((a, b) => b.applied_at.localeCompare(a.applied_at))[0];
+  if (latest === undefined) return { context: null, team: [], intake: [] };
+  const res = await proxyFetch(config, { method: "GET", path: `/v1/blueprints/installs/${latest.id}/context` }, null, fetchImpl);
+  if (!res.ok) return null;
+  return {
+    context: await res.json(),
+    team: (latest.report?.agents ?? [])
+      .filter((row) => row.action !== "refused" && row.action !== "deleted" && row.id !== undefined)
+      .map((row) => ({ name: row.name, id: row.id as string })),
+    intake: await Promise.all((latest.report?.intake ?? []).map((row) => intakeLine(config, row, fetchImpl))),
+  };
 }
 
 export interface ProvisionReport {

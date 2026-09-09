@@ -11,6 +11,7 @@
  */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { listAgents, proxyFetch, type AgentRow, type ProxyConfig } from "./proxy.ts";
+import { SITE_SECTIONS } from "../site/site.config.ts";
 import { ACTIVE } from "../templates/index.ts";
 import type { DraftPostInput, Store } from "./store.ts";
 
@@ -73,11 +74,11 @@ const str = (description: string) => ({ type: "string", description }) as const;
 export const TOOLS = [
   { name: "list_clients", description: "All CRM clients with their pipeline stage.", inputSchema: obj({}, []) },
   { name: "get_client", description: "One client by id.", inputSchema: obj({ id: str("Client id (cli_…)") }, ["id"]) },
-  { name: "create_lead", description: "Add a new lead to the CRM pipeline.", inputSchema: obj({
-    name: str("Company name"), domain: str("Company domain"),
-    contact_name: str("Contact person"), contact_email: str("Contact email"), contact_role: str("Contact role"),
+  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator.", inputSchema: obj({
+    name: str("Company name"), domain: str("Company domain, when known"),
+    contact_name: str("Contact person, when known"), contact_email: str("Contact email, when known"), contact_role: str("Contact role, when known"),
     note: str("Optional first note"),
-  }, ["name", "domain", "contact_name", "contact_email", "contact_role"]) },
+  }, ["name"]) },
   { name: "advance_pipeline", description: "Move a client to the next pipeline stage.", inputSchema: obj({ id: str("Client id") }, ["id"]) },
   { name: "add_client_note", description: "File a working note on a client — a drafted outreach or follow-up, a call summary, what a proposal is waiting on — for the operator to read on the client's page. Optionally restate what the client is waiting on next.", inputSchema: obj({
     id: str("Client id"), note: str("The note in full — a drafted follow-up goes here verbatim"),
@@ -96,13 +97,17 @@ export const TOOLS = [
   { name: "schedule_post", description: "Reslot a post on the calendar.", inputSchema: obj({
     id: str("Post id"), date: str("ISO day (YYYY-MM-DD)"),
   }, ["id", "date"]) },
-  { name: "list_agents", description: "Platform agents, optionally only one client's crew.", inputSchema: obj({ client: str("Optional client id") }, []) },
+  { name: "list_agents", description: "Platform agents, optionally only one client's team.", inputSchema: obj({ client: str("Optional client id") }, []) },
   { name: "start_agent_session", description: "Start a session with a platform agent.", inputSchema: obj({
     agent: str("Agent name"), prompt: str("Opening message"),
   }, ["agent", "prompt"]) },
   { name: "get_calendar", description: "Posts for a client within a date range.", inputSchema: obj({
     client: str("Client id"), from: str("ISO day, inclusive"), to: str("ISO day, inclusive"),
   }, ["client", "from", "to"]) },
+  { name: "get_site", description: "The agency's public site as it is published: every section, as one record.", inputSchema: obj({}, []) },
+  { name: "update_site", description: "Replace whole sections of the public site. Each key given replaces that section in full and must keep its shape (read get_site first); the change is live once the operator approves this call. Never invent a result, a number or a client name.", inputSchema: obj({
+    site: { type: "object", description: `Sections to replace: any of ${SITE_SECTIONS.join(", ")}.` },
+  }, ["site"]) },
 ] as const;
 
 class ToolError extends Error {}
@@ -111,6 +116,8 @@ const need = (params: Record<string, unknown>, key: string): string => {
   if (typeof value !== "string" || value === "") throw new ToolError(`${key} is required`);
   return value;
 };
+const text = (params: Record<string, unknown>, key: string): string =>
+  typeof params[key] === "string" ? (params[key] as string) : "";
 
 /** The whole roster, cursor followed: a crew on page four is an agent this tool can still start. */
 async function platformAgents(config: ProxyConfig | null): Promise<AgentRow[]> {
@@ -131,8 +138,8 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
     }
     case "create_lead":
       return store.createLead({
-        name: need(params, "name"), domain: need(params, "domain"),
-        contact: { name: need(params, "contact_name"), email: need(params, "contact_email"), role: need(params, "contact_role") },
+        name: need(params, "name"), domain: text(params, "domain"),
+        contact: { name: text(params, "contact_name"), email: text(params, "contact_email"), role: text(params, "contact_role") },
         note: typeof params.note === "string" ? params.note : undefined,
       });
     case "advance_pipeline": {
@@ -190,6 +197,15 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       const from = need(params, "from");
       const to = need(params, "to");
       return store.read().posts.filter((p) => p.clientId === client && p.scheduledFor >= from && p.scheduledFor <= to);
+    }
+    case "get_site":
+      return store.site();
+    case "update_site": {
+      const patch = params.site;
+      if (typeof patch !== "object" || patch === null || Array.isArray(patch)) throw new ToolError("site is required");
+      const updated = store.updateSite(patch as Record<string, unknown>);
+      if (!updated) throw new ToolError(`site must name only ${SITE_SECTIONS.join(", ")}, each in the shape get_site returns`);
+      return updated;
     }
     default:
       throw new ToolError(`unknown tool: ${name}`);

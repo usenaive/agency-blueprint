@@ -18,6 +18,7 @@ import { Approvals } from "./screens/Approvals";
 import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Crm } from "./screens/Crm";
+import { Home } from "./screens/Home";
 
 const routes = [
   {
@@ -25,6 +26,7 @@ const routes = [
     Component: Shell,
     children: [
       { index: true, element: <Navigate to="/crm" replace /> },
+      { path: "home", Component: Home },
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
@@ -349,5 +351,52 @@ describe("an agent", () => {
     await screen.press("sales");
     expect(screen.text()).toContain("Spend unavailable");
     expect(screen.text()).not.toContain("$0.00");
+  });
+});
+
+describe("the home screen", () => {
+  const context = {
+    context: { answers: [{ key: "offer", label: "What does your agency sell?", value: "Paid social" }], template: "blank", updated_at: "2026-09-08T00:00:00Z" },
+    team: [{ name: "sales", id: "agt_1" }, { name: "site-builder", id: "agt_2" }],
+    intake: [
+      { name: "sales", action: "created", id: "ses_1", session: { status: "idle", stop_reason: "awaiting_approval", waiting: true } },
+      { name: "site-builder", action: "created", id: "ses_2", session: null },
+      { name: "gap-researcher", action: "deselected", session: null },
+    ],
+  };
+  const crew = { data: [...roster.data, { ...roster.data[0]!, id: "agt_9", name: "seo-writer--other-project" }] };
+  const timers = { data: [{ agent_id: "agt_9", cron: "0 9 * * 1", timezone: "UTC", enabled: true, next_run_at: "2026-09-14T09:00:00Z" }] };
+
+  it("reads day one off the install report, and cuts the crew and the queue to this install's team", async () => {
+    const { text, calls } = await render("/home", (path) =>
+      path.includes("/api/context") ? { body: context }
+      : path.includes("/api/agents") ? { body: crew }
+      : path.includes("/api/deployments") ? { body: timers }
+      : path.includes("/api/sessions") ? { body: { data: [{ ...parkedSession, agent_id: "agt_9" }] } }
+      : { body: [] });
+    // The parked session belongs to another project's agent: not this operator's to approve.
+    expect(text()).toContain("Nothing is waiting on you");
+    expect(text()).not.toContain("seo-writer--other-project");
+    expect(text()).toContain("site-builder");
+    // A session the server could not read is unknown — not "created", which nobody has seen.
+    expect(text()).toMatch(/site-builder\s*unknown/);
+    expect(text()).toMatch(/sales\s*Waiting on you/);
+    expect(text()).toMatch(/gap-researcher\s*deselected/);
+    // The parked sessions are asked for by stop reason, not read off the hundred most recent.
+    const asked = calls.map((c) => c.path);
+    expect(asked).toContain("/api/sessions?stop_reason=awaiting_approval");
+    expect(asked).toContain("/api/sessions?stop_reason=awaiting_answer");
+    expect(asked).not.toContain("/api/sessions");
+  });
+
+  it("says why a card is empty when its read failed, rather than showing no agents and nothing waiting", async () => {
+    const { text } = await render("/home", (path) =>
+      path.includes("/api/context") ? { body: context }
+      : path.includes("/api/agents") || path.includes("/api/sessions") || path.includes("/api/deployments")
+        ? { status: 502, body: { error: "upstream unavailable" } }
+      : { body: [] });
+    expect(text()).not.toContain("Nothing is waiting on you");
+    expect(text()).not.toContain("None of this install's agents");
+    expect(text().match(/upstream unavailable/g)?.length).toBe(2);
   });
 });
