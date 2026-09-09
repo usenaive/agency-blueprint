@@ -94,7 +94,7 @@ describe("every template of this blueprint", () => {
       expect(agent.system, name).toMatch(/pricing answer when the context holds one.*when it does not.*ask_operator/);
     }
     const gap = template.agents.find((a) => a.name === "gap-researcher")!;
-    expect(gap.system.includes("third setup answer")).toBe(asked.has("competitors"));
+    expect((gap.system ?? "").includes("third setup answer")).toBe(asked.has("competitors"));
   });
 
   it.each(all)("$name seeds a demo that says it is one, and files only kinds it declares", (template) => {

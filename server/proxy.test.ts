@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "../templates/active";
 import { AGENCY_IDENTITY } from "../templates/blank";
-import { configFromEnv, listAgents, provisionClientAgents, proxyFetch, upstreamFor } from "./proxy";
+import { collect, configFromEnv, listAgents, provisionClientAgents, proxyFetch, upstreamFor } from "./proxy";
 
 describe("upstreamFor", () => {
   it("does not map the agent roster, which is paged and cannot be relayed one page at a time", () => {
@@ -91,6 +91,16 @@ describe("listAgents", () => {
     const flaky = vi.fn(async () =>
       (calls += 1) === 1 ? page([{ id: "agt_1", name: "sales" }], "agt_1") : new Response("nope", { status: 503 }));
     expect(await listAgents(config, flaky as typeof fetch)).toBeNull();
+  });
+
+  it("reads the timers the same way — a timer on an unread page is an agent shown with none", async () => {
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL) => {
+      const after = new URL(String(url)).searchParams.get("after");
+      return after === null ? page([{ id: "dep_1", name: "a" }], "dep_1") : page([{ id: "dep_2", name: "b" }], null);
+    });
+    expect(await collect(config, "/v1/deployments", fetchImpl as typeof fetch)).toHaveLength(2);
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe("https://x.test/v1/deployments?limit=100");
+    expect(String(fetchImpl.mock.calls[1]?.[0])).toBe("https://x.test/v1/deployments?limit=100&after=dep_1");
   });
 });
 

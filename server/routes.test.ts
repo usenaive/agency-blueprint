@@ -436,18 +436,41 @@ describe("the platform routes", () => {
     const installs = [
       { id: "bpi_old", status: "applied", applied_at: "2026-09-01T00:00:00Z", report: { intake: [] } },
       { id: "bpi_failed", status: "failed", applied_at: "2026-09-09T00:00:00Z", report: null },
-      { id: "bpi_new", status: "applied", applied_at: "2026-09-08T00:00:00Z", report: { intake: [{ name: "sales", action: "started", id: "ses_1" }] } },
+      {
+        id: "bpi_new", status: "applied", applied_at: "2026-09-08T00:00:00Z",
+        report: {
+          agents: [{ name: "sales", action: "created", id: "agt_1" }, { name: "site-builder", action: "refused", reason: "no host" }],
+          intake: [{ name: "sales", action: "created", id: "ses_1" }, { name: "site-builder", action: "skipped", reason: "agent refused" }],
+        },
+      },
     ];
     const context = { object: "project_context", answers: [{ key: "offer", label: "What does your agency sell?", value: "Paid social" }] };
+    const session = { id: "ses_1", status: "idle", stop_reason: "awaiting_approval", pending_actions: [{ tool_call_id: "c1" }] };
     const fetchImpl = vi.fn().mockImplementation((url: string) =>
-      Promise.resolve(new Response(JSON.stringify(url.includes("/context") ? context : { data: installs, has_more: false, next_cursor: null }), { status: 200 })));
+      Promise.resolve(new Response(JSON.stringify(
+        url.includes("/context") ? context
+        : url.endsWith("/v1/sessions/ses_1") ? session
+        : { data: installs, has_more: false, next_cursor: null }), { status: 200 })));
     vi.stubGlobal("fetch", fetchImpl);
     const { call } = fixture({ config });
     const reply = await call("GET", "/api/context");
-    expect(reply).toEqual({ status: 200, body: { context, intake: [{ name: "sales", action: "started", id: "ses_1" }] } });
+    expect(reply).toEqual({
+      status: 200,
+      body: {
+        context,
+        // The team is the agents the apply left standing — the refused one is not on it.
+        team: [{ name: "sales", id: "agt_1" }],
+        // Each opened intake is read by its own id, so it is found long after it left the recent list.
+        intake: [
+          { name: "sales", action: "created", id: "ses_1", session: { status: "idle", stop_reason: "awaiting_approval", waiting: true } },
+          { name: "site-builder", action: "skipped", reason: "agent refused", session: null },
+        ],
+      },
+    });
     expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
       expect.stringMatching(/^https:\/\/api\.test\/v1\/blueprints\/installs\?project=[\w-]+&limit=100$/),
       "https://api.test/v1/blueprints/installs/bpi_new/context",
+      "https://api.test/v1/sessions/ses_1",
     ]);
 
     fetchImpl.mockResolvedValue(new Response(JSON.stringify({ data: [], has_more: false, next_cursor: null }), { status: 200 }));

@@ -10,7 +10,7 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
-import { latestContext, listAgents, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
+import { collect, latestContext, listAgents, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import type { LeadInput, PostPatch, Store } from "./store.ts";
 
 export interface ApiRequest {
@@ -288,12 +288,13 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
         JSON.stringify({ agent_id: agent, message: typeof message === "string" ? message : "" }));
       return { status: created.status, body: await created.json() };
     }
-    if (req.method === "GET" && req.path === "/api/agents") {
+    if (req.method === "GET" && (req.path === "/api/agents" || req.path === "/api/deployments")) {
       // Assembled here rather than relayed: the upstream pages at 20, so the screen that lists the
-      // agency's own agents was showing whichever twenty came first — never `sales`, on a real org.
-      const roster = await listAgents(config);
-      if (roster === null) return { status: 502, body: { error: "upstream unavailable" } };
-      return { status: 200, body: { data: roster, has_more: false, next_cursor: null } };
+      // agency's own agents was showing whichever twenty came first — never `sales`, on a real org;
+      // and a timer past the first hundred read as an agent with none.
+      const rows = await collect(config, req.path === "/api/agents" ? "/v1/agents" : "/v1/deployments");
+      if (rows === null) return { status: 502, body: { error: "upstream unavailable" } };
+      return { status: 200, body: { data: rows, has_more: false, next_cursor: null } };
     }
     if (req.method === "GET" && req.path === "/api/context") {
       const found = await latestContext(config);
