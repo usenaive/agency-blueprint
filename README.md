@@ -42,9 +42,9 @@ flowchart LR
   app's own store, read by the page over the public, cacheable `GET /api/site` and rewritten
   by the `site-builder` through `dashboard.update_site` — which is held at `ask`, so every
   edit lands on **Approvals** first. The contact form posts to `POST /api/leads`, the one
-  other public route, and lands as a CRM lead — one open row per contact and domain, at most
-  200 open leads before the form answers `429`, and the page takes a served section only in the
-  seed's shape. The old operator paths (`/crm`, `/approvals`,
+  other public route, and lands as a CRM lead — one open row per contact and domain, ten new
+  leads an hour and at most 200 open ones before the form answers `429`, and the page takes a
+  served section only in the seed's shape, within its lengths. The old operator paths (`/crm`, `/approvals`,
   …) redirect to `/app/*`.
 - **Seven agents** — the active template's crew, each with a role, a private system prompt,
   a deny-by-default tool allow-list, skills from the platform catalogue, a daily budget, and a
@@ -105,11 +105,21 @@ reads the new value on its next turn, no re-apply needed.
 ### Day one
 
 Each of the seven carries an `intake` — a first message the apply starts a session with,
-capped at **$2** (`2_000_000` µUSD) each, so day one costs at most **$14** and leaves you: a
-rewritten site waiting on Approvals, fifteen leads, an onboarding checklist, an editorial
-calendar and a first draft, three revisions, a gap report and a proposal skeleton — all filed
-on the agency's own client record or as pending drafts, nothing sent, nothing published. The
-dashboard's home screen (`/app`) shows each of those sessions and what it is waiting on.
+capped at **$20** (`20_000_000` µUSD) each. An intake runs *once*, on the apply that creates
+the agent, and never again on a later apply, so seven of them are a one-off ceiling of
+**$140** on install day — not a monthly line.
+
+What recurs is the separate per-agent `budget`: **$60** a day each
+(`cap_micro_usd: 60_000_000`, `period: "day"`), no more than $20 of it on any one task. That
+is a ceiling, not a bill — nothing spends against it unless a timer fires or you start a
+session, and the crew's declared timers are ten scheduled runs a week in all, each capped at
+$10 per fire.
+
+Day one leaves you: a rewritten site waiting on Approvals, fifteen leads, an onboarding
+checklist, an editorial calendar and a first draft, three revisions, a gap report and a
+proposal skeleton — all filed on the agency's own client record or as pending drafts, nothing
+sent, nothing published. The dashboard's home screen (`/app`) shows each of those sessions and
+what it is waiting on.
 
 ### The skills
 

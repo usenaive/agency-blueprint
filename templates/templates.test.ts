@@ -7,6 +7,7 @@
  * be a delta on it and not a fork of it, and neither may declare a row or a kind the other's
  * screens could not render.
  */
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
@@ -258,5 +259,28 @@ describe("kindLabel", () => {
     // A row filed under another template keeps its kind after a switch; the screen shows the id
     // rather than an empty chip.
     expect(kindLabel("a-kind-from-another-template")).toBe("a-kind-from-another-template");
+  });
+});
+
+/**
+ * The README is where a person reads what an install will cost, before they can read a declaration.
+ * It said an intake was capped at $2 and day one at $14 while `templates/agents.ts` declared
+ * 20_000_000 µUSD and seven agents — so derive both figures from the declarations here, and the
+ * next retune cannot leave the number behind.
+ */
+describe("what the README promises about spend", () => {
+  const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+  const usd = (micro: number) => `$${(micro / 1_000_000).toLocaleString("en-US")}`;
+  const agents = blank.agents ?? [];
+  const intake = agents[0]!.intake!.budget_micro_usd!;
+  const cap = agents[0]!.budget!.cap_micro_usd;
+
+  it("names the one-time intake ceiling, its day-one total, and the separate recurring cap", () => {
+    // One `intake` each, spent once at the apply: the ceiling is per agent and the total is one-off.
+    expect(readme).toContain(`**${usd(intake)}**`);
+    expect(readme).toContain(`**${usd(intake * agents.length)}**`);
+    // The recurring cap is a different number on a different clock, and must be stated as one.
+    expect(readme).toContain(`**${usd(cap)}**`);
+    expect(readme).not.toContain("$14 ");
   });
 });
