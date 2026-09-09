@@ -64,6 +64,22 @@ export const SITE_SECTIONS = [
   "company", "tagline", "tone", "palette", "hero", "proof", "services", "whoWeServe", "process", "pricing", "faq", "contact", "footer",
 ] as const satisfies readonly (keyof SiteProfile)[];
 
+/**
+ * A section is accepted when it has the seed's shape all the way down: the same type, every key
+ * the seed has, and each list's items shaped like the seed's first — so a page never renders a
+ * tier without a price or a step without a title. The store judges an `update_site` by it and the
+ * page judges what `GET /api/site` served by it.
+ */
+export const sameShape = (seed: unknown, value: unknown): boolean => {
+  if (Array.isArray(seed)) {
+    return Array.isArray(value) && (seed.length === 0 || value.every((item) => sameShape(seed[0], item)));
+  }
+  if (typeof seed !== "object" || seed === null) return typeof value === typeof seed;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const given = value as Record<string, unknown>;
+  return Object.entries(seed).every(([key, inner]) => key in given && sameShape(inner, given[key]));
+};
+
 export const site: SiteProfile = {
   company: ACTIVE.words.brand,
   tagline: ACTIVE.site.tagline,

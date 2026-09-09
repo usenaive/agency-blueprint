@@ -95,4 +95,20 @@ describe("the page reads its copy from /api/site", () => {
     expect(await loadSite(html)).toEqual(site);
     expect(await loadSite(down)).toEqual(site);
   });
+
+  it("takes a served section only in the seed's shape, and the seed's own for any other", async () => {
+    // A tier without a price and a hero that is a string would each throw in a section; both are the seed's.
+    const served = {
+      ...site,
+      hero: "Approved on Tuesday",
+      pricing: { ...site.pricing, tiers: [{ name: "Growth" }] },
+      contact: { ...site.contact, email: "hello@served.example" },
+    };
+    const got = await loadSite((() => json(served)) as unknown as typeof fetch);
+    expect(got.hero).toEqual(site.hero);
+    expect(got.pricing).toEqual(site.pricing);
+    expect(got.contact.email).toBe("hello@served.example");
+    expect(await loadSite((() => json([1, 2])) as unknown as typeof fetch)).toEqual(site);
+    expect(await loadSite((() => json(null)) as unknown as typeof fetch)).toEqual(site);
+  });
 });

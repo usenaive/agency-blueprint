@@ -5,7 +5,7 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hashToken } from "./mcp.ts";
-import { handleRequest, isLoopback, type ApiContext, type ApiRequest } from "./routes.ts";
+import { handleRequest, isLoopback, OPEN_LEADS_CAP, type ApiContext, type ApiRequest } from "./routes.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -66,6 +66,29 @@ describe("the store routes", () => {
     });
     // A body that is not JSON at all is a validation error, never a 502.
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
+  });
+
+  it("bounds what the anonymous form may write: one open row per contact, a cap on open leads, a size on fields", async () => {
+    const { call, writes, store } = fixture();
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    // The same contact again, however it is cased, is the row already filed — not a second write.
+    const again = await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "Jordan@SummitOutdoor.example " } });
+    expect(again.status).toBe(200);
+    expect(writes()).toBe(1);
+    // Once the contact is worked past "lead" the address may file a new one.
+    store.advanceClient((again.body as { id: string }).id);
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+
+    expect((await call("POST", "/api/leads", { ...lead, note: "x".repeat(2001) })).status).toBe(400);
+    expect((await call("POST", "/api/leads", { ...lead, services: Array.from({ length: 11 }, () => "seo") })).status).toBe(400);
+
+    for (let i = store.read().clients.filter((c) => c.stage === "lead").length; i < OPEN_LEADS_CAP; i += 1) {
+      store.createLead({ ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
+    }
+    const full = await call("POST", "/api/leads", { ...lead, domain: "late.example", contact: { ...lead.contact, email: "late@late.example" } });
+    expect(full.status).toBe(429);
+    expect(full.headers?.["retry-after"]).toBe("86400");
+    expect(store.read().clients).toHaveLength(OPEN_LEADS_CAP + 1);
   });
 
   it("advances, onboards, and refuses to onboard a churned client", async () => {

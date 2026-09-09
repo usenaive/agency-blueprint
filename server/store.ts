@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { STAGE_ORDER, type Client, type PipelineStage } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
-import { site, SITE_SECTIONS, type SiteProfile } from "../site/site.config.ts";
+import { sameShape, site, SITE_SECTIONS, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 
 /** A minted MCP credential: only the SHA-256 hash of the token is kept. */
@@ -94,21 +94,6 @@ export const seedState = (): StoreState => ({
  * site-builder rewrites from the setup answers on day one.
  */
 export const emptyState = (): StoreState => ({ clients: [], posts: [], site_profile: structuredClone(site) });
-
-/**
- * A section is accepted when it has the seed's shape all the way down: the same type, every key
- * the seed has, and each list's items shaped like the seed's first — so a page never renders a
- * tier without a price or a step without a title.
- */
-const sameShape = (seed: unknown, value: unknown): boolean => {
-  if (Array.isArray(seed)) {
-    return Array.isArray(value) && (seed.length === 0 || value.every((item) => sameShape(seed[0], item)));
-  }
-  if (typeof seed !== "object" || seed === null) return typeof value === typeof seed;
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const given = value as Record<string, unknown>;
-  return Object.entries(seed).every(([key, inner]) => key in given && sameShape(inner, given[key]));
-};
 
 /** The stage after `stage` on the happy path; churned only ever by hand. */
 const next = (stage: PipelineStage): PipelineStage | null => {

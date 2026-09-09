@@ -42,7 +42,9 @@ flowchart LR
   app's own store, read by the page over the public, cacheable `GET /api/site` and rewritten
   by the `site-builder` through `dashboard.update_site` — which is held at `ask`, so every
   edit lands on **Approvals** first. The contact form posts to `POST /api/leads`, the one
-  other public route, and lands as a CRM lead. The old operator paths (`/crm`, `/approvals`,
+  other public route, and lands as a CRM lead — one open row per contact and domain, at most
+  200 open leads before the form answers `429`, and the page takes a served section only in the
+  seed's shape. The old operator paths (`/crm`, `/approvals`,
   …) redirect to `/app/*`.
 - **Seven agents** — the active template's crew, each with a role, a private system prompt,
   a deny-by-default tool allow-list, skills from the platform catalogue, a daily budget, and a

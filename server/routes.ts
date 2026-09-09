@@ -173,6 +173,21 @@ async function tokenRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
 }
 
 /**
+ * What an anonymous form may put in the CRM: a bounded number of *open* leads (the store is the one
+ * durable thing the deployed entry has — a per-process counter would reset on every cold start), one
+ * row per contact-and-domain while it is still a lead, and fields no longer than the form's own.
+ * The sales agent working the pipeline (`advance_pipeline`) is what frees the inbox again.
+ */
+export const OPEN_LEADS_CAP = 200;
+const LEAD_FIELD_MAX = 200;
+const withinLeadSize = (lead: Partial<LeadInput>): boolean =>
+  [lead.name, lead.domain, lead.contact?.name, lead.contact?.email, lead.contact?.role]
+    .every((v) => v === undefined || (typeof v === "string" && v.length <= LEAD_FIELD_MAX)) &&
+  (lead.note === undefined || (typeof lead.note === "string" && lead.note.length <= 2000)) &&
+  (lead.services === undefined || (Array.isArray(lead.services) && lead.services.length <= 10 &&
+    lead.services.every((x) => typeof x === "string" && x.length <= LEAD_FIELD_MAX)));
+
+/**
  * The public site's two routes, and the only `/api/*` routes besides `/api/enter` that run before
  * the gate: a visitor holds no bearer. `GET /api/site` is the page's copy — public by definition,
  * cacheable for a minute so a burst of visitors is one read — and `POST /api/leads` is its contact
@@ -190,7 +205,16 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     if (!body.name || !body.domain || !body.contact?.name || !body.contact.email) {
       return { status: 400, body: { error: "name, domain and contact {name, email} are required" } };
     }
-    return { status: 201, body: (await ctx.store()).createLead(body as LeadInput) };
+    if (!withinLeadSize(body)) return { status: 400, body: { error: "a field is longer than the form allows" } };
+    const store = await ctx.store();
+    const open = store.read().clients.filter((c) => c.stage === "lead");
+    const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+    const seen = open.find((c) => same(c.contact.email, body.contact!.email) && same(c.domain, body.domain!));
+    if (seen !== undefined) return { status: 200, body: seen };
+    if (open.length >= OPEN_LEADS_CAP) {
+      return { status: 429, body: { error: "the lead inbox is full — email the agency directly" }, headers: { "retry-after": "86400" } };
+    }
+    return { status: 201, body: store.createLead(body as LeadInput) };
   }
   return null;
 }
