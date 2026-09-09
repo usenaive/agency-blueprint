@@ -109,7 +109,7 @@ export function Home() {
 
   return (
     <div className="pane-in">
-      <PageHeader title={TEMPLATE.words.brand} subtitle="What the crew knows, what it did on day one, and what is waiting on you." />
+      <PageHeader title={TEMPLATE.words.brand} subtitle="What the team knows, what it did on day one, and what is waiting on you." />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Project context">
           {ctx ? (
@@ -166,7 +166,7 @@ export function Home() {
           )}
         </Card>
 
-        <Card title="Crew" to="/agents">
+        <Card title="Team" to="/agents">
           {rosterError !== null ? (
             <Absent>{notConfigured ? "Not configured — the roster is the platform's." : rosterError}</Absent>
           ) : roster === null || ctx === null ? (

@@ -82,7 +82,7 @@ const blank: TemplateVocabulary = {
     noActiveClients: "No active clients yet — advance one on the CRM.",
     agentsSubtitle: "Every agent working for this agency.",
     noCrew:
-      "No agents of this client's own. This template runs every client through the agency's own seven; a template with a per-client crew provisions one at onboarding.",
+      "No agents of this client's own. This template runs every client through the agency's own seven; a template with a per-client team provisions one at onboarding.",
   },
   site: {
     tagline: "The work, planned and shown before it ships.",
@@ -117,7 +117,7 @@ const blank: TemplateVocabulary = {
 };
 
 const seoGeo: TemplateVocabulary = {
-  description: "The agency, specialised in search: audits, SERP work and answer-engine optimization, with a crew per client.",
+  description: "The agency, specialised in search: audits, SERP work and answer-engine optimization, with a team per client.",
   kinds: [
     { id: "article", label: "Article", description: "A ranking article written against the client's keyword map." },
     { id: "landing-page", label: "Landing page", description: "A page built for one query and one intent." },
@@ -129,11 +129,11 @@ const seoGeo: TemplateVocabulary = {
     brand: "Meridian Search",
     crmSubtitle: "Every prospect and client, by pipeline stage — the sales agent works this board, search presence first.",
     onboarding:
-      "Moving a client to active onboards them and provisions their crew — an SEO writer, a GEO optimizer and an audit runner, each named for the client.",
-    clientsSubtitle: "Every active engagement — open one to see its connections, calendar, crew and deliverables.",
+      "Moving a client to active onboards them and provisions their team — an SEO writer, a GEO optimizer and an audit runner, each named for the client.",
+    clientsSubtitle: "Every active engagement — open one to see its connections, calendar, team and deliverables.",
     noActiveClients: "No active clients yet — advance one on the CRM.",
-    agentsSubtitle: "Every agent working for this agency — the seven that run it, and each client's crew.",
-    noCrew: "No agents for this client yet — onboarding a client provisions its crew.",
+    agentsSubtitle: "Every agent working for this agency — the seven that run it, and each client's team.",
+    noCrew: "No agents for this client yet — onboarding a client provisions its team.",
   },
   site: {
     tagline: "Be the answer, everywhere people ask.",

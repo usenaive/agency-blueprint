@@ -97,7 +97,7 @@ export const TOOLS = [
   { name: "schedule_post", description: "Reslot a post on the calendar.", inputSchema: obj({
     id: str("Post id"), date: str("ISO day (YYYY-MM-DD)"),
   }, ["id", "date"]) },
-  { name: "list_agents", description: "Platform agents, optionally only one client's crew.", inputSchema: obj({ client: str("Optional client id") }, []) },
+  { name: "list_agents", description: "Platform agents, optionally only one client's team.", inputSchema: obj({ client: str("Optional client id") }, []) },
   { name: "start_agent_session", description: "Start a session with a platform agent.", inputSchema: obj({
     agent: str("Agent name"), prompt: str("Opening message"),
   }, ["agent", "prompt"]) },

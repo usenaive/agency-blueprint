@@ -25,7 +25,7 @@ const FOCUS: Record<string, string> = {
   sales:
     "This agency sells search and answer-engine work, so research each lead's search presence first — what they rank for, where they are cited in AI answers, and what a first audit would find.",
   "client-manager":
-    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's crew pointed at the next one.",
+    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one.",
   "content-writer":
     "Every post is written for one query and one intent, carries an answer block an AI engine can cite, and names the entity it is about in the first hundred words.",
   "content-reviser":

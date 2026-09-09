@@ -82,7 +82,7 @@ export const OPERATOR = [...ASK_OPERATOR, ...REQUEST_TOOLS];
  * anything else is inventing a client.
  */
 export const PREAMBLE =
-  "Before anything else, read project_context: it holds what this agency sells and to whom, who its ideal client is and — when the template asked — how it prices, in the operator's own words, plus the agency's apps and crew. " +
+  "Before anything else, read project_context: it holds what this agency sells and to whom, who its ideal client is and — when the template asked — how it prices, in the operator's own words, plus the agency's apps and team. " +
   "Those answers are the client's, not yours to invent — where the context is silent on something you need, ask the operator rather than filling the gap yourself.";
 
 /** The one rule every agent of this blueprint shares: nothing leaves the agency without the operator. */
