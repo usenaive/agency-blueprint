@@ -349,7 +349,7 @@ describe("the /api/* gate", () => {
 });
 
 describe("the platform routes", () => {
-  const config = { baseUrl: "https://api.test", apiKey: "sk_test", identityId: "idn_1" };
+  const config = { baseUrl: "https://api.test", apiKey: "sk_test", identityId: "idn_1", project: "agency" };
 
   it("says the key is missing rather than swallowing it, and only for routes that need one", async () => {
     const { call } = fixture();

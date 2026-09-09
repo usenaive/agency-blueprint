@@ -44,14 +44,26 @@ describe("configFromEnv", () => {
       apiKey: "k",
       baseUrl: "https://x.test",
       identityId: null,
+      project: "agency",
     });
+  });
+
+  /**
+   * Measured on staging: the install is filed under the customer's slug (`ws12-staging-blank`) and
+   * the dashboard asked for `project=agency`, so `/api/context` was a 404 on every deployed install.
+   * The platform writes the install's own project as `NAIVE_PROJECT`; the declaration's name is
+   * only the fallback for a laptop `naive up`, which files under it.
+   */
+  it("reads the install's project from NAIVE_PROJECT and falls back to the declaration's name", () => {
+    expect(configFromEnv({ NAIVE_API_KEY: "k", NAIVE_PROJECT: "ws12-staging-blank" })?.project).toBe("ws12-staging-blank");
+    expect(configFromEnv({ NAIVE_API_KEY: "k" })?.project).toBe("agency");
   });
 });
 
 describe("proxyFetch", () => {
   it("attaches the key upstream only", async () => {
     const fetchImpl = vi.fn(async () => new Response("{}"));
-    await proxyFetch({ apiKey: "k", baseUrl: "https://x.test", identityId: null }, { method: "GET", path: "/v1/agents" }, null, fetchImpl);
+    await proxyFetch({ apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" }, { method: "GET", path: "/v1/agents" }, null, fetchImpl);
     expect(fetchImpl).toHaveBeenCalledWith("https://x.test/v1/agents", expect.objectContaining({
       method: "GET",
       headers: expect.objectContaining({ authorization: "Bearer k" }),
@@ -60,7 +72,7 @@ describe("proxyFetch", () => {
 });
 
 describe("listAgents", () => {
-  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null };
+  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" };
   const page = (rows: { id: string; name: string }[], next: string | null) =>
     new Response(JSON.stringify({ data: rows, has_more: next !== null, next_cursor: next }), { status: 200 });
 
@@ -105,7 +117,7 @@ describe("listAgents", () => {
 });
 
 describe("provisionClientAgents", () => {
-  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null };
+  const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" };
   const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
   /** Named, not "the active one": the mechanism is the blueprint's and must hold for either template. */
   const crew = TEMPLATES["seo-geo"].crew;

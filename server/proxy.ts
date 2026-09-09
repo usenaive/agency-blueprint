@@ -78,6 +78,8 @@ export interface ProxyConfig {
   baseUrl: string;
   apiKey: string;
   identityId: string | null;
+  /** The install this app belongs to (`NAIVE_PROJECT`, §29.7) — the row `/api/context` reads; the declaration's own name when the platform did not say. */
+  project: string;
 }
 
 /** Reads the server's platform config from the environment; null when the key is absent. */
@@ -88,6 +90,7 @@ export function configFromEnv(env: Record<string, string | undefined>): ProxyCon
     apiKey,
     baseUrl: (env.NAIVE_API_URL ?? "https://api.usenaive.ai").replace(/\/$/, ""),
     identityId: env.NAIVE_IDENTITY_ID ?? null,
+    project: env.NAIVE_PROJECT ?? PROJECT,
   };
 }
 
@@ -194,7 +197,7 @@ async function intakeLine(config: ProxyConfig, line: ReportLine, fetchImpl: type
  * platform did not answer.
  */
 export async function latestContext(config: ProxyConfig, fetchImpl: typeof fetch = fetch): Promise<ContextReply | null> {
-  const list = await proxyFetch(config, { method: "GET", path: `/v1/blueprints/installs?project=${encodeURIComponent(PROJECT)}&limit=100` }, null, fetchImpl);
+  const list = await proxyFetch(config, { method: "GET", path: `/v1/blueprints/installs?project=${encodeURIComponent(config.project)}&limit=100` }, null, fetchImpl);
   if (!list.ok) return null;
   type Row = { id: string; status: string; applied_at: string; report?: { agents?: ReportLine[]; intake?: ReportLine[] } | null };
   const rows = ((await list.json()) as { data?: Row[] }).data ?? [];
