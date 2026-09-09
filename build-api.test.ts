@@ -26,8 +26,9 @@ function buildApi(template?: string): string {
 
 beforeAll(() => {
   work = mkdtempSync(join(tmpdir(), "sga-build-"));
-  // `templates` too: the server reads the active template's crew, seed and kinds from it.
-  for (const entry of ["build-api.mjs", "server", "seed", "templates"]) {
+  // `templates` too: the server reads the active template's crew, seed and kinds from it; `site`
+  // for the site profile the store seeds and the two-door routing the server shares with it.
+  for (const entry of ["build-api.mjs", "server", "seed", "site", "templates"]) {
     cpSync(join(root, entry), join(work, entry), { recursive: true });
   }
   // Symlinked, not copied: the script only needs esbuild to resolve from beside itself.
@@ -53,19 +54,21 @@ describe("build-api.mjs", () => {
     expect(readFileSync(join(dist, "api", "app.js"), "utf8")).toContain('from "pg"');
   });
 
-  it("writes the three rewrites in the order that makes them work", () => {
+  it("writes the four rewrites in the order that makes them work", () => {
     const { rewrites } = JSON.parse(readFileSync(join(dist, "vercel.json"), "utf8")) as {
       rewrites: { source: string; destination: string }[];
     };
     expect(rewrites).toEqual([
       { source: "/mcp", destination: "/api/app?__path=/mcp" },
       { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
+      { source: "/app/:path*", destination: "/app/index.html" },
       { source: "/((?!api/).*)", destination: "/index.html" },
     ]);
-    // The SPA fallback must come last and must never swallow a function.
-    expect(rewrites[2]!.source).toBe("/((?!api/).*)");
-    expect(new RegExp(`^${rewrites[2]!.source}$`).test("/api/clients")).toBe(false);
-    expect(new RegExp(`^${rewrites[2]!.source}$`).test("/clients/cli_1/posts")).toBe(true);
+    // The operator dashboard's fallback comes before the public site's, and the site's — last —
+    // must never swallow a function.
+    expect(rewrites[3]!.source).toBe("/((?!api/).*)");
+    expect(new RegExp(`^${rewrites[3]!.source}$`).test("/api/clients")).toBe(false);
+    expect(new RegExp(`^${rewrites[3]!.source}$`).test("/pricing")).toBe(true);
   });
 
   it("compiles the template it was built for, rather than reading it on a host that has none", () => {

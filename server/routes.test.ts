@@ -196,12 +196,31 @@ describe("the /api/* gate", () => {
     expect(allowed.body).toHaveLength(1);
   });
 
+  /**
+   * The public site's two routes stand open on purpose: a visitor holds no bearer, the copy is what
+   * the page shows anyway, and the contact form has to land as a lead or the site sells nothing.
+   * Neither reads a row back — the lead is answered as created, and the CRM stays behind the gate.
+   */
+  it("leaves the site's copy and its contact form open to a visitor, and nothing else", async () => {
+    const { call } = fixture(deployed);
+    const copy = await call("GET", "/api/site");
+    expect(copy.status).toBe(200);
+    expect(copy.headers).toEqual({ "cache-control": "public, max-age=60" });
+    expect((copy.body as { hero: { title: string } }).hero.title).toBeTruthy();
+    expect(await call("PATCH", "/api/site", {})).toMatchObject({ status: 405 });
+
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    expect(await call("GET", "/api/leads")).toMatchObject({ status: 405 });
+    // The row it made is still behind the gate.
+    expect(await call("GET", "/api/clients")).toMatchObject({ status: 401 });
+  });
+
   it("gates the writes too — the queue, the pipeline and a billable session alike", async () => {
     const { call, store, writes } = fixture(deployed);
     const client = store.createLead(lead);
     const before = writes();
     for (const [method, path] of [
-      ["POST", "/api/leads"], ["POST", `/api/clients/${client.id}/advance`],
+      ["POST", `/api/clients/${client.id}/advance`],
       ["POST", `/api/clients/${client.id}/onboard`], ["PATCH", "/api/posts/post_1"],
       ["POST", "/api/posts/post_1/post-now"], ["POST", "/api/chat"], ["GET", "/api/chat/ses_1/stream"],
       ["GET", "/api/agents"], ["GET", "/api/social/accounts"],
@@ -257,7 +276,8 @@ describe("the /api/* gate", () => {
       const reply = await enter(new URLSearchParams({ ticket: ticket(Date.now() + 60_000) }).toString());
       expect(reply.status).toBe(303);
       expect(reply.body).toBeUndefined();
-      expect(reply.headers?.["location"]).toBe("/");
+      // To the operator UI, which lives under `/app`; `/` is the public site and needs no cookie.
+      expect(reply.headers?.["location"]).toBe("/app");
       const cookie = reply.headers?.["set-cookie"] ?? "";
       expect(cookie).toContain("dashboard_session=dash");
       expect(cookie).toContain("HttpOnly");
@@ -405,6 +425,35 @@ describe("the platform routes", () => {
     const { call } = fixture({ config });
     expect((await call("GET", "/api/agents/agt_1/spend")).body).toMatchObject({ spent_micro_usd: 1_250_000 });
     expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.test/v1/agents/agt_1/spend");
+  });
+
+  /**
+   * The home screen's context card: the setup answers live on the latest APPLIED install of this
+   * project, so the route lists installs narrowed by project, picks the newest applied one, and
+   * reads its context — the day-one lines ride along from that install's report.
+   */
+  it("reads this project's context from its latest applied install, and says when there is none", async () => {
+    const installs = [
+      { id: "bpi_old", status: "applied", applied_at: "2026-09-01T00:00:00Z", report: { intake: [] } },
+      { id: "bpi_failed", status: "failed", applied_at: "2026-09-09T00:00:00Z", report: null },
+      { id: "bpi_new", status: "applied", applied_at: "2026-09-08T00:00:00Z", report: { intake: [{ name: "sales", action: "started", id: "ses_1" }] } },
+    ];
+    const context = { object: "project_context", answers: [{ key: "offer", label: "What does your agency sell?", value: "Paid social" }] };
+    const fetchImpl = vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(new Response(JSON.stringify(url.includes("/context") ? context : { data: installs, has_more: false, next_cursor: null }), { status: 200 })));
+    vi.stubGlobal("fetch", fetchImpl);
+    const { call } = fixture({ config });
+    const reply = await call("GET", "/api/context");
+    expect(reply).toEqual({ status: 200, body: { context, intake: [{ name: "sales", action: "started", id: "ses_1" }] } });
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      expect.stringMatching(/^https:\/\/api\.test\/v1\/blueprints\/installs\?project=[\w-]+&limit=100$/),
+      "https://api.test/v1/blueprints/installs/bpi_new/context",
+    ]);
+
+    fetchImpl.mockResolvedValue(new Response(JSON.stringify({ data: [], has_more: false, next_cursor: null }), { status: 200 }));
+    expect(await call("GET", "/api/context")).toEqual({ status: 404, body: { error: "no applied install for this project" } });
+    // And without a key it is the same 503 as every platform-backed screen — "not configured", not an error.
+    expect(await fixture().call("GET", "/api/context")).toMatchObject({ status: 503 });
   });
 
   it("answers 502 when the platform cannot be reached at all", async () => {

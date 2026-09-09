@@ -10,7 +10,7 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
-import { listAgents, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
+import { latestContext, listAgents, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import type { LeadInput, PostPatch, Store } from "./store.ts";
 
 export interface ApiRequest {
@@ -119,7 +119,7 @@ function enterRoute(req: ApiRequest, ctx: ApiContext): ApiReply {
   return {
     status: 303,
     headers: {
-      location: "/",
+      location: "/app",
       "set-cookie": `${COOKIE}=${ctx.dashboardToken}; Path=/; HttpOnly; SameSite=Lax${secure}; Max-Age=${COOKIE_MAX_AGE}`,
     },
   };
@@ -172,6 +172,29 @@ async function tokenRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     : { status: 404, body: { error: "no such token" } };
 }
 
+/**
+ * The public site's two routes, and the only `/api/*` routes besides `/api/enter` that run before
+ * the gate: a visitor holds no bearer. `GET /api/site` is the page's copy — public by definition,
+ * cacheable for a minute so a burst of visitors is one read — and `POST /api/leads` is its contact
+ * form, which lands as a CRM lead. Neither reads a row a visitor could not already see on the page.
+ */
+async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
+  const { method, path } = req;
+  if (path === "/api/site") {
+    if (method !== "GET") return NOT_ALLOWED;
+    return { status: 200, body: (await ctx.store()).site(), headers: { "cache-control": "public, max-age=60" } };
+  }
+  if (path === "/api/leads") {
+    if (method !== "POST") return NOT_ALLOWED;
+    const body = parse(req.body) as Partial<LeadInput>;
+    if (!body.name || !body.domain || !body.contact?.name || !body.contact.email) {
+      return { status: 400, body: { error: "name, domain and contact {name, email} are required" } };
+    }
+    return { status: 201, body: (await ctx.store()).createLead(body as LeadInput) };
+  }
+  return null;
+}
+
 /** The store-backed routes: the CRM pipeline and the content queue. */
 async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   const { method, path } = req;
@@ -181,15 +204,6 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
   }
   if (path === "/api/posts") {
     return method === "GET" ? { status: 200, body: (await ctx.store()).read().posts } : NOT_ALLOWED;
-  }
-  // The public site's contact form lands here as a CRM lead.
-  if (path === "/api/leads") {
-    if (method !== "POST") return NOT_ALLOWED;
-    const body = parse(req.body) as Partial<LeadInput>;
-    if (!body.name || !body.domain || !body.contact?.name || !body.contact.email) {
-      return { status: 400, body: { error: "name, domain and contact {name, email} are required" } };
-    }
-    return { status: 201, body: (await ctx.store()).createLead(body as LeadInput) };
   }
 
   const advance = /^\/api\/clients\/([\w-]+)\/advance$/.exec(path);
@@ -256,9 +270,10 @@ async function chatAgentId(config: ProxyConfig): Promise<string | null> {
 
 /**
  * Everything that needs the org's key: chat, the agent roster, an agent's spend, the sessions
- * behind the approval queue and the agent history, and the client's social accounts.
+ * behind the approval queue and the agent history, the client's social accounts, the timers, and
+ * this project's context (the setup answers) from its latest applied install.
  */
-const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions)(\/|$)/;
+const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context)(\/|$)/;
 
 async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (!PLATFORM_ROUTE.test(req.path)) return NO_ROUTE;
@@ -279,6 +294,13 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
       const roster = await listAgents(config);
       if (roster === null) return { status: 502, body: { error: "upstream unavailable" } };
       return { status: 200, body: { data: roster, has_more: false, next_cursor: null } };
+    }
+    if (req.method === "GET" && req.path === "/api/context") {
+      const found = await latestContext(config);
+      if (found === null) return { status: 502, body: { error: "upstream unavailable" } };
+      return found.context === null
+        ? { status: 404, body: { error: "no applied install for this project" } }
+        : { status: 200, body: found };
     }
     const upstream = upstreamFor(req.method, req.path, config.identityId, req.query);
     if (upstream === null) return NO_ROUTE;
@@ -329,12 +351,15 @@ function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
   return token !== null && sameSecret(token, ctx.dashboardToken) ? null : UNAUTHENTICATED;
 }
 
-/** The whole route table, in order: `/mcp`, the gate, the local token routes, the store, the platform. */
+/** The whole route table, in order: `/mcp`, the public site, the gate, the local token routes, the store, the platform. */
 export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (req.path === "/mcp") return mcpRoute(req, ctx);
   if (!req.path.startsWith("/api/")) return NO_ROUTE;
   // The one route that must run before the gate, because it is what gets a browser through it.
   if (req.path === "/api/enter") return enterRoute(req, ctx);
+  // The public site's own two routes: a visitor holds no bearer.
+  const open = await publicRoutes(req, ctx);
+  if (open !== null) return open;
   // Before the route table, so an unauthenticated caller cannot even map which routes exist.
   const denied = apiGate(req, ctx);
   if (denied !== null) return denied;

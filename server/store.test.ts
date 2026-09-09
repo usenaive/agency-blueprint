@@ -5,7 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients";
 import type { Post } from "../seed/posts";
 import { ACTIVE_TEMPLATE } from "../templates/active";
-import { emptyState, openStore, seedState } from "./store";
+import { site } from "../site/site.config";
+import { emptyState, openStore, openStoreOver, seedState, type StoreState } from "./store";
 
 /**
  * The rows the store starts with are the *active template's* demo seed, so this suite names them
@@ -32,8 +33,46 @@ describe("the two starting documents", () => {
   it("gives a deployment nothing and the local file store the demo agency", () => {
     // A deployed dashboard showing the blueprint's sample rows would be presenting fiction as the
     // operator's CRM; an empty board is the truth about an agency that has not started yet.
-    expect(emptyState()).toEqual({ clients: [], posts: [] });
+    expect(emptyState()).toEqual({ clients: [], posts: [], site_profile: site });
     expect(seedState().clients.length).toBeGreaterThan(0);
+    // The site is the same generic page on both: it claims nothing about anyone until the builder
+    // rewrites it from the setup answers.
+    expect(seedState().site_profile).toEqual(site);
+  });
+});
+
+describe("the site profile", () => {
+  it("reads the seed off a document written before the site was data", () => {
+    const state = { clients: [], posts: [] } as StoreState;
+    const store = openStoreOver(state, () => {});
+    expect(store.site()).toEqual(site);
+    expect(state.site_profile).toBeUndefined();
+  });
+
+  it("replaces whole sections that keep the seed's shape, and refuses everything else", () => {
+    let writes = 0;
+    const state = emptyState();
+    const store = openStoreOver(state, () => { writes += 1; });
+    const hero = { ...site.hero, title: "Paid social for skincare brands" };
+    const faq = { title: "Questions", items: [{ question: "How long?", answer: "A quarter." }] };
+    expect(store.updateSite({ hero, faq })).toEqual({ ...site, hero, faq });
+    expect(state.site_profile?.hero.title).toBe("Paid social for skincare brands");
+    expect(writes).toBe(1);
+
+    for (const bad of [
+      {}, // nothing to do
+      { caseStudies: [] }, // not a section
+      { hero: { title: "only a title" } }, // a section missing its keys
+      { hero: "a string" },
+      { services: { title: "not a list" } },
+      { faq: { title: "Questions", items: [{ question: "answerless" }] } }, // an item missing its keys
+      { proof: { facts: [42] } }, // an item of the wrong type
+    ]) {
+      expect([bad, store.updateSite(bad)]).toEqual([bad, null]);
+    }
+    // A refusal writes nothing and changes nothing.
+    expect(writes).toBe(1);
+    expect(store.site()).toEqual({ ...site, hero, faq });
   });
 });
 

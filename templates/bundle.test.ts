@@ -10,8 +10,8 @@
  * of trees, and an operator installing `blank` got Meridian Search's search agency instead.
  *
  * A unit test on `ACTIVE` cannot see this: it runs in Node, where the read has always worked. Only
- * the emitted bytes can, so this builds them — both apps this blueprint ships, since each has its
- * own Vite config and each has to carry the same substitution.
+ * the emitted bytes can, so this builds them — the one build this blueprint ships, which carries
+ * two pages: the public site at `/` and the operator dashboard under `/app`.
  */
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -21,19 +21,17 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const original = process.env["NAIVE_TEMPLATE"];
 
-/** One app, compiled for one template. Never written: `dist` is what `pnpm build` owns. */
-async function bundle(config: string, template: string): Promise<string> {
+/** The build, compiled for one template. Never written: `dist` is what `pnpm build` owns. */
+async function bundle(template: string): Promise<Rollup.RollupOutput> {
   process.env["NAIVE_TEMPLATE"] = template;
-  const result = (await build({
-    configFile: `${root}${config}`,
-    logLevel: "silent",
-    build: { write: false },
-  })) as Rollup.RollupOutput;
-  return result.output
+  return (await build({ configFile: `${root}vite.config.ts`, logLevel: "silent", build: { write: false } })) as Rollup.RollupOutput;
+}
+
+const code = (result: Rollup.RollupOutput): string =>
+  result.output
     .filter((chunk): chunk is Rollup.OutputChunk => chunk.type === "chunk")
     .map((chunk) => chunk.code)
     .join("\n");
-}
 
 /** Compared as digests, not as text: two 200 kB bundles printed side by side say nothing. */
 const digest = (code: string) => createHash("sha256").update(code).digest("hex");
@@ -43,17 +41,21 @@ afterAll(() => {
   else process.env["NAIVE_TEMPLATE"] = original;
 });
 
-describe.each([
-  ["dashboard", "vite.config.ts"],
-  ["site", "site/vite.config.ts"],
-])("the built %s", (_app, config) => {
+describe("the built app", () => {
   let blank = "";
   let seoGeo = "";
+  let pages: string[] = [];
 
   beforeAll(async () => {
-    blank = await bundle(config, "blank");
-    seoGeo = await bundle(config, "seo-geo");
+    const first = await bundle("blank");
+    blank = code(first);
+    pages = first.output.filter((asset) => asset.fileName.endsWith(".html")).map((asset) => asset.fileName).sort();
+    seoGeo = code(await bundle("seo-geo"));
   }, 180_000);
+
+  it("emits the public site at / and the operator dashboard under /app", () => {
+    expect(pages).toEqual(["app/index.html", "index.html"]);
+  });
 
   it("is a different bundle for each template", () => {
     // The whole bug in one line. Before the `define` in the Vite configs these two bundles were

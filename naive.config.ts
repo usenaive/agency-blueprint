@@ -2,9 +2,9 @@
  * The `agency` blueprint, declared.
  *
  * This is the file `naive up` reads. A person clones this repo, sets NAIVE_API_KEY, runs
- * `naive up`, and the platform provisions everything below into their organization: the dashboard
- * app, the public site and the chosen template's agents. Re-running is idempotent — resources are
- * keyed by name.
+ * `naive up`, and the platform provisions everything below into their organization: the one app
+ * (public site at `/`, operator dashboard under `/app`) and the chosen template's seven agents.
+ * Re-running is idempotent — resources are keyed by name.
  *
  * The blueprint is the machine and is shared: the screens, `/api/*`, `/mcp`, the store, the
  * operator bearer, the build and the approval flow do not change with the template. The template
@@ -25,17 +25,28 @@
  * via the workspace protocol.
  */
 import { defineProject } from "@usenaive-sdk/blueprints";
-import { TEMPLATES } from "./templates/active.ts";
+import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
-import { TEMPLATE } from "./templates/index.ts";
+import { PROJECT, TEMPLATE } from "./templates/index.ts";
 
 export default defineProject({
-  name: "agency",
+  name: PROJECT,
   blueprint: "agency",
   /** Chosen in `templates/index.ts`, so the config, the screens and the site cannot disagree. */
   template: TEMPLATE,
   /** Every template this repo carries; the chosen one's agents become this project's crew. */
   templates: Object.values(TEMPLATES),
+  /**
+   * The ≤3 questions the studio asks before provisioning (plan §4). The answers become the project
+   * context every agent reads first (`project_context`, canonical-spec §31.8); no `{ from_env }`
+   * reader is needed for an answer to a declared question.
+   */
+  questions: ACTIVE_TEMPLATE.questions,
+  /**
+   * The crew the dashboard provisions per client at onboarding (`server/proxy.ts`), published so
+   * the studio can show it. Names carry the client's slug at runtime, so only the shape is here.
+   */
+  crew_per_client: ACTIVE_TEMPLATE.crew.map(({ name, role, description }) => ({ name, role, description })),
 
   /**
    * The agency's persona, and the reason a connected account is reachable from an agent at all.
@@ -66,9 +77,12 @@ export default defineProject({
     {
       name: "dashboard",
       type: "fullstack",
-      description: "Agency dashboard — CRM pipeline, agency agents, per-client workspaces.",
+      description:
+        "The agency's public site at / — served from the site profile the crew edits — and the operator dashboard under /app: CRM pipeline, approvals, agents, per-client workspaces.",
       deploy_dir: "dist",
       mcp: "/mcp",
+      /** The one app the crew files into and the site is served from; the template cannot run without it. */
+      required: true,
       /**
        * The deployed dashboard calls the platform on your behalf — the agency chat, the agent
        * roster, each client's connections, and the per-client crew provisioned at onboarding — so
@@ -104,15 +118,9 @@ export default defineProject({
         DASHBOARD_TOKEN: { generate: true as const },
       },
     },
-    {
-      name: "site",
-      type: "frontend_only",
-      description: "Public agency website — services, case studies, pricing, contact form into the CRM.",
-      deploy_dir: "site/dist",
-    },
   ],
 
-  // No `agents:` here. They are the template's — `templates/blank.ts` declares the pair every
+  // No `agents:` here. They are the template's — `templates/agents.ts` declares the seven every
   // agency has, `templates/seo-geo.ts` adds its focus to them, and the per-client crew
   // (`seo-writer--<slug>`, …) is provisioned at onboarding by the dashboard server, since its
   // names carry a client slug and cannot be declared statically.

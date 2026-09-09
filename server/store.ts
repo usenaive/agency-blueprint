@@ -8,6 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { STAGE_ORDER, type Client, type PipelineStage } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
+import { site, SITE_SECTIONS, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 
 /** A minted MCP credential: only the SHA-256 hash of the token is kept. */
@@ -22,7 +23,12 @@ export interface StoreState {
   clients: Client[];
   posts: Post[];
   mcpTokens?: McpToken[];
+  /** The public site. Absent on a document written before the site was data; read as the seed. */
+  site_profile?: SiteProfile;
 }
+
+/** Whole sections of the site, each replacing the current one; a key outside `SITE_SECTIONS` is refused. */
+export type SitePatch = Partial<SiteProfile>;
 
 export interface LeadInput {
   name: string;
@@ -64,6 +70,10 @@ export interface Store {
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
   onboardClient(id: string): Client | null;
   updatePost(id: string, patch: PostPatch): Post | null;
+  /** The public site as `GET /api/site` serves it. */
+  site(): SiteProfile;
+  /** Replaces the named sections; null when a key is not a section or a section is not the right shape. */
+  updateSite(patch: Record<string, unknown>): SiteProfile | null;
 }
 
 /**
@@ -75,10 +85,30 @@ export interface Store {
 export const seedState = (): StoreState => ({
   clients: structuredClone(ACTIVE_TEMPLATE.seed.clients as Client[]),
   posts: structuredClone(ACTIVE_TEMPLATE.seed.posts as Post[]),
+  site_profile: structuredClone(site),
 });
 
-/** What a fresh **deployed** document is created with: nothing, because nothing has happened yet. */
-export const emptyState = (): StoreState => ({ clients: [], posts: [] });
+/**
+ * What a fresh **deployed** document is created with: no rows, because nothing has happened yet,
+ * and the active template's generic site — which claims nothing about anyone and is what the
+ * site-builder rewrites from the setup answers on day one.
+ */
+export const emptyState = (): StoreState => ({ clients: [], posts: [], site_profile: structuredClone(site) });
+
+/**
+ * A section is accepted when it has the seed's shape all the way down: the same type, every key
+ * the seed has, and each list's items shaped like the seed's first — so a page never renders a
+ * tier without a price or a step without a title.
+ */
+const sameShape = (seed: unknown, value: unknown): boolean => {
+  if (Array.isArray(seed)) {
+    return Array.isArray(value) && (seed.length === 0 || value.every((item) => sameShape(seed[0], item)));
+  }
+  if (typeof seed !== "object" || seed === null) return typeof value === typeof seed;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const given = value as Record<string, unknown>;
+  return Object.entries(seed).every(([key, inner]) => key in given && sameShape(inner, given[key]));
+};
 
 /** The stage after `stage` on the happy path; churned only ever by hand. */
 const next = (stage: PipelineStage): PipelineStage | null => {
@@ -198,6 +228,18 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       if (patch.status === "rejected") post.rejectedReason = patch.rejectedReason ?? "Rejected by you";
       save();
       return post;
+    },
+    site: () => state.site_profile ?? site,
+    updateSite(patch) {
+      const keys = Object.keys(patch);
+      if (keys.length === 0) return null;
+      const current = state.site_profile ?? structuredClone(site);
+      for (const key of keys) {
+        if (!(SITE_SECTIONS as readonly string[]).includes(key) || !sameShape(site[key as keyof SiteProfile], patch[key])) return null;
+      }
+      state.site_profile = { ...current, ...(patch as SitePatch) };
+      save();
+      return state.site_profile;
     },
   };
 }

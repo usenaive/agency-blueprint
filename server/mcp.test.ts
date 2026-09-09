@@ -160,6 +160,23 @@ describe("mcp tools", () => {
     expect(posts.length).toBeGreaterThan(0);
   });
 
+  it("get_site reads the page as served, and update_site replaces whole sections or nothing", async () => {
+    const store = freshStore();
+    const before = (await handleMcp(call("get_site", {}), store, null)) as CallResult;
+    const page = JSON.parse(before.result.content[0]!.text) as { hero: { title: string }; pricing: unknown };
+    expect(page).toEqual(store.site());
+    const hero = { ...page.hero, title: "Paid social for skincare brands" };
+    const updated = (await handleMcp(call("update_site", { site: { hero } }), store, null)) as CallResult;
+    expect(updated.result.isError).toBeUndefined();
+    expect(store.site().hero.title).toBe("Paid social for skincare brands");
+    expect(store.site().pricing).toEqual(page.pricing);
+    // A section outside the page, or one that lost its shape, is refused in words the builder can act on.
+    const bad = (await handleMcp(call("update_site", { site: { testimonials: [] } }), store, null)) as CallResult;
+    expect(bad.result.isError).toBe(true);
+    expect(bad.result.content[0]!.text).toMatch(/^site must name only company, tagline, .*each in the shape get_site returns$/);
+    expect(((await handleMcp(call("update_site", {}), store, null)) as CallResult).result.isError).toBe(true);
+  });
+
   it("answers tool errors as isError results, not protocol errors", async () => {
     const store = freshStore();
     const missing = (await handleMcp(call("get_client", { id: "cli_missing" }), store, null)) as CallResult;

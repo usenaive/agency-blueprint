@@ -11,6 +11,7 @@
  */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { listAgents, proxyFetch, type AgentRow, type ProxyConfig } from "./proxy.ts";
+import { SITE_SECTIONS } from "../site/site.config.ts";
 import { ACTIVE } from "../templates/index.ts";
 import type { DraftPostInput, Store } from "./store.ts";
 
@@ -103,6 +104,10 @@ export const TOOLS = [
   { name: "get_calendar", description: "Posts for a client within a date range.", inputSchema: obj({
     client: str("Client id"), from: str("ISO day, inclusive"), to: str("ISO day, inclusive"),
   }, ["client", "from", "to"]) },
+  { name: "get_site", description: "The agency's public site as it is published: every section, as one record.", inputSchema: obj({}, []) },
+  { name: "update_site", description: "Replace whole sections of the public site. Each key given replaces that section in full and must keep its shape (read get_site first); the change is live once the operator approves this call. Never invent a result, a number or a client name.", inputSchema: obj({
+    site: { type: "object", description: `Sections to replace: any of ${SITE_SECTIONS.join(", ")}.` },
+  }, ["site"]) },
 ] as const;
 
 class ToolError extends Error {}
@@ -190,6 +195,15 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       const from = need(params, "from");
       const to = need(params, "to");
       return store.read().posts.filter((p) => p.clientId === client && p.scheduledFor >= from && p.scheduledFor <= to);
+    }
+    case "get_site":
+      return store.site();
+    case "update_site": {
+      const patch = params.site;
+      if (typeof patch !== "object" || patch === null || Array.isArray(patch)) throw new ToolError("site is required");
+      const updated = store.updateSite(patch as Record<string, unknown>);
+      if (!updated) throw new ToolError(`site must name only ${SITE_SECTIONS.join(", ")}, each in the shape get_site returns`);
+      return updated;
     }
     default:
       throw new ToolError(`unknown tool: ${name}`);

@@ -6,6 +6,7 @@
  */
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
+import { PROJECT } from "../templates/index.ts";
 
 export interface Upstream {
   method: string;
@@ -62,6 +63,8 @@ export function upstreamFor(
   // What an agent has spent this budget period, against the cap the agent itself carries.
   const spend = /^\/api\/agents\/(agt_[\w-]+)\/spend$/.exec(pathname);
   if (method === "GET" && spend) return { method: "GET", path: `/v1/agents/${spend[1]}/spend` };
+  // The timers: each carries `agent_id`, `cron` and `next_run_at`, which is the crew card's "next fire".
+  if (method === "GET" && pathname === "/api/deployments") return { method: "GET", path: "/v1/deployments?limit=100" };
   // `/api/agents` is not here: the roster is cursor-paginated upstream, so it is assembled by
   // `listAgents` below rather than relayed one page at a time.
   // Segments are strictly [\w-]+ so `..` can never traverse out of the social subtree.
@@ -143,6 +146,34 @@ export async function listAgents(config: ProxyConfig, fetchImpl: typeof fetch = 
     after = body.next_cursor;
   }
   return all;
+}
+
+/** One line of an install report: the intake session an apply opened for an agent (`canonical-spec §31.4`). */
+export interface IntakeLine {
+  name: string;
+  action: string;
+  id?: string;
+  reason?: string;
+}
+
+/**
+ * THIS PROJECT'S CONTEXT (`canonical-spec §31.8`): the setup answers, apps and crew of its latest
+ * applied install, found through the installs list narrowed to `PROJECT`, plus that install's
+ * intake lines so the home screen can say which day-one sessions opened. `context: null` when the
+ * project has no applied install yet; null altogether when the platform did not answer.
+ */
+export async function latestContext(
+  config: ProxyConfig,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ context: unknown; intake: IntakeLine[] } | null> {
+  const list = await proxyFetch(config, { method: "GET", path: `/v1/blueprints/installs?project=${encodeURIComponent(PROJECT)}&limit=100` }, null, fetchImpl);
+  if (!list.ok) return null;
+  const rows = ((await list.json()) as { data?: { id: string; status: string; applied_at: string; report?: { intake?: IntakeLine[] } | null }[] }).data ?? [];
+  const latest = rows.filter((row) => row.status === "applied").sort((a, b) => b.applied_at.localeCompare(a.applied_at))[0];
+  if (latest === undefined) return { context: null, intake: [] };
+  const res = await proxyFetch(config, { method: "GET", path: `/v1/blueprints/installs/${latest.id}/context` }, null, fetchImpl);
+  if (!res.ok) return null;
+  return { context: await res.json(), intake: latest.report?.intake ?? [] };
 }
 
 export interface ProvisionReport {

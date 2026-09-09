@@ -1,4 +1,4 @@
-import { Bot, Building2, KanbanSquare, ShieldAlert, Settings2 } from "lucide-react";
+import { Bot, Building2, House, KanbanSquare, ShieldAlert, Settings2 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { useApi } from "./api";
 import { TEMPLATE, type Client } from "./data";
@@ -17,6 +17,7 @@ export function Shell() {
   const active = (clients ?? []).filter((c) => c.stage === "active");
   const prospects = (clients ?? []).filter((c) => c.stage === "lead" || c.stage === "proposal");
   const nav = [
+    { to: "/", label: "Home", Icon: House, count: undefined as number | undefined },
     { to: "/crm", label: "CRM", Icon: KanbanSquare, count: prospects.length },
     { to: "/approvals", label: "Approvals", Icon: ShieldAlert, count: waitingOn(sessions?.data ?? [], new Map()).length },
     // No count on Agents: the roster is the platform's, and the rail is not worth a call for it.
@@ -38,7 +39,7 @@ export function Shell() {
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4">
           <div className="space-y-px">
             {nav.map(({ to, label, Icon, count }) => (
-              <NavLink key={to} to={to} className="rail-row equip">
+              <NavLink key={to} to={to} end={to === "/"} className="rail-row equip">
                 {({ isActive }) => (
                   <>
                     <span className={`grid size-5 shrink-0 place-items-center ${isActive ? "text-ink" : "text-ink-2"}`}>

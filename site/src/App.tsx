@@ -1,15 +1,16 @@
-import { site } from "../site.config.ts";
+import type { SiteProfile } from "../site.config.ts";
 import { Contact } from "./Contact.tsx";
-import { CaseStudies, Pricing, Process, Services, Testimonials } from "./sections.tsx";
+import { Faq, Pricing, Process, ProofStrip, Services, WhoWeServe, type SectionProps } from "./sections.tsx";
 
 const NAV = [
   { label: "Services", href: "#services" },
+  { label: "Who we serve", href: "#who" },
   { label: "Process", href: "#process" },
-  { label: "Work", href: "#work" },
   { label: "Pricing", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
 ];
 
-function Nav() {
+function Nav({ site }: SectionProps) {
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-ground/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -31,7 +32,7 @@ function Nav() {
   );
 }
 
-function Hero() {
+function Hero({ site }: SectionProps) {
   return (
     <section className="mx-auto max-w-6xl px-6 pb-20 pt-24 text-center sm:pt-32">
       <p className="eyebrow">{site.hero.eyebrow}</p>
@@ -49,7 +50,7 @@ function Hero() {
   );
 }
 
-function Footer() {
+function Footer({ site }: SectionProps) {
   return (
     <footer className="border-t border-line">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-8 text-sm text-muted sm:flex-row">
@@ -63,20 +64,22 @@ function Footer() {
   );
 }
 
-export function App() {
+/** The whole page, in the order plan §2.5 names: hero · proof · services · who · process · pricing · FAQ · contact. */
+export function App({ site }: { site: SiteProfile }) {
   return (
     <div id="top">
-      <Nav />
+      <Nav site={site} />
       <main>
-        <Hero />
-        <Services />
-        <Process />
-        <CaseStudies />
-        <Testimonials />
-        <Pricing />
-        <Contact />
+        <Hero site={site} />
+        <ProofStrip site={site} />
+        <Services site={site} />
+        <WhoWeServe site={site} />
+        <Process site={site} />
+        <Pricing site={site} />
+        <Faq site={site} />
+        <Contact site={site} />
       </main>
-      <Footer />
+      <Footer site={site} />
     </div>
   );
 }
