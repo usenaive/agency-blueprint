@@ -78,7 +78,7 @@ export default defineProject({
       name: "dashboard",
       type: "fullstack",
       description:
-        "The agency's public site at / — served from the site profile the crew edits — and the operator dashboard under /app: CRM pipeline, approvals, agents, per-client workspaces.",
+        "The agency's public site at / — served from the site profile the team edits — and the operator dashboard under /app: CRM pipeline, approvals, agents, per-client workspaces.",
       deploy_dir: "dist",
       mcp: "/mcp",
       /** The one app the crew files into and the site is served from; the template cannot run without it. */
