@@ -6,6 +6,7 @@ import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hashToken } from "./mcp.ts";
 import { handleRequest, isLoopback, OPEN_LEADS_CAP, type ApiContext, type ApiRequest } from "./routes.ts";
+import { LEAD_WINDOW_MS, LEADS_PER_WINDOW } from "./store.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -57,7 +58,9 @@ describe("the store routes", () => {
     const { call, writes } = fixture();
     const created = await call("POST", "/api/leads", lead);
     expect(created.status).toBe(201);
-    expect(writes()).toBe(1);
+    // Two: the rate window's count and the row itself. Both are the same document, so the deployed
+    // entry still writes it back once — `save()` there only marks the request dirty.
+    expect(writes()).toBe(2);
     expect((await call("GET", "/api/clients")).body).toHaveLength(1);
 
     expect(await call("POST", "/api/leads", { name: "x" })).toEqual({
@@ -74,7 +77,8 @@ describe("the store routes", () => {
     // The same contact again, however it is cased, is the row already filed — not a second write.
     const again = await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "Jordan@SummitOutdoor.example " } });
     expect(again.status).toBe(200);
-    expect(writes()).toBe(1);
+    // Still the two the first lead cost: a repeat is neither a row nor a count against the window.
+    expect(writes()).toBe(2);
     // Once the contact is worked past "lead" the address may file a new one.
     store.advanceClient((again.body as { id: string }).id);
     expect((await call("POST", "/api/leads", lead)).status).toBe(201);
@@ -89,6 +93,34 @@ describe("the store routes", () => {
     expect(full.status).toBe(429);
     expect(full.headers?.["retry-after"]).toBe("86400");
     expect(store.read().clients).toHaveLength(OPEN_LEADS_CAP + 1);
+  });
+
+  /**
+   * The cap alone bounds spend, not availability: 200 scripted pairs used to fill the inbox in one
+   * burst and every real lead for the next twenty-four hours was answered `429`. No agent turn
+   * fires on a lead, so what that costs is business, not money — which is why the answer is a rate
+   * and its `retry-after` is an hour, not the inbox-full day.
+   */
+  it("rate-limits the anonymous form, so a burst cannot hold the inbox shut for a day", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(0);
+      const { call, store } = fixture();
+      const file = (i: number) =>
+        call("POST", "/api/leads", { ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
+      for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect((await file(i)).status).toBe(201);
+
+      const limited = await file(LEADS_PER_WINDOW);
+      expect(limited.status).toBe(429);
+      expect(limited.headers?.["retry-after"]).toBe(String(LEAD_WINDOW_MS / 1000));
+      expect(store.read().clients).toHaveLength(LEADS_PER_WINDOW);
+
+      // The next window admits again — the form is shut for an hour, never for the day.
+      vi.setSystemTime(LEAD_WINDOW_MS);
+      expect((await file(LEADS_PER_WINDOW)).status).toBe(201);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("advances, onboards, and refuses to onboard a churned client", async () => {

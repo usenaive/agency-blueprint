@@ -80,6 +80,25 @@ export const sameShape = (seed: unknown, value: unknown): boolean => {
   return Object.entries(seed).every(([key, inner]) => key in given && sameShape(inner, given[key]));
 };
 
+/**
+ * The size a section may be, on top of the shape it must have. `sameShape` judges types and keys
+ * and nothing else, so a perfectly shaped hero whose title is ten megabytes long passes it — and
+ * the writer is a language model working from an operator's answers, so a runaway generation is
+ * the ordinary failure here, not the exotic one. These are the page's own limits, with room to
+ * spare: the longest thing the seed says is a two-sentence FAQ answer, and its longest list is
+ * four items.
+ */
+export const MAX_TEXT = 2_000;
+export const MAX_ITEMS = 24;
+
+/** Every string and every list inside `value` within those bounds, all the way down. */
+export const withinBounds = (value: unknown): boolean => {
+  if (typeof value === "string") return value.length <= MAX_TEXT;
+  if (Array.isArray(value)) return value.length <= MAX_ITEMS && value.every(withinBounds);
+  if (typeof value === "object" && value !== null) return Object.values(value).every(withinBounds);
+  return true;
+};
+
 export const site: SiteProfile = {
   company: ACTIVE.words.brand,
   tagline: ACTIVE.site.tagline,

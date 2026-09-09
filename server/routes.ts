@@ -11,7 +11,7 @@
  */
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
 import { collect, latestContext, listAgents, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
-import type { LeadInput, PostPatch, Store } from "./store.ts";
+import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
 
 export interface ApiRequest {
   /** Upper-case. */
@@ -215,6 +215,17 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     if (seen !== undefined) return { status: 200, body: seen };
     if (open.length >= OPEN_LEADS_CAP) {
       return { status: 429, body: { error: "the lead inbox is full — email the agency directly" }, headers: { "retry-after": "86400" } };
+    }
+    // The cap above bounds how many leads may be open; this bounds how fast the inbox fills. Without
+    // it, `OPEN_LEADS_CAP` scripted contact-and-domain pairs shut the form for a day in one burst —
+    // no agent turn fires on a lead, so what that costs is business rather than money. An hour's
+    // `retry-after`, because unlike a full inbox this clears without anyone doing anything.
+    if (!store.admitLead(Date.now())) {
+      return {
+        status: 429,
+        body: { error: "too many leads just now — try again shortly, or email the agency directly" },
+        headers: { "retry-after": String(LEAD_WINDOW_MS / 1000) },
+      };
     }
     return { status: 201, body: store.createLead(body as LeadInput) };
   }

@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients";
 import type { Post } from "../seed/posts";
 import { ACTIVE_TEMPLATE } from "../templates/active";
-import { site } from "../site/site.config";
-import { emptyState, openStore, openStoreOver, seedState, type StoreState } from "./store";
+import { MAX_ITEMS, MAX_TEXT, site, withinBounds } from "../site/site.config";
+import { emptyState, LEAD_WINDOW_MS, LEADS_PER_WINDOW, openStore, openStoreOver, seedState, type StoreState } from "./store";
 
 /**
  * The rows the store starts with are the *active template's* demo seed, so this suite names them
@@ -73,6 +73,53 @@ describe("the site profile", () => {
     // A refusal writes nothing and changes nothing.
     expect(writes).toBe(1);
     expect(store.site()).toEqual({ ...site, hero, faq });
+  });
+
+  /**
+   * `sameShape` judges structure and nothing else, so every patch below is a perfectly shaped
+   * section — and one of them is a hero title megabytes long. The site is the live public page and
+   * the agent writing it is a language model working from an operator's answers; a bound is what
+   * keeps a runaway generation from becoming the page every visitor loads.
+   */
+  it("refuses a rightly shaped section whose strings or lists are longer than the page can carry", () => {
+    let writes = 0;
+    const store = openStoreOver(emptyState(), () => { writes += 1; });
+    for (const bad of [
+      { tagline: "x".repeat(MAX_TEXT + 1) },
+      { hero: { ...site.hero, title: "x".repeat(MAX_TEXT + 1) } },
+      { faq: { ...site.faq, items: [{ question: "How long?", answer: "x".repeat(MAX_TEXT + 1) }] } },
+      { proof: { facts: Array.from({ length: MAX_ITEMS + 1 }, () => "a fact") } },
+      { services: Array.from({ length: MAX_ITEMS + 1 }, () => site.services[0]!) },
+    ]) {
+      expect([Object.keys(bad)[0], store.updateSite(bad)]).toEqual([Object.keys(bad)[0], null]);
+    }
+    expect(writes).toBe(0);
+    expect(store.site()).toEqual(site);
+  });
+
+  it("carries a seed that is well inside those bounds", () => {
+    expect(withinBounds(site)).toBe(true);
+  });
+});
+
+/**
+ * The public form's rate window. The open-leads cap is a spend bound, not a denial-of-service one:
+ * before this, `OPEN_LEADS_CAP` scripted pairs filled the inbox in one burst and every real lead
+ * for the next day was answered `429`.
+ */
+describe("the public form's rate window", () => {
+  it("admits a window's worth, refuses the rest, and reopens on the next window", () => {
+    const store = openStore(storeFile());
+    for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect(store.admitLead(1_000)).toBe(true);
+    expect(store.admitLead(1_000)).toBe(false);
+    expect(store.admitLead(1_000 + LEAD_WINDOW_MS - 1)).toBe(false);
+    expect(store.admitLead(1_000 + LEAD_WINDOW_MS)).toBe(true);
+  });
+
+  it("counts across cold starts, because the count lives in the document", () => {
+    const file = storeFile();
+    for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect(openStore(file).admitLead(1_000)).toBe(true);
+    expect(openStore(file).admitLead(1_000)).toBe(false);
   });
 });
 
