@@ -20,7 +20,7 @@ export interface Upstream {
  * not declare rather than dropping it (spec §9), so this is an allow-list and not a passthrough: a
  * caller cannot smuggle a filter through the dashboard that the platform would then reject.
  */
-const SESSION_FILTERS = ["agent_id", "status"] as const;
+const SESSION_FILTERS = ["agent_id", "status", "stop_reason"] as const;
 
 /**
  * Maps a browser-facing `/api/*` request onto the platform route it fronts.

@@ -26,6 +26,14 @@ describe("upstreamFor", () => {
     expect(upstreamFor("GET", "/api/sessions/ses_1/answers", null)).toBeNull();
   });
 
+  it("forwards the parked-session filters and drops anything else", () => {
+    const query = new URLSearchParams({ stop_reason: "awaiting_approval", agent_id: "agt_1", limit: "5", foo: "bar" });
+    expect(upstreamFor("GET", "/api/sessions", null, query)).toEqual({
+      method: "GET",
+      path: "/v1/sessions?limit=100&agent_id=agt_1&stop_reason=awaiting_approval",
+    });
+  });
+
   it("routes social paths through the client identity", () => {
     expect(upstreamFor("POST", "/api/social/portal", "idn_1")).toEqual({ method: "POST", path: "/v1/identities/idn_1/social/portal" });
   });

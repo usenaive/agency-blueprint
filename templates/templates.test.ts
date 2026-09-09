@@ -74,7 +74,7 @@ describe("every template of this blueprint", () => {
       expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
       expect([at, (agent.skills ?? []).length > 0]).toEqual([at, true]);
       for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
-      expect([at, agent.intake?.budget_micro_usd]).toEqual([at, 2_000_000]);
+      expect([at, agent.intake?.budget_micro_usd]).toEqual([at, 6_000_000]);
       for (const schedule of agent.schedules ?? []) expect([at, Number.isInteger(schedule.budget_micro_usd)]).toEqual([at, true]);
     }
   });
