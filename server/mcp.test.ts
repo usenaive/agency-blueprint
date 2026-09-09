@@ -108,6 +108,15 @@ describe("mcp tools", () => {
     expect(store.read().clients.at(-1)?.id).toBe(lead.id);
   });
 
+  it("create_lead needs only a name: the agency's own record is filed without a contact to ask for", async () => {
+    const store = freshStore();
+    const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio" }), store, null)) as CallResult;
+    const lead = JSON.parse(answer.result.content[0]!.text) as { id: string; domain: string; contact: { email: string } };
+    expect(lead.domain).toBe("");
+    expect(lead.contact.email).toBe("");
+    expect(store.read().clients.at(-1)?.id).toBe(lead.id);
+  });
+
   it("add_client_note files the note verbatim and restates the next action when given", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("add_client_note", {

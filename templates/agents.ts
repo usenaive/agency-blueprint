@@ -107,7 +107,7 @@ export const mailbox =
  * research are the agency's own, so they are filed on one record that stands for the agency itself.
  */
 export const OWN_RECORD =
-  "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own CRM record: find it with list_clients, or create it once with create_lead from the name and domain in project_context.";
+  "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own CRM record: find it with list_clients, or create it once with create_lead from the project name alone; never ask for a domain or contact.";
 
 const system = (role: string): string => `${PREAMBLE} ${gate} ${role}`;
 const withMailbox = (role: string): string => `${PREAMBLE} ${gate} ${mailbox} ${role}`;
