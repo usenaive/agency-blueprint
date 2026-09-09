@@ -136,8 +136,10 @@ const parse = (body: string): Record<string, unknown> => {
 
 /** The MCP endpoint: bearer-gated JSON-RPC over POST, on the same document as every `/api/*` row. */
 async function mcpRoute(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
-  if (req.method !== "POST") return { status: 405, body: { error: "POST only" } };
+  // The store opens before the 405 so a bare GET answers 503 while the database is still
+  // unreachable: it is what the platform dials to decide the endpoint can serve its tools.
   const store = await ctx.store();
+  if (req.method !== "POST") return { status: 405, body: { error: "POST only" } };
   if (!authorized(store, req.headers.authorization, ctx.mcpToken)) {
     return { status: 401, body: { error: "missing or invalid bearer token" } };
   }

@@ -158,6 +158,12 @@ describe("/mcp", () => {
     expect(await call("GET", "/mcp")).toEqual({ status: 405, body: { error: "POST only" } });
   });
 
+  it("lets a bare GET fail with the store while the database is unreachable", async () => {
+    const down = new Error("connect ECONNREFUSED");
+    const { call } = fixture({ store: () => Promise.reject(down) });
+    await expect(call("GET", "/mcp")).rejects.toBe(down);
+  });
+
   it("accepts a token minted from Settings and answers a notification with a bodiless 202", async () => {
     const { call, store } = fixture();
     store.addMcpToken("desktop", hashToken("mcp_local"));
