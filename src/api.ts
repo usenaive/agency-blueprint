@@ -30,7 +30,9 @@ const UNREACHABLE = "the dashboard server is unreachable";
  * cookie the browser then attaches to every same-origin call below on its own.
  *
  * So no `authorization` header is sent, and a 401 is not a prompt any more — it is the honest
- * sentence the server wrote, rendered by whichever screen asked.
+ * sentence the server wrote, rendered by whichever screen asked. A signed-out browser should not
+ * reach one at all: `src/Gate.tsx` asks `GET /api/session` before any screen mounts, and draws
+ * the sign-in page (the studio's handoff, or the dashboard password as a plain HTML form) instead.
  */
 
 async function call<T>(path: string, init: RequestInit): Promise<T> {

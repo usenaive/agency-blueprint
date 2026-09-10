@@ -24,6 +24,10 @@ const base = {
   mcpToken: process.env.VETTA_MCP_TOKEN,
   /** Optional here and required on the deploy: only a loopback caller may go without it. */
   dashboardToken: process.env.DASHBOARD_TOKEN,
+  /** All three are the platform's to write on a deploy; unset here, the gate screen has no door but the token. */
+  dashboardPassword: process.env.DASHBOARD_PASSWORD,
+  studioUrl: process.env.NAIVE_STUDIO_URL,
+  appId: process.env.NAIVE_APP_ID,
 };
 
 /**

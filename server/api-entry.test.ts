@@ -135,6 +135,33 @@ describe("the function itself", () => {
     // "the app database is unavailable".
   });
 
+  it("threads the studio's environment and the password into the routes, and does without them", async () => {
+    // Unset — a deployment the platform has not (yet) told about its studio — is the closed shape,
+    // not an error: the gate screen shows what exists.
+    const { res, written } = reply();
+    await handler({ method: "GET", url: "/api/app?__path=/api/session", headers: {} }, res);
+    expect(written).toEqual({ status: 200, body: { authenticated: false, studio_url: null, password_enabled: false } });
+
+    process.env["NAIVE_STUDIO_URL"] = "https://app.usenaive.ai";
+    process.env["NAIVE_APP_ID"] = "app_123";
+    process.env["DASHBOARD_PASSWORD"] = "kq7m-x2rt-8bvn-pz4h";
+    try {
+      const shown = reply();
+      await handler({ method: "GET", url: "/api/app?__path=/api/session", headers: {} }, shown.res);
+      expect(shown.written).toEqual({
+        status: 200,
+        body: { authenticated: false, studio_url: "https://app.usenaive.ai/apps/app_123/open", password_enabled: true },
+      });
+      const entered = reply();
+      await handler({ method: "POST", url: "/api/app?__path=/api/enter", headers: {}, body: { password: "kq7m-x2rt-8bvn-pz4h" } }, entered.res);
+      expect(entered.written.status).toBe(303);
+    } finally {
+      delete process.env["NAIVE_STUDIO_URL"];
+      delete process.env["NAIVE_APP_ID"];
+      delete process.env["DASHBOARD_PASSWORD"];
+    }
+  });
+
   /**
    * The document is one jsonb row read-modify-written per request. Without the transaction that is
    * last-write-wins: eight parallel `create_lead` calls each answered 201 with a distinct client

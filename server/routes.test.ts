@@ -28,6 +28,10 @@ function fixture(overrides: Partial<ApiContext> = {}) {
     // Unset by default, with `local: true`: `pnpm serve` for development is the one place the
     // `/api/*` gate is allowed to stand open, and every store test below is that case.
     dashboardToken: undefined,
+    // Likewise unset: no password door, and no studio for the gate screen to send a browser to.
+    dashboardPassword: undefined,
+    studioUrl: undefined,
+    appId: undefined,
     local: true,
     ...overrides,
   };
@@ -350,17 +354,29 @@ describe("the /api/* gate", () => {
       expect((await enter(JSON.stringify({ ticket: ticket(Date.now() + 60_000) }))).status).toBe(303);
     });
 
+    const badTickets = () => [
+      ticket(Date.now() - 1),
+      ticket(Date.now() + 60_000, "some-other-app-token"),
+      `${Date.now() + 60_000}.not-a-mac`,
+      "dash",
+      "",
+    ];
+
     it("refuses an expired ticket, a forged one and a bare token, and sets no cookie", async () => {
-      for (const bad of [
-        ticket(Date.now() - 1),
-        ticket(Date.now() + 60_000, "some-other-app-token"),
-        `${Date.now() + 60_000}.not-a-mac`,
-        "dash",
-        "",
-      ]) {
-        const reply = await enter(new URLSearchParams({ ticket: bad }).toString());
+      for (const bad of badTickets()) {
+        // A JSON caller gets the 403 and the sentence, as ever.
+        const reply = await fixture(deployed).call("POST", "/api/enter", { ticket: bad });
         expect(reply.status, bad).toBe(403);
         expect(reply.headers?.["set-cookie"]).toBeUndefined();
+      }
+    });
+
+    it("sends a refused form back to the gate screen with `entry=denied`, and still no cookie", async () => {
+      // The studio's handoff and the gate screen's own form are top-level navigations: a 403 JSON
+      // body would be the whole page, so a refused form lands on the sign-in screen with a sentence.
+      for (const bad of badTickets()) {
+        const reply = await enter(new URLSearchParams({ ticket: bad }).toString());
+        expect(reply, bad).toEqual({ status: 303, headers: { location: "/app?entry=denied" } });
       }
     });
 
@@ -373,6 +389,106 @@ describe("the /api/* gate", () => {
 
     it("is the only /api route that runs before the gate, so it needs no credential to reach", async () => {
       expect((await enter("ticket=")).status).not.toBe(401);
+    });
+  });
+
+  /**
+   * THE SECOND DOOR: THE PASSWORD.
+   *
+   * The ticket needs a studio that can hand the browser back signed in; a colleague's browser, or
+   * an operator signed out of the studio too, has none. `DASHBOARD_PASSWORD` is the one credential
+   * the platform generates to be handed to a person (read off the studio's Access panel, audited),
+   * and the gate screen posts it here as a plain form. It earns the identical cookie.
+   */
+  describe("the dashboard password is the other way in", () => {
+    const withPassword = { ...deployed, dashboardPassword: "kq7m-x2rt-8bvn-pz4h" };
+    const form = (fields: Record<string, string>) =>
+      [new URLSearchParams(fields).toString(), { "content-type": "application/x-www-form-urlencoded" }] as const;
+
+    it("trades the right password for the same cookie and the same redirect a ticket earns", async () => {
+      const reply = await fixture(withPassword).call("POST", "/api/enter", ...form({ password: "kq7m-x2rt-8bvn-pz4h" }));
+      expect(reply.status).toBe(303);
+      expect(reply.body).toBeUndefined();
+      expect(reply.headers?.["location"]).toBe("/app");
+      const cookie = reply.headers?.["set-cookie"] ?? "";
+      // The cookie is the token, as for a ticket — never the password.
+      expect(cookie).toContain("dashboard_session=dash");
+      expect(cookie).not.toContain("kq7m");
+      expect(cookie).toContain("HttpOnly");
+      expect(cookie).toContain("SameSite=Lax");
+      expect(cookie).toContain("Secure");
+      // A JSON body works too, for the same reason the ticket's does.
+      expect((await fixture(withPassword).call("POST", "/api/enter", { password: "kq7m-x2rt-8bvn-pz4h" })).status).toBe(303);
+    });
+
+    it("refuses a wrong password: back to the gate for a form, 403 for JSON, never a cookie", async () => {
+      for (const wrong of ["kq7m-x2rt-8bvn-pz4H", "kq7m", "dash"]) {
+        expect(await fixture(withPassword).call("POST", "/api/enter", ...form({ password: wrong })), wrong)
+          .toEqual({ status: 303, headers: { location: "/app?entry=denied" } });
+        const asJson = await fixture(withPassword).call("POST", "/api/enter", { password: wrong });
+        expect(asJson, wrong).toEqual({ status: 403, body: { error: "that password did not check out" } });
+      }
+    });
+
+    it("refuses every password when DASHBOARD_PASSWORD is unset — an absent door is not an open one", async () => {
+      expect(await fixture(deployed).call("POST", "/api/enter", ...form({ password: "kq7m-x2rt-8bvn-pz4h" })))
+        .toEqual({ status: 303, headers: { location: "/app?entry=denied" } });
+      expect((await fixture(deployed).call("POST", "/api/enter", { password: "anything" })).status).toBe(403);
+      // An empty password field is not a password: the body is read as a ticket, and there is none.
+      expect((await fixture({ ...deployed, dashboardPassword: "" }).call("POST", "/api/enter", { password: "" })).status).toBe(403);
+    });
+
+    it("still needs the token, because the token is what the cookie carries", async () => {
+      const reply = await fixture({ ...withPassword, dashboardToken: undefined }).call("POST", "/api/enter", { password: "kq7m-x2rt-8bvn-pz4h" });
+      expect(reply).toMatchObject({ status: 503 });
+    });
+  });
+
+  /**
+   * WHAT THE GATE SCREEN ASKS FIRST. Ungated, cookie-free, and the same verdict the gate gives:
+   * the screen renders nothing of the dashboard until this says `authenticated`.
+   */
+  describe("GET /api/session", () => {
+    const studio = { ...deployed, studioUrl: "https://app.usenaive.ai/", appId: "app_123" };
+
+    it("tells a signed-out browser which doors exist, and sets nothing", async () => {
+      const reply = await fixture({ ...studio, dashboardPassword: "kq7m-x2rt-8bvn-pz4h" }).call("GET", "/api/session");
+      expect(reply.status).toBe(200);
+      expect(reply.body).toEqual({
+        authenticated: false,
+        studio_url: "https://app.usenaive.ai/apps/app_123/open",
+        password_enabled: true,
+      });
+      expect(reply.headers?.["set-cookie"]).toBeUndefined();
+      // Nothing secret rides along: not the token, not the password.
+      expect(JSON.stringify(reply.body)).not.toMatch(/dash|kq7m/);
+    });
+
+    it("says authenticated for the cookie /api/enter set, and for the bearer — the gate's own check", async () => {
+      const { call } = fixture(studio);
+      expect((await call("GET", "/api/session", "", { cookie: "dashboard_session=dash" })).body).toMatchObject({ authenticated: true });
+      expect((await call("GET", "/api/session", "", { authorization: "Bearer dash" })).body).toMatchObject({ authenticated: true });
+      expect((await call("GET", "/api/session", "", { cookie: "dashboard_session=nope" })).body).toMatchObject({ authenticated: false });
+      // A deployment with no token is closed, and says so the same way the gate does.
+      expect((await fixture({ ...studio, dashboardToken: undefined }).call("GET", "/api/session")).body).toMatchObject({ authenticated: false });
+      // A genuinely local `pnpm serve` with nothing set is in, because its gate stands open.
+      expect((await fixture().call("GET", "/api/session")).body).toEqual({ authenticated: true, studio_url: null, password_enabled: false });
+    });
+
+    it("has no studio link unless both the studio and the app id are known, and no password door unless one is set", async () => {
+      expect((await fixture(deployed).call("GET", "/api/session")).body).toEqual({ authenticated: false, studio_url: null, password_enabled: false });
+      expect((await fixture({ ...deployed, studioUrl: "https://app.usenaive.ai" }).call("GET", "/api/session")).body).toMatchObject({ studio_url: null });
+      expect((await fixture({ ...deployed, appId: "app_123" }).call("GET", "/api/session")).body).toMatchObject({ studio_url: null });
+      expect((await fixture({ ...deployed, dashboardPassword: "" }).call("GET", "/api/session")).body).toMatchObject({ password_enabled: false });
+    });
+
+    it("is GET only, runs before the gate, and leaves every other route gated", async () => {
+      const { call } = fixture(deployed);
+      expect(await call("POST", "/api/session", {})).toMatchObject({ status: 405 });
+      expect((await call("GET", "/api/session")).status).toBe(200);
+      for (const path of ["/api/clients", "/api/posts", "/api/agents", "/api/sessions", "/api/nothing"]) {
+        expect(await call("GET", path), path).toMatchObject({ status: 401 });
+      }
     });
   });
 
