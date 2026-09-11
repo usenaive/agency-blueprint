@@ -74,7 +74,7 @@ const str = (description: string) => ({ type: "string", description }) as const;
 export const TOOLS = [
   { name: "list_clients", description: "All CRM clients with their pipeline stage.", inputSchema: obj({}, []) },
   { name: "get_client", description: "One client by id.", inputSchema: obj({ id: str("Client id (cli_…)") }, ["id"]) },
-  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator.", inputSchema: obj({
+  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator. A name alone that is already on the pipeline returns that record instead of a second one.", inputSchema: obj({
     name: str("Company name"), domain: str("Company domain, when known"),
     contact_name: str("Contact person, when known"), contact_email: str("Contact email, when known"), contact_role: str("Contact role, when known"),
     note: str("Optional first note"),

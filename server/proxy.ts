@@ -271,6 +271,9 @@ async function createdId(res: Response): Promise<string | null> {
  * an agent with a search toolset and no identity is offered none of those tools, and reporting that
  * as a success is how the blueprint hid this in the first place.
  *
+ * A `handoffs` list is slugged like the name: the template's `["seo-writer"]` becomes this client's
+ * `seo-writer--<slug>` and no other client's. `true`, `false` and `"team"` pass through.
+ *
  * Answers null when the roster itself cannot be read.
  */
 export async function provisionClientAgents(
@@ -296,8 +299,9 @@ export async function provisionClientAgents(
       // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
       // declare: sending it would read as a grant and be none. It is the call below.
       const { identity: _persona, ...decl } = member;
+      const handoffs = Array.isArray(decl.handoffs) ? decl.handoffs.map((target) => `${target}--${slug}`) : decl.handoffs;
       const created = await proxyFetch(config, { method: "POST", path: "/v1/agents" },
-        JSON.stringify({ ...decl, name }), fetchImpl);
+        JSON.stringify({ ...decl, name, handoffs }), fetchImpl);
       if (!created.ok) {
         reports.push({ name, action: "failed" });
         continue;

@@ -144,6 +144,25 @@ describe("openStore", () => {
     expect(store.read().clients.some((c) => c.id === lead.id)).toBe(true);
   });
 
+  it("files the agency's own record once, however many agents file it by name in the same minute", () => {
+    // Five intakes each `create_lead` the agency's own record from the project name alone; the
+    // first opens it and the rest must land on it, notes included, or day one ends with five twins.
+    const store = openStore(storeFile());
+    const before = store.read().clients.length;
+    const own = { domain: "", contact: { name: "", email: "", role: "" } };
+    const first = store.createLead({ name: "Northwind Studio", ...own, note: "Onboarding checklist." });
+    const second = store.createLead({ name: "Northwind  Studio", ...own, note: "Gap report." });
+    expect(second.id).toBe(first.id);
+    expect(store.read().clients).toHaveLength(before + 1);
+    expect(store.read().clients.find((c) => c.id === first.id)?.notes).toEqual(["Onboarding checklist.", "Gap report."]);
+    // A prospect that shares the name is a different company: it has a domain, and it is its own row.
+    const prospect = store.createLead({
+      name: "Northwind Studio", domain: "northwind.example", contact: { name: "Kim", email: "kim@northwind.example", role: "CEO" },
+    });
+    expect(prospect.id).not.toBe(first.id);
+    expect(store.read().clients).toHaveLength(before + 2);
+  });
+
   it("files a note on a client, restating what it waits on only when told to", () => {
     const file = storeFile();
     const store = openStore(file);

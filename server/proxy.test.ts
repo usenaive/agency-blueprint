@@ -204,6 +204,20 @@ describe("provisionClientAgents", () => {
     expect(crew.map((one) => one.identity)).toEqual(crew.map(() => AGENCY_IDENTITY));
   });
 
+  it("slugs a member's `handoffs` list like its name, so the chain stays inside one client's crew", async () => {
+    // The template writes `audit-runner → seo-writer → geo-optimizer`; the platform resolves a
+    // handoff target by agent name, and this client's writer is `seo-writer--acme`, not the seat.
+    const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === "GET" ? json({ data: [] }) : json({ id: "agt_new" }));
+    await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
+    const bodies = creates(fetchImpl).map(([, init]) => JSON.parse(String(init?.body)) as { name: string; handoffs: unknown });
+    expect(bodies.map((b) => [b.name, b.handoffs])).toEqual([
+      ["seo-writer--acme", ["geo-optimizer--acme"]],
+      ["geo-optimizer--acme", false],
+      ["audit-runner--acme", ["seo-writer--acme"]],
+    ]);
+  });
+
   it("reports a member `failed` when the persona does not land, however well the agent was created", async () => {
     // The agent exists and its toolset reads perfectly; it can reach no connected account. Calling
     // that `created` is precisely how this went unnoticed, so it is reported as the failure it is.

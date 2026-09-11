@@ -151,6 +151,16 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
     read: () => state,
     createLead(input) {
       const slugged = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      // A name alone files the agency's own record; a second filing lands on the first.
+      const own = input.domain === "" && input.contact.email === "";
+      const twin = own ? state.clients.find((c) => c.slug === slugged) : undefined;
+      if (twin) {
+        if (input.note !== undefined) {
+          twin.notes.push(input.note);
+          save();
+        }
+        return twin;
+      }
       const client: Client = {
         id: `cli_${randomBytes(4).toString("hex")}`,
         slug: slugged || "client",
