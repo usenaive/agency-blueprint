@@ -116,7 +116,6 @@ const DENIED = `${DASHBOARD}?entry=denied`;
  */
 const COOKIE = "dashboard_session";
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
-const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** Every value of one cookie out of the header, without a parser dependency and without regex over a whole header. */
 function cookieValues(header: string | undefined, name: string): string[] {
@@ -188,7 +187,12 @@ function enterRoute(req: ApiRequest, ctx: ApiContext): ApiReply {
     headers: {
       location: DASHBOARD,
       // Deployed, the sign-in also expires the legacy unpartitioned cookie a returning browser holds.
-      "set-cookie": ctx.local ? cookie : [cookie, expireLegacyCookie(ctx)],
+      // The order is load-bearing: a browser without CHIPS ignores `Partitioned` as an unknown
+      // attribute, so both headers name ONE cookie (same name, no Domain, Path=/) and the last one
+      // wins. Expiring first and setting second signs that browser in; the other way round, a
+      // correct password answered the login form again. A CHIPS browser keeps two distinct cookies
+      // and does not care.
+      "set-cookie": ctx.local ? cookie : [expireLegacyCookie(ctx), cookie],
     },
   };
 }
@@ -473,7 +477,7 @@ function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
     if (!anyMatches(held, ctx.dashboardToken)) {
       return { ...UNAUTHENTICATED, headers: { "set-cookie": expireLegacyCookie(ctx) } };
     }
-    return MUTATING.has(req.method) && !sameOrigin(req) ? CROSS_SITE : null;
+    return sameOriginGuard(req);
   }
   const token = bearerOf(req.headers.authorization);
   return token !== null && sameSecret(token, ctx.dashboardToken) ? null : UNAUTHENTICATED;
@@ -486,7 +490,16 @@ function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
  * forge) says `same-origin`, or `none` for the address bar; a browser too old to send it must at
  * least send an `origin` that is this host. Reads, bearers and `/api/enter` are not asked — the
  * studio's ticket form is cross-site by design, and a bearer was never in a cookie jar.
+ *
+ * A read is `GET` or `HEAD` and nothing else: every other method is a write until shown otherwise,
+ * because `platformRoutes` relays the method as sent under the org's key, and an allow-list of
+ * writes would let anything outside it past the guard.
  */
+function sameOriginGuard(req: ApiRequest): ApiReply | null {
+  if (req.method === "GET" || req.method === "HEAD") return null;
+  return sameOrigin(req) ? null : CROSS_SITE;
+}
+
 function sameOrigin(req: ApiRequest): boolean {
   const site = req.headers["sec-fetch-site"];
   if (site !== undefined) return site === "same-origin" || site === "none";

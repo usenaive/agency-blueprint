@@ -23,6 +23,11 @@
  * FRAMED, the studio shows this dashboard inside its own page. A frame never bounces: a redirect
  * to the studio from inside the studio would be refused or nest it in itself. It gets the form,
  * and the studio link opens in the top window (`target="_top"`) instead.
+ *
+ * Framed cross-site with third-party storage blocked (an Incognito window, Brave), merely touching
+ * `sessionStorage` throws a `SecurityError` while the partitioned cookie keeps working. Every read
+ * and write of the flag is therefore guarded, and a store that cannot be read counts as "already
+ * attempted": the gate is drawn rather than the page bouncing or coming up blank.
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { apiGet, apiMessage } from "./api";
@@ -38,6 +43,31 @@ export const ATTEMPTED = "naive.entry.attempted";
 
 const DENIED = "That didn't check out — try again or use your dashboard password.";
 
+/** Whether this tab already bounced once. A storage that throws reads as "yes": nothing may bounce twice. */
+function readAttempted(): boolean {
+  try {
+    return window.sessionStorage.getItem(ATTEMPTED) !== null;
+  } catch {
+    return true;
+  }
+}
+
+function markAttempted(): void {
+  try {
+    window.sessionStorage.setItem(ATTEMPTED, "1");
+  } catch {
+    // Storage denied: `readAttempted` already answers "attempted" for this tab.
+  }
+}
+
+function clearAttempted(): void {
+  try {
+    window.sessionStorage.removeItem(ATTEMPTED);
+  } catch {
+    // Storage denied: there was nothing stored to clear.
+  }
+}
+
 type State = { kind: "asking" } | { kind: "answered"; session: Session } | { kind: "failed"; message: string };
 
 export function Gate({ children }: { children: ReactNode }) {
@@ -46,7 +76,7 @@ export function Gate({ children }: { children: ReactNode }) {
   const framed = window.self !== window.top;
   const session = state.kind === "answered" ? state.session : null;
   const bouncing = session !== null && !session.authenticated && session.studio_url !== null
-    && !framed && !denied && sessionStorage.getItem(ATTEMPTED) === null;
+    && !framed && !denied && !readAttempted();
 
   useEffect(() => {
     let live = true;
@@ -58,11 +88,11 @@ export function Gate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (session === null) return;
-    if (session.authenticated) return void sessionStorage.removeItem(ATTEMPTED);
+    if (session.authenticated) return clearAttempted();
     // Re-read the flag here rather than trusting `bouncing`: an effect may run more than once for
     // one render, and the bounce must happen exactly once per tab.
-    if (bouncing && session.studio_url !== null && sessionStorage.getItem(ATTEMPTED) === null) {
-      sessionStorage.setItem(ATTEMPTED, "1");
+    if (bouncing && session.studio_url !== null && !readAttempted()) {
+      markAttempted();
       location.assign(session.studio_url);
     }
   }, [session, bouncing]);

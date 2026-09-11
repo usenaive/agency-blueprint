@@ -48,8 +48,21 @@ async function render(answer: () => Promise<Session>) {
   return { host, text, calls, settle };
 }
 
+/**
+ * A browser that refuses third-party storage: touching `sessionStorage` at all throws, as it does
+ * for a cross-site frame in an Incognito window or Brave. Restored by `afterEach`.
+ */
+const storageAccessor = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+function denyStorage() {
+  Object.defineProperty(window, "sessionStorage", {
+    get() { throw new DOMException("denied", "SecurityError"); },
+    configurable: true,
+  });
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  if (storageAccessor !== undefined) Object.defineProperty(window, "sessionStorage", storageAccessor);
   document.body.innerHTML = "";
 });
 
@@ -113,6 +126,35 @@ describe("the gate screen", () => {
     expect(text()).toContain("Sign in to your dashboard");
     expect(text().toLowerCase()).not.toContain("private");
     expect(host.querySelector("[data-testid=app]")).toBeNull();
+  });
+
+  it("still renders when sessionStorage itself throws, as it does framed with third-party storage blocked", async () => {
+    const assign = vi.fn();
+    vi.stubGlobal("location", { search: "", assign });
+    vi.stubGlobal("top", {});
+    denyStorage();
+    expect(() => window.sessionStorage).toThrow(DOMException);
+    const framed = await render(() => Promise.resolve(signedOut));
+    expect(assign).not.toHaveBeenCalled();
+    expect(framed.text()).toContain("Sign in to your dashboard");
+    expect(framed.host.querySelector("a[href]")?.getAttribute("href")).toBe(STUDIO);
+    expect(framed.host.querySelector("form")?.getAttribute("action")).toBe("/api/enter");
+    expect(framed.host.querySelector("input[name=password]")).not.toBeNull();
+
+    // Top-level, the same store counts as "already attempted": the gate, not a bounce it could not remember.
+    document.body.innerHTML = "";
+    vi.unstubAllGlobals();
+    vi.stubGlobal("location", { search: "", assign });
+    denyStorage();
+    const topLevel = await render(() => Promise.resolve(signedOut));
+    expect(assign).not.toHaveBeenCalled();
+    expect(topLevel.host.querySelector("form")).not.toBeNull();
+    expect(topLevel.text()).toContain("Open in the Studio");
+
+    // And a browser that is in gets the dashboard: clearing the flag it cannot reach is not an error.
+    document.body.innerHTML = "";
+    const signedIn = await render(() => Promise.resolve({ authenticated: true, studio_url: STUDIO, password_enabled: true }));
+    expect(signedIn.text()).toBe("The dashboard");
   });
 
   it("offers the studio link and a plain password form — a real POST to /api/enter, not a fetch", async () => {

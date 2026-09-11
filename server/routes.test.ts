@@ -345,10 +345,12 @@ describe("the /api/* gate", () => {
       expect(reply.headers?.["location"]).toBe("/app");
       // Deployed, the dashboard is also framed by the studio: a `Lax` cookie never reaches a framed
       // cross-site document, so it is `None` and partitioned per top-level site (CHIPS). Two headers,
-      // not one joined: the second expires the pre-partitioning cookie a returning browser still holds.
+      // not one joined: the first expires the pre-partitioning cookie a returning browser still holds,
+      // and the session cookie comes SECOND — a browser without CHIPS ignores `Partitioned`, sees one
+      // cookie named twice, and keeps the last header; the other order signed it straight out again.
       expect(reply.headers?.["set-cookie"]).toEqual([
-        `dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${30 * 24 * 60 * 60}`,
         "dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure",
+        `dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${30 * 24 * 60 * 60}`,
       ]);
     });
 
@@ -478,6 +480,19 @@ describe("the /api/* gate", () => {
         }
       });
 
+      it("treats every method but GET and HEAD as a write — a method outside any list is not a way round the guard", async () => {
+        const { call } = fixture(deployed);
+        for (const method of ["OPTIONS", "PROPFIND", "QUERY"]) {
+          const crossSite = { ...cookie, host: "agency.example", origin: "https://evil.example" };
+          expect(await call(method, "/api/agents", "", { ...cookie, "sec-fetch-site": "cross-site" }), method)
+            .toEqual({ status: 403, body: { error: "cross-site request refused" } });
+          expect((await call(method, "/api/agents", "", crossSite)).status, method).toBe(403);
+          // Same-origin, the method reaches the route table and is judged there, not here.
+          expect((await call(method, "/api/agents", "", { ...cookie, "sec-fetch-site": "same-origin" })).status, method).not.toBe(403);
+        }
+        expect((await call("HEAD", "/api/clients", "", { ...cookie, "sec-fetch-site": "cross-site" })).status).not.toBe(403);
+      });
+
       it("asks nothing of a bearer, a read, or /api/enter — none of them is a cookie another site could spend", async () => {
         expect((await advance({ ...bearer, "sec-fetch-site": "cross-site" })).reply.status).toBe(200);
         const { call } = fixture(deployed);
@@ -517,7 +532,8 @@ describe("the /api/* gate", () => {
       expect(reply.status).toBe(303);
       expect(reply.body).toBeUndefined();
       expect(reply.headers?.["location"]).toBe("/app");
-      const [cookie, expiring] = reply.headers?.["set-cookie"] ?? [];
+      // Expiring header first, session cookie second: the same order, for the same reason, as a ticket's.
+      const [expiring, cookie] = reply.headers?.["set-cookie"] ?? [];
       // The cookie is the token, as for a ticket — never the password.
       expect(cookie).toContain("dashboard_session=dash");
       expect(cookie).not.toContain("kq7m");

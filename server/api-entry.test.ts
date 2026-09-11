@@ -157,13 +157,14 @@ describe("the function itself", () => {
       const entered = reply();
       await handler({ method: "POST", url: "/api/app?__path=/api/enter", headers: {}, body: { password: "kq7m-x2rt-8bvn-pz4h" } }, entered.res);
       expect(entered.written.status).toBe(303);
-      // Two `Set-Cookie` headers reach the host as an array, never joined: the live cookie, then the
-      // one that expires the legacy unpartitioned cookie a returning browser still holds.
+      // Two `Set-Cookie` headers reach the host as an array, never joined: the one that expires the
+      // legacy unpartitioned cookie a returning browser still holds, then the live cookie — last,
+      // because a browser without CHIPS sees one cookie named twice and keeps the last.
       const cookies = entered.headers["set-cookie"];
       expect(Array.isArray(cookies)).toBe(true);
       expect(cookies).toHaveLength(2);
-      expect(cookies?.[0]).toContain("dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned");
-      expect(cookies?.[1]).toBe("dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure");
+      expect(cookies?.[0]).toBe("dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure");
+      expect(cookies?.[1]).toContain("dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned");
     } finally {
       delete process.env["NAIVE_STUDIO_URL"];
       delete process.env["NAIVE_APP_ID"];
