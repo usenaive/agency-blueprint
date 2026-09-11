@@ -62,15 +62,17 @@ vi.mock("pg", () => {
   return { Client };
 });
 
-/** One `res` double: the last status and body the handler wrote. */
+/** One `res` double: the last status and body the handler wrote, and every header as it was set. */
 const reply = () => {
   const written: { status?: number; body?: unknown } = {};
+  const headers: Record<string, string | string[]> = {};
   const res = {
     status(code: number) { written.status = code; return res; },
     json(body: unknown) { written.body = body; },
-    end() {}, setHeader() {}, write() {},
+    end() {}, write() {},
+    setHeader(name: string, value: string | string[]) { headers[name] = value; },
   };
-  return { res, written };
+  return { res, written, headers };
 };
 
 const send = async (method: string, path: string, body?: unknown) => {
@@ -133,6 +135,41 @@ describe("the function itself", () => {
     });
     // Refused before any connection is opened: `DATABASE_URL` is unset, and neither answered 503
     // "the app database is unavailable".
+  });
+
+  it("threads the studio's environment and the password into the routes, and does without them", async () => {
+    // Unset — a deployment the platform has not (yet) told about its studio — is the closed shape,
+    // not an error: the gate screen shows what exists.
+    const { res, written } = reply();
+    await handler({ method: "GET", url: "/api/app?__path=/api/session", headers: {} }, res);
+    expect(written).toEqual({ status: 200, body: { authenticated: false, studio_url: null, password_enabled: false } });
+
+    process.env["NAIVE_STUDIO_URL"] = "https://app.usenaive.ai";
+    process.env["NAIVE_APP_ID"] = "app_123";
+    process.env["DASHBOARD_PASSWORD"] = "kq7m-x2rt-8bvn-pz4h";
+    try {
+      const shown = reply();
+      await handler({ method: "GET", url: "/api/app?__path=/api/session", headers: {} }, shown.res);
+      expect(shown.written).toEqual({
+        status: 200,
+        body: { authenticated: false, studio_url: "https://app.usenaive.ai/apps/app_123/open", password_enabled: true },
+      });
+      const entered = reply();
+      await handler({ method: "POST", url: "/api/app?__path=/api/enter", headers: {}, body: { password: "kq7m-x2rt-8bvn-pz4h" } }, entered.res);
+      expect(entered.written.status).toBe(303);
+      // Two `Set-Cookie` headers reach the host as an array, never joined: the one that expires the
+      // legacy unpartitioned cookie a returning browser still holds, then the live cookie — last,
+      // because a browser without CHIPS sees one cookie named twice and keeps the last.
+      const cookies = entered.headers["set-cookie"];
+      expect(Array.isArray(cookies)).toBe(true);
+      expect(cookies).toHaveLength(2);
+      expect(cookies?.[0]).toBe("dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure");
+      expect(cookies?.[1]).toContain("dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned");
+    } finally {
+      delete process.env["NAIVE_STUDIO_URL"];
+      delete process.env["NAIVE_APP_ID"];
+      delete process.env["DASHBOARD_PASSWORD"];
+    }
   });
 
   /**

@@ -46,6 +46,7 @@ describe("naive.config.ts", () => {
     expect(result.config.apps[0].env).toEqual({
       NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
       DASHBOARD_TOKEN: { generate: true },
+      DASHBOARD_PASSWORD: { generate: true },
     });
     // And the platform's own two values are the platform's to write. As `process.env` reads they
     // baked the PUBLISHER'S shell into the declaration every customer installs, and vanished
