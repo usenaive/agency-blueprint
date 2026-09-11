@@ -146,12 +146,16 @@ handoff wrote, and files nothing while no calendar exists yet.
 
 The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
 entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
-`seo-writer--acme` and no other client's writer. A crew provisioned before this field existed is
-left as it stands (widen, never narrow): its seats hold no handoff tools until re-provisioned.
+`seo-writer--acme` and no other client's writer. Onboarding a client whose crew already exists
+patches the declaration onto each seat (the platform mints a version only where something
+differs), so a crew provisioned before this field existed gains the chain the next time its
+client is onboarded. A seat the active template no longer declares is kept as it stands (widen,
+never narrow).
 
-Agents file the agency's own record with `create_lead` from the project name alone; a name that
-is already on the pipeline returns that record, so five intakes filing it in the same minute
-share one row.
+Agents file the agency's own record with `create_lead` from the project name alone; a second
+name-only filing of a name already on the pipeline returns that record, so five intakes filing
+it in the same minute share one row. A prospect filed with a domain or a contact is never that
+record, whatever its name.
 
 ### The skills
 

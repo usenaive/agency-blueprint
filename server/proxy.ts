@@ -119,6 +119,7 @@ export async function proxyFetch(
 export interface AgentRow {
   id: string;
   name: string;
+  current_version?: number;
 }
 
 /**
@@ -216,8 +217,11 @@ export async function latestContext(config: ProxyConfig, fetchImpl: typeof fetch
 
 export interface ProvisionReport {
   name: string;
-  /** `kept`: a crew agent of some other template of this blueprint, left exactly as it is. */
-  action: "created" | "unchanged" | "kept" | "failed";
+  /**
+   * `updated`: the declaration drifted from the live agent and was patched onto it. `kept`: a crew
+   * agent of some other template of this blueprint, left exactly as it is.
+   */
+  action: "created" | "updated" | "unchanged" | "kept" | "failed";
 }
 
 /**
@@ -240,11 +244,12 @@ async function grantIdentity(
   return res.ok;
 }
 
-/** The `agt_` id of a freshly created agent, or null when the platform answered something else. */
-async function createdId(res: Response): Promise<string | null> {
+/** The agent a create or patch answered with, or null when the platform answered something else. */
+async function agentOf(res: Response): Promise<{ id: string; current_version?: number } | null> {
   try {
-    const body = (await res.json()) as { id?: unknown };
-    return typeof body.id === "string" ? body.id : null;
+    const body = (await res.json()) as { id?: unknown; current_version?: unknown };
+    if (typeof body.id !== "string") return null;
+    return { id: body.id, ...(typeof body.current_version === "number" ? { current_version: body.current_version } : {}) };
   } catch {
     return null;
   }
@@ -252,9 +257,11 @@ async function createdId(res: Response): Promise<string | null> {
 
 /**
  * Upserts the active template's per-client crew (`seo-writer--<slug>`, …) by name — the same
- * semantics the blueprints reconciler uses: an agent that already exists is left untouched, a
- * missing one is created. The crew, its prompts, its model, its budget, its allow-list and its
- * persona are all template data (`templates/*.ts`); none of it is decided here.
+ * semantics the blueprints reconciler uses: a missing agent is created, an existing one has the
+ * declaration patched onto it (`PATCH /v1/agents/:id` mints a version only when something
+ * differs, so a crew that already matches is `unchanged`). The crew, its prompts, its model, its
+ * budget, its allow-list and its persona are all template data (`templates/*.ts`); none of it is
+ * decided here.
  *
  * **Widen, never narrow.** A crew agent this client already has that the *active* template does not
  * declare — the operator switched template, or switched to `blank`, which declares no crew — is
@@ -265,7 +272,7 @@ async function createdId(res: Response): Promise<string | null> {
  * already there, exactly as the reconciler does for the agency's own agents: the grant is
  * idempotent, and a crew provisioned before this blueprint declared a persona would otherwise stay
  * unable to reach a single connected account for as long as it existed. `unchanged` therefore
- * describes the agent's own configuration — never re-posted — and not the grant.
+ * describes the agent's own configuration and not the grant.
  *
  * A member whose persona did not land is reported `failed` even when the agent itself was created:
  * an agent with a search toolset and no identity is offered none of those tools, and reporting that
@@ -287,31 +294,31 @@ export async function provisionClientAgents(
   // again under the same name on every onboard.
   const roster = await listAgents(config, fetchImpl);
   if (roster === null) return null;
-  const existing = new Map(roster.map((a) => [a.name, a.id]));
+  const existing = new Map(roster.map((a) => [a.name, a]));
   const reports: ProvisionReport[] = [];
   const declared = new Set<string>();
   for (const member of crew) {
     const name = `${member.name}--${slug}`;
     declared.add(name);
-    const present = existing.has(name);
-    let id = existing.get(name) ?? null;
-    if (!present) {
-      // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
-      // declare: sending it would read as a grant and be none. It is the call below.
-      const { identity: _persona, ...decl } = member;
-      const handoffs = Array.isArray(decl.handoffs) ? decl.handoffs.map((target) => `${target}--${slug}`) : decl.handoffs;
-      const created = await proxyFetch(config, { method: "POST", path: "/v1/agents" },
-        JSON.stringify({ ...decl, name, handoffs }), fetchImpl);
-      if (!created.ok) {
-        reports.push({ name, action: "failed" });
-        continue;
-      }
-      id = await createdId(created);
+    const present = existing.get(name);
+    // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
+    // declare: sending it would read as a grant and be none. It is the call below.
+    const { identity: _persona, name: _seat, ...decl } = member;
+    const handoffs = Array.isArray(decl.handoffs) ? decl.handoffs.map((target) => `${target}--${slug}`) : decl.handoffs;
+    const res = present
+      ? await proxyFetch(config, { method: "PATCH", path: `/v1/agents/${present.id}` }, JSON.stringify({ ...decl, handoffs }), fetchImpl)
+      : await proxyFetch(config, { method: "POST", path: "/v1/agents" }, JSON.stringify({ ...decl, name, handoffs }), fetchImpl);
+    if (!res.ok) {
+      reports.push({ name, action: "failed" });
+      continue;
     }
+    const written = await agentOf(res);
+    const id = present ? present.id : written?.id ?? null;
     const granted =
       member.identity === undefined ||
       (id !== null && (await grantIdentity(config, id, member.identity, fetchImpl)));
-    reports.push({ name, action: granted ? (present ? "unchanged" : "created") : "failed" });
+    const action = !present ? "created" : written?.current_version !== present.current_version ? "updated" : "unchanged";
+    reports.push({ name, action: granted ? action : "failed" });
   }
   for (const agent of roster) {
     if (agent.name.endsWith(`--${slug}`) && !declared.has(agent.name)) reports.push({ name: agent.name, action: "kept" });

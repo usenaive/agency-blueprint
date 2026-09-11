@@ -136,6 +136,9 @@ describe("provisionClientAgents", () => {
   const creates = (impl: { mock: { calls: Call[] } }) => posted(impl, /\/v1\/agents$/);
   /** `POST /v1/agents/{id}/identities` — the persona grant, which is a call of its own (§22). */
   const grants = (impl: { mock: { calls: Call[] } }) => posted(impl, /\/v1\/agents\/[\w-]+\/identities$/);
+  /** `PATCH /v1/agents/{id}` — the declaration re-asserted on a member that already exists. */
+  const patches = (impl: { mock: { calls: Call[] } }) =>
+    impl.mock.calls.filter(([url, init]) => init?.method === "PATCH" && /\/v1\/agents\/[\w-]+$/.test(String(url)));
 
   it("provisions the active template's crew when none is named", async () => {
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
@@ -144,7 +147,7 @@ describe("provisionClientAgents", () => {
     expect(reports?.map((r) => r.name)).toEqual(ACTIVE_TEMPLATE.crew.map((one) => `${one.name}--acme`));
   });
 
-  it("creates the missing agents and leaves existing ones untouched", async () => {
+  it("creates the missing agents and patches the declaration onto existing ones", async () => {
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
       init?.method === "GET" ? json({ data: [{ id: "agt_1", name: "seo-writer--acme" }] }) : json({ id: "agt_new" }));
     expect(await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew)).toEqual([
@@ -152,10 +155,11 @@ describe("provisionClientAgents", () => {
       { name: "geo-optimizer--acme", action: "created" },
       { name: "audit-runner--acme", action: "created" },
     ]);
-    // Two creates only — the existing agent is never re-posted. (The persona grants below are
-    // POSTs too, and are counted separately: they are the only write an existing member takes.)
+    // Two creates only — the existing agent is patched, not re-posted. (The persona grants below
+    // are POSTs too, and are counted separately.)
     const posts = creates(fetchImpl);
     expect(posts).toHaveLength(2);
+    expect(patches(fetchImpl).map(([url]) => String(url))).toEqual(["https://x.test/v1/agents/agt_1"]);
     const bodies = posts.map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
     expect(bodies.map((b) => b.name)).toEqual(["geo-optimizer--acme", "audit-runner--acme"]);
     // POST /v1/agents requires model and budget, and every one of these fields is the template's:
@@ -216,6 +220,41 @@ describe("provisionClientAgents", () => {
       ["geo-optimizer--acme", false],
       ["audit-runner--acme", ["seo-writer--acme"]],
     ]);
+  });
+
+  it("re-asserts the declaration on a crew that already exists, so an old crew gains the chain", async () => {
+    // A crew provisioned before the template declared `handoffs` has neither the field nor the
+    // tools; only a write can give it them. `PATCH /v1/agents/:id` mints a version only when
+    // something differs, so the same call on a crew that already matches is `unchanged`.
+    const roster = crew.map(({ name }, i) => ({ id: `agt_${i}`, name: `${name}--acme`, current_version: 1 }));
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "GET") return json({ data: roster });
+      if (init?.method !== "PATCH") return json({ id: "agt_new" });
+      const id = /\/v1\/agents\/(agt_\d)$/.exec(String(url))?.[1];
+      // Only the writer drifted; the other two already carry what the declaration says.
+      return json({ id, current_version: id === "agt_0" ? 2 : 1 });
+    });
+    const reports = await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
+    expect(reports).toEqual([
+      { name: "seo-writer--acme", action: "updated" },
+      { name: "geo-optimizer--acme", action: "unchanged" },
+      { name: "audit-runner--acme", action: "unchanged" },
+    ]);
+    expect(creates(fetchImpl)).toHaveLength(0);
+    const bodies = patches(fetchImpl).map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
+    // The whole declaration, slugged like a create — and without the name: a patch renames nothing.
+    expect(bodies.map((b) => [b.handoffs, b.name])).toEqual([
+      [["geo-optimizer--acme"], undefined],
+      [false, undefined],
+      [["seo-writer--acme"], undefined],
+    ]);
+    for (const [i, body] of bodies.entries()) {
+      expect(body.system).toBe(crew[i]?.system);
+      expect(body.tools).toEqual(crew[i]?.tools);
+      expect(body).not.toHaveProperty("identity");
+    }
+    // The grant lands on the roster id, as before.
+    expect(grants(fetchImpl).map(([url]) => String(url))).toEqual(roster.map((a) => `https://x.test/v1/agents/${a.id}/identities`));
   });
 
   it("reports a member `failed` when the persona does not land, however well the agent was created", async () => {

@@ -150,10 +150,11 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
   return {
     read: () => state,
     createLead(input) {
-      const slugged = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-      // A name alone files the agency's own record; a second filing lands on the first.
-      const own = input.domain === "" && input.contact.email === "";
-      const twin = own ? state.clients.find((c) => c.slug === slugged) : undefined;
+      const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "client";
+      // A name alone files the agency's own record; a second filing lands on the first. Only a row
+      // filed the same way is the first: a prospect with a domain or a contact is never it.
+      const nameOnly = (row: { domain: string; contact: { email: string } }) => row.domain === "" && row.contact.email === "";
+      const twin = nameOnly(input) ? state.clients.find((c) => c.slug === slug && nameOnly(c)) : undefined;
       if (twin) {
         if (input.note !== undefined) {
           twin.notes.push(input.note);
@@ -163,7 +164,7 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       }
       const client: Client = {
         id: `cli_${randomBytes(4).toString("hex")}`,
-        slug: slugged || "client",
+        slug,
         name: input.name,
         domain: input.domain,
         stage: "lead",
