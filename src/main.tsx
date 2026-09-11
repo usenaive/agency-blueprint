@@ -3,6 +3,7 @@ import "./app.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
+import { Gate } from "./Gate";
 import { Shell } from "./Shell";
 import { AgencyAgents } from "./screens/AgencyAgents";
 import { Approvals } from "./screens/Approvals";
@@ -47,8 +48,12 @@ const router = createBrowserRouter([
   },
 ], { basename: "/app" });
 
+// The gate is outside the router on purpose: no screen mounts, and so no screen fetches, until
+// `/api/session` says the browser is in (`src/Gate.tsx`).
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <Gate>
+      <RouterProvider router={router} />
+    </Gate>
   </StrictMode>,
 );

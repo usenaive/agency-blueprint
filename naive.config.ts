@@ -105,6 +105,13 @@ export default defineProject({
        * secret — so the dashboard comes up CLOSED rather than open, and an operator who wants a
        * token they know sets their own with `POST /v1/apps/{id}/secrets`, once.
        *
+       * `DASHBOARD_PASSWORD` is the one credential made to be handed to a person. Also
+       * `{ generate: true }`, but for this name the platform generates a password-shaped value
+       * (four groups of four, `kq7m-x2rt-8bvn-pz4h`) and keeps a copy it will show the operator
+       * from the studio's Access panel (`GET /v1/apps/{id}/access`, audited) — for the browser the
+       * studio cannot hand back signed in, or a colleague's. `/api/enter` trades it for the same
+       * cookie a ticket earns; rotation is `POST /v1/apps/{id}/access`, never a re-apply.
+       *
        * `NAIVE_API_URL` and `NAIVE_IDENTITY_ID` are deliberately NOT here. They were `process.env`
        * reads, evaluated when this declaration is BUILT — so the publisher's shell was baked into
        * the bytes every customer installs — and on a hosted apply there is no shell at all, so both
@@ -116,6 +123,7 @@ export default defineProject({
       env: {
         NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
         DASHBOARD_TOKEN: { generate: true as const },
+        DASHBOARD_PASSWORD: { generate: true as const },
       },
     },
   ],

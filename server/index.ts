@@ -24,6 +24,10 @@ const base = {
   mcpToken: process.env.VETTA_MCP_TOKEN,
   /** Optional here and required on the deploy: only a loopback caller may go without it. */
   dashboardToken: process.env.DASHBOARD_TOKEN,
+  /** All three are the platform's to write on a deploy; unset here, the gate screen has no door but the token. */
+  dashboardPassword: process.env.DASHBOARD_PASSWORD,
+  studioUrl: process.env.NAIVE_STUDIO_URL,
+  appId: process.env.NAIVE_APP_ID,
 };
 
 /**
@@ -38,7 +42,7 @@ const MIME: Record<string, string> = {
   ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".png": "image/png", ".woff2": "font/woff2",
 };
 
-const send = (res: ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}) => {
+const send = (res: ServerResponse, status: number, body: unknown, headers: Record<string, string | string[]> = {}) => {
   res.writeHead(status, { "content-type": "application/json", ...headers });
   res.end(JSON.stringify(body));
 };
@@ -75,7 +79,8 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
   }, contextFor(req));
 
   if (reply.stream) return relay(res, reply.stream);
-  // `/api/enter` answers with a cookie and a `location` and nothing else; every other route sets none.
+  // `/api/enter` answers with a cookie and a `location` and nothing else. An array value is several
+  // headers of one name, which is how Node's `writeHead` takes it: `set-cookie` cannot be joined.
   if (reply.body === undefined) return void res.writeHead(reply.status, reply.headers ?? {}).end();
   return send(res, reply.status, reply.body, reply.headers);
 }

@@ -40,7 +40,8 @@ interface Reply {
   status(code: number): Reply;
   json(body: unknown): void;
   end(body?: string): void;
-  setHeader(name: string, value: string): void;
+  /** An array is several headers of that name (`set-cookie`), as on Node's own `ServerResponse`. */
+  setHeader(name: string, value: string | string[]): void;
   write(chunk: string | Uint8Array): void;
 }
 
@@ -168,6 +169,9 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
       config: configFromEnv(process.env),
       mcpToken: process.env["VETTA_MCP_TOKEN"],
       dashboardToken: process.env["DASHBOARD_TOKEN"],
+      dashboardPassword: process.env["DASHBOARD_PASSWORD"],
+      studioUrl: process.env["NAIVE_STUDIO_URL"],
+      appId: process.env["NAIVE_APP_ID"],
       local: false,
     });
 
