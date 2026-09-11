@@ -70,6 +70,7 @@ const NO_ROUTE: ApiReply = { status: 404, body: { error: "no such route" } };
 const NOT_ALLOWED: ApiReply = { status: 405, body: { error: "method not allowed" } };
 const NOT_CONFIGURED: ApiReply = { status: 503, body: { error: "not configured — set NAIVE_API_KEY" } };
 const UNAUTHENTICATED: ApiReply = { status: 401, body: { error: "missing or invalid access token" } };
+const CROSS_SITE: ApiReply = { status: 403, body: { error: "cross-site request refused" } };
 const NO_GATE: ApiReply = { status: 503, body: { error: "not configured — set DASHBOARD_TOKEN" } };
 /** Said to a browser that arrived on its own. There is nothing for it to type; there is a button. */
 const CLOSED = "this dashboard is opened from the studio that installed it";
@@ -89,13 +90,21 @@ const DENIED = `${DASHBOARD}?entry=denied`;
  * that route trades it for the cookie below. The value never passes through the DOM, a URL, storage
  * or anything a person is shown.
  *
- * `HttpOnly` so no script on this page can read it; `SameSite=Lax` so another site cannot make the
- * browser spend it on a write, while still allowing the top-level navigation that sets it; thirty
- * days because a token that dies with the tab sends the operator back to the studio every morning
- * for a credential neither of them can see.
+ * `HttpOnly` so no script on this page can read it; thirty days because a token that dies with the
+ * tab sends the operator back to the studio every morning for a credential neither of them can see.
+ *
+ * On a deployment the dashboard is also shown INSIDE the studio's cross-site `<iframe>`, and a
+ * `SameSite=Lax` cookie is never sent to a framed cross-site document — a framed dashboard could
+ * not be signed in at all. So off-laptop the cookie is `SameSite=None; Secure; Partitioned` (CHIPS):
+ * sent to the frame, but keyed by the top-level site, so the framed dashboard and the top-level
+ * dashboard each sign in once and neither can read the other's jar. What `Lax` used to guard
+ * against — another site making the browser spend the cookie on a write — is `sameOrigin` below
+ * instead. `pnpm serve` on a laptop keeps `Lax` without `Secure`: `Partitioned` requires `Secure`,
+ * and there is no frame to serve.
  */
 const COOKIE = "dashboard_session";
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
+const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** One cookie out of the header, without a parser dependency and without regex over a whole header. */
 function cookieValue(header: string | undefined, name: string): string | undefined {
@@ -133,8 +142,9 @@ function field(body: string, name: string): string {
  * and a way in rather than a JSON body; a JSON caller gets the 403 and the sentence.
  *
  * The form that posts here is served by the studio on a different origin, so this is a cross-site
- * top-level navigation: no CORS applies to it, `SameSite=Lax` still permits SETTING the cookie on
- * the way past, and every same-origin request the dashboard makes afterwards carries it.
+ * navigation: no CORS applies to it, a cookie may be SET on the way past whatever its `SameSite`,
+ * and every request the dashboard makes to its own API afterwards carries it. Being cross-site by
+ * design, this route is also the one the same-origin guard in `apiGate` does not ask about.
  */
 function enterRoute(req: ApiRequest, ctx: ApiContext): ApiReply {
   if (req.method !== "POST") return NOT_ALLOWED;
@@ -147,12 +157,12 @@ function enterRoute(req: ApiRequest, ctx: ApiContext): ApiReply {
   } else if (!ticketMatches(ctx.dashboardToken, field(req.body, "ticket"), Date.now())) {
     return refuse(NO_TICKET);
   }
-  const secure = ctx.local ? "" : "; Secure";
+  const site = ctx.local ? "SameSite=Lax" : "Secure; SameSite=None; Partitioned";
   return {
     status: 303,
     headers: {
       location: DASHBOARD,
-      "set-cookie": `${COOKIE}=${ctx.dashboardToken}; Path=/; HttpOnly; SameSite=Lax${secure}; Max-Age=${COOKIE_MAX_AGE}`,
+      "set-cookie": `${COOKIE}=${ctx.dashboardToken}; Path=/; HttpOnly; ${site}; Max-Age=${COOKIE_MAX_AGE}`,
     },
   };
 }
@@ -432,9 +442,32 @@ function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
   if (!ctx.dashboardToken) return ctx.local ? null : NO_GATE;
   // The cookie `/api/enter` set, first: it is how a browser that was never given a token gets in.
   const held = cookieValue(req.headers.cookie, COOKIE);
-  if (held !== undefined) return sameSecret(held, ctx.dashboardToken) ? null : UNAUTHENTICATED;
+  if (held !== undefined) {
+    if (!sameSecret(held, ctx.dashboardToken)) return UNAUTHENTICATED;
+    return MUTATING.has(req.method) && !sameOrigin(req) ? CROSS_SITE : null;
+  }
   const token = bearerOf(req.headers.authorization);
   return token !== null && sameSecret(token, ctx.dashboardToken) ? null : UNAUTHENTICATED;
+}
+
+/**
+ * Whether a request the browser attached the cookie to came from this dashboard's own pages. A
+ * `SameSite=None` cookie rides on cross-site requests too, so a cookie-authenticated WRITE must
+ * show it was not another site's doing: `sec-fetch-site` (which the browser sets and a page cannot
+ * forge) says `same-origin`, or `none` for the address bar; a browser too old to send it must at
+ * least send an `origin` that is this host. Reads, bearers and `/api/enter` are not asked — the
+ * studio's ticket form is cross-site by design, and a bearer was never in a cookie jar.
+ */
+function sameOrigin(req: ApiRequest): boolean {
+  const site = req.headers["sec-fetch-site"];
+  if (site !== undefined) return site === "same-origin" || site === "none";
+  const origin = req.headers.origin;
+  if (origin === undefined || req.headers.host === undefined) return false;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
 }
 
 /** The whole route table, in order: `/mcp`, the door, the public site, the gate, the local token routes, the store, the platform. */

@@ -13,12 +13,16 @@
  *      hand the browser back (signed out there too, a colleague's browser) would otherwise loop —
  *      the attempt is remembered in `sessionStorage` for the life of the tab.
  *   2. **The password.** A plain `<form method="post">` to `/api/enter`: the browser posts it as a
- *      top-level navigation, the server answers a cookie and a redirect, and the value never
- *      passes through this bundle's JavaScript. Shown only when the server says a password exists.
+ *      navigation, the server answers a cookie and a redirect, and the value never passes through
+ *      this bundle's JavaScript. Shown only when the server says a password exists.
  *
  * `entry=denied` is how `/api/enter` sends a refused form back here, and it also disables the
  * automatic bounce: a browser that just came back refused should be shown the sentence, not sent
  * around again.
+ *
+ * FRAMED, the studio shows this dashboard inside its own page. A frame never bounces: a redirect
+ * to the studio from inside the studio would be refused or nest it in itself. It gets the form,
+ * and the studio link opens in the top window (`target="_top"`) instead.
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { apiGet, apiMessage } from "./api";
@@ -39,9 +43,10 @@ type State = { kind: "asking" } | { kind: "answered"; session: Session } | { kin
 export function Gate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ kind: "asking" });
   const denied = new URLSearchParams(location.search).get("entry") === "denied";
+  const framed = window.self !== window.top;
   const session = state.kind === "answered" ? state.session : null;
   const bouncing = session !== null && !session.authenticated && session.studio_url !== null
-    && !denied && sessionStorage.getItem(ATTEMPTED) === null;
+    && !framed && !denied && sessionStorage.getItem(ATTEMPTED) === null;
 
   useEffect(() => {
     let live = true;
@@ -76,7 +81,7 @@ export function Gate({ children }: { children: ReactNode }) {
     <Frame>
       {denied ? <p className="text-sm text-fail">{DENIED}</p> : null}
       {studio_url !== null ? (
-        <a className="btn btn-primary" href={studio_url}>Open with Naive Studio</a>
+        <a className="btn btn-primary" href={studio_url} target={framed ? "_top" : undefined}>Open in the Studio</a>
       ) : null}
       {password_enabled ? (
         <form method="post" action="/api/enter" className="mt-2 space-y-3">
@@ -103,8 +108,8 @@ function Frame({ children }: { children?: ReactNode }) {
       {children === undefined ? null : (
         <section className="panel w-full max-w-sm space-y-4 p-6">
           <div>
-            <h1 className="page-title">Agency dashboard</h1>
-            <p className="mt-1 text-sm text-ink-2">Sign in to see the CRM, the queue and the crew.</p>
+            <h1 className="page-title">Sign in to your dashboard</h1>
+            <p className="mt-1 text-sm text-ink-2">The CRM, the queue and the crew are behind this door.</p>
           </div>
           {children}
         </section>

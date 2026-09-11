@@ -343,11 +343,17 @@ describe("the /api/* gate", () => {
       expect(reply.body).toBeUndefined();
       // To the operator UI, which lives under `/app`; `/` is the public site and needs no cookie.
       expect(reply.headers?.["location"]).toBe("/app");
-      const cookie = reply.headers?.["set-cookie"] ?? "";
-      expect(cookie).toContain("dashboard_session=dash");
-      expect(cookie).toContain("HttpOnly");
-      expect(cookie).toContain("SameSite=Lax");
-      expect(cookie).toContain("Secure");
+      // Deployed, the dashboard is also framed by the studio: a `Lax` cookie never reaches a framed
+      // cross-site document, so it is `None` and partitioned per top-level site (CHIPS).
+      expect(reply.headers?.["set-cookie"]).toBe(
+        `dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${30 * 24 * 60 * 60}`,
+      );
+    });
+
+    it("keeps a laptop's cookie Lax and not Secure: Partitioned needs Secure, and there is no frame", async () => {
+      const reply = await fixture({ local: true, dashboardToken: "dash" })
+        .call("POST", "/api/enter", new URLSearchParams({ ticket: ticket(Date.now() + 60_000) }).toString(), { "content-type": "application/x-www-form-urlencoded" });
+      expect(reply.headers?.["set-cookie"]).toBe(`dashboard_session=dash; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`);
     });
 
     it("takes the ticket from a JSON body too, because the host parses a form for us", async () => {
@@ -387,6 +393,63 @@ describe("the /api/* gate", () => {
       expect((await call("GET", "/api/clients", "", { cookie: "dashboard_session=nope" })).status).toBe(401);
     });
 
+    /**
+     * A `SameSite=None` cookie rides on cross-site requests too, which is what `Lax` used to
+     * forbid. So a WRITE the cookie authenticates must come from this dashboard's own pages — framed
+     * by the studio or not, the request is still same-origin to its own API.
+     */
+    describe("a cookie-authenticated write must be the dashboard's own", () => {
+      const cookie = { cookie: "dashboard_session=dash" };
+      /** A gated write: advancing a lead. Answers 200 with the advanced row, or is refused. */
+      const advance = async (headers: Record<string, string>) => {
+        const { call, store } = fixture(deployed);
+        const client = store.createLead(lead);
+        const reply = await call("POST", `/api/clients/${client.id}/advance`, "", headers);
+        return { reply, stage: store.read().clients[0]?.stage };
+      };
+
+      it("passes the framed dashboard's own fetch, and the address bar", async () => {
+        expect((await advance({ ...cookie, "sec-fetch-site": "same-origin" })).reply.status).toBe(200);
+        expect((await advance({ ...cookie, "sec-fetch-site": "none" })).reply.status).toBe(200);
+        // A browser too old for `sec-fetch-site` must at least name this host as its origin.
+        expect((await advance({ ...cookie, host: "agency.example", origin: "https://agency.example" })).reply.status).toBe(200);
+      });
+
+      it("refuses a cross-site POST that arrived with the cookie, with a sentence and no write", async () => {
+        for (const headers of [
+          { ...cookie, "sec-fetch-site": "cross-site" },
+          { ...cookie, "sec-fetch-site": "same-site" },
+          { ...cookie, host: "agency.example", origin: "https://evil.example" },
+          { ...cookie, host: "agency.example", origin: "not a url" },
+          { ...cookie, host: "agency.example" },
+          cookie,
+        ]) {
+          const { reply, stage } = await advance(headers);
+          expect(reply, JSON.stringify(headers)).toEqual({ status: 403, body: { error: "cross-site request refused" } });
+          expect(stage, JSON.stringify(headers)).toBe("lead");
+        }
+        const { call } = fixture(deployed);
+        for (const method of ["PUT", "PATCH", "DELETE"]) {
+          expect((await call(method, "/api/posts/post_1", {}, { ...cookie, "sec-fetch-site": "cross-site" })).status, method).toBe(403);
+        }
+      });
+
+      it("asks nothing of a bearer, a read, or /api/enter — none of them is a cookie another site could spend", async () => {
+        expect((await advance({ ...bearer, "sec-fetch-site": "cross-site" })).reply.status).toBe(200);
+        const { call } = fixture(deployed);
+        expect((await call("GET", "/api/clients", "", { ...cookie, "sec-fetch-site": "cross-site" })).status).toBe(200);
+        expect((await call("GET", "/api/clients", "", cookie)).status).toBe(200);
+        const handoff = await call("POST", "/api/enter", new URLSearchParams({ ticket: ticket(Date.now() + 60_000) }).toString(), {
+          ...cookie, "content-type": "application/x-www-form-urlencoded", "sec-fetch-site": "cross-site",
+        });
+        expect(handoff.status).toBe(303);
+        // The public site's contact form is not gated, so it is not this guard's either.
+        expect((await call("POST", "/api/leads", lead, { ...cookie, "sec-fetch-site": "cross-site" })).status).toBe(201);
+        // The wrong cookie is still the wrong cookie, before any question of origin.
+        expect((await advance({ cookie: "dashboard_session=nope", "sec-fetch-site": "same-origin" })).reply.status).toBe(401);
+      });
+    });
+
     it("is the only /api route that runs before the gate, so it needs no credential to reach", async () => {
       expect((await enter("ticket=")).status).not.toBe(401);
     });
@@ -415,8 +478,7 @@ describe("the /api/* gate", () => {
       expect(cookie).toContain("dashboard_session=dash");
       expect(cookie).not.toContain("kq7m");
       expect(cookie).toContain("HttpOnly");
-      expect(cookie).toContain("SameSite=Lax");
-      expect(cookie).toContain("Secure");
+      expect(cookie).toContain("Secure; SameSite=None; Partitioned");
       // A JSON body works too, for the same reason the ticket's does.
       expect((await fixture(withPassword).call("POST", "/api/enter", { password: "kq7m-x2rt-8bvn-pz4h" })).status).toBe(303);
     });

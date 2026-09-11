@@ -15,8 +15,11 @@ import { ATTEMPTED, Gate, type Session } from "./Gate";
 const STUDIO = "https://app.usenaive.ai/apps/app_123/open";
 const signedOut: Session = { authenticated: false, studio_url: STUDIO, password_enabled: true };
 
-/** A `sessionStorage` the test can read back, and a `location` whose `assign` goes nowhere. */
-function stubBrowser(search = "", stored: Record<string, string> = {}) {
+/**
+ * A `sessionStorage` the test can read back, a `location` whose `assign` goes nowhere, and — when
+ * `framed` — a `window.top` that is not this window, which is all the gate looks at.
+ */
+function stubBrowser(search = "", stored: Record<string, string> = {}, framed = false) {
   vi.stubGlobal("sessionStorage", {
     getItem: (k: string) => stored[k] ?? null,
     setItem: (k: string, v: string) => { stored[k] = v; },
@@ -24,6 +27,7 @@ function stubBrowser(search = "", stored: Record<string, string> = {}) {
   });
   const assign = vi.fn();
   vi.stubGlobal("location", { search, assign });
+  if (framed) vi.stubGlobal("top", {});
   return { stored, assign };
 }
 
@@ -85,8 +89,30 @@ describe("the gate screen", () => {
     document.body.innerHTML = "";
     const second = await render(() => Promise.resolve(signedOut));
     expect(assign).toHaveBeenCalledTimes(1);
-    expect(second.host.querySelector("a[href]")?.getAttribute("href")).toBe(STUDIO);
-    expect(second.text()).toContain("Open with Naive Studio");
+    const link = second.host.querySelector("a[href]");
+    expect(link?.getAttribute("href")).toBe(STUDIO);
+    expect(link?.hasAttribute("target")).toBe(false);
+    expect(second.text()).toContain("Sign in to your dashboard");
+    expect(second.text()).toContain("Open in the Studio");
+  });
+
+  it("inside the studio's frame never bounces: the form, and a link that opens the studio on top", async () => {
+    const { assign, stored } = stubBrowser("", {}, true);
+    expect(window.self).not.toBe(window.top);
+    const { host, text, settle } = await render(() => Promise.resolve(signedOut));
+    await settle();
+    expect(assign).not.toHaveBeenCalled();
+    expect(stored[ATTEMPTED]).toBeUndefined();
+    const form = host.querySelector("form");
+    expect(form?.getAttribute("action")).toBe("/api/enter");
+    expect(host.querySelector("input[name=password]")).not.toBeNull();
+    const link = host.querySelector("a[href]");
+    expect(link?.getAttribute("href")).toBe(STUDIO);
+    expect(link?.getAttribute("target")).toBe("_top");
+    expect(link?.textContent).toBe("Open in the Studio");
+    expect(text()).toContain("Sign in to your dashboard");
+    expect(text().toLowerCase()).not.toContain("private");
+    expect(host.querySelector("[data-testid=app]")).toBeNull();
   });
 
   it("offers the studio link and a plain password form — a real POST to /api/enter, not a fetch", async () => {
@@ -98,8 +124,9 @@ describe("the gate screen", () => {
     const input = host.querySelector<HTMLInputElement>("input[name=password]");
     expect(input?.type).toBe("password");
     expect(input?.autocomplete).toBe("current-password");
-    expect(text()).toContain("Open with Naive Studio");
+    expect(text()).toContain("Open in the Studio");
     expect(text()).not.toContain("didn't check out");
+    expect(text().toLowerCase()).not.toContain("private");
     expect(host.querySelector("[data-testid=app]")).toBeNull();
     expect(calls).toEqual(["/api/session"]);
   });

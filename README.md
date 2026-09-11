@@ -191,16 +191,25 @@ the apply that creates the app, and no route anywhere returns an app secret.
 
 You get in by opening the dashboard from the studio that installed it. That mints a
 short-lived entry ticket, the browser posts it to `POST /api/enter`, and the server trades it
-for an `HttpOnly`, `SameSite=Lax` session cookie the browser then attaches to every
-same-origin call by itself — the credential never passes through the DOM, a URL or storage.
-A deployment that somehow has no token answers `503 not configured — set DASHBOARD_TOKEN` on
-every `/api/*` route rather than serving your CRM to whoever finds the URL.
+for an `HttpOnly` session cookie the browser then attaches to every call to its own API by
+itself — the credential never passes through the DOM, a URL or storage. Deployed, the cookie
+is `Secure; SameSite=None; Partitioned`, because the studio also shows the dashboard inside
+its own page and a `Lax` cookie never reaches a framed cross-site document; partitioned
+(CHIPS), the framed and the top-level dashboard each sign in once and never see each other's
+cookie. Since such a cookie rides on cross-site requests, a cookie-authenticated write
+(`POST`/`PUT`/`PATCH`/`DELETE` to a gated route) must also be the dashboard's own —
+`Sec-Fetch-Site: same-origin` or `none`, or failing that an `Origin` on this host — or it is
+`403 cross-site request refused`; bearers, reads and `/api/enter` are not asked. On a laptop the
+cookie stays `SameSite=Lax` without `Secure`. A deployment that somehow has no token answers
+`503 not configured — set DASHBOARD_TOKEN` on every `/api/*` route rather than serving your CRM
+to whoever finds the URL.
 
 Opening `/app` directly, or from a browser the studio cannot hand back — a colleague's, or one
 signed out of the studio too — lands on a sign-in screen rather than the dashboard: the SPA
 asks `GET /api/session` before it mounts a single screen, sends a first-time visitor to the
 studio once (the `naive.entry.attempted` flag in `sessionStorage`), and otherwise offers an
-**Open with Naive Studio** link and a **dashboard password** form. That password is the second
+**Open in the Studio** link and a **dashboard password** form. Inside the studio's frame it
+never bounces — the link opens the studio in the top window instead. That password is the second
 generated secret, `DASHBOARD_PASSWORD` — the one credential a person may hold. The studio's
 Access panel shows it (audited) and rotates it; the form posts it to the same `/api/enter`,
 which compares it in constant time and answers with the identical cookie. A refused form goes
