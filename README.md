@@ -146,11 +146,17 @@ handoff wrote, and files nothing while no calendar exists yet.
 
 The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
 entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
-`seo-writer--acme` and no other client's writer. Onboarding a client whose crew already exists
+`seo-writer--acme` and no other client's writer. Provisioning a client whose crew already exists
 patches the declaration onto each seat (the platform mints a version only where something
-differs), so a crew provisioned before this field existed gains the chain the next time its
-client is onboarded. A seat the active template no longer declares is kept as it stands (widen,
-never narrow).
+differs), so a crew provisioned before this field existed gains the chain. A seat the active
+template no longer declares is kept as it stands (widen, never narrow).
+
+A client is provisioned once by the lead→active move on the CRM board, and after that from
+**Re-provision crew** on the client's own Agents tab — which is the same route (`POST
+/api/clients/<id>/onboard`, idempotent for an active client), run again, printing what it did to
+each seat. That button is how a standing crew gains a seat, a tool or a handoff the template has
+since declared; without it nothing in the dashboard could reach the upsert again, because the
+board offers the lead→active move only while the client is not yet active.
 
 Agents file the agency's own record with `create_lead` from the project name alone; a second
 name-only filing of a name already on the pipeline returns that record, so five intakes filing

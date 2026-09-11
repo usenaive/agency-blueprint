@@ -268,6 +268,13 @@ async function agentOf(res: Response): Promise<{ id: string; current_version?: n
  * reported as `kept` and never touched. Deleting an agent is an explicit act, exactly as it is in
  * the reconciler, where only a `removed:` tombstone deletes anything.
  *
+ * That rule is about **seats, not fields**. Within a seat the declaration is re-asserted whole and
+ * never merged, so a member an operator widened by hand on the platform — an extra tool, a raised
+ * budget, a longer prompt — is returned to what the template says the next time its client is
+ * reconciled. That is deliberate and it is what makes a crew reproducible from `templates/*.ts`
+ * alone; it is also what the agency's own seven get from the reconciler. A change meant to survive
+ * belongs in the template, not on the live agent.
+ *
  * **The persona is re-asserted every time**, on a member that was just created and on one that was
  * already there, exactly as the reconciler does for the agency's own agents: the grant is
  * idempotent, and a crew provisioned before this blueprint declared a persona would otherwise stay
@@ -308,17 +315,23 @@ export async function provisionClientAgents(
     const res = present
       ? await proxyFetch(config, { method: "PATCH", path: `/v1/agents/${present.id}` }, JSON.stringify({ ...decl, handoffs }), fetchImpl)
       : await proxyFetch(config, { method: "POST", path: "/v1/agents" }, JSON.stringify({ ...decl, name, handoffs }), fetchImpl);
-    if (!res.ok) {
+    // A refused CREATE leaves no agent behind, so there is nothing to grant a persona to and
+    // nothing further to say about this seat. A refused PATCH is not the same event: the seat is
+    // still standing and still reachable, and the grant is a call of its own (§22). Giving up here
+    // would cost an existing crew the declaration AND the persona — so one unsupported or 5xx
+    // PATCH would quietly take back every connected account the crew already had, which is the
+    // opposite of what re-asserting the grant every onboard is for.
+    if (!res.ok && present === undefined) {
       reports.push({ name, action: "failed" });
       continue;
     }
-    const written = await agentOf(res);
+    const written = res.ok ? await agentOf(res) : null;
     const id = present ? present.id : written?.id ?? null;
     const granted =
       member.identity === undefined ||
       (id !== null && (await grantIdentity(config, id, member.identity, fetchImpl)));
     const action = !present ? "created" : written?.current_version !== present.current_version ? "updated" : "unchanged";
-    reports.push({ name, action: granted ? action : "failed" });
+    reports.push({ name, action: res.ok && granted ? action : "failed" });
   }
   for (const agent of roster) {
     if (agent.name.endsWith(`--${slug}`) && !declared.has(agent.name)) reports.push({ name: agent.name, action: "kept" });

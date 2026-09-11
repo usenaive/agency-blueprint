@@ -269,6 +269,24 @@ describe("provisionClientAgents", () => {
     expect(creates(fetchImpl)).toHaveLength(crew.length);
   });
 
+  it("still re-grants the persona on a standing seat whose PATCH was refused", async () => {
+    // A refused PATCH must cost the declaration and nothing else. The seat is still there, and the
+    // grant is a call of its own (§22) that this function re-asserts on every onboard — so giving
+    // up on the whole member would let one unsupported or 5xx PATCH take back the connected
+    // accounts a working crew already had, which is a strictly worse outcome than not patching.
+    const roster = crew.map(({ name }, i) => ({ id: `agt_${i}`, name: `${name}--acme`, current_version: 1 }));
+    const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "GET") return json({ data: roster });
+      return init?.method === "PATCH" ? new Response("{}", { status: 500 }) : json({ ok: true });
+    });
+    const reports = await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
+    // Reported for what it is: the declaration did not land on any of them.
+    expect(reports).toEqual(roster.map(({ name }) => ({ name, action: "failed" })));
+    expect(grants(fetchImpl).map(([url]) => String(url))).toEqual(roster.map((a) => `https://x.test/v1/agents/${a.id}/identities`));
+    // And nothing was created to route around the refusal: the seats already exist.
+    expect(creates(fetchImpl)).toHaveLength(0);
+  });
+
   it("keeps a crew the new template does not declare, and never deletes it", async () => {
     // The switch rule: WIDEN, NEVER NARROW. This is `seo-geo` → `blank`, which declares no crew at
     // all: every agent the old template provisioned is reported and left exactly as it is. An

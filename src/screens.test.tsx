@@ -15,6 +15,7 @@ import { createMemoryRouter, Navigate, RouterProvider } from "react-router";
 import { Shell } from "./Shell";
 import { AgencyAgents } from "./screens/AgencyAgents";
 import { Approvals } from "./screens/Approvals";
+import { ClientAgents } from "./screens/ClientAgents";
 import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Crm } from "./screens/Crm";
@@ -30,7 +31,11 @@ const routes = [
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
-      { path: "clients/:id", Component: ClientWorkspace, children: [{ path: "posts", Component: ClientPosts }] },
+      {
+        path: "clients/:id",
+        Component: ClientWorkspace,
+        children: [{ path: "posts", Component: ClientPosts }, { path: "agents", Component: ClientAgents }],
+      },
     ],
   },
 ];
@@ -398,5 +403,53 @@ describe("the home screen", () => {
     expect(text()).not.toContain("Nothing is waiting on you");
     expect(text()).not.toContain("None of this install's agents");
     expect(text().match(/upstream unavailable/g)?.length).toBe(2);
+  });
+});
+
+/**
+ * The reconcile had no trigger.
+ *
+ * `provisionClientAgents` creates the missing seats and patches the declaration onto the standing
+ * ones, and its only caller was the CRM board's lead→active move — a control offered only while the
+ * client is not yet active. So a crew provisioned before the template declared `handoffs` could not
+ * be reached from anywhere in the dashboard: the operator's one route was a hand-written POST,
+ * which is a release note, not a product.
+ */
+describe("a crew that is already standing", () => {
+  const client = { id: "cli_1", slug: "acme", name: "Acme", domain: "acme.example", stage: "active", services: [], contact: { name: "S", email: "s@acme.example", role: "Owner" }, notes: [] };
+  const stale = { data: [{ id: "agt_1", name: "seo-writer--acme", model: "m" }, { id: "agt_2", name: "audit-runner--acme", model: "m" }] };
+  const reconciled = {
+    client,
+    agents: [
+      { name: "seo-writer--acme", action: "updated" },
+      { name: "geo-optimizer--acme", action: "created" },
+      { name: "audit-runner--acme", action: "unchanged" },
+    ],
+  };
+
+  it("can be brought up to the template from the screen that shows it, without a hand-written POST", async () => {
+    const screen = await render("/clients/cli_1/agents", (path, init) =>
+      path === `/api/clients/${client.id}/onboard` && init?.method === "POST" ? { body: reconciled }
+      : path === "/api/clients" ? { body: [client] }
+      : path.startsWith("/api/agents") ? { body: stale }
+      : { body: { data: [] } });
+
+    await screen.press("Re-provision crew");
+    // The onboard route, which is already idempotent for an active client — not a second route.
+    expect(screen.calls.filter((c) => c.init?.method === "POST").map((c) => c.path)).toEqual(["/api/clients/cli_1/onboard"]);
+    // And the report is shown, so `unchanged` everywhere reads as "nothing to do" rather than "done".
+    expect(screen.text()).toContain("updated to the template");
+    expect(screen.text()).toContain("created — this seat was missing");
+    expect(screen.text()).toContain("already matched the template");
+  });
+
+  /** The same route graduates a lead. A control that reads as maintenance must never do that. */
+  it("is not offered for a client that is not active, because there the same route is the graduation", async () => {
+    const lead = { ...client, stage: "lead" };
+    const screen = await render("/clients/cli_1/agents", (path) =>
+      path === "/api/clients" ? { body: [lead] }
+      : path.startsWith("/api/agents") ? { body: { data: [] } }
+      : { body: { data: [] } });
+    expect(screen.button("Re-provision crew")).toBeUndefined();
   });
 });
