@@ -40,7 +40,8 @@ interface Reply {
   status(code: number): Reply;
   json(body: unknown): void;
   end(body?: string): void;
-  setHeader(name: string, value: string): void;
+  /** An array is several headers of that name (`set-cookie`), as on Node's own `ServerResponse`. */
+  setHeader(name: string, value: string | string[]): void;
   write(chunk: string | Uint8Array): void;
 }
 

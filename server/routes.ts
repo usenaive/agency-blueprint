@@ -31,8 +31,12 @@ export interface ApiReply {
   body?: unknown;
   /** Set only by `/api/chat/:sid/stream` — piped, not buffered. */
   stream?: Response;
-  /** Set only by `/api/enter`, which answers with a cookie and a redirect and no body at all. */
-  headers?: Record<string, string>;
+  /**
+   * Set by `/api/enter` (a cookie and a redirect, no body) and by a refused cookie (the header
+   * that expires it). An array is several headers of that name — `set-cookie` is the one header
+   * that cannot be joined with commas — and both adapters hand it to Node as such.
+   */
+  headers?: Record<string, string | string[]>;
 }
 
 export interface ApiContext {
@@ -101,18 +105,38 @@ const DENIED = `${DASHBOARD}?entry=denied`;
  * against — another site making the browser spend the cookie on a write — is `sameOrigin` below
  * instead. `pnpm serve` on a laptop keeps `Lax` without `Secure`: `Partitioned` requires `Secure`,
  * and there is no frame to serve.
+ *
+ * A browser that signed in before the cookie was partitioned still holds the old `Lax`,
+ * unpartitioned one under the same name, and sends BOTH: a cookie jar keys on name, domain and
+ * path, not on `Partitioned`, so a new sign-in does not replace the old cookie. That is why the
+ * gate accepts a request when ANY `dashboard_session` value is the token, and why a request whose
+ * values are all stale is answered with the header that expires the legacy cookie (`Max-Age=0`,
+ * spelled with the old attributes so the jar finds it) — as is every deployed sign-in, so the
+ * top-level context is rid of it at once rather than after thirty days.
  */
 const COOKIE = "dashboard_session";
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-/** One cookie out of the header, without a parser dependency and without regex over a whole header. */
-function cookieValue(header: string | undefined, name: string): string | undefined {
+/** Every value of one cookie out of the header, without a parser dependency and without regex over a whole header. */
+function cookieValues(header: string | undefined, name: string): string[] {
+  const found: string[] = [];
   for (const part of (header ?? "").split(";")) {
     const at = part.indexOf("=");
-    if (at > 0 && part.slice(0, at).trim() === name) return part.slice(at + 1).trim();
+    if (at > 0 && part.slice(0, at).trim() === name) found.push(part.slice(at + 1).trim());
   }
-  return undefined;
+  return found;
+}
+
+/** The `Set-Cookie` that expires the pre-partitioning cookie: its attributes, an empty value, and no life. */
+const expireLegacyCookie = (ctx: ApiContext): string =>
+  `${COOKIE}=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax${ctx.local ? "" : "; Secure"}`;
+
+/** Whether any of the cookie's values is the token. Every candidate is compared, each in constant time. */
+function anyMatches(values: string[], token: string): boolean {
+  let matched = false;
+  for (const value of values) matched = sameSecret(value, token) || matched;
+  return matched;
 }
 
 /** One field out of a body that is JSON when it parses and a form when it does not. */
@@ -158,11 +182,13 @@ function enterRoute(req: ApiRequest, ctx: ApiContext): ApiReply {
     return refuse(NO_TICKET);
   }
   const site = ctx.local ? "SameSite=Lax" : "Secure; SameSite=None; Partitioned";
+  const cookie = `${COOKIE}=${ctx.dashboardToken}; Path=/; HttpOnly; ${site}; Max-Age=${COOKIE_MAX_AGE}`;
   return {
     status: 303,
     headers: {
       location: DASHBOARD,
-      "set-cookie": `${COOKIE}=${ctx.dashboardToken}; Path=/; HttpOnly; ${site}; Max-Age=${COOKIE_MAX_AGE}`,
+      // Deployed, the sign-in also expires the legacy unpartitioned cookie a returning browser holds.
+      "set-cookie": ctx.local ? cookie : [cookie, expireLegacyCookie(ctx)],
     },
   };
 }
@@ -441,9 +467,12 @@ export const isLoopback = (remoteAddress: string | undefined): boolean =>
 function apiGate(req: ApiRequest, ctx: ApiContext): ApiReply | null {
   if (!ctx.dashboardToken) return ctx.local ? null : NO_GATE;
   // The cookie `/api/enter` set, first: it is how a browser that was never given a token gets in.
-  const held = cookieValue(req.headers.cookie, COOKIE);
-  if (held !== undefined) {
-    if (!sameSecret(held, ctx.dashboardToken)) return UNAUTHENTICATED;
+  // Every value of that name is tried — a browser may hold the legacy cookie beside the live one.
+  const held = cookieValues(req.headers.cookie, COOKIE);
+  if (held.length > 0) {
+    if (!anyMatches(held, ctx.dashboardToken)) {
+      return { ...UNAUTHENTICATED, headers: { "set-cookie": expireLegacyCookie(ctx) } };
+    }
     return MUTATING.has(req.method) && !sameOrigin(req) ? CROSS_SITE : null;
   }
   const token = bearerOf(req.headers.authorization);

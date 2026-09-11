@@ -199,10 +199,13 @@ its own page and a `Lax` cookie never reaches a framed cross-site document; part
 cookie. Since such a cookie rides on cross-site requests, a cookie-authenticated write
 (`POST`/`PUT`/`PATCH`/`DELETE` to a gated route) must also be the dashboard's own —
 `Sec-Fetch-Site: same-origin` or `none`, or failing that an `Origin` on this host — or it is
-`403 cross-site request refused`; bearers, reads and `/api/enter` are not asked. On a laptop the
-cookie stays `SameSite=Lax` without `Secure`. A deployment that somehow has no token answers
-`503 not configured — set DASHBOARD_TOKEN` on every `/api/*` route rather than serving your CRM
-to whoever finds the URL.
+`403 cross-site request refused`; bearers, reads and `/api/enter` are not asked. A browser that
+signed in before the cookie was partitioned still holds the old `Lax` one under the same name
+and sends both: the gate accepts a request when any `dashboard_session` value is the token, and a
+sign-in — or a request whose values are all stale — also answers with a `Set-Cookie` that
+expires the old one. On a laptop the cookie stays `SameSite=Lax` without `Secure`. A deployment
+that somehow has no token answers `503 not configured — set DASHBOARD_TOKEN` on every `/api/*`
+route rather than serving your CRM to whoever finds the URL.
 
 Opening `/app` directly, or from a browser the studio cannot hand back — a colleague's, or one
 signed out of the studio too — lands on a sign-in screen rather than the dashboard: the SPA

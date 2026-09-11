@@ -344,16 +344,60 @@ describe("the /api/* gate", () => {
       // To the operator UI, which lives under `/app`; `/` is the public site and needs no cookie.
       expect(reply.headers?.["location"]).toBe("/app");
       // Deployed, the dashboard is also framed by the studio: a `Lax` cookie never reaches a framed
-      // cross-site document, so it is `None` and partitioned per top-level site (CHIPS).
-      expect(reply.headers?.["set-cookie"]).toBe(
+      // cross-site document, so it is `None` and partitioned per top-level site (CHIPS). Two headers,
+      // not one joined: the second expires the pre-partitioning cookie a returning browser still holds.
+      expect(reply.headers?.["set-cookie"]).toEqual([
         `dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${30 * 24 * 60 * 60}`,
-      );
+        "dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure",
+      ]);
     });
 
     it("keeps a laptop's cookie Lax and not Secure: Partitioned needs Secure, and there is no frame", async () => {
       const reply = await fixture({ local: true, dashboardToken: "dash" })
         .call("POST", "/api/enter", new URLSearchParams({ ticket: ticket(Date.now() + 60_000) }).toString(), { "content-type": "application/x-www-form-urlencoded" });
+      // One header, a string: a laptop never held the deployed cookie, so there is nothing to expire.
       expect(reply.headers?.["set-cookie"]).toBe(`dashboard_session=dash; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`);
+    });
+
+    /**
+     * A browser that signed in before the cookie was partitioned keeps the old `Lax` cookie beside
+     * the new one — same name, same path, so the jar sends both — and if the token has since been
+     * rotated, the first value the server looked at was the stale one. Every value is tried, and a
+     * request whose values are all stale is told to drop the old cookie.
+     */
+    describe("a legacy cookie beside the live one", () => {
+      const both = "dashboard_session=stale-rotated-token; dashboard_session=dash";
+
+      it("is in when ANY dashboard_session value is the token, whichever the browser sent first", async () => {
+        const { call, store } = fixture(deployed);
+        expect((await call("GET", "/api/clients", "", { cookie: both })).status).toBe(200);
+        expect((await call("GET", "/api/clients", "", { cookie: "dashboard_session=dash; dashboard_session=stale" })).status).toBe(200);
+        expect((await call("GET", "/api/session", "", { cookie: both })).body).toMatchObject({ authenticated: true });
+        // The guard still applies to what the live value authenticates.
+        const client = store.createLead(lead);
+        expect((await call("POST", `/api/clients/${client.id}/advance`, "", { cookie: both, "sec-fetch-site": "same-origin" })).status).toBe(200);
+        expect((await call("POST", `/api/clients/${client.id}/advance`, "", { cookie: both, "sec-fetch-site": "cross-site" })).status).toBe(403);
+      });
+
+      it("answers 401 and expires the legacy cookie when no value is the token", async () => {
+        const reply = await fixture(deployed).call("GET", "/api/clients", "", { cookie: "dashboard_session=stale; dashboard_session=older" });
+        expect(reply).toEqual({
+          status: 401,
+          body: { error: "missing or invalid access token" },
+          headers: { "set-cookie": "dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure" },
+        });
+        // A single stale cookie earns the same header; a laptop's spells it without `Secure`.
+        expect((await fixture(deployed).call("GET", "/api/clients", "", { cookie: "dashboard_session=nope" })).headers)
+          .toEqual({ "set-cookie": "dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure" });
+        expect((await fixture({ local: true, dashboardToken: "dash" }).call("GET", "/api/clients", "", { cookie: "dashboard_session=nope" })).headers)
+          .toEqual({ "set-cookie": "dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax" });
+        // No cookie at all is the plain 401: there is nothing to expire, and a bearer caller gets no jar.
+        expect((await fixture(deployed).call("GET", "/api/clients")).headers).toBeUndefined();
+        // `/api/session` reports the verdict and, as ever, sets nothing.
+        const session = await fixture(deployed).call("GET", "/api/session", "", { cookie: "dashboard_session=stale" });
+        expect(session.body).toMatchObject({ authenticated: false });
+        expect(session.headers?.["set-cookie"]).toBeUndefined();
+      });
     });
 
     it("takes the ticket from a JSON body too, because the host parses a form for us", async () => {
@@ -473,12 +517,13 @@ describe("the /api/* gate", () => {
       expect(reply.status).toBe(303);
       expect(reply.body).toBeUndefined();
       expect(reply.headers?.["location"]).toBe("/app");
-      const cookie = reply.headers?.["set-cookie"] ?? "";
+      const [cookie, expiring] = reply.headers?.["set-cookie"] ?? [];
       // The cookie is the token, as for a ticket — never the password.
       expect(cookie).toContain("dashboard_session=dash");
       expect(cookie).not.toContain("kq7m");
       expect(cookie).toContain("HttpOnly");
       expect(cookie).toContain("Secure; SameSite=None; Partitioned");
+      expect(expiring).toBe("dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure");
       // A JSON body works too, for the same reason the ticket's does.
       expect((await fixture(withPassword).call("POST", "/api/enter", { password: "kq7m-x2rt-8bvn-pz4h" })).status).toBe(303);
     });

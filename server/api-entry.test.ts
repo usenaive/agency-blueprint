@@ -62,15 +62,17 @@ vi.mock("pg", () => {
   return { Client };
 });
 
-/** One `res` double: the last status and body the handler wrote. */
+/** One `res` double: the last status and body the handler wrote, and every header as it was set. */
 const reply = () => {
   const written: { status?: number; body?: unknown } = {};
+  const headers: Record<string, string | string[]> = {};
   const res = {
     status(code: number) { written.status = code; return res; },
     json(body: unknown) { written.body = body; },
-    end() {}, setHeader() {}, write() {},
+    end() {}, write() {},
+    setHeader(name: string, value: string | string[]) { headers[name] = value; },
   };
-  return { res, written };
+  return { res, written, headers };
 };
 
 const send = async (method: string, path: string, body?: unknown) => {
@@ -155,6 +157,13 @@ describe("the function itself", () => {
       const entered = reply();
       await handler({ method: "POST", url: "/api/app?__path=/api/enter", headers: {}, body: { password: "kq7m-x2rt-8bvn-pz4h" } }, entered.res);
       expect(entered.written.status).toBe(303);
+      // Two `Set-Cookie` headers reach the host as an array, never joined: the live cookie, then the
+      // one that expires the legacy unpartitioned cookie a returning browser still holds.
+      const cookies = entered.headers["set-cookie"];
+      expect(Array.isArray(cookies)).toBe(true);
+      expect(cookies).toHaveLength(2);
+      expect(cookies?.[0]).toContain("dashboard_session=dash; Path=/; HttpOnly; Secure; SameSite=None; Partitioned");
+      expect(cookies?.[1]).toBe("dashboard_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax; Secure");
     } finally {
       delete process.env["NAIVE_STUDIO_URL"];
       delete process.env["NAIVE_APP_ID"];
