@@ -15,7 +15,7 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, blank, budget, crm, gate, model, OPERATOR, questions, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, blank, budget, crm, gate, HANDOFF, model, OPERATOR, questions, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -23,7 +23,7 @@ const FOCUS: Record<string, string> = {
   "site-builder":
     "This agency sells search and answer-engine work: the services section names SEO, GEO and content; the FAQ answers what GEO is and how citations are measured; every page carries one clear query it is built for.",
   sales:
-    "This agency sells search and answer-engine work, so research each lead's search presence first — what they rank for, where they are cited in AI answers, and what a first audit would find.",
+    "This agency sells search and answer-engine work: research each lead's search presence first — what it ranks for, where AI answers cite it, what a first audit would find.",
   "client-manager":
     "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one.",
   "content-writer":
@@ -70,6 +70,12 @@ const SEARCH_READ = [
  * (`seo-writer--acme-dental`), which is how one organization hosts many clients' agents. Model,
  * budget, allow-list and persona are template data — the server holds none of them.
  *
+ * The three run as a chain, not three sessions the operator opens by hand: the audit runner files
+ * the audit and hands its `post_` id to the SEO writer, who writes the pages the audit found
+ * missing and hands their `post_` ids to the GEO optimizer, who tunes those pages for citations.
+ * Each `handoffs` entry names the seat, and `server/proxy.ts` slugs it the same way it slugs the
+ * name, so `audit-runner--acme-dental` may reach exactly `seo-writer--acme-dental`.
+ *
  * Every member names `AGENCY_IDENTITY` for the reason the agency's own seven do: without a persona
  * the search and analytics names above resolve to nothing, and a crew sold on working against the
  * client's own numbers can call `web_search` and `web_fetch` and no more. `POST /v1/agents` carries
@@ -84,11 +90,12 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Briefs, articles and landing copy from the client's keywords and site.",
-    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (googlesearchconsole.query_search_analytics) rather than from a guess.`,
+    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (googlesearchconsole.query_search_analytics) rather than from a guess. A session opened by the audit runner names the audit's post_ id: read that draft with list_posts and write the pages it found missing, in its order. When your drafts are filed, hand their post_ ids to this client's GEO optimizer with send_to_agent (wait false) — list_agents names the one seat you may reach — so it tunes what you wrote rather than what it guesses you wrote.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics"],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics", ...HANDOFF],
       OPERATOR,
     ),
+    handoffs: ["geo-optimizer"],
     identity: AGENCY_IDENTITY,
   },
   {
@@ -97,11 +104,12 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
-    system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. Search the query yourself and read what IS being cited; the gap is the brief.`,
+    system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. A session opened by the SEO writer names post_ ids: those drafts are the ones you tune, read them with list_posts first. Search the query yourself and read what IS being cited; the gap is the brief.`,
     tools: tools(
       ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics", "googlesearchconsole.inspect_url"],
       OPERATOR,
     ),
+    handoffs: false,
     identity: AGENCY_IDENTITY,
   },
   {
@@ -110,11 +118,12 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Recurring technical and content audits of the client's site and rankings.",
-    system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings as an audit or serp-report draft. A number you did not read from the client's account is a number you may not report; say plainly which property was missing.`,
+    system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings as an audit or serp-report draft. When the audit is filed, hand its post_ id to this client's SEO writer with send_to_agent (wait false) — list_agents names the one seat you may reach — with the pages it found missing, in order of value, so they are written from the audit and not from a guess. A number you did not read from the client's account is a number you may not report; say plainly which property was missing.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), ...SEARCH_READ],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), ...SEARCH_READ, ...HANDOFF],
       OPERATOR,
     ),
+    handoffs: ["seo-writer"],
     identity: AGENCY_IDENTITY,
   },
 ];

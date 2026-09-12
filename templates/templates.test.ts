@@ -164,6 +164,63 @@ describe("connected accounts", () => {
   });
 });
 
+describe("handoffs", () => {
+  /**
+   * Day one is ordered by handoffs (canonical-spec §28.12), not by seven intakes racing for one
+   * empty record: the researcher files its report and hands it to the writer, sales hands a lead it
+   * advanced to the proposal writer, and in the search crew the audit runner hands the audit's id
+   * to the SEO writer, who hands the pages it wrote to the GEO optimizer. Every other seat holds
+   * `handoffs: false`, so the tools are offered to exactly the seats that pass work on.
+   */
+  const CHAIN: Record<string, string[]> = {
+    sales: ["proposal-writer"],
+    "gap-researcher": ["content-writer"],
+    "audit-runner": ["seo-writer"],
+    "seo-writer": ["geo-optimizer"],
+  };
+  const handoffTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
+    ["send_to_agent", "list_agents"].filter((name) => agent.tools?.configs[name]?.permission === "allow");
+
+  it.each(all)("$name names the next seat on every seat that hands work on, and closes the rest", (template) => {
+    for (const agent of [...template.agents, ...template.crew]) {
+      expect([agent.name, agent.handoffs]).toEqual([agent.name, CHAIN[agent.name] ?? false]);
+    }
+  });
+
+  it.each(all)("$name grants both tools to exactly those seats — a `handoffs` list under deny-by-default offers nothing on its own", (template) => {
+    for (const agent of [...template.agents, ...template.crew]) {
+      const hands = agent.name in CHAIN;
+      expect([agent.name, handoffTools(agent)]).toEqual([agent.name, hands ? ["send_to_agent", "list_agents"] : []]);
+    }
+  });
+
+  it.each(all)("$name tells each sender what to pass — the durable id the receiver reads first", (template) => {
+    const roster = new Map([...template.agents, ...template.crew].map((a) => [a.name, a]));
+    for (const [from, [to]] of Object.entries(CHAIN)) {
+      const sender = roster.get(from);
+      if (sender === undefined) continue; // `blank` provisions no crew
+      const receiver = roster.get(to!)!;
+      expect([from, sender.system]).toEqual([from, expect.stringMatching(/send_to_agent[^.]*wait false/)]);
+      // Everything on the agency's side is a CRM row; everything in a client's account is a draft.
+      const id = template.crew.some((a) => a.name === from) ? /post_ id/ : /cli_ id/;
+      expect([from, sender.system]).toEqual([from, expect.stringMatching(id)]);
+      expect([to, receiver.system]).toEqual([to, expect.stringMatching(id)]);
+    }
+    // Every target a sender names is a seat of the same template.
+    for (const agent of [...template.agents, ...template.crew]) {
+      for (const target of Array.isArray(agent.handoffs) ? agent.handoffs : []) expect(roster.has(target)).toBe(true);
+    }
+  });
+
+  it.each(all)("$name has the writer wait for the researcher on day one, and only then write the calendar", (template) => {
+    const writer = template.agents.find((a) => a.name === "content-writer")!;
+    expect(writer.intake?.message).toMatch(/Do not write the calendar or a post yet/);
+    expect(writer.schedules?.[0]?.input).toMatch(/If no calendar is filed yet, stop/);
+    const researcher = template.agents.find((a) => a.name === "gap-researcher")!;
+    expect(researcher.intake?.message).toMatch(/send_to_agent: agent content-writer, wait false/);
+  });
+});
+
 describe("blank", () => {
   /**
    * The point of the template. `blank` is a working agency for someone who does not do search, so

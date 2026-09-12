@@ -119,6 +119,7 @@ export async function proxyFetch(
 export interface AgentRow {
   id: string;
   name: string;
+  current_version?: number;
 }
 
 /**
@@ -216,8 +217,11 @@ export async function latestContext(config: ProxyConfig, fetchImpl: typeof fetch
 
 export interface ProvisionReport {
   name: string;
-  /** `kept`: a crew agent of some other template of this blueprint, left exactly as it is. */
-  action: "created" | "unchanged" | "kept" | "failed";
+  /**
+   * `updated`: the declaration drifted from the live agent and was patched onto it. `kept`: a crew
+   * agent of some other template of this blueprint, left exactly as it is.
+   */
+  action: "created" | "updated" | "unchanged" | "kept" | "failed";
 }
 
 /**
@@ -240,11 +244,12 @@ async function grantIdentity(
   return res.ok;
 }
 
-/** The `agt_` id of a freshly created agent, or null when the platform answered something else. */
-async function createdId(res: Response): Promise<string | null> {
+/** The agent a create or patch answered with, or null when the platform answered something else. */
+async function agentOf(res: Response): Promise<{ id: string; current_version?: number } | null> {
   try {
-    const body = (await res.json()) as { id?: unknown };
-    return typeof body.id === "string" ? body.id : null;
+    const body = (await res.json()) as { id?: unknown; current_version?: unknown };
+    if (typeof body.id !== "string") return null;
+    return { id: body.id, ...(typeof body.current_version === "number" ? { current_version: body.current_version } : {}) };
   } catch {
     return null;
   }
@@ -252,24 +257,36 @@ async function createdId(res: Response): Promise<string | null> {
 
 /**
  * Upserts the active template's per-client crew (`seo-writer--<slug>`, …) by name — the same
- * semantics the blueprints reconciler uses: an agent that already exists is left untouched, a
- * missing one is created. The crew, its prompts, its model, its budget, its allow-list and its
- * persona are all template data (`templates/*.ts`); none of it is decided here.
+ * semantics the blueprints reconciler uses: a missing agent is created, an existing one has the
+ * declaration patched onto it (`PATCH /v1/agents/:id` mints a version only when something
+ * differs, so a crew that already matches is `unchanged`). The crew, its prompts, its model, its
+ * budget, its allow-list and its persona are all template data (`templates/*.ts`); none of it is
+ * decided here.
  *
  * **Widen, never narrow.** A crew agent this client already has that the *active* template does not
  * declare — the operator switched template, or switched to `blank`, which declares no crew — is
  * reported as `kept` and never touched. Deleting an agent is an explicit act, exactly as it is in
  * the reconciler, where only a `removed:` tombstone deletes anything.
  *
+ * That rule is about **seats, not fields**. Within a seat the declaration is re-asserted whole and
+ * never merged, so a member an operator widened by hand on the platform — an extra tool, a raised
+ * budget, a longer prompt — is returned to what the template says the next time its client is
+ * reconciled. That is deliberate and it is what makes a crew reproducible from `templates/*.ts`
+ * alone; it is also what the agency's own seven get from the reconciler. A change meant to survive
+ * belongs in the template, not on the live agent.
+ *
  * **The persona is re-asserted every time**, on a member that was just created and on one that was
  * already there, exactly as the reconciler does for the agency's own agents: the grant is
  * idempotent, and a crew provisioned before this blueprint declared a persona would otherwise stay
  * unable to reach a single connected account for as long as it existed. `unchanged` therefore
- * describes the agent's own configuration — never re-posted — and not the grant.
+ * describes the agent's own configuration and not the grant.
  *
  * A member whose persona did not land is reported `failed` even when the agent itself was created:
  * an agent with a search toolset and no identity is offered none of those tools, and reporting that
  * as a success is how the blueprint hid this in the first place.
+ *
+ * A `handoffs` list is slugged like the name: the template's `["seo-writer"]` becomes this client's
+ * `seo-writer--<slug>` and no other client's. `true`, `false` and `"team"` pass through.
  *
  * Answers null when the roster itself cannot be read.
  */
@@ -284,30 +301,37 @@ export async function provisionClientAgents(
   // again under the same name on every onboard.
   const roster = await listAgents(config, fetchImpl);
   if (roster === null) return null;
-  const existing = new Map(roster.map((a) => [a.name, a.id]));
+  const existing = new Map(roster.map((a) => [a.name, a]));
   const reports: ProvisionReport[] = [];
   const declared = new Set<string>();
   for (const member of crew) {
     const name = `${member.name}--${slug}`;
     declared.add(name);
-    const present = existing.has(name);
-    let id = existing.get(name) ?? null;
-    if (!present) {
-      // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
-      // declare: sending it would read as a grant and be none. It is the call below.
-      const { identity: _persona, ...decl } = member;
-      const created = await proxyFetch(config, { method: "POST", path: "/v1/agents" },
-        JSON.stringify({ ...decl, name }), fetchImpl);
-      if (!created.ok) {
-        reports.push({ name, action: "failed" });
-        continue;
-      }
-      id = await createdId(created);
+    const present = existing.get(name);
+    // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
+    // declare: sending it would read as a grant and be none. It is the call below.
+    const { identity: _persona, name: _seat, ...decl } = member;
+    const handoffs = Array.isArray(decl.handoffs) ? decl.handoffs.map((target) => `${target}--${slug}`) : decl.handoffs;
+    const res = present
+      ? await proxyFetch(config, { method: "PATCH", path: `/v1/agents/${present.id}` }, JSON.stringify({ ...decl, handoffs }), fetchImpl)
+      : await proxyFetch(config, { method: "POST", path: "/v1/agents" }, JSON.stringify({ ...decl, name, handoffs }), fetchImpl);
+    // A refused CREATE leaves no agent behind, so there is nothing to grant a persona to and
+    // nothing further to say about this seat. A refused PATCH is not the same event: the seat is
+    // still standing and still reachable, and the grant is a call of its own (§22). Giving up here
+    // would cost an existing crew the declaration AND the persona — so one unsupported or 5xx
+    // PATCH would quietly take back every connected account the crew already had, which is the
+    // opposite of what re-asserting the grant every onboard is for.
+    if (!res.ok && present === undefined) {
+      reports.push({ name, action: "failed" });
+      continue;
     }
+    const written = res.ok ? await agentOf(res) : null;
+    const id = present ? present.id : written?.id ?? null;
     const granted =
       member.identity === undefined ||
       (id !== null && (await grantIdentity(config, id, member.identity, fetchImpl)));
-    reports.push({ name, action: granted ? (present ? "unchanged" : "created") : "failed" });
+    const action = !present ? "created" : written?.current_version !== present.current_version ? "updated" : "unchanged";
+    reports.push({ name, action: res.ok && granted ? action : "failed" });
   }
   for (const agent of roster) {
     if (agent.name.endsWith(`--${slug}`) && !declared.has(agent.name)) reports.push({ name: agent.name, action: "kept" });

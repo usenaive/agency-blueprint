@@ -144,6 +144,51 @@ describe("openStore", () => {
     expect(store.read().clients.some((c) => c.id === lead.id)).toBe(true);
   });
 
+  it("files the agency's own record once, however many agents file it by name in the same minute", () => {
+    // Five intakes each `create_lead` the agency's own record from the project name alone; the
+    // first opens it and the rest must land on it, notes included, or day one ends with five twins.
+    const store = openStore(storeFile());
+    const before = store.read().clients.length;
+    const own = { domain: "", contact: { name: "", email: "", role: "" } };
+    const first = store.createLead({ name: "Northwind Studio", ...own, note: "Onboarding checklist." });
+    const second = store.createLead({ name: "Northwind  Studio", ...own, note: "Gap report." });
+    expect(second.id).toBe(first.id);
+    expect(store.read().clients).toHaveLength(before + 1);
+    expect(store.read().clients.find((c) => c.id === first.id)?.notes).toEqual(["Onboarding checklist.", "Gap report."]);
+    // A prospect that shares the name is a different company: it has a domain, and it is its own row.
+    const prospect = store.createLead({
+      name: "Northwind Studio", domain: "northwind.example", contact: { name: "Kim", email: "kim@northwind.example", role: "CEO" },
+    });
+    expect(prospect.id).not.toBe(first.id);
+    expect(store.read().clients).toHaveLength(before + 2);
+  });
+
+  it("never files the agency's notes on a prospect that happened to share the name", () => {
+    // The prospect is on the pipeline first, with a domain and a contact; the agency's own record
+    // is then filed from the name alone. A same-slug row that was filed with more is not it.
+    const store = openStore(storeFile());
+    const before = store.read().clients.length;
+    const prospect = store.createLead({
+      name: "Northwind Studio", domain: "northwind.example", contact: { name: "Kim", email: "kim@northwind.example", role: "CEO" },
+    });
+    const own = store.createLead({ name: "Northwind Studio", domain: "", contact: { name: "", email: "", role: "" }, note: "Gap report." });
+    expect(own.id).not.toBe(prospect.id);
+    expect(store.read().clients).toHaveLength(before + 2);
+    expect(store.read().clients.find((c) => c.id === prospect.id)?.notes).toEqual([]);
+  });
+
+  it("dedupes a name-only record whose name slugs to nothing on the slug it is actually stored under", () => {
+    // Every character of "東京スタジオ" is dropped by the slug; the row is stored as `client`, and
+    // the second filing must look for `client`, not for an empty string.
+    const store = openStore(storeFile());
+    const before = store.read().clients.length;
+    const own = { domain: "", contact: { name: "", email: "", role: "" } };
+    const first = store.createLead({ name: "東京スタジオ", ...own });
+    expect(first.slug).toBe("client");
+    expect(store.createLead({ name: "東京スタジオ", ...own }).id).toBe(first.id);
+    expect(store.read().clients).toHaveLength(before + 1);
+  });
+
   it("files a note on a client, restating what it waits on only when told to", () => {
     const file = storeFile();
     const store = openStore(file);

@@ -76,11 +76,11 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 | Agent | Role | Tools | Skills | Timer (`America/New_York`) | First message (day one) |
 |---|---|---|---|---|---|
 | `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
-| `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
+| `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
 | `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
-| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A four-week editorial calendar for the agency's own blog, and the first post as a pending draft. |
+| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
 | `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
-| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report. |
+| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
 | `proposal-writer` | Proposals | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
 
 Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
@@ -120,6 +120,48 @@ checklist, an editorial calendar and a first draft, three revisions, a gap repor
 proposal skeleton — all filed on the agency's own client record or as pending drafts, nothing
 sent, nothing published. The dashboard's home screen (`/app`) shows each of those sessions and
 what it is waiting on.
+
+### Handoffs
+
+The seven intakes open in the same minute, and two of them depend on another's output: the
+content writer's calendar is written from the gap researcher's report, and a proposal is written
+for a lead sales has advanced. Where one seat's work is another's input, the first **hands off**
+to the second instead of both reading an empty record at once. Each `AgentDecl` declares the
+platform's `handoffs` field — the names it may open a session on — and only those seats are
+granted the two platform tools, `send_to_agent` and `list_agents`:
+
+| Sender | `handoffs` | Hands on | The message names |
+|---|---|---|---|
+| `gap-researcher` | `["content-writer"]` | once the gap report is filed (day one, then every Friday) | the agency record's `cli_` id and the ten gaps |
+| `sales` | `["proposal-writer"]` | when a lead is advanced to `proposal` | that lead's `cli_` id, as `handoff_key` too, so a lead is handed once |
+| `audit-runner--<slug>` | `["seo-writer"]` | once a client audit is filed (`seo-geo`) | the audit's `post_` id and the pages it found missing |
+| `seo-writer--<slug>` | `["geo-optimizer"]` | once the pages are drafted (`seo-geo`) | the new drafts' `post_` ids |
+
+Every other seat declares `handoffs: false` and holds neither tool. A handoff is
+`send_to_agent` with `wait: false`: it opens an ordinary session on the receiver, at the
+receiver's own budget, and the sender carries on; the receiver reads the durable row the
+message names (`get_client`, `list_posts`) before writing a line. The timers stay as the
+fallback — the content writer's Tuesday/Thursday run takes the next title from the calendar the
+handoff wrote, and files nothing while no calendar exists yet.
+
+The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
+entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
+`seo-writer--acme` and no other client's writer. Provisioning a client whose crew already exists
+patches the declaration onto each seat (the platform mints a version only where something
+differs), so a crew provisioned before this field existed gains the chain. A seat the active
+template no longer declares is kept as it stands (widen, never narrow).
+
+A client is provisioned once by the lead→active move on the CRM board, and after that from
+**Re-provision crew** on the client's own Agents tab — which is the same route (`POST
+/api/clients/<id>/onboard`, idempotent for an active client), run again, printing what it did to
+each seat. That button is how a standing crew gains a seat, a tool or a handoff the template has
+since declared; without it nothing in the dashboard could reach the upsert again, because the
+board offers the lead→active move only while the client is not yet active.
+
+Agents file the agency's own record with `create_lead` from the project name alone; a second
+name-only filing of a name already on the pipeline returns that record, so five intakes filing
+it in the same minute share one row. A prospect filed with a domain or a contact is never that
+record, whatever its name.
 
 ### The skills
 
@@ -487,7 +529,7 @@ The config can declare more than this template uses:
 | `templates[]` | every template this repo carries; the chosen one's agents become the project's crew, the others' become `kept` |
 | `questions[]` | at most three, `text` or `choice`; the answers become the project's context |
 | `apps[]` | `name`, `type`, `description`, `deploy_dir`, `mcp` (the app's own MCP endpoint path, fullstack only), `required`, and `env` — literals, `{ from_env }` or `{ generate: true }`, written as the app's secrets |
-| `agents[]` | `role`, `description`, `model`, `budget`, `system`, `tools`, `skills` (`naive/<slug>` or your own), `mcp_servers`, `allowed_apps`, `identity`, `required`, `schedules`, `intake` |
+| `agents[]` | `role`, `description`, `model`, `budget`, `system`, `tools`, `skills` (`naive/<slug>` or your own), `mcp_servers`, `allowed_apps`, `identity`, `handoffs`, `required`, `schedules`, `intake` |
 | `crew_per_client[]` | the per-client crew's `name`, `role`, `description`, published for the studio |
 | `agents[].schedules[]` | cron deployments with a `budget_micro_usd` ceiling per fire, owned as a complete set per agent and matched by `cron` |
 | `agents[].intake` | the first message, started as a session on apply, with its own `budget_micro_usd` |
