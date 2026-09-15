@@ -24,12 +24,17 @@
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
  * via the workspace protocol.
  */
-import { defineProject } from "@usenaive-sdk/blueprints";
+import { defineProject, type DefineInput } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
-import { AGENCY_IDENTITY } from "./templates/blank.ts";
+import { AGENCY_IDENTITY, type TaskDecl } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
 
-export default defineProject({
+/**
+ * What `naive up` is handed. Named rather than inlined so `naive.config.test.ts` can read the
+ * declaration itself — `tasks` in particular, which the installed engine's input type does not
+ * name yet and its parse drops; `satisfies` holds the rest to the engine's contract meanwhile.
+ */
+export const declaration = {
   name: PROJECT,
   blueprint: "agency",
   /** Chosen in `templates/index.ts`, so the config, the screens and the site cannot disagree. */
@@ -47,6 +52,13 @@ export default defineProject({
    * the studio can show it. Names carry the client's slug at runtime, so only the shape is here.
    */
   crew_per_client: ACTIVE_TEMPLATE.crew.map(({ name, role, description }) => ({ name, role, description })),
+  /**
+   * Day one, as cards on the agency's board (`canonical-spec §31.10`). The apply seeds one per
+   * seat, keyed `<project>:<key>` so a re-apply doubles nothing, and the board's tick wakes each
+   * assignee when its card has no open blocker — `blocked_by` is the order, not a race of first
+   * sessions. No agent declares an `intake`: a template that seeds tasks opens no private brief.
+   */
+  tasks: ACTIVE_TEMPLATE.tasks,
 
   /**
    * The agency's persona, and the reason a connected account is reachable from an agent at all.
@@ -132,4 +144,6 @@ export default defineProject({
   // agency has, `templates/seo-geo.ts` adds its focus to them, and the per-client crew
   // (`seo-writer--<slug>`, …) is provisioned at onboarding by the dashboard server, since its
   // names carry a client slug and cannot be declared statically.
-});
+} satisfies DefineInput & { tasks: TaskDecl[] };
+
+export default defineProject(declaration);

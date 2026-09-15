@@ -31,7 +31,7 @@ flowchart LR
   repo["this repo<br/>naive.config.ts + templates/"]
   repo -->|naive up| plat["Naive platform"]
   plat --> dash["dashboard app<br/>public site at /, operator UI at /app, /api/* and /mcp"]
-  plat --> crew["seven agents<br/>five timers, seven day-one sessions"]
+  plat --> crew["seven agents<br/>five timers, seven cards on the agency's board"]
   plat --> idn["agency identity<br/>owns the mailbox, holds the connected accounts"]
 ```
 
@@ -48,7 +48,7 @@ flowchart LR
   …) redirect to `/app/*`.
 - **Seven agents** — the active template's crew, each with a role, a private system prompt,
   a deny-by-default tool allow-list, skills from the platform catalogue, a daily budget, and a
-  first message that runs on day one. See [The crew](#-the-crew).
+  first card on the agency's board. See [The crew](#-the-crew).
 - **The agency identity** (`agency`) — the persona every agent and every schedule acts as. It
   is what owns the agency mailbox and holds any connected account.
 
@@ -73,15 +73,15 @@ with the same paragraph: read `project_context` before anything else — it hold
 answers in your own words — and treat those answers as the client's, never yours to invent.
 Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 
-| Agent | Role | Tools | Skills | Timer (`America/New_York`) | First message (day one) |
+| Agent | Role | Tools | Skills | Timer (`America/New_York`) | Day-one card |
 |---|---|---|---|---|---|
-| `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
-| `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
-| `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
-| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
-| `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
-| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
-| `proposal-writer` | Proposals | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
+| `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | `site-rewrite` — reads the site and rewrites every generic section from the answers; done when the rewrite waits on Approvals as one `update_site` call. Invents no case study, testimonial or number. |
+| `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | `prospect-list` — fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
+| `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | `onboarding-kit` — the onboarding checklist and a first-30-days calendar template for the service you sell, filed as one note. |
+| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | `editorial-calendar`, **blocked by `gap-report`** — a note on who the blog is for and its voice, the four-week calendar written from the ten gaps, and the first title as a pending draft. |
+| `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | `first-revisions` — reads the site and every published post; files revisions for the three weakest as pending drafts. |
+| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | `gap-report` — three competitors compared against your site; the ten highest-value misses filed as a gap report, and its done note lists them for the writer's card. |
+| `proposal-writer` | Proposals | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | `proposal-skeleton` — the standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
 
 Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
 `ask_operator*` and `request_tools*`. No agent holds `approve_post`, `start_agent_session` or
@@ -102,37 +102,44 @@ what the dashboard's home screen shows.
 Edit an answer later through the platform (`PATCH /v1/blueprints/installs/{id}`); the crew
 reads the new value on its next turn, no re-apply needed.
 
-### Day one
+### Day one: the board
 
-Each of the seven carries an `intake` — a first message the apply starts a session with,
-capped at **$20** (`20_000_000` µUSD) each. An intake runs *once*, on the apply that creates
-the agent, and never again on a later apply, so seven of them are a one-off ceiling of
-**$140** on install day — not a monthly line.
+The apply seeds the agency's shared board with one card per seat — the template's `tasks`,
+each with a stable key, a title, a brief that says what "done" looks like, and the seat it is
+assigned to. Nothing starts in the apply itself: on the board's next tick every assigned card
+with no open blocker wakes a session of its assignee, the card moves to *doing*, and it is
+closed *done* with a note — or parked *blocked* if the session ends unfinished, for you to
+read on the board. A re-apply replays the same keys and seeds nothing twice.
 
-What recurs is the separate per-agent `budget`: **$60** a day each
-(`cap_micro_usd: 60_000_000`, `period: "day"`), no more than $20 of it on any one task. That
-is a ceiling, not a bill — nothing spends against it unless a timer fires or you start a
-session, and the crew's declared timers are ten scheduled runs a week in all, each capped at
-$10 per fire.
+A card has no budget of its own. A session woken for one runs on the seat's `budget`: no more
+than **$20** on any one task (`max_task_micro_usd: 20_000_000`) inside **$60** a day
+(`cap_micro_usd: 60_000_000`, `period: "day"`). Those are ceilings, not a bill — nothing spends
+against them unless a card wakes a seat, a timer fires or you start a session, and the crew's
+declared timers are ten scheduled runs a week in all, each capped at $10 per fire.
 
 Day one leaves you: a rewritten site waiting on Approvals, fifteen leads, an onboarding
 checklist, an editorial calendar and a first draft, three revisions, a gap report and a
 proposal skeleton — all filed on the agency's own client record or as pending drafts, nothing
-sent, nothing published. The dashboard's home screen (`/app`) shows each of those sessions and
-what it is waiting on.
+sent, nothing published — and a board that records who did what, from which brief, and what
+each card's note says.
 
 ### Handoffs
 
-The seven intakes open in the same minute, and two of them depend on another's output: the
-content writer's calendar is written from the gap researcher's report, and a proposal is written
-for a lead sales has advanced. Where one seat's work is another's input, the first **hands off**
-to the second instead of both reading an empty record at once. Each `AgentDecl` declares the
+On day one, one card depends on another's output: the content writer's calendar is written from
+the gap researcher's report, so `editorial-calendar` is `blocked_by: ["gap-report"]` and the
+writer is woken only once the report is filed and its card closed. The researcher hands nothing
+on from that card; a handoff there would open a second writer beside the woken one.
+
+Past day one, work is passed by **handoffs**: the researcher's Friday refresh hands the report to
+the writer, and a proposal is written for a lead sales has advanced. Where one seat's work is
+another's input, the first hands off to the second instead of both reading an empty record at
+once. Each `AgentDecl` declares the
 platform's `handoffs` field — the names it may open a session on — and only those seats are
 granted the two platform tools, `send_to_agent` and `list_agents`:
 
 | Sender | `handoffs` | Hands on | The message names |
 |---|---|---|---|
-| `gap-researcher` | `["content-writer"]` | once the gap report is filed (day one, then every Friday) | the agency record's `cli_` id and the ten gaps |
+| `gap-researcher` | `["content-writer"]` | once a Friday gap report is filed | the agency record's `cli_` id and the ten gaps |
 | `sales` | `["proposal-writer"]` | when a lead is advanced to `proposal` | that lead's `cli_` id, as `handoff_key` too, so a lead is handed once |
 | `audit-runner--<slug>` | `["seo-writer"]` | once a client audit is filed (`seo-geo`) | the audit's `post_` id and the pages it found missing |
 | `seo-writer--<slug>` | `["geo-optimizer"]` | once the pages are drafted (`seo-geo`) | the new drafts' `post_` ids |
@@ -159,7 +166,7 @@ since declared; without it nothing in the dashboard could reach the upsert again
 board offers the lead→active move only while the client is not yet active.
 
 Agents file the agency's own record with `create_lead` from the project name alone; a second
-name-only filing of a name already on the pipeline returns that record, so five intakes filing
+name-only filing of a name already on the pipeline returns that record, so five cards filing
 it in the same minute share one row. A prospect filed with a domain or a contact is never that
 record, whatever its name.
 
@@ -442,7 +449,7 @@ services, who we serve, process, pricing, FAQ, contact, footer — held in the a
 beside the CRM. [`site/site.config.ts`](site/site.config.ts) is the **seed** a fresh store
 starts from: generic copy that claims nothing about anyone, with the hero, services and
 footer line coming from the active template. Personalizing it is not a build: the
-`site-builder`'s day-one session reads your answers and proposes a rewrite through
+`site-builder`'s day-one card (`site-rewrite`) reads your answers and proposes a rewrite through
 `dashboard.update_site`, you approve it on **Approvals**, and the page shows it on the next
 load (`GET /api/site` is public and cached for a minute). Any agent — or you, over MCP — can
 do the same later: `get_site` returns every section, `update_site` replaces whole sections and
@@ -529,10 +536,10 @@ The config can declare more than this template uses:
 | `templates[]` | every template this repo carries; the chosen one's agents become the project's crew, the others' become `kept` |
 | `questions[]` | at most three, `text` or `choice`; the answers become the project's context |
 | `apps[]` | `name`, `type`, `description`, `deploy_dir`, `mcp` (the app's own MCP endpoint path, fullstack only), `required`, and `env` — literals, `{ from_env }` or `{ generate: true }`, written as the app's secrets |
-| `agents[]` | `role`, `description`, `model`, `budget`, `system`, `tools`, `skills` (`naive/<slug>` or your own), `mcp_servers`, `allowed_apps`, `identity`, `handoffs`, `required`, `schedules`, `intake` |
+| `agents[]` | `role`, `description`, `model`, `budget`, `system`, `tools`, `skills` (`naive/<slug>` or your own), `mcp_servers`, `allowed_apps`, `identity`, `handoffs`, `required`, `schedules` |
 | `crew_per_client[]` | the per-client crew's `name`, `role`, `description`, published for the studio |
 | `agents[].schedules[]` | cron deployments with a `budget_micro_usd` ceiling per fire, owned as a complete set per agent and matched by `cron` |
-| `agents[].intake` | the first message, started as a session on apply, with its own `budget_micro_usd` |
+| `tasks[]` | the cards seeded on the agency's board: `key` (stable, for an idempotent re-apply), `title`, `body`, `assignee` (an agent's name), `blocked_by` (sibling keys) |
 | `skills[]` | markdown files pushed by slug, versioned by content |
 | `identities[]` | personas agents and schedules act as |
 | `vaults[]` | credential vaults; values are `{ from_env }` only and reconciled by presence |

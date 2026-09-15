@@ -15,24 +15,27 @@
 import type { AgentDecl, DefineInput, Template } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { roster } from "./agents.ts";
+import { roster, tasks, type TaskDecl } from "./agents.ts";
 import { VOCABULARY } from "./index.ts";
 
 export {
   AGENCY_IDENTITY, AGENCY_TIMEZONE, ASK_OPERATOR, budget, CONTEXT, crm, gate, HANDOFF, mailbox, MAILBOX_READ, MAILBOX_SEND,
-  model, OPERATOR, OWN_RECORD, PREAMBLE, REQUEST_TOOLS, roster, tools,
+  model, OPERATOR, OWN_RECORD, PREAMBLE, REQUEST_TOOLS, roster, tasks, tools, type TaskDecl,
 } from "./agents.ts";
 
 /**
  * The blueprint's `Template` plus what a project-level declaration cannot hold: the ≤3 setup
  * questions this template asks (`defineProject({ questions })`, §7.1 — the engine refuses a fourth),
- * and the crew provisioned per client at onboarding, whose names carry the client's slug and so
- * cannot be declared statically. `server/proxy.ts` posts `crew` as it stands, with the slug appended
- * to each `name`; `naive.config.ts` publishes its `{name, role, description}` as `crew_per_client`.
+ * the crew provisioned per client at onboarding, whose names carry the client's slug and so
+ * cannot be declared statically (`server/proxy.ts` posts `crew` as it stands, with the slug appended
+ * to each `name`; `naive.config.ts` publishes its `{name, role, description}` as `crew_per_client`),
+ * and the seven's first cards (`tasks`, `canonical-spec §31.10`), seeded on the agency's board by
+ * the apply.
  */
 export interface AgencyTemplate extends Template {
   questions: NonNullable<DefineInput["questions"]>;
   crew: AgentDecl[];
+  tasks: TaskDecl[];
 }
 
 /**
@@ -121,4 +124,5 @@ export const blank: AgencyTemplate = {
   questions,
   crew: [],
   agents: roster,
+  tasks,
 };

@@ -5,8 +5,8 @@
  * Everything here is data. Each agent carries a `role` (the word a card prints), a two-sentence
  * `description` (published), a private `system` (mission, what it reads first, what it files where
  * through the dashboard tools, what it never does), a deny-by-default `tools` allow-list, the
- * platform skills it reads (`naive/<slug>`), its timers, and an `intake` — the first thing it does,
- * once, on the apply that creates it, written to consume the operator's setup answers.
+ * platform skills it reads (`naive/<slug>`) and its timers. Its first work is a card (`tasks`,
+ * below) the apply seeds on the agency's board, written to consume the operator's setup answers.
  *
  * No seed row lives here, so this module is server- and config-safe; the browser never imports it.
  */
@@ -129,9 +129,6 @@ const timer = (cron: string, input: string, budget_micro_usd: number): NonNullab
   budget_micro_usd,
 });
 
-/** Day one: one session per agent, at the agent's own per-task ceiling. */
-const DAY_ONE = 20_000_000;
-
 export const roster: AgentDecl[] = [
   {
     name: "site-builder",
@@ -148,11 +145,6 @@ export const roster: AgentDecl[] = [
     skills: ["naive/landing-page-copy"],
     identity: AGENCY_IDENTITY,
     schedules: [],
-    intake: {
-      message:
-        "Read project_context. Then read the site (dashboard.get_site) and rewrite every section that still says generic things — hero, services, who we serve, process, FAQ, and pricing if the context holds a pricing answer (if it does not, ask the operator once with ask_operator and leave that section for now) — so it describes THIS agency in its own words, from the answers. Do not invent case studies, testimonials or numbers. Propose the rewrite as one update_site call.",
-      budget_micro_usd: DAY_ONE,
-    },
   },
   {
     name: "sales",
@@ -178,11 +170,6 @@ export const roster: AgentDecl[] = [
         10_000_000,
       ),
     ],
-    intake: {
-      message:
-        "Read project_context. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name, each with a one-line why-now — and file every one with create_lead. Draft (do not send) openers for the three best, as notes on each.",
-      budget_micro_usd: DAY_ONE,
-    },
   },
   {
     name: "client-manager",
@@ -208,11 +195,6 @@ export const roster: AgentDecl[] = [
         10_000_000,
       ),
     ],
-    intake: {
-      message:
-        "Read project_context. Write the onboarding checklist and a first-30-days calendar template for the service this agency sells, and file both as one note on the agency's own client record (list_clients; create it with create_lead if it is not there yet).",
-      budget_micro_usd: DAY_ONE,
-    },
   },
   {
     name: "content-writer",
@@ -238,11 +220,6 @@ export const roster: AgentDecl[] = [
         10_000_000,
       ),
     ],
-    intake: {
-      message:
-        "Read project_context and the site (dashboard.get_site). File one short note on the agency's own record: who the blog is for, the voice it is written in, and the shape of the four-week calendar to come. Do not write the calendar or a post yet — the gap researcher is comparing the site against its competitors right now and hands you its report when it is filed; the calendar is written from those gaps, in that session.",
-      budget_micro_usd: DAY_ONE,
-    },
   },
   {
     name: "content-reviser",
@@ -265,11 +242,6 @@ export const roster: AgentDecl[] = [
         10_000_000,
       ),
     ],
-    intake: {
-      message:
-        "Read project_context. Read every page of the public site and every published post. File a revision for the three weakest — thin, stale, or not in the agency's voice — as pending drafts on the agency's own record.",
-      budget_micro_usd: DAY_ONE,
-    },
   },
   {
     name: "gap-researcher",
@@ -292,11 +264,6 @@ export const roster: AgentDecl[] = [
         10_000_000,
       ),
     ],
-    intake: {
-      message:
-        "Read project_context. Identify three competitors (from the answers, or find them and say how). Compare keywords, page types and on-page elements against the agency's site and file a gap report with the ten highest-value misses as a note on the agency's own record. Then hand it on with send_to_agent: agent content-writer, wait false, and a message that names the agency record's cli_ id and lists the ten gaps — it writes the four-week editorial calendar and the first post from them.",
-      budget_micro_usd: DAY_ONE,
-    },
   },
   {
     name: "proposal-writer",
@@ -313,10 +280,92 @@ export const roster: AgentDecl[] = [
     skills: ["naive/proposal-writing"],
     identity: AGENCY_IDENTITY,
     schedules: [],
-    intake: {
-      message:
-        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers: priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price. File it as a note on the agency's own record (list_clients; create it with create_lead if it is not there yet).",
-      budget_micro_usd: DAY_ONE,
-    },
+  },
+];
+
+/**
+ * One card the apply seeds on the agency's board (`canonical-spec §31.10`), and how the crew
+ * starts: the board's tick wakes the assignee of a `todo` card with no open blocker, so day one is
+ * ordered by `blocked_by` rather than by seven first sessions racing for one empty record.
+ * `assignee` is a seat's declared name; `blocked_by` names sibling tasks by `key`. The installed
+ * engine does not export this shape yet, so it is spelled here to the spec until the pin moves.
+ */
+export interface TaskDecl {
+  /** Stable per template — the idempotency handle (`<project>:<key>` on the wire). */
+  key: string;
+  title: string;
+  /** The brief, as a card: what "done" looks like and how the seat knows it got there. */
+  body: string;
+  assignee: string;
+  blocked_by?: string[];
+}
+
+/** Where every day-one card files: the agency's own CRM record, opened once by whoever gets there first. */
+const ON_OWN_RECORD =
+  "on the agency's own client record (list_clients; create it with create_lead from the project name alone if it is not there yet)";
+
+/**
+ * Day one, as cards — one per seat, shared by every template the way `roster` is. The one edge is
+ * the writer's: the calendar is written from the gap report, so its card is woken when the
+ * researcher's is closed, and the researcher hands nothing on from that card (the Friday refresh
+ * still does). A proposal skeleton needs no lead, so `proposal-writer` is not blocked on `sales`.
+ */
+export const tasks: TaskDecl[] = [
+  {
+    key: "site-rewrite",
+    title: "Rewrite the public site from the setup answers",
+    assignee: "site-builder",
+    body:
+      "Read project_context, then the site (dashboard.get_site). Rewrite every section that still says generic things — hero, services, who we serve, process, FAQ, and pricing if the context holds a pricing answer (if it does not, ask the operator once with ask_operator and leave that section for now) — so it describes THIS agency in its own words, from the answers. " +
+      "Done when the whole rewrite is proposed as one update_site call and is waiting on Approvals. Acceptance: the hero is written from the offer answer and who-we-serve from the ideal-client answer; no case study, testimonial, number or client name the context does not give; the proof strip carries how the agency works, never results.",
+  },
+  {
+    key: "prospect-list",
+    title: "Build the first prospect list",
+    assignee: "sales",
+    body:
+      "Read project_context and list_clients. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name, each with a one-line why-now — and file every one with create_lead. Draft openers for the three best as notes on each (add_client_note). " +
+      "Done when fifteen leads stand on the pipeline and three carry a drafted opener; your done note names the three. Acceptance: every prospect is named and fits the industry, size and geography the answer gives; no opener is sent — email.send waits for the operator and is not called here; nothing already on the pipeline is filed twice.",
+  },
+  {
+    key: "onboarding-kit",
+    title: "Write the onboarding checklist and first-30-days calendar",
+    assignee: "client-manager",
+    body:
+      `Read project_context. Write the onboarding checklist and a first-30-days calendar template for the service this agency sells, and file both as one note ${ON_OWN_RECORD}. ` +
+      "Done when that note is filed. Acceptance: the checklist names what the client must provide and what the agency delivers in the first week; the calendar names a deliverable per slot in the kinds this agency files; both are written for the offer in the context and no other service.",
+  },
+  {
+    key: "gap-report",
+    title: "File the gap report against three competitors",
+    assignee: "gap-researcher",
+    body:
+      `Read project_context, then the agency's site (dashboard.get_site). Identify three competitors — from the answers where the template asked for them, or find them and say how you chose. Compare keywords, page types and on-page elements against the site and file one gap report with add_client_note ${ON_OWN_RECORD}: the ten highest-value misses, each with the evidence you fetched. ` +
+      "Done when the report is filed; your done note names the agency record's cli_ id and lists the ten gaps, because the content writer's card is blocked on this one and is woken from it — do not send_to_agent from this card. Acceptance: every competitor named was visited; no guess is presented as a ranking; the site itself is unchanged.",
+  },
+  {
+    key: "editorial-calendar",
+    title: "Write the editorial calendar and the first post from the gap report",
+    assignee: "content-writer",
+    blocked_by: ["gap-report"],
+    body:
+      "Read project_context, the site (dashboard.get_site) and the agency's own record (list_clients, get_client): the gap researcher's card left the gap report there as a note. File one short note on that record — who the blog is for and the voice it is written in — then write the four-week editorial calendar from the ten gaps as a second note, and file the first title as a pending draft with create_draft_post: 900–1400 words, one target keyword, a named search intent, a real introduction. " +
+      "Done when the voice note, the calendar and one draft are filed. Acceptance: every calendar slot names a gap it answers, a target keyword and an intent; no title repeats one in list_posts; no statistic is cited that you did not fetch; nothing is published.",
+  },
+  {
+    key: "first-revisions",
+    title: "File revisions for the three weakest published pieces",
+    assignee: "content-reviser",
+    body:
+      `Read project_context. Read every page of the public site (dashboard.get_site) and every published post (list_posts). File a revision for the three weakest — thin, stale, or not in the agency's voice — as pending drafts with create_draft_post ${ON_OWN_RECORD}. ` +
+      "Done when three revisions are pending, each titled for the page or post it replaces. Acceptance: each carries a one-line reason; nothing that is performing is revised; the site itself is unchanged.",
+  },
+  {
+    key: "proposal-skeleton",
+    title: "Draft the standard proposal skeleton and three tiers",
+    assignee: "proposal-writer",
+    body:
+      `Read project_context. Draft the agency's standard proposal skeleton and three package tiers — priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price — and file it as a note ${ON_OWN_RECORD}. ` +
+      "Done when that note is filed. Acceptance: scope, three tiers, a timeline and what the client must provide are all present; no price the context does not support; no result is promised.",
   },
 ];

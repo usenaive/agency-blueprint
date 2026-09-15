@@ -64,7 +64,8 @@ describe("every template of this blueprint", () => {
   /**
    * Plan §2.1, held per agent: the shared paragraph first (read `project_context` before anything;
    * the answers are the client's), a two-sentence public description, a private prompt of 150–400
-   * words, skills from the platform catalogue only, and a day-one intake capped at $2.
+   * words, skills from the platform catalogue only, and no intake — the seat's first work is a
+   * card on the board (`tasks`), not a private first session.
    */
   it.each(all)("$name writes each of the seven to the plan's shape", (template) => {
     for (const agent of template.agents) {
@@ -75,9 +76,31 @@ describe("every template of this blueprint", () => {
       expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
       expect([at, (agent.skills ?? []).length > 0]).toEqual([at, true]);
       for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
-      expect([at, agent.intake?.budget_micro_usd]).toEqual([at, 20_000_000]);
+      expect([at, agent.intake]).toEqual([at, undefined]);
       for (const schedule of agent.schedules ?? []) expect([at, Number.isInteger(schedule.budget_micro_usd)]).toEqual([at, true]);
     }
+  });
+
+  /**
+   * Day one is the board (`canonical-spec §31.10`): one card per seat, keyed for an idempotent
+   * re-apply, assigned by the seat's declared name, each written to consume the setup answers and
+   * to say what "done" looks like — a card is a brief a stranger could pick up. The per-client crew
+   * is provisioned at onboarding and gets no card here: its names carry a slug the apply cannot know.
+   */
+  it.each(all)("$name seeds one card per seat of the seven, each from the context and saying what done is", (template) => {
+    expect(template.tasks.map((task) => task.assignee).sort()).toEqual(template.agents.map((a) => a.name).sort());
+    expect(new Set(template.tasks.map((task) => task.key)).size).toBe(template.tasks.length);
+    for (const task of template.tasks) {
+      const at = task.key;
+      expect([at, /^[a-z][a-z0-9-]*$/.test(task.key)]).toEqual([at, true]);
+      expect([at, task.title.trim().length > 0]).toEqual([at, true]);
+      expect([at, task.body]).toEqual([at, expect.stringMatching(/project_context/)]);
+      expect([at, task.body]).toEqual([at, expect.stringMatching(/Done when/)]);
+      expect([at, task.body]).toEqual([at, expect.stringMatching(/Acceptance:/)]);
+      for (const key of task.blocked_by ?? []) expect([at, template.tasks.map((one) => one.key)]).toEqual([at, expect.arrayContaining([key])]);
+    }
+    // Nothing leaves the agency from a card either: the one seat that could send is told not to.
+    expect(template.tasks.find((task) => task.assignee === "sales")?.body).toMatch(/no opener is sent/);
   });
 
   it.each(all)("$name asks the three setup questions, as text, and no fourth", (template) => {
@@ -166,8 +189,8 @@ describe("connected accounts", () => {
 
 describe("handoffs", () => {
   /**
-   * Day one is ordered by handoffs (canonical-spec §28.12), not by seven intakes racing for one
-   * empty record: the researcher files its report and hands it to the writer, sales hands a lead it
+   * The pipeline is ordered by handoffs (canonical-spec §28.12), not by seven sessions racing for
+   * one empty record: the researcher files its report and hands it to the writer, sales hands a lead it
    * advanced to the proposal writer, and in the search crew the audit runner hands the audit's id
    * to the SEO writer, who hands the pages it wrote to the GEO optimizer. Every other seat holds
    * `handoffs: false`, so the tools are offered to exactly the seats that pass work on.
@@ -212,12 +235,25 @@ describe("handoffs", () => {
     }
   });
 
-  it.each(all)("$name has the writer wait for the researcher on day one, and only then write the calendar", (template) => {
+  /**
+   * Day one itself is ordered by the board: the writer's card is blocked on the researcher's, so the
+   * writer is woken with the gap report already filed and the researcher hands nothing on from that
+   * card — a handoff there would open a second writer session beside the woken one. Nothing else
+   * on day one needs another seat's output: a proposal skeleton is not a proposal, so it does not
+   * wait on `sales`.
+   */
+  it.each(all)("$name blocks the writer's calendar on the researcher's report, and nothing else", (template) => {
+    const blockers = Object.fromEntries(template.tasks.map((task) => [task.key, task.blocked_by ?? []]));
+    expect(blockers).toEqual({
+      "site-rewrite": [], "prospect-list": [], "onboarding-kit": [], "gap-report": [],
+      "editorial-calendar": ["gap-report"], "first-revisions": [], "proposal-skeleton": [],
+    });
+    const researcher = template.tasks.find((task) => task.assignee === "gap-researcher")!;
+    expect(researcher.body).toMatch(/done note names the agency record's cli_ id and lists the ten gaps/);
+    expect(researcher.body).toMatch(/do not send_to_agent from this card/);
     const writer = template.agents.find((a) => a.name === "content-writer")!;
-    expect(writer.intake?.message).toMatch(/Do not write the calendar or a post yet/);
+    // The timer stays the fallback and still files nothing while no calendar exists.
     expect(writer.schedules?.[0]?.input).toMatch(/If no calendar is filed yet, stop/);
-    const researcher = template.agents.find((a) => a.name === "gap-researcher")!;
-    expect(researcher.intake?.message).toMatch(/send_to_agent: agent content-writer, wait false/);
   });
 });
 
@@ -321,23 +357,28 @@ describe("kindLabel", () => {
 
 /**
  * The README is where a person reads what an install will cost, before they can read a declaration.
- * It said an intake was capped at $2 and day one at $14 while `templates/agents.ts` declared
- * 20_000_000 µUSD and seven agents — so derive both figures from the declarations here, and the
- * next retune cannot leave the number behind.
+ * It once said a first session was capped at $2 and day one at $14 while `templates/agents.ts`
+ * declared 20_000_000 µUSD and seven agents — so the figures are derived from the declarations
+ * here, and the next retune cannot leave the number behind. A card has no budget of its own: a
+ * session woken for one runs on the seat's ceilings, so those are the only figures day one may quote.
  */
 describe("what the README promises about spend", () => {
   const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
   const usd = (micro: number) => `$${(micro / 1_000_000).toLocaleString("en-US")}`;
   const agents = blank.agents ?? [];
-  const intake = agents[0]!.intake!.budget_micro_usd!;
+  const task = agents[0]!.budget!.max_task_micro_usd;
   const cap = agents[0]!.budget!.cap_micro_usd;
 
-  it("names the one-time intake ceiling, its day-one total, and the separate recurring cap", () => {
-    // One `intake` each, spent once at the apply: the ceiling is per agent and the total is one-off.
-    expect(readme).toContain(`**${usd(intake)}**`);
-    expect(readme).toContain(`**${usd(intake * agents.length)}**`);
-    // The recurring cap is a different number on a different clock, and must be stated as one.
+  it("names the per-task and daily ceilings a woken card runs on, and no one-off day-one total", () => {
+    expect(readme).toContain(`**${usd(task)}**`);
     expect(readme).toContain(`**${usd(cap)}**`);
+    // The old shape of the claim: a per-session ceiling times seven. There is no such session.
+    expect(readme).not.toContain(`**${usd(task * agents.length)}**`);
     expect(readme).not.toContain("$14 ");
+    expect(readme).not.toMatch(/intake/i);
+  });
+
+  it("names every card in the crew table by its key", () => {
+    for (const one of blank.tasks) expect(readme).toContain(`\`${one.key}\``);
   });
 });
