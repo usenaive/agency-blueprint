@@ -133,7 +133,7 @@ export function Home() {
           {ctx === null ? (
             <Absent>{ctxError ? "Unknown until the project context can be read." : "Reading the install report…"}</Absent>
           ) : ctx.intake.length === 0 ? (
-            <Absent>No intake sessions in this install's report.</Absent>
+            <Absent>Day one runs from the agency's board — this install opened no first sessions of its own.</Absent>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {ctx.intake.map((line) => (

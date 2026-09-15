@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "@usenaive-sdk/blueprints";
+import { declaration } from "./naive.config.ts";
 import { TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE } from "./templates/blank.ts";
 import { TEMPLATE } from "./templates/index.ts";
@@ -110,6 +111,31 @@ describe("naive.config.ts", () => {
     // carry a client slug and cannot be declared statically.
     expect(result.config.kept.agents).toEqual([]);
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
+  }, 30_000);
+
+  /**
+   * Day one is the board (`canonical-spec §31.10`): the apply seeds one card per seat on the
+   * agency's board and the tick wakes each assignee when its card has no open blocker. Asserted on
+   * the declaration — the installed engine (0.5.0) does not carry `tasks` through its parse yet;
+   * when the pin moves, `result.config.tasks` is the thing to read here instead.
+   */
+  it("seeds the running crew's day one as cards, one per seat, and opens no intake beside them", async () => {
+    const result = await loaded;
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(declaration.tasks).toBe(TEMPLATES[TEMPLATE].tasks);
+    const keys = declaration.tasks.map((task) => task.key);
+    expect(keys).toHaveLength(result.config.agents.length);
+    expect(new Set(keys).size).toBe(keys.length);
+    const crew = result.config.agents.map((agent) => agent.name);
+    for (const task of declaration.tasks) {
+      // `assignee` is an agent NAME of the running crew: the engine resolves it against `agents[]`.
+      expect([task.key, crew]).toEqual([task.key, expect.arrayContaining([task.assignee])]);
+      for (const key of task.blocked_by ?? []) expect([task.key, keys]).toEqual([task.key, expect.arrayContaining([key])]);
+      expect(task.blocked_by ?? []).not.toContain(task.key);
+    }
+    // A template that seeds tasks declares no intakes, and none reaches the engine.
+    for (const agent of result.config.agents) expect([agent.name, agent.intake]).toEqual([agent.name, undefined]);
   }, 30_000);
 });
 

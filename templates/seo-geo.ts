@@ -5,7 +5,7 @@
  * It is a **delta on `blank`**, and deliberately reads as one. The seven agency agents are
  * `blank`'s, with a sentence or two of search focus added to each and the search skills alongside;
  * the machinery around them — model, budget, deny-by-default toolset, approval gate, timers,
- * intakes — is shared, so what this file shows is exactly what the specialism changes: the words,
+ * first cards — is shared, so what this file shows is exactly what the specialism changes: the words,
  * the kinds of work, the third question, the crew, and the demo seed.
  *
  * Switching to it widens: `naive up` creates nothing the operator loses, and the crew below is
@@ -213,7 +213,8 @@ export const seoGeo: AgencyTemplate = {
   ],
   crew,
   // The seven are shared; only their focus and search skills are this template's. Every other field
-  // — model, budget, allow-list, timers, intake — stays `blank`'s, so a change there reaches both.
+  // — model, budget, allow-list, timers, and the cards in `tasks` — stays `blank`'s, so a change
+  // there reaches both.
   agents: blank.agents.map((agent) => ({
     ...agent,
     system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
