@@ -215,6 +215,89 @@ export async function latestContext(config: ProxyConfig, fetchImpl: typeof fetch
   };
 }
 
+/** Redacted platform state used by the operator's release-readiness dashboard. */
+export interface ProductAuditPlatform {
+  project: string;
+  observed_at: string;
+  agents: ({ id: string; name: string; model?: string; budget?: unknown })[];
+  deployments: ({ id?: string; agent_id?: string; status?: string; schedule?: string; cron?: string })[];
+  sessions: ({
+    id: string;
+    agent_id: string;
+    status: string;
+    stop_reason: string | null;
+    pending_actions?: unknown[];
+    consumed_micro_usd?: number;
+    created_at?: string;
+  })[];
+  context: ContextReply;
+  identity: {
+    id: string;
+    name: string;
+    emails: unknown[];
+    domains: unknown[];
+    connections: { id: string; connector: string; status: string; status_reason?: string | null }[];
+  } | null;
+  organization_domains: unknown[];
+}
+
+/** Read-only launch evidence. Credentials, connect links, messages and tool arguments stay out. */
+export async function productAuditPlatform(
+  config: ProxyConfig,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ProductAuditPlatform | null> {
+  type Agent = ProductAuditPlatform["agents"][number];
+  type Deployment = ProductAuditPlatform["deployments"][number];
+  type Session = ProductAuditPlatform["sessions"][number];
+  const [agents, deployments, sessions, context, organizationDomains] = await Promise.all([
+    collect<Agent>(config, "/v1/agents", fetchImpl),
+    collect<Deployment>(config, "/v1/deployments", fetchImpl),
+    collect<Session>(config, "/v1/sessions", fetchImpl),
+    latestContext(config, fetchImpl),
+    collect<unknown>(config, "/v1/domains", fetchImpl),
+  ]);
+  if (agents === null || deployments === null || sessions === null || context === null || organizationDomains === null) return null;
+
+  let identity: ProductAuditPlatform["identity"] = null;
+  if (config.identityId !== null) {
+    const response = await proxyFetch(config, { method: "GET", path: `/v1/identities/${config.identityId}` }, null, fetchImpl);
+    if (response.ok) {
+      const row = (await response.json()) as {
+        id?: string; name?: string; emails?: unknown[]; domains?: unknown[]; connections?: string[];
+      };
+      const connections = await Promise.all((row.connections ?? []).map(async (id) => {
+        const found = await proxyFetch(config, { method: "GET", path: `/v1/connections/${id}` }, null, fetchImpl);
+        if (!found.ok) return { id, connector: "unknown", status: "unavailable" };
+        const value = (await found.json()) as { id?: string; connector?: string; status?: string; status_reason?: string | null };
+        return {
+          id: value.id ?? id,
+          connector: value.connector ?? "unknown",
+          status: value.status ?? "unknown",
+          ...(value.status_reason === undefined ? {} : { status_reason: value.status_reason }),
+        };
+      }));
+      identity = {
+        id: row.id ?? config.identityId,
+        name: row.name ?? "identity",
+        emails: row.emails ?? [],
+        domains: row.domains ?? [],
+        connections,
+      };
+    }
+  }
+
+  return {
+    project: config.project,
+    observed_at: new Date().toISOString(),
+    agents,
+    deployments,
+    sessions,
+    context,
+    identity,
+    organization_domains: organizationDomains,
+  };
+}
+
 export interface ProvisionReport {
   name: string;
   /**

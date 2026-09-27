@@ -58,7 +58,7 @@ describe("naive.config.ts", () => {
     // of its own, so switching template is the only thing that changes this list.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
     expect(result.config.agents.map((a) => a.name)).toEqual([
-      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer",
+      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer", "paid-media-planner",
     ]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
@@ -81,7 +81,7 @@ describe("naive.config.ts", () => {
         expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
         expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
         expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
-      } else {
+      } else if (agent.name !== "paid-media-planner") {
         expect([agent.name, connectionTools(agent)]).toEqual([agent.name, []]);
       }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
@@ -134,7 +134,7 @@ describe("the agency persona", () => {
       // holding none is offered none of the mailbox names however they are permissioned.
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
-    expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual(["sales", "client-manager"]);
+    expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual(["sales", "client-manager", "paid-media-planner"]);
   }, 30_000);
 
   it("speaks for every scheduled fire, in a zone the platform will accept", async () => {

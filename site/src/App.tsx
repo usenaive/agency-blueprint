@@ -1,9 +1,11 @@
 import type { SiteProfile } from "../site.config.ts";
+import type { PublicPost } from "./profile.ts";
 import { Contact } from "./Contact.tsx";
-import { Faq, Pricing, Process, ProofStrip, Services, WhoWeServe, type SectionProps } from "./sections.tsx";
+import { Blog, Faq, Pricing, Process, ProofStrip, Services, WhoWeServe, type SectionProps } from "./sections.tsx";
 
 const NAV = [
   { label: "Services", href: "#services" },
+  { label: "Insights", href: "#insights" },
   { label: "Who we serve", href: "#who" },
   { label: "Process", href: "#process" },
   { label: "Pricing", href: "#pricing" },
@@ -65,7 +67,7 @@ function Footer({ site }: SectionProps) {
 }
 
 /** The whole page, in the order plan §2.5 names: hero · proof · services · who · process · pricing · FAQ · contact. */
-export function App({ site }: { site: SiteProfile }) {
+export function App({ site, blog = [] }: { site: SiteProfile; blog?: PublicPost[] }) {
   return (
     <div id="top">
       <Nav site={site} />
@@ -73,6 +75,7 @@ export function App({ site }: { site: SiteProfile }) {
         <Hero site={site} />
         <ProofStrip site={site} />
         <Services site={site} />
+        <Blog site={site} posts={blog} />
         <WhoWeServe site={site} />
         <Process site={site} />
         <Pricing site={site} />

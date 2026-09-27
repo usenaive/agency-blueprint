@@ -153,6 +153,7 @@ describe("openStore", () => {
     const first = store.createLead({ name: "Northwind Studio", ...own, note: "Onboarding checklist." });
     const second = store.createLead({ name: "Northwind  Studio", ...own, note: "Gap report." });
     expect(second.id).toBe(first.id);
+    expect(store.createLead({ name: "Meridian Search", ...own }).id).toBe(first.id);
     expect(store.read().clients).toHaveLength(before + 1);
     expect(store.read().clients.find((c) => c.id === first.id)?.notes).toEqual(["Onboarding checklist.", "Gap report."]);
     // A prospect that shares the name is a different company: it has a domain, and it is its own row.
@@ -161,6 +162,21 @@ describe("openStore", () => {
     });
     expect(prospect.id).not.toBe(first.id);
     expect(store.read().clients).toHaveLength(before + 2);
+  });
+
+  it("consolidates legacy internal duplicates without losing notes or queued work", () => {
+    const state = emptyState();
+    state.clients = [
+      { id: "cli_one", slug: "agency", name: "agency", domain: "", stage: "lead", services: ["SEO"], contact: { name: "", email: "", role: "" }, notes: ["site"] },
+      { id: "cli_two", slug: "meridian", name: "Meridian", domain: "", stage: "lead", services: ["GEO"], contact: { name: "", email: "", role: "" }, notes: ["blog"] },
+    ];
+    state.posts = [{ id: "post_1", clientId: "cli_two", title: "Draft", summary: "s", kind: "article", channel: "blog", status: "pending", agent: "mcp", scheduledFor: "2026-09-26", hue: 1 }];
+    let writes = 0;
+    const store = openStoreOver(state, () => { writes += 1; });
+    expect(store.read().clients).toHaveLength(1);
+    expect(store.read().clients[0]).toMatchObject({ id: "cli_one", notes: ["site", "blog"], services: ["SEO", "GEO"] });
+    expect(store.read().posts[0]?.clientId).toBe("cli_one");
+    expect(writes).toBe(1);
   });
 
   it("never files the agency's notes on a prospect that happened to share the name", () => {

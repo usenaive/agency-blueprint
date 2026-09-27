@@ -16,6 +16,7 @@ import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Clients } from "./screens/Clients";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
+import { ProductAudit } from "./screens/ProductAudit";
 import { Settings } from "./screens/Settings";
 
 // The operator dashboard lives under `/app`; `/` is the agency's public site (`site/`). The basename
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
     Component: Shell,
     children: [
       { index: true, Component: Home },
+      { path: "product-audit", Component: ProductAudit },
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },

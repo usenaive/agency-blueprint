@@ -43,11 +43,11 @@ importers:
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.17)
       '@usenaive-sdk/blueprints':
+        specifier: ^0.8.0
+        version: 0.8.0
+      '@usenaive-sdk/vetta-cli':
         specifier: ^0.5.0
         version: 0.5.0
-      '@usenaive-sdk/vetta-cli':
-        specifier: ^0.4.0
-        version: 0.4.0
       '@vitejs/plugin-react':
         specifier: ^5.1.0
         version: 5.2.0(vite@8.1.5(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0))
@@ -760,17 +760,17 @@ packages:
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
 
-  '@usenaive-sdk/blueprints@0.5.0':
-    resolution: {integrity: sha512-jnEN9iQ/rruXnwdqcIu45uFrcl9XGBYa8Q67F5IT+V9mV70bi0DIynepl80LV5Ab/OOoVWykTXfm5s45BQ5RNg==}
+  '@usenaive-sdk/blueprints@0.8.0':
+    resolution: {integrity: sha512-1Na3g3VMFzTghNGN9quCLynLTrEGDnpqRGrdW4t6QbVpl/e8sIFQ5b7V2Kl3jX4+gl2Oq/XAyqwC0ekmlraGvg==}
     engines: {node: '>=20'}
 
-  '@usenaive-sdk/vetta-cli@0.4.0':
-    resolution: {integrity: sha512-telg1jNW5nHW9u1IRjqXOGTauENmL3HfQiGe66ahSK3OSyUf4nlKm9WVdkipnQUXjNMq47o8gdpePfw+qyCpVg==}
+  '@usenaive-sdk/vetta-cli@0.5.0':
+    resolution: {integrity: sha512-YawVLBcvana+WkZ4+4bZ2Lx16w0nPTAPVW1Aj6LPp92wN1rEgIs6V3UCJ8KmRRS+v+jXnDSA/w3KDyjNiWHm/g==}
     engines: {node: '>=20'}
     hasBin: true
 
-  '@usenaive-sdk/vetta@0.3.0':
-    resolution: {integrity: sha512-tsGWJE0P+/1y/gBZrCZTOH7Svx3539fBhq54ZZJSJ5t0ZWBmN4cr+kYqq5w8y9pgO8blHIQ/CVzDK9QZxH24FQ==}
+  '@usenaive-sdk/vetta@0.5.1':
+    resolution: {integrity: sha512-QJbVDuuZGvrQ4WoSr8f6FuLAatCRYXWffmSG/lXdw5JCeEiKsY57g4nPGNzHBICxzjCWhYGmoWYTG3nP5j1SXw==}
     engines: {node: '>=20'}
 
   '@vitejs/plugin-react@5.2.0':
@@ -2041,17 +2041,17 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
-  '@usenaive-sdk/blueprints@0.5.0':
+  '@usenaive-sdk/blueprints@0.8.0':
     dependencies:
-      '@usenaive-sdk/vetta': 0.3.0
+      '@usenaive-sdk/vetta': 0.5.1
       jiti: 2.7.0
       zod: 4.5.4
 
-  '@usenaive-sdk/vetta-cli@0.4.0':
+  '@usenaive-sdk/vetta-cli@0.5.0':
     dependencies:
       jiti: 2.7.0
 
-  '@usenaive-sdk/vetta@0.3.0':
+  '@usenaive-sdk/vetta@0.5.1':
     dependencies:
       zod: 4.5.4
 

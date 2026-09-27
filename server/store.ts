@@ -146,6 +146,22 @@ export function openStore(file: string): Store {
  */
 export function openStoreOver(state: StoreState, persist: (state: StoreState) => void): Store {
   const save = () => persist(state);
+  const nameOnly = (row: { domain: string; contact: { email: string } }) => row.domain === "" && row.contact.email === "";
+
+  // Older installs allowed each intake to choose a different label for the agency itself. The CRM
+  // has clients; it has exactly one internal workspace. Consolidate those legacy rows under the
+  // first durable id, retaining their notes/services and repointing every queued deliverable.
+  const internal = state.clients.filter(nameOnly);
+  if (internal.length > 1) {
+    const keeper = internal[0]!;
+    const duplicates = new Set(internal.slice(1).map((row) => row.id));
+    keeper.notes = [...new Set(internal.flatMap((row) => row.notes))];
+    keeper.services = [...new Set(internal.flatMap((row) => row.services))];
+    keeper.nextAction ??= internal.find((row) => row.nextAction !== undefined)?.nextAction;
+    for (const post of state.posts) if (duplicates.has(post.clientId)) post.clientId = keeper.id;
+    state.clients = state.clients.filter((row) => !duplicates.has(row.id));
+    save();
+  }
 
   return {
     read: () => state,
@@ -153,8 +169,9 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "client";
       // A name alone files the agency's own record; a second filing lands on the first. Only a row
       // filed the same way is the first: a prospect with a domain or a contact is never it.
-      const nameOnly = (row: { domain: string; contact: { email: string } }) => row.domain === "" && row.contact.email === "";
-      const twin = nameOnly(input) ? state.clients.find((c) => c.slug === slug && nameOnly(c)) : undefined;
+      // Name is not identity here: independent agents may call the same workspace "agency",
+      // project name, or public brand. A name-only row is always the one internal workspace.
+      const twin = nameOnly(input) ? state.clients.find(nameOnly) : undefined;
       if (twin) {
         if (input.note !== undefined) {
           twin.notes.push(input.note);

@@ -20,6 +20,7 @@ import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
+import { ProductAudit } from "./screens/ProductAudit";
 
 const routes = [
   {
@@ -28,6 +29,7 @@ const routes = [
     children: [
       { index: true, element: <Navigate to="/crm" replace /> },
       { path: "home", Component: Home },
+      { path: "product-audit", Component: ProductAudit },
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
@@ -39,6 +41,25 @@ const routes = [
     ],
   },
 ];
+
+describe("the product audit", () => {
+  it("keeps record counts separate from accepted deliverables", async () => {
+    const snapshot = {
+      project: "acme", observed_at: "2026-09-26T00:00:00Z", expected_agents: 8,
+      agents: Array.from({ length: 8 }, (_, i) => ({ id: `agt_${i}`, name: `agent-${i}` })), deployments: [{}], sessions: [],
+      context: { intake: [] }, identity: { emails: [{}], domains: [{}], connections: [] }, organization_domains: [{}],
+      public_site: { company: "Acme Search", contact_email: "hello@acme.com", placeholder_email: false, generic_company: false, pricing_without_answer: false, prices: ["Custom"] },
+      content: { total: 3, posted_blog_articles: 1, draft_blog_articles: 1, ad_plans: 1, approved_ad_plans: 0 },
+      crm: { records: 5, prospects: 4, working_notes: 4, internal_records: 1, named_contacts: 2, addressed_contacts: 1 },
+      setup_has_paste_artifacts: false,
+    };
+    const screen = await render("/product-audit", (path) => path === "/api/product-audit" ? { body: snapshot } : { body: [] });
+    expect(screen.text()).toContain("LAUNCH BLOCKED");
+    expect(screen.text()).toContain("4 companies; 2 named and 1 addressed contacts");
+    expect(screen.text()).toContain("1 plans filed; 0 operator-approved");
+    expect(screen.text()).toContain("Changes in this hardening release");
+  });
+});
 
 /** React only batches inside `act` when it is told it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

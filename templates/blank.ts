@@ -1,5 +1,5 @@
 /**
- * `blank` — a working agency with no specialism, and the base every other template of this
+ * `blank` — a working agency with no specialism, and the core every other template of this
  * blueprint is a delta on.
  *
  * Everything here is data: the seven-agent crew of `templates/agents.ts` with generic prompts,
@@ -24,8 +24,8 @@ export {
 } from "./agents.ts";
 
 /**
- * The blueprint's `Template` plus what a project-level declaration cannot hold: the ≤3 setup
- * questions this template asks (`defineProject({ questions })`, §7.1 — the engine refuses a fourth),
+ * The blueprint's `Template` plus what a project-level declaration cannot hold: the ≤4 setup
+ * questions this template asks (`defineProject({ questions })`, §7.1),
  * and the crew provisioned per client at onboarding, whose names carry the client's slug and so
  * cannot be declared statically. `server/proxy.ts` posts `crew` as it stands, with the slug appended
  * to each `name`; `naive.config.ts` publishes its `{name, role, description}` as `crew_per_client`.

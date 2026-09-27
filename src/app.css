@@ -1467,41 +1467,6 @@ input[type="submit"]:disabled,
   background: var(--on-action);
 }
 
-/* THE MARK THAT IS WAITING. The split-V logo with one soft band of ground-light
-   crossing it left to right, fading in and out at the edges, then nothing until
-   the next pass.
-   THE LOGO IS ITS OWN MASK, which is the whole trick: the shape stays the real
-   `vetta-mark.png` (same URL, same cache entry as `VettaLogo`) and only the fill
-   moves, so nothing here traces a second copy of the mark that can drift from it.
-   The band is `--ground` at its centre over `--ink-2`, so the sweep is light
-   passing over ink rather than a fourth colour.
-   IT LOOPS, AND THE HEADER RULE SAYS NOTHING LOOPS. The exception is narrow and
-   it is the same one `.caret` and `.nav-progress` already take: a turn writes
-   nothing a client can read between `session.running` and its commit, so there
-   is no state change to animate — the loop IS the state. It sits under a chat
-   composer at 14px in the muted ink, and it must stay that quiet. */
-.logo-sweep {
-  display: block;
-  background: linear-gradient(90deg, var(--ink-2) 42%, var(--ground) 50%, var(--ink-2) 58%);
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  -webkit-mask: url("/vetta-mark.png?v=3") no-repeat center / contain;
-  mask: url("/vetta-mark.png?v=3") no-repeat center / contain;
-  animation: logo-sweep 2.4s var(--ease) infinite;
-}
-@keyframes logo-sweep {
-  from { background-position: 100% 0; }
-  to { background-position: 0 0; }
-}
-/* The global reduce block already flattens every animation; this says what is
-   left behind on purpose — the mark, still, in the muted ink. */
-@media (prefers-reduced-motion: reduce) {
-  .logo-sweep {
-    animation: none;
-    background: var(--ink-2);
-  }
-}
-
 /* A definition list row: label left, value right. */
 .dl {
   display: grid;

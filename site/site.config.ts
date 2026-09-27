@@ -99,8 +99,24 @@ export const withinBounds = (value: unknown): boolean => {
   return true;
 };
 
+/**
+ * Whether a stored profile may replace the safe holding page on the public route. An incomplete
+ * draft stays editable in the store; visitors keep seeing the holding profile until identity is
+ * real and unsupported price, term, timeline and result language is absent.
+ */
+export function launchSafeSite(profile: SiteProfile): boolean {
+  const copy = JSON.stringify(profile);
+  const verifiedIdentity = profile.company.trim() !== "" && profile.company !== "Your agency" &&
+    /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(profile.contact.email) && !/\.example$/i.test(profile.contact.email);
+  const unsupportedClaim = /\$\s*\d|\b\d[\d,.]*\s*(?:%|per\s+month|\/month)|month[- ]to[- ]month|first quarter|guarantee(?:d|s)?\b|within\s+\d+\s+(?:days?|weeks?)/i.test(copy);
+  return verifiedIdentity && !unsupportedClaim;
+}
+
 export const site: SiteProfile = {
-  company: ACTIVE.words.brand,
+  // A fresh install is public before the site-builder's first approved rewrite. Keep that state
+  // deliberately generic and commercially silent: setup supplies the real brand, contact and
+  // pricing posture, but an interrupted intake must never leave invented terms on the internet.
+  company: "Your agency",
   tagline: ACTIVE.site.tagline,
   tone: "Confident, plain-spoken, evidence-first. No jargon, no hype.",
   palette: { accent: "#1d4ed8", accentInk: "#ffffff", ground: "#fbfaf8", ink: "#111114", muted: "#63605a" },
@@ -114,55 +130,55 @@ export const site: SiteProfile = {
   proof: {
     facts: [
       "Every deliverable passes your approval queue before it ships.",
-      "One report a month, tied to the work — not to vanity metrics.",
-      "Month to month after the first quarter; no long lock-in.",
+      "Public claims require a source or explicit operator approval.",
+      "Campaign changes and spend remain operator-controlled.",
     ],
   },
   services: ACTIVE.site.services,
   whoWeServe: {
     title: "Who we work with",
-    subtitle: "Companies that want the work shown before it ships, and a number at the end of the month.",
+    subtitle: "Companies that want the work shown before it ships and the scope agreed before work begins.",
     segments: [
-      { name: "Founder-led companies", description: "You are the marketing team. We bring the calendar, you keep the last word." },
+      { name: "Founder-led companies", description: "You are the marketing team. We bring a documented plan; you keep the last word." },
       { name: "Small marketing teams", description: "One or two people who need production capacity without losing control of the voice." },
       { name: "Multi-location businesses", description: "Several sites or markets that need one plan and one report." },
     ],
   },
   process: {
     title: "How an engagement runs",
-    subtitle: "Four steps, no mystery. You see every deliverable before it ships.",
+    subtitle: "Four steps, no mystery. Scope and timing are agreed with the operator before work begins.",
     steps: [
-      { title: "Baseline", description: "We measure where you stand today, in the first two weeks, and write it down." },
-      { title: "Plan", description: "A quarter's roadmap: the calendar, the deliverables and the fixes ordered by impact." },
-      { title: "Ship", description: "Work goes out weekly. Everything passes through your approval queue first." },
-      { title: "Prove", description: "Monthly reports tie the work to what moved — not vanity metrics." },
+      { title: "Baseline", description: "We document the available evidence and the questions the engagement must answer." },
+      { title: "Plan", description: "We agree the deliverables, measurement approach and operator-controlled boundaries." },
+      { title: "Ship", description: "Every public deliverable passes through your approval queue first." },
+      { title: "Review", description: "We compare completed work with the agreed evidence and decide the next scope together." },
     ],
   },
   pricing: {
-    title: "Plain pricing",
-    subtitle: "Month to month after the first quarter. Every plan starts with the baseline.",
+    title: "Scoped pricing",
+    subtitle: "Choose the work first. Commercial terms are provided only after the operator confirms the scope.",
     tiers: [
       {
         name: "Foundation",
-        price: "$2,500",
-        cadence: "/month",
-        blurb: "For teams that need the base fixed and a steady cadence of work started.",
-        includes: ["Quarterly audit", "4 deliverables / month", "On-page fixes", "Monthly report"],
+        price: "Custom",
+        cadence: "",
+        blurb: "For teams that need a baseline and a prioritized first scope.",
+        includes: ["Evidence review", "Prioritized scope", "Operator approval", "Handoff plan"],
       },
       {
         name: "Growth",
-        price: "$6,000",
-        cadence: "/month",
-        blurb: "The full engagement — the whole calendar shipped and reported every month.",
-        includes: ["Everything in Foundation", "12 deliverables / month", "Full channel coverage", "Dedicated strategist"],
+        price: "Custom",
+        cadence: "",
+        blurb: "For teams that need an ongoing, approval-gated delivery program.",
+        includes: ["Everything in Foundation", "Agreed delivery scope", "Measurement plan", "Named owner"],
         featured: true,
       },
       {
         name: "Partner",
         price: "Custom",
         cadence: "",
-        blurb: "Multi-site or multi-market programs with embedded reporting.",
-        includes: ["Everything in Growth", "Multi-domain programs", "Custom dashboards", "Quarterly on-site planning"],
+        blurb: "For multi-site or multi-market programs that require a tailored operating model.",
+        includes: ["Everything in Growth", "Multi-domain planning", "Custom dashboard scope", "Governance plan"],
       },
     ],
   },
@@ -170,16 +186,16 @@ export const site: SiteProfile = {
     title: "Questions we get asked",
     items: [
       { question: "Who approves what goes out?", answer: "You do. Every draft, post and page waits in an approval queue until you release it; nothing is sent or published on your behalf." },
-      { question: "How quickly does an engagement start?", answer: "The baseline begins the week the contract is signed and is written up within two weeks; the first calendar follows it." },
-      { question: "What do you need from us?", answer: "Access to the accounts we report on, one person who can approve work, and an hour a week." },
-      { question: "Can we stop?", answer: "Yes. Plans run month to month after the first quarter, and every deliverable is yours to keep." },
+      { question: "How quickly does an engagement start?", answer: "Timing is agreed after the operator confirms the scope, required access and approval owner." },
+      { question: "What do you need from us?", answer: "The relevant account access, one approval owner and the evidence needed to support public claims." },
+      { question: "What are the commercial terms?", answer: "Pricing, term and cadence are custom-scoped and are not published until the operator approves them." },
     ],
   },
   contact: {
     title: ACTIVE.site.cta,
     subtitle: ACTIVE.site.contactSubtitle,
-    email: "hello@your-agency.example",
-    offlineNote: "Couldn't reach our inbox just now — email us directly and we'll take it from there.",
+    email: "",
+    offlineNote: "Contact details will appear after the operator verifies the agency inbox.",
   },
   footer: { note: ACTIVE.site.footerNote },
 };
