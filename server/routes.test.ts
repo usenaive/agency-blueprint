@@ -151,7 +151,7 @@ describe("the store routes", () => {
     const { call, store } = fixture();
     const client = store.createLead(lead);
     const post = store.createDraftPost({
-      clientId: client.id, title: "t", summary: "s", kind: "article", channel: "blog", scheduledFor: "2026-01-05",
+      clientId: client.id, title: "t", summary: "s", body: "A complete, reviewed article.", kind: "article", channel: "blog", scheduledFor: "2026-01-05",
     })!;
     expect(((await call("PATCH", `/api/posts/${post.id}`, { status: "approved" })).body as { status: string }).status).toBe("approved");
     expect(await call("PATCH", `/api/posts/${post.id}`, {})).toEqual({
@@ -164,6 +164,36 @@ describe("the store routes", () => {
     });
     // Without a key the publish is skipped, but the queue still moves.
     expect(((await call("POST", `/api/posts/${post.id}/post-now`)).body as { status: string }).status).toBe("posted");
+  });
+
+  it("publishes a blog article to the public feed without calling the social publisher", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+    const { call, store } = fixture({
+      config: { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" },
+    });
+    const client = store.createLead(lead);
+    const draft = store.createDraftPost({
+      clientId: client.id, title: "GEO basics", summary: "A practical definition", body: "Full article",
+      kind: "article", channel: "blog", scheduledFor: "2026-09-26",
+    })!;
+    expect((await call("GET", "/api/blog")).body).toEqual([]);
+    expect((await call("POST", `/api/posts/${draft.id}/post-now`)).status).toBe(200);
+    expect(await call("GET", "/api/blog")).toMatchObject({
+      status: 200,
+      body: [{ id: draft.id, title: "GEO basics", body: "Full article" }],
+      headers: { "cache-control": "public, max-age=60" },
+    });
+    expect(upstream).not.toHaveBeenCalled();
+
+    const unsafe = store.createDraftPost({
+      clientId: client.id, title: "Industry benchmark", summary: "A 35% result with no source",
+      body: "Our clients get this result in the first two weeks.", kind: "article", channel: "blog", scheduledFor: "2026-09-27",
+    })!;
+    expect(await call("POST", `/api/posts/${unsafe.id}/post-now`)).toEqual({
+      status: 409,
+      body: { error: expect.stringContaining("publication blocked") },
+    });
   });
 
   it("names the method as the problem when the path exists but the verb does not", async () => {
@@ -262,17 +292,22 @@ describe("the /api/* gate", () => {
   });
 
   /**
-   * The public site's two routes stand open on purpose: a visitor holds no bearer, the copy is what
+   * The public site's routes stand open on purpose: a visitor holds no bearer, the copy is what
    * the page shows anyway, and the contact form has to land as a lead or the site sells nothing.
    * Neither reads a row back — the lead is answered as created, and the CRM stays behind the gate.
    */
   it("leaves the site's copy and its contact form open to a visitor, and nothing else", async () => {
-    const { call } = fixture(deployed);
+    const { call, store } = fixture(deployed);
     const copy = await call("GET", "/api/site");
     expect(copy.status).toBe(200);
     expect(copy.headers).toEqual({ "cache-control": "public, max-age=60" });
     expect((copy.body as { hero: { title: string } }).hero.title).toBeTruthy();
+    store.updateSite({ company: "Acme Search", contact: { ...store.site().contact, email: "hello@acme.com" } });
+    expect((await call("GET", "/api/site")).body).toMatchObject({ company: "Acme Search", contact: { email: "hello@acme.com" } });
+    store.updateSite({ pricing: { ...store.site().pricing, subtitle: "$2,500 per month" } });
+    expect((await call("GET", "/api/site")).body).toMatchObject({ company: "Your agency", contact: { email: "" } });
     expect(await call("PATCH", "/api/site", {})).toMatchObject({ status: 405 });
+    expect(await call("GET", "/api/blog")).toMatchObject({ status: 200, body: [] });
 
     expect((await call("POST", "/api/leads", lead)).status).toBe(201);
     expect(await call("GET", "/api/leads")).toMatchObject({ status: 405 });

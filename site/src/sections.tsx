@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { SiteProfile } from "../site.config.ts";
+import type { PublicPost } from "./profile.ts";
 
 /** Every section renders the profile it is handed — the body of `GET /api/site` — and nothing else. */
 export interface SectionProps {
@@ -58,6 +59,29 @@ export function Services({ site }: SectionProps) {
             <ul className="mt-5 space-y-2 text-sm">
               {service.deliverables.map((item) => <Bullet key={item}>{item}</Bullet>)}
             </ul>
+          </article>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+export function Blog({ site, posts }: SectionProps & { posts: PublicPost[] }) {
+  if (posts.length === 0) return null;
+  return (
+    <Section
+      id="insights"
+      eyebrow="Insights"
+      title="Search and answer-engine field notes"
+      subtitle={`Practical guidance from ${site.company}, published only after operator review.`}
+    >
+      <div className="grid gap-5 md:grid-cols-3">
+        {posts.map((post) => (
+          <article className="rounded-xl border border-line bg-surface p-6" key={post.id}>
+            <p className="eyebrow">{post.postedAt ?? post.scheduledFor}</p>
+            <h3 className="mt-3 text-lg font-semibold tracking-tight">{post.title}</h3>
+            <p className="mt-3 text-sm leading-6 text-muted">{post.summary}</p>
+            {post.body ? <p className="mt-4 line-clamp-4 text-sm leading-6 text-ink">{post.body}</p> : null}
           </article>
         ))}
       </div>

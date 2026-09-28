@@ -67,9 +67,9 @@ and cannot be declared in `naive.config.ts`. `seo-geo` declares three (`seo-writ
 
 ## 👥 The crew
 
-Both templates declare the same seven; `seo-geo` appends a sentence of search focus to each
-prompt and the search skills to the writers' and the researcher's lists. Every prompt opens
-with the same paragraph: read `project_context` before anything else — it holds your three
+Both templates share the core seven; `seo-geo` adds a read-only paid-media planner, appends a
+sentence of search focus to each shared prompt, and adds search skills to the relevant lists. Every prompt opens
+with the same paragraph: read `project_context` before anything else — it holds your setup
 answers in your own words — and treat those answers as the client's, never yours to invent.
 Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 
@@ -82,19 +82,21 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 | `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
 | `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
 | `proposal-writer` | Proposals | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
+| `paid-media-planner` (`seo-geo`) | Paid media | `web_search`, `web_fetch`, dashboard reads/writes, read-only Google/Meta Ads tools | `naive/proposal-writing` | — | A zero-baseline plan with operator-selectable budget scenarios, integration-aware channels, measurement and stop rules. It cannot mutate campaigns or spend. |
 
 Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
 `ask_operator*` and `request_tools*`. No agent holds `approve_post`, `start_agent_session` or
 `social.post`: approving, spending and publishing stay with you.
 
-### The three questions
+### Setup questions
 
-A template asks at most three questions before anything is provisioned (the engine refuses a
-fourth), and the answers become the project's context — what every agent reads first, and
+A template asks at most four questions before anything is provisioned, and the answers become
+the project's context — what every agent reads first, and
 what the dashboard's home screen shows.
 
 | | `blank` | `seo-geo` |
 |---|---|---|
+| public identity | — | Agency name, verified public inbox, and whether pricing is custom-scoped or hidden. |
 | `offer` | What does your agency sell, and to whom? | What does your agency sell, and to whom? (search and answer-engine work) |
 | `ideal_client` | Who is your ideal client — industry, size, geography? | same |
 | third | `pricing` — How do you price — retainer / project / hourly — and your typical range? | `competitors` — Which three competitors do your clients lose to in search? |
@@ -204,10 +206,13 @@ an inbox is an address, and the address is yours to choose. Provision one on the
 identity, on your organization's system domain or a domain you have verified:
 
 ```sh
-naive identity list                                       # find the agency persona's idn_...
-naive identity domain list                                # the system domain's dom_...
-naive identity email provision --identity idn_... --domain dom_... --address hello@<domain>
+naive identity list                          # find the agency persona's idn_...
+naive domain list                            # find the managed or verified dom_...
+naive email provision --identity idn_... --domain dom_...
 ```
+
+`--domain` asks Naive to provision a native address on that domain. Use `--address` instead when
+attaching a specific supported address; the two options are alternatives and must not be combined.
 
 From the next turn on, `sales` and `client-manager` are offered `email.inboxes` and `email.read` for it, and
 `email.send` (held at `ask`) where the deployment's mail provider is configured. Until then the

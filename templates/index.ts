@@ -124,6 +124,7 @@ const seoGeo: TemplateVocabulary = {
     { id: "answer-block", label: "Answer block", description: "An entity-dense Q&A block written to be cited by AI answer engines." },
     { id: "serp-report", label: "SERP report", description: "Where the client ranks, and against whom." },
     { id: "audit", label: "Audit", description: "A technical and content sweep of the client's site." },
+    { id: "ad-plan", label: "Paid ad plan", description: "A channel, audience, creative, budget-scenario and measurement proposal; never live spend." },
   ],
   words: {
     brand: "Meridian Search",

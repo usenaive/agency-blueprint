@@ -15,7 +15,7 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, blank, budget, crm, gate, HANDOFF, model, OPERATOR, questions, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, blank, budget, crm, gate, HANDOFF, model, OPERATOR, PREAMBLE, questions, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -64,6 +64,44 @@ const SEARCH_READ = [
   "googlesearchconsole.inspect_url",
   "googleanalytics.run_report",
 ];
+
+/** Read-only evidence for a proposal. These tools cannot create campaigns, mutate ads or spend. */
+const AD_READ = [
+  "googleads.list_accessible_customers",
+  "googleads.get_campaign_by_id",
+  "googleads.get_campaign_by_name",
+  "googleads.search_stream_gaql",
+  "metaads.get_ad_accounts",
+  "metaads.get_insights",
+  "metaads.list_targeting_search",
+  "metaads.read_adsets",
+];
+
+const paidMediaPlanner: AgentDecl = {
+  name: "paid-media-planner",
+  role: "Paid media planning",
+  model,
+  budget,
+  description: "Builds evidence-backed paid-search and paid-social proposals. It cannot launch campaigns or spend.",
+  system:
+    `${PREAMBLE} ${gate} You are the agency's paid-media planner. Produce a proposal, never a live campaign. ` +
+    "Read dashboard.get_site and the CRM before drafting. State which ad-account integrations are actually connected; an unavailable channel is recommendation-only. " +
+    "Use operator-selectable budget scenarios unless project_context contains an approved budget. Never invent a benchmark, forecast, contract term, reporting cadence or result. " +
+    "Cover channel rationale, audiences and exclusions, campaign structure, three creative concepts, landing-page match, conversion events, attribution, experiment design and stop rules. " +
+    "File the plan as a pending ad-plan on the agency profile. You have no authority to create, mutate, launch, fund or purchase anything.",
+  tools: tools(
+    ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "get_site"), ...AD_READ],
+    OPERATOR,
+  ),
+  skills: ["naive/proposal-writing"],
+  handoffs: false,
+  identity: AGENCY_IDENTITY,
+  intake: {
+    message:
+      "Read project_context, the public site and any connected ad accounts. Draft a zero-baseline paid-media proposal with operator-selectable budget scenarios, measurement and stop rules. Label unsupported channels recommendation-only, file one pending ad-plan and launch nothing.",
+    budget_micro_usd: 20_000_000,
+  },
+};
 
 /**
  * The per-client crew. `server/proxy.ts` appends the client slug to each name at onboarding
@@ -196,6 +234,13 @@ export const seoGeo: AgencyTemplate = {
   seed: { clients, posts },
   questions: [
     {
+      key: "public_identity",
+      type: "text",
+      label: "What public agency name, verified inbox, and pricing posture should the site use?",
+      help: "Give all three. For example: Acme Search; hello@acme.com; custom-scoped after a fit call. No price or commercial term is inferred when omitted.",
+      placeholder: "Agency name; verified email; custom-scoped or no public pricing.",
+    },
+    {
       key: "offer",
       type: "text",
       label: "What does your agency sell — SEO, GEO, content — and to whom?",
@@ -214,9 +259,12 @@ export const seoGeo: AgencyTemplate = {
   crew,
   // The seven are shared; only their focus and search skills are this template's. Every other field
   // — model, budget, allow-list, timers, intake — stays `blank`'s, so a change there reaches both.
-  agents: blank.agents.map((agent) => ({
-    ...agent,
-    system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
-    skills: [...(agent.skills ?? []), ...(SKILLS[agent.name] ?? [])],
-  })),
+  agents: [
+    ...blank.agents.map((agent) => ({
+      ...agent,
+      system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
+      skills: [...(agent.skills ?? []), ...(SKILLS[agent.name] ?? [])],
+    })),
+    paidMediaPlanner,
+  ],
 };

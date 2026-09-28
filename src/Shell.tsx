@@ -1,4 +1,4 @@
-import { Bot, Building2, House, KanbanSquare, ShieldAlert, Settings2 } from "lucide-react";
+import { Bot, Building2, ClipboardCheck, House, KanbanSquare, ShieldAlert, Settings2 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { useApi } from "./api";
 import { TEMPLATE, type Client } from "./data";
@@ -18,6 +18,7 @@ export function Shell() {
   const prospects = (clients ?? []).filter((c) => c.stage === "lead" || c.stage === "proposal");
   const nav = [
     { to: "/", label: "Home", Icon: House, count: undefined as number | undefined },
+    { to: "/product-audit", label: "Product audit", Icon: ClipboardCheck, count: undefined as number | undefined },
     { to: "/crm", label: "CRM", Icon: KanbanSquare, count: prospects.length },
     { to: "/approvals", label: "Approvals", Icon: ShieldAlert, count: waitingOn(sessions?.data ?? [], new Map()).length },
     // No count on Agents: the roster is the platform's, and the rail is not worth a call for it.

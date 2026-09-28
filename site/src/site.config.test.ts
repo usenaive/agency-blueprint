@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import { createElement, isValidElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { site, SITE_SECTIONS } from "../site.config.ts";
+import { launchSafeSite, site, SITE_SECTIONS } from "../site.config.ts";
 import { App } from "./App.tsx";
 import { loadSite } from "./profile.ts";
 import { Pricing, ProofStrip } from "./sections.tsx";
@@ -29,6 +29,13 @@ function render(node: ReactNode): string {
 }
 
 describe("the site template invents no social proof", () => {
+  it("keeps an incomplete or commercially unsafe draft off the public route", () => {
+    expect(launchSafeSite(site)).toBe(false);
+    const identified = { ...site, company: "Acme Search", contact: { ...site.contact, email: "hello@acme.com" } };
+    expect(launchSafeSite(identified)).toBe(true);
+    expect(launchSafeSite({ ...identified, pricing: { ...identified.pricing, subtitle: "$2,500 per month" } })).toBe(false);
+    expect(launchSafeSite({ ...identified, faq: { ...identified.faq, items: [{ question: "Term?", answer: "Month-to-month after the first quarter." }] } })).toBe(false);
+  });
   it("has no case study, testimonial or number in its proof", () => {
     expect(Object.keys(site)).not.toContain("caseStudies");
     expect(Object.keys(site)).not.toContain("testimonials");

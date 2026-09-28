@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { operatorRedirect } from "../routing.ts";
 import type { SiteProfile } from "../site.config.ts";
 import { App } from "./App.tsx";
-import { loadSite } from "./profile.ts";
+import { loadBlog, loadSite, type PublicPost } from "./profile.ts";
 
 // A pre-`/app` operator bookmark lands on the public site on a static deploy; send it on before paint.
 const legacy = operatorRedirect(location.pathname);
@@ -28,13 +28,15 @@ function paint({ palette, company, tagline }: SiteProfile) {
 
 function Site() {
   const [site, setSite] = useState<SiteProfile | null>(null);
+  const [blog, setBlog] = useState<PublicPost[]>([]);
   useEffect(() => {
-    void loadSite().then((profile) => {
+    void Promise.all([loadSite(), loadBlog()]).then(([profile, posts]) => {
       paint(profile);
       setSite(profile);
+      setBlog(posts);
     });
   }, []);
-  return site === null ? null : <App site={site} />;
+  return site === null ? null : <App site={site} blog={blog} />;
 }
 
 if (legacy === null) {

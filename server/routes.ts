@@ -10,8 +10,10 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
-import { collect, latestContext, listAgents, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
+import { collect, latestContext, listAgents, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
+import { ACTIVE_TEMPLATE } from "../templates/active.ts";
+import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
 
 export interface ApiRequest {
   /** Upper-case. */
@@ -287,7 +289,17 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   const { method, path } = req;
   if (path === "/api/site") {
     if (method !== "GET") return NOT_ALLOWED;
-    return { status: 200, body: (await ctx.store()).site(), headers: { "cache-control": "public, max-age=60" } };
+    const stored = (await ctx.store()).site();
+    return { status: 200, body: launchSafeSite(stored) ? stored : holdingSite, headers: { "cache-control": "public, max-age=60" } };
+  }
+  if (path === "/api/blog") {
+    if (method !== "GET") return NOT_ALLOWED;
+    const posts = (await ctx.store()).read().posts
+      .filter((post) => post.channel === "blog" && post.status === "posted" && post.kind === "article")
+      .sort((a, b) => (b.postedAt ?? b.scheduledFor).localeCompare(a.postedAt ?? a.scheduledFor))
+      .slice(0, 6)
+      .map(({ id, title, summary, body, postedAt, scheduledFor }) => ({ id, title, summary, body, postedAt, scheduledFor }));
+    return { status: 200, body: posts, headers: { "cache-control": "public, max-age=60" } };
   }
   if (path === "/api/leads") {
     if (method !== "POST") return NOT_ALLOWED;
@@ -356,9 +368,22 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     const store = await ctx.store();
     const post = store.read().posts.find((p) => p.id === postNow[1]);
     if (!post) return { status: 404, body: { error: "no such post" } };
-    // When the platform is configured, publish for real before marking posted.
+    if (post.channel === "blog") {
+      const copy = `${post.title}\n${post.summary}\n${post.body ?? ""}`;
+      const problems = [
+        ...(post.kind === "article" && (post.body ?? "").trim() === "" ? ["a public article needs its full body"] : []),
+        ...(/Meridian Search|\.example\b/i.test(copy) ? ["placeholder brand or domain"] : []),
+        ...(/\bour clients\b|clients we (?:work|talk)|first two weeks|month[- ]to[- ]month|first quarter|guarantee(?:d|s)?\b/i.test(copy)
+          ? ["unsupported client, timeline, term or result claim"] : []),
+        ...(/\b\d+(?:\.\d+)?%|\bbenchmark\b/i.test(copy) && !/https:\/\//i.test(copy)
+          ? ["a metric or benchmark needs a source link"] : []),
+      ];
+      if (problems.length > 0) return { status: 409, body: { error: `publication blocked: ${problems.join("; ")}` } };
+    }
+    // The app's own public feed publishes blog articles. Social channels still go through the
+    // identity-bound publisher; treating `blog` as a social platform made a valid article fail.
     const upstream = ctx.config === null ? null : upstreamFor("POST", "/api/social/posts", ctx.config.identityId);
-    if (ctx.config !== null && upstream !== null) {
+    if (post.channel !== "blog" && ctx.config !== null && upstream !== null) {
       const published = await proxyFetch(ctx.config, upstream, JSON.stringify({
         content: post.summary, title: post.title, platforms: [post.channel],
       }));
@@ -398,7 +423,7 @@ async function chatAgentId(config: ProxyConfig): Promise<string | null> {
  * behind the approval queue and the agent history, the client's social accounts, the timers, and
  * this project's context (the setup answers) from its latest applied install.
  */
-const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context)(\/|$)/;
+const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context|product-audit)(\/|$)/;
 
 async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (!PLATFORM_ROUTE.test(req.path)) return NO_ROUTE;
@@ -427,6 +452,56 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
       return found.context === null
         ? { status: 404, body: { error: "no applied install for this project" } }
         : { status: 200, body: found };
+    }
+    if (req.method === "GET" && req.path === "/api/product-audit") {
+      const platform = await productAuditPlatform(config);
+      if (platform === null) return { status: 502, body: { error: "upstream unavailable" } };
+      const store = await ctx.store();
+      const site = store.site();
+      const state = store.read();
+      const posts = state.posts;
+      const externalProspects = state.clients.filter((client) =>
+        (client.domain.trim() !== "" || client.contact.email.trim() !== "") &&
+        (client.stage === "lead" || client.stage === "proposal"));
+      const internalRecords = state.clients.filter((client) => client.domain.trim() === "" && client.contact.email.trim() === "");
+      const answers = (() => {
+        const value = platform.context.context as { answers?: { key?: string; value?: unknown }[] } | null;
+        return value?.answers ?? [];
+      })();
+      const hasPricingAnswer = answers.some((answer) => ["pricing", "public_identity"].includes(answer.key ?? "") && String(answer.value ?? "").trim() !== "");
+      const namedContacts = externalProspects.filter((client) => client.contact.name.trim() !== "").length;
+      const addressedContacts = externalProspects.filter((client) => client.contact.email.trim() !== "").length;
+      return {
+        status: 200,
+        body: {
+          ...platform,
+          expected_agents: ACTIVE_TEMPLATE.agents.length,
+          public_site: {
+            company: site.company,
+            contact_email: site.contact.email,
+            placeholder_email: site.contact.email === "" || /\.example$/i.test(site.contact.email),
+            generic_company: site.company === "Your agency" || site.company === ACTIVE_TEMPLATE.words.brand,
+            pricing_without_answer: !hasPricingAnswer && site.pricing.tiers.some((tier) => /\$\s*\d/.test(tier.price)),
+            prices: site.pricing.tiers.map((tier) => tier.price),
+          },
+          content: {
+            total: posts.length,
+            posted_blog_articles: posts.filter((post) => post.channel === "blog" && post.kind === "article" && post.status === "posted").length,
+            draft_blog_articles: posts.filter((post) => post.channel === "blog" && post.kind === "article" && post.status !== "posted").length,
+            ad_plans: posts.filter((post) => post.kind === "ad-plan").length,
+            approved_ad_plans: posts.filter((post) => post.kind === "ad-plan" && ["approved", "posted"].includes(post.status)).length,
+          },
+          crm: {
+            records: state.clients.length,
+            prospects: externalProspects.length,
+            working_notes: externalProspects.reduce((sum, client) => sum + client.notes.length, 0),
+            internal_records: internalRecords.length,
+            named_contacts: namedContacts,
+            addressed_contacts: addressedContacts,
+          },
+          setup_has_paste_artifacts: answers.some((answer) => /^\s*>/m.test(String(answer.value ?? ""))),
+        },
+      };
     }
     const upstream = upstreamFor(req.method, req.path, config.identityId, req.query);
     if (upstream === null) return NO_ROUTE;

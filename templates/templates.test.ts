@@ -27,6 +27,7 @@ const ROSTER = [
   ["gap-researcher", "Research"],
   ["proposal-writer", "Proposals"],
 ];
+const SEO_ROSTER = [...ROSTER, ["paid-media-planner", "Paid media planning"]];
 
 const all = Object.values(TEMPLATES);
 const clientsOf = (t: (typeof all)[number]) => t.seed.clients as Client[];
@@ -53,7 +54,7 @@ describe("every template of this blueprint", () => {
   });
 
   it.each(all)("$name declares the seven that run an agency, with the gate in every prompt", (template) => {
-    expect(template.agents.map((a) => [a.name, a.role])).toEqual(ROSTER);
+    expect(template.agents.map((a) => [a.name, a.role])).toEqual(template.name === "seo-geo" ? SEO_ROSTER : ROSTER);
     for (const agent of [...template.agents, ...template.crew]) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
       expect(agent.model).toBeTruthy();
@@ -80,9 +81,15 @@ describe("every template of this blueprint", () => {
     }
   });
 
-  it.each(all)("$name asks the three setup questions, as text, and no fourth", (template) => {
-    expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text"]);
-    expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", template.name === "blank" ? "pricing" : "competitors"]);
+  it.each(all)("$name asks the setup questions its deliverables require", (template) => {
+    if (template.name === "blank") {
+      expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text"]);
+      expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", "pricing"]);
+    } else {
+      expect(template.questions.map((q) => q.key)).toEqual([
+        "public_identity", "offer", "ideal_client", "competitors",
+      ]);
+    }
   });
 
   it.each(all)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
@@ -133,7 +140,7 @@ describe("connected accounts", () => {
     // Deny-by-default names only what an agent needs: the mailbox is the pipeline's and delivery's;
     // a writer, a researcher or the site-builder holds no connected account at all.
     for (const agent of template.agents) {
-      const outward = agent.name === "sales" || agent.name === "client-manager";
+      const outward = agent.name === "sales" || agent.name === "client-manager" || agent.name === "paid-media-planner";
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
     for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
@@ -248,8 +255,9 @@ describe("seo-geo", () => {
   it("is a delta on blank, not a fork of it", () => {
     // Same seven, same model, same budget, same allow-list, same schedule: only the focus and the
     // search skills differ, and the search skills are added to the generic ones, never in their place.
-    expect(seoGeo.agents.map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
-    for (const [i, agent] of seoGeo.agents.entries()) {
+    expect(seoGeo.agents.slice(0, blank.agents.length).map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
+    expect(seoGeo.agents.at(-1)?.name).toBe("paid-media-planner");
+    for (const [i, agent] of seoGeo.agents.slice(0, blank.agents.length).entries()) {
       const base = blank.agents[i]!;
       expect(agent.system).toContain(base.system);
       expect(agent.system).not.toBe(base.system);
@@ -259,7 +267,7 @@ describe("seo-geo", () => {
   });
 
   it("adds the specialism: the kinds, and the crew provisioned per client", () => {
-    expect(seoGeo.kinds.map((k) => k.id)).toEqual(["article", "landing-page", "answer-block", "serp-report", "audit"]);
+    expect(seoGeo.kinds.map((k) => k.id)).toEqual(["article", "landing-page", "answer-block", "serp-report", "audit", "ad-plan"]);
     expect(seoGeo.crew.map((a) => a.name)).toEqual(["seo-writer", "geo-optimizer", "audit-runner"]);
     // The crew's model is the template's, not the server's — `server/proxy.ts` posts these as they
     // stand and decides nothing.
