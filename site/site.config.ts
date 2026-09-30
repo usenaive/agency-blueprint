@@ -106,10 +106,15 @@ export const withinBounds = (value: unknown): boolean => {
  */
 export function launchSafeSite(profile: SiteProfile): boolean {
   const copy = JSON.stringify(profile);
+  const pricing = JSON.stringify(profile.pricing);
   const verifiedIdentity = profile.company.trim() !== "" && profile.company !== "Your agency" &&
     /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(profile.contact.email) && !/\.example$/i.test(profile.contact.email);
-  const unsupportedClaim = /\$\s*\d|\b\d[\d,.]*\s*(?:%|per\s+month|\/month)|month[- ]to[- ]month|first quarter|guarantee(?:d|s)?\b|within\s+\d+\s+(?:days?|weeks?)/i.test(copy);
-  return verifiedIdentity && !unsupportedClaim;
+  // A dollar amount in the ICP (for example "$2M–$50M ARR") is not a price. Commercial numbers
+  // are unsafe only in the pricing section; result percentages and promise language stay unsafe
+  // everywhere on the page.
+  const unsupportedPrice = /\$\s*\d|\b\d[\d,.]*\s*(?:per\s+month|\/month)/i.test(pricing);
+  const unsupportedClaim = /\b\d[\d,.]*\s*%|month[- ]to[- ]month|first quarter|guarantee(?:d|s)?\b|within\s+\d+\s+(?:days?|weeks?)/i.test(copy);
+  return verifiedIdentity && !unsupportedPrice && !unsupportedClaim;
 }
 
 export const site: SiteProfile = {
