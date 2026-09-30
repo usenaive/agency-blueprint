@@ -343,6 +343,23 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     return method === "GET" ? { status: 200, body: (await ctx.store()).read().posts } : NOT_ALLOWED;
   }
 
+  const clientPatch = /^\/api\/clients\/([\w-]+)$/.exec(path);
+  if (clientPatch) {
+    if (method !== "PATCH") return NOT_ALLOWED;
+    const body = parse(req.body);
+    const contact = body.contact;
+    if (typeof contact !== "object" || contact === null || Array.isArray(contact)) {
+      return { status: 400, body: { error: "contact is required" } };
+    }
+    const fields = contact as Record<string, unknown>;
+    const patch = Object.fromEntries(
+      ["name", "email", "role"].flatMap((key) => typeof fields[key] === "string" ? [[key, fields[key]]] : []),
+    );
+    if (Object.keys(patch).length === 0) return { status: 400, body: { error: "contact name, email or role is required" } };
+    const client = (await ctx.store()).updateClientContact(clientPatch[1]!, patch);
+    return client ? { status: 200, body: client } : { status: 404, body: { error: "no such client" } };
+  }
+
   const advance = /^\/api\/clients\/([\w-]+)\/advance$/.exec(path);
   if (advance) {
     if (method !== "POST") return NOT_ALLOWED;

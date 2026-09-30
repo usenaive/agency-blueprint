@@ -74,6 +74,12 @@ export interface PostPatch {
   scheduledFor?: string;
 }
 
+export interface ClientContactPatch {
+  name?: string;
+  email?: string;
+  role?: string;
+}
+
 export interface Store {
   read(): StoreState;
   createLead(input: LeadInput): Client;
@@ -82,6 +88,8 @@ export interface Store {
   addMcpToken(name: string, hash: string): McpToken;
   removeMcpToken(id: string): boolean;
   advanceClient(id: string): Client | null;
+  /** Adds or corrects the researched contact on an existing CRM row without replacing its notes. */
+  updateClientContact(id: string, patch: ClientContactPatch): Client | null;
   /** Appends a working note to the client and, when given, replaces what it is waiting on. */
   addClientNote(id: string, note: string, nextAction?: string): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
@@ -231,6 +239,13 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const to = next(client.stage);
       if (to === null) return client;
       client.stage = to;
+      save();
+      return client;
+    },
+    updateClientContact(id, patch) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return null;
+      client.contact = { ...client.contact, ...patch };
       save();
       return client;
     },

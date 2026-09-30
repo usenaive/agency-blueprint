@@ -80,6 +80,9 @@ export const TOOLS = [
     note: str("Optional first note"),
   }, ["name"]) },
   { name: "advance_pipeline", description: "Move a client to the next pipeline stage.", inputSchema: obj({ id: str("Client id") }, ["id"]) },
+  { name: "update_client_contact", description: "Add or correct the researched contact on an existing CRM client. Keeps its notes, stage and next action unchanged.", inputSchema: obj({
+    id: str("Client id"), contact_name: str("Contact person"), contact_email: str("Verified public business email"), contact_role: str("Contact role, when known"),
+  }, ["id", "contact_name", "contact_email"]) },
   { name: "add_client_note", description: "File a working note on a client — a drafted outreach or follow-up, a call summary, what a proposal is waiting on — for the operator to read on the client's page. Optionally restate what the client is waiting on next.", inputSchema: obj({
     id: str("Client id"), note: str("The note in full — a drafted follow-up goes here verbatim"),
     next_action: str("Optional: what this client is waiting on now, replacing the previous next action"),
@@ -144,6 +147,13 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       });
     case "advance_pipeline": {
       const client = store.advanceClient(need(params, "id"));
+      if (!client) throw new ToolError("no such client");
+      return client;
+    }
+    case "update_client_contact": {
+      const client = store.updateClientContact(need(params, "id"), {
+        name: need(params, "contact_name"), email: need(params, "contact_email"), role: text(params, "contact_role"),
+      });
       if (!client) throw new ToolError("no such client");
       return client;
     }
