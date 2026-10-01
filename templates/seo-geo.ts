@@ -27,11 +27,11 @@ const FOCUS: Record<string, string> = {
   "client-manager":
     "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one.",
   "content-writer":
-    "Every post is written for one query and one intent, carries an answer block an AI engine can cite, and names the entity it is about in the first hundred words.",
+    "Write every post for one query and intent, using connected Search Console evidence when available, a citable answer block, and a named entity. Never invent queries or results.",
   "content-reviser":
-    "Weak here means: no target query, no answer block, thin entity coverage, or a title that no longer matches the query it ranks for.",
+    "Weak here means: no target query, no answer block, thin entity coverage, or a title that no longer matches the query it ranks for. Read Search Console and Analytics before revising so work that is performing is left alone; if the properties are unavailable, say so instead of inventing performance.",
   "gap-researcher":
-    "The competitors are the three the third setup answer names — the ones this agency's clients lose to in search. Compare where each is cited in AI answers as well as where it ranks.",
+    "Compare the three competitors in the third setup answer by rankings and AI citations against connected Search Console and Analytics evidence when available; never invent performance.",
   "proposal-writer":
     "Tiers are scoped in audits, articles, answer blocks and SERP reports per month; a proposal never promises a ranking or a citation.",
 };
@@ -64,6 +64,13 @@ const SEARCH_READ = [
   "googlesearchconsole.inspect_url",
   "googleanalytics.run_report",
 ];
+
+/** Founder Frame's own scheduled research and writing must use its connected measurement too. */
+const AGENCY_SEARCH_READ: Record<string, string[]> = {
+  "content-writer": ["googlesearchconsole.query_search_analytics"],
+  "content-reviser": ["googlesearchconsole.query_search_analytics", "googleanalytics.run_report"],
+  "gap-researcher": SEARCH_READ,
+};
 
 /** Read-only evidence for a proposal. These tools cannot create campaigns, mutate ads or spend. */
 const AD_READ = [
@@ -264,6 +271,13 @@ export const seoGeo: AgencyTemplate = {
       ...agent,
       system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
       skills: [...(agent.skills ?? []), ...(SKILLS[agent.name] ?? [])],
+      tools: {
+        default_config: agent.tools?.default_config ?? { permission: "deny" as const },
+        configs: {
+          ...(agent.tools?.configs ?? {}),
+          ...Object.fromEntries((AGENCY_SEARCH_READ[agent.name] ?? []).map((name) => [name, { enabled: true, permission: "allow" as const }])),
+        },
+      },
     })),
     paidMediaPlanner,
   ],
