@@ -31,6 +31,8 @@ export interface ApiReply {
   status: number;
   /** JSON-encoded; undefined means an empty body. */
   body?: unknown;
+  /** Written verbatim for public discovery documents such as robots.txt and sitemap.xml. */
+  text?: string;
   /** Set only by `/api/chat/:sid/stream` — piped, not buffered. */
   stream?: Response;
   /**
@@ -287,6 +289,49 @@ const withinLeadSize = (lead: Partial<LeadInput>): boolean =>
  */
 async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   const { method, path } = req;
+  const forwarded = req.headers["x-forwarded-proto"]?.split(",")[0]?.trim();
+  const scheme = forwarded === "http" ? "http" : "https";
+  const host = req.headers.host?.trim() || "localhost";
+  const origin = `${scheme}://${host}`;
+  if (path === "/robots.txt") {
+    if (method !== "GET") return NOT_ALLOWED;
+    return {
+      status: 200,
+      text: `User-agent: *\nAllow: /\nDisallow: /app/\nDisallow: /api/\nSitemap: ${origin}/sitemap.xml\n`,
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+    };
+  }
+  if (path === "/sitemap.xml") {
+    if (method !== "GET") return NOT_ALLOWED;
+    return {
+      status: 200,
+      text: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url></urlset>\n`,
+      headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" },
+    };
+  }
+  if (path === "/llms.txt") {
+    if (method !== "GET") return NOT_ALLOWED;
+    const store = await ctx.store();
+    const profile = store.site();
+    const articles = store.read().posts
+      .filter((post) => post.channel === "blog" && post.status === "posted" && post.kind === "article")
+      .slice(0, 12);
+    return {
+      status: 200,
+      text: [
+        `# ${profile.company}`,
+        "",
+        `> ${profile.hero.subtitle}`,
+        "",
+        `- Website: ${origin}/`,
+        `- Contact: mailto:${profile.contact.email}`,
+        ...profile.services.map((service) => `- ${service.name}: ${service.description}`),
+        ...(articles.length === 0 ? [] : ["", "## Insights", ...articles.map((post) => `- ${post.title}: ${post.summary}`)]),
+        "",
+      ].join("\n"),
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+    };
+  }
   if (path === "/api/site") {
     if (method !== "GET") return NOT_ALLOWED;
     const stored = (await ctx.store()).site();
@@ -590,6 +635,9 @@ function sameOrigin(req: ApiRequest): boolean {
 /** The whole route table, in order: `/mcp`, the door, the public site, the gate, the local token routes, the store, the platform. */
 export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (req.path === "/mcp") return mcpRoute(req, ctx);
+  if (["/robots.txt", "/sitemap.xml", "/llms.txt"].includes(req.path)) {
+    return (await publicRoutes(req, ctx)) ?? NO_ROUTE;
+  }
   if (!req.path.startsWith("/api/")) return NO_ROUTE;
   // The two routes that must run before the gate: the one that gets a browser through it, and the
   // one that tells the browser whether it is.

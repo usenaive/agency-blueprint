@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, Circle, ExternalLink, ShieldCheck } from "
 import { useApi } from "../api";
 import { PageHeader } from "../components/kit";
 
-interface AuditSnapshot {
+export interface AuditSnapshot {
   project: string;
   observed_at: string;
   expected_agents: number;

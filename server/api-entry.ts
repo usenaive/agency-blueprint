@@ -185,6 +185,7 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
     }
     for (const [name, value] of Object.entries(reply.headers ?? {})) res.setHeader(name, value);
     if (reply.stream) return await pipe(res, reply.stream);
+    if (reply.text !== undefined) return res.status(reply.status).end(reply.text);
     if (reply.body === undefined) return res.status(reply.status).end();
     return res.status(reply.status).json(reply.body);
   } catch (error) {

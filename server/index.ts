@@ -79,6 +79,7 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
   }, contextFor(req));
 
   if (reply.stream) return relay(res, reply.stream);
+  if (reply.text !== undefined) return void res.writeHead(reply.status, reply.headers ?? {}).end(reply.text);
   // `/api/enter` answers with a cookie and a `location` and nothing else. An array value is several
   // headers of one name, which is how Node's `writeHead` takes it: `set-cookie` cannot be joined.
   if (reply.body === undefined) return void res.writeHead(reply.status, reply.headers ?? {}).end();
@@ -107,7 +108,7 @@ async function handleStatic(res: ServerResponse, path: string): Promise<void> {
 
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
-  const handled = url.pathname === "/mcp" || url.pathname.startsWith("/api/")
+  const handled = url.pathname === "/mcp" || url.pathname.startsWith("/api/") || ["/robots.txt", "/sitemap.xml", "/llms.txt"].includes(url.pathname)
     ? handleApi(req, res, url)
     : handleStatic(res, url.pathname);
   handled.catch(() => send(res, 502, { error: "upstream unavailable" }));

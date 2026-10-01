@@ -20,6 +20,7 @@ import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
+import { LaunchReview } from "./screens/LaunchReview";
 import { ProductAudit } from "./screens/ProductAudit";
 
 const routes = [
@@ -30,6 +31,7 @@ const routes = [
       { index: true, element: <Navigate to="/crm" replace /> },
       { path: "home", Component: Home },
       { path: "product-audit", Component: ProductAudit },
+      { path: "launch-review", Component: LaunchReview },
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
@@ -58,6 +60,46 @@ describe("the product audit", () => {
     expect(screen.text()).toContain("4 companies; 2 named and 1 addressed contacts");
     expect(screen.text()).toContain("1 plans filed; 0 operator-approved");
     expect(screen.text()).toContain("Changes in this hardening release");
+  });
+});
+
+describe("the launch review", () => {
+  it("puts prospect evidence, outreach copy, content and its decision on one screen", async () => {
+    const prospect = {
+      id: "cli_1", slug: "acme", name: "Acme", domain: "acme.test", stage: "lead", services: ["SEO"],
+      contact: { name: "Sam", email: "sam@acme.test", role: "Founder" },
+      notes: ["Why now: the pricing pages are not indexed.", "Email draft: Hi Sam — I found three crawl gaps."],
+      nextAction: "Review opener",
+    };
+    const draft = {
+      id: "post_1", clientId: "cli_own", title: "GEO guide", summary: "A practical guide", body: "The complete article.",
+      kind: "article", channel: "blog", status: "pending", agent: "content-writer", scheduledFor: "2026-10-02", hue: 10,
+    };
+    const snapshot = {
+      project: "agency", observed_at: "2026-10-01T00:00:00Z", expected_agents: 8,
+      agents: Array.from({ length: 8 }, (_, i) => ({ id: `agt_${i}`, name: `agent-${i}` })),
+      deployments: Array.from({ length: 5 }, () => ({})), sessions: [], context: { intake: [] },
+      identity: { emails: [{}], domains: [{}], connections: [] }, organization_domains: [{}],
+      public_site: { company: "Founder Frame", contact_email: "hello@founderframehq.com", placeholder_email: false, generic_company: false, pricing_without_answer: false, prices: ["Custom"] },
+      content: { total: 1, posted_blog_articles: 1, draft_blog_articles: 1, ad_plans: 0, approved_ad_plans: 0 },
+      crm: { records: 1, prospects: 1, working_notes: 2, internal_records: 0, named_contacts: 1, addressed_contacts: 1 },
+      setup_has_paste_artifacts: false,
+    };
+    const screen = await render("/launch-review", (path, init) => {
+      if (path === "/api/product-audit") return { body: snapshot };
+      if (path === "/api/context") return { body: { context: { answers: [], template: "seo-geo", updated_at: "2026-10-01" }, team: [], intake: [] } };
+      if (path === "/api/clients") return { body: [prospect] };
+      if (path === "/api/posts" && !init?.method) return { body: [draft] };
+      if (path.includes("/api/sessions")) return { body: { data: [] } };
+      if (path === "/api/posts/post_1" && init?.method === "PATCH") return { body: { ...draft, status: "approved" } };
+      return { body: "" };
+    });
+    expect(screen.text()).toContain("Prospects and outreach drafts");
+    expect(screen.text()).toContain("Why now: the pricing pages are not indexed.");
+    expect(screen.text()).toContain("Email draft: Hi Sam");
+    expect(screen.text()).toContain("The complete article.");
+    await screen.press("Approve");
+    expect(screen.calls.some((call) => call.path === "/api/posts/post_1" && call.init?.method === "PATCH")).toBe(true);
   });
 });
 
