@@ -128,6 +128,18 @@ describe("mcp tools", () => {
     expect(store.read().clients.find((c) => c.id === anyClient)?.nextAction).toBe("Reply to follow-up");
   });
 
+  it("update_client_contact enriches an existing lead without replacing its research", async () => {
+    const store = freshStore();
+    const before = store.read().clients.find((c) => c.id === anyClient)!;
+    before.notes.push("Why now");
+    const answer = (await handleMcp(call("update_client_contact", {
+      id: anyClient, contact_name: "Ada Lovelace", contact_email: "ada@example.com", contact_role: "VP Marketing",
+    }), store, null)) as CallResult;
+    const client = JSON.parse(answer.result.content[0]!.text) as { contact: { name: string; email: string; role: string }; notes: string[] };
+    expect(client.contact).toEqual({ name: "Ada Lovelace", email: "ada@example.com", role: "VP Marketing" });
+    expect(client.notes).toContain("Why now");
+  });
+
   it("walks a post through draft → approve → schedule", async () => {
     const store = freshStore();
     const drafted = (await handleMcp(call("create_draft_post", {

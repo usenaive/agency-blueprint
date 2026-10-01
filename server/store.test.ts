@@ -134,7 +134,7 @@ describe("openStore", () => {
     const store = openStore(storeFile());
     const lead = store.createLead({
       name: "Summit Outdoor Co",
-      domain: "summitoutdoor.example",
+      domain: "summitoutdoor-new.example",
       contact: { name: "Jordan Lee", email: "jordan@summitoutdoor.example", role: "Site inquiry" },
       services: ["SEO"],
       note: "Inbound from the public site.",
@@ -177,6 +177,21 @@ describe("openStore", () => {
     expect(store.read().clients[0]).toMatchObject({ id: "cli_one", notes: ["site", "blog"], services: ["SEO", "GEO"] });
     expect(store.read().posts[0]?.clientId).toBe("cli_one");
     expect(writes).toBe(1);
+  });
+
+  it("enriches and consolidates repeated prospects by company domain", () => {
+    const state = emptyState();
+    state.clients = [
+      { id: "cli_one", slug: "close", name: "Close", domain: "close.com", stage: "lead", services: ["SEO"], contact: { name: "", email: "", role: "" }, notes: ["why now"] },
+      { id: "cli_two", slug: "close-crm", name: "Close CRM", domain: "CLOSE.COM", stage: "lead", services: ["GEO"], contact: { name: "Megan", email: "support@close.com", role: "Marketing" }, notes: ["opener"] },
+    ];
+    state.posts = [{ id: "post_1", clientId: "cli_two", title: "Draft", summary: "s", kind: "article", channel: "blog", status: "pending", agent: "mcp", scheduledFor: "2026-09-26", hue: 1 }];
+    const store = openStoreOver(state, () => {});
+    expect(store.read().clients).toHaveLength(1);
+    expect(store.read().clients[0]).toMatchObject({ id: "cli_one", notes: ["why now", "opener"], services: ["SEO", "GEO"], contact: { name: "Megan", email: "support@close.com" } });
+    expect(store.read().posts[0]?.clientId).toBe("cli_one");
+    expect(store.createLead({ name: "Close", domain: "close.com", contact: { name: "Megan", email: "support@close.com", role: "Marketing" }, note: "follow-up" }).id).toBe("cli_one");
+    expect(store.read().clients).toHaveLength(1);
   });
 
   it("never files the agency's notes on a prospect that happened to share the name", () => {

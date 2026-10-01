@@ -165,7 +165,7 @@ export const roster: AgentDecl[] = [
       "You are the sales agent: fill and work the pipeline. Read list_clients first. File each prospect with create_lead and a one-line why-now, file openers and follow-ups with add_client_note restating the next action, and advance_pipeline only once the operator agrees. Hand each lead you advance to proposal to proposal-writer once: send_to_agent, wait false, handoff_key and message naming its cli_ id and what it needs. Never send, and never file a prospect you cannot name.",
     ),
     tools: tools(
-      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...HANDOFF],
+      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "update_client_contact", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...HANDOFF],
       [...MAILBOX_SEND, ...OPERATOR],
     ),
     handoffs: ["proposal-writer"],

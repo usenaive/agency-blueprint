@@ -74,6 +74,12 @@ export interface PostPatch {
   scheduledFor?: string;
 }
 
+export interface ClientContactPatch {
+  name?: string;
+  email?: string;
+  role?: string;
+}
+
 export interface Store {
   read(): StoreState;
   createLead(input: LeadInput): Client;
@@ -82,6 +88,8 @@ export interface Store {
   addMcpToken(name: string, hash: string): McpToken;
   removeMcpToken(id: string): boolean;
   advanceClient(id: string): Client | null;
+  /** Adds or corrects the researched contact on an existing CRM row without replacing its notes. */
+  updateClientContact(id: string, patch: ClientContactPatch): Client | null;
   /** Appends a working note to the client and, when given, replaces what it is waiting on. */
   addClientNote(id: string, note: string, nextAction?: string): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
@@ -163,6 +171,27 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
     save();
   }
 
+  // Agents may revisit the same company after enrichment. A CRM row represents the company, so
+  // exact domain twins are one lead, not a second prospect. Consolidate legacy twins and repoint
+  // their deliverables while preserving every note and service.
+  const byDomain = new Map<string, Client>();
+  for (const row of [...state.clients]) {
+    const domain = row.domain.trim().toLowerCase();
+    if (domain === "") continue;
+    const keeper = byDomain.get(domain);
+    if (keeper === undefined) {
+      byDomain.set(domain, row);
+      continue;
+    }
+    keeper.notes = [...new Set([...keeper.notes, ...row.notes])];
+    keeper.services = [...new Set([...keeper.services, ...row.services])];
+    keeper.nextAction ??= row.nextAction;
+    for (const key of ["name", "email", "role"] as const) if (keeper.contact[key] === "") keeper.contact[key] = row.contact[key];
+    for (const post of state.posts) if (post.clientId === row.id) post.clientId = keeper.id;
+    state.clients = state.clients.filter((candidate) => candidate.id !== row.id);
+    save();
+  }
+
   return {
     read: () => state,
     createLead(input) {
@@ -171,12 +200,15 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       // filed the same way is the first: a prospect with a domain or a contact is never it.
       // Name is not identity here: independent agents may call the same workspace "agency",
       // project name, or public brand. A name-only row is always the one internal workspace.
-      const twin = nameOnly(input) ? state.clients.find(nameOnly) : undefined;
+      const twin = nameOnly(input)
+        ? state.clients.find(nameOnly)
+        : state.clients.find((row) => row.domain.trim() !== "" && row.domain.trim().toLowerCase() === input.domain.trim().toLowerCase());
       if (twin) {
+        for (const key of ["name", "email", "role"] as const) if (twin.contact[key] === "") twin.contact[key] = input.contact[key];
         if (input.note !== undefined) {
           twin.notes.push(input.note);
-          save();
         }
+        save();
         return twin;
       }
       const client: Client = {
@@ -231,6 +263,13 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const to = next(client.stage);
       if (to === null) return client;
       client.stage = to;
+      save();
+      return client;
+    },
+    updateClientContact(id, patch) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return null;
+      client.contact = { ...client.contact, ...patch };
       save();
       return client;
     },

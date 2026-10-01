@@ -147,6 +147,19 @@ describe("the store routes", () => {
     });
   });
 
+  it("updates a researched contact without replacing the CRM row", async () => {
+    const { call, store } = fixture();
+    const client = store.createLead({ ...lead, contact: { name: "", email: "", role: "" }, note: "Why now" });
+    const reply = await call("PATCH", `/api/clients/${client.id}`, {
+      contact: { name: "Ada Lovelace", email: "ada@example.com", role: "VP Marketing" },
+    });
+    expect(reply).toMatchObject({ status: 200, body: { id: client.id, notes: ["Why now"], contact: {
+      name: "Ada Lovelace", email: "ada@example.com", role: "VP Marketing",
+    } } });
+    expect((await call("PATCH", `/api/clients/${client.id}`, {})).status).toBe(400);
+    expect((await call("PATCH", "/api/clients/cli_missing", { contact: { email: "a@example.com" } })).status).toBe(404);
+  });
+
   it("patches a post, and says which of the two things it needed", async () => {
     const { call, store } = fixture();
     const client = store.createLead(lead);
