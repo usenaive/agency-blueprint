@@ -204,6 +204,28 @@ describe("the store routes", () => {
   });
 });
 
+describe("public discovery documents", () => {
+  it("serves crawl directives, a canonical sitemap, and an agency-readable llms file", async () => {
+    const { call, store } = fixture();
+    store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
+    const headers = { host: "founderframehq.com", "x-forwarded-proto": "https" };
+
+    const robots = await call("GET", "/robots.txt", "", headers);
+    expect(robots).toMatchObject({ status: 200, headers: { "content-type": "text/plain; charset=utf-8" } });
+    expect(robots.text).toContain("Sitemap: https://founderframehq.com/sitemap.xml");
+    expect(robots.text).toContain("Disallow: /app/");
+
+    const sitemap = await call("GET", "/sitemap.xml", "", headers);
+    expect(sitemap).toMatchObject({ status: 200, headers: { "content-type": "application/xml; charset=utf-8" } });
+    expect(sitemap.text).toContain("<loc>https://founderframehq.com/</loc>");
+
+    const llms = await call("GET", "/llms.txt", "", headers);
+    expect(llms).toMatchObject({ status: 200, headers: { "content-type": "text/plain; charset=utf-8" } });
+    expect(llms.text).toContain("# Founder Frame");
+    expect(llms.text).toContain("mailto:hello@founderframehq.com");
+  });
+});
+
 describe("/mcp", () => {
   it("is the same document as /api/clients — an agent's write is what the UI reads", async () => {
     const { call } = fixture();

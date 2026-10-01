@@ -54,21 +54,24 @@ describe("build-api.mjs", () => {
     expect(readFileSync(join(dist, "api", "app.js"), "utf8")).toContain('from "pg"');
   });
 
-  it("writes the four rewrites in the order that makes them work", () => {
+  it("writes the public discovery and app rewrites in the order that makes them work", () => {
     const { rewrites } = JSON.parse(readFileSync(join(dist, "vercel.json"), "utf8")) as {
       rewrites: { source: string; destination: string }[];
     };
     expect(rewrites).toEqual([
       { source: "/mcp", destination: "/api/app?__path=/mcp" },
+      { source: "/robots.txt", destination: "/api/app?__path=/robots.txt" },
+      { source: "/sitemap.xml", destination: "/api/app?__path=/sitemap.xml" },
+      { source: "/llms.txt", destination: "/api/app?__path=/llms.txt" },
       { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
       { source: "/app/:path*", destination: "/app/index.html" },
       { source: "/((?!api/).*)", destination: "/index.html" },
     ]);
     // The operator dashboard's fallback comes before the public site's, and the site's — last —
     // must never swallow a function.
-    expect(rewrites[3]!.source).toBe("/((?!api/).*)");
-    expect(new RegExp(`^${rewrites[3]!.source}$`).test("/api/clients")).toBe(false);
-    expect(new RegExp(`^${rewrites[3]!.source}$`).test("/pricing")).toBe(true);
+    expect(rewrites[6]!.source).toBe("/((?!api/).*)");
+    expect(new RegExp(`^${rewrites[6]!.source}$`).test("/api/clients")).toBe(false);
+    expect(new RegExp(`^${rewrites[6]!.source}$`).test("/pricing")).toBe(true);
   });
 
   it("compiles the template it was built for, rather than reading it on a host that has none", () => {

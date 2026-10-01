@@ -16,6 +16,7 @@ import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Clients } from "./screens/Clients";
 import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
+import { LaunchReview } from "./screens/LaunchReview";
 import { ProductAudit } from "./screens/ProductAudit";
 import { Settings } from "./screens/Settings";
 
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
     Component: Shell,
     children: [
       { index: true, Component: Home },
+      { path: "launch-review", Component: LaunchReview },
       { path: "product-audit", Component: ProductAudit },
       { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },

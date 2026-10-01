@@ -6,6 +6,7 @@ import { operatorRedirect } from "../routing.ts";
 import type { SiteProfile } from "../site.config.ts";
 import { App } from "./App.tsx";
 import { loadBlog, loadSite, type PublicPost } from "./profile.ts";
+import { applySeo } from "./seo.ts";
 
 // A pre-`/app` operator bookmark lands on the public site on a static deploy; send it on before paint.
 const legacy = operatorRedirect(location.pathname);
@@ -13,7 +14,8 @@ if (legacy !== null) location.replace(`${legacy}${location.search}`);
 
 // The palette is profile, not CSS: recolouring the whole site is an `update_site`. Applied before
 // the page renders so nothing flashes.
-function paint({ palette, company, tagline }: SiteProfile) {
+function paint(site: SiteProfile) {
+  const { palette } = site;
   for (const [key, value] of Object.entries({
     "--accent": palette.accent,
     "--accent-ink": palette.accentInk,
@@ -23,7 +25,7 @@ function paint({ palette, company, tagline }: SiteProfile) {
   })) {
     document.documentElement.style.setProperty(key, value);
   }
-  document.title = `${company} — ${tagline}`;
+  applySeo(site);
 }
 
 function Site() {
