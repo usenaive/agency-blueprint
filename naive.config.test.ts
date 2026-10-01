@@ -82,7 +82,15 @@ describe("naive.config.ts", () => {
         expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
         expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
       } else if (agent.name !== "paid-media-planner") {
-        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, []]);
+        const measurement: Record<string, string[]> = {
+          "content-writer": ["googlesearchconsole.query_search_analytics"],
+          "content-reviser": ["googlesearchconsole.query_search_analytics", "googleanalytics.run_report"],
+          "gap-researcher": [
+            "googlesearchconsole.query_search_analytics", "googlesearchconsole.list_sites",
+            "googlesearchconsole.inspect_url", "googleanalytics.run_report",
+          ],
+        };
+        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, measurement[agent.name] ?? []]);
       }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
@@ -134,7 +142,9 @@ describe("the agency persona", () => {
       // holding none is offered none of the mailbox names however they are permissioned.
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
-    expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual(["sales", "client-manager", "paid-media-planner"]);
+    expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual([
+      "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "paid-media-planner",
+    ]);
   }, 30_000);
 
   it("speaks for every scheduled fire, in a zone the platform will accept", async () => {

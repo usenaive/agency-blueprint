@@ -136,14 +136,25 @@ describe("connected accounts", () => {
   const connectionTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
     Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard."));
 
-  it.each(all)("$name grants them to the two that reach outward, and to no one who does not", (template) => {
-    // Deny-by-default names only what an agent needs: the mailbox is the pipeline's and delivery's;
-    // a writer, a researcher or the site-builder holds no connected account at all.
+  it.each(all)("$name grants connected accounts only to agents that consume them", (template) => {
+    // Blank needs only the mailbox-facing seats. SEO/GEO additionally grants read-only measurement
+    // to its own writer, reviser and gap researcher, plus read-only ad evidence to its planner.
     for (const agent of template.agents) {
-      const outward = agent.name === "sales" || agent.name === "client-manager" || agent.name === "paid-media-planner";
+      const outward = agent.name === "sales" || agent.name === "client-manager" ||
+        (template.name === "seo-geo" && ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"].includes(agent.name));
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
     for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
+  });
+
+  it("lets the SEO/GEO agency's own scheduled work read its Search Console and Analytics evidence", () => {
+    const names = (agent: string) => connectionTools(seoGeo.agents.find((row) => row.name === agent)!).map(([name]) => name);
+    expect(names("content-writer")).toContain("googlesearchconsole.query_search_analytics");
+    expect(names("content-reviser")).toEqual(expect.arrayContaining(["googlesearchconsole.query_search_analytics", "googleanalytics.run_report"]));
+    expect(names("gap-researcher")).toEqual(expect.arrayContaining([
+      "googlesearchconsole.query_search_analytics", "googlesearchconsole.list_sites",
+      "googlesearchconsole.inspect_url", "googleanalytics.run_report",
+    ]));
   });
 
   /**
@@ -253,8 +264,8 @@ describe("blank", () => {
 
 describe("seo-geo", () => {
   it("is a delta on blank, not a fork of it", () => {
-    // Same seven, same model, same budget, same allow-list, same schedule: only the focus and the
-    // search skills differ, and the search skills are added to the generic ones, never in their place.
+    // Same seven, model, budget and schedule. SEO/GEO adds focus, search skills and only the
+    // read-only measurement tools its own scheduled content/research work consumes.
     expect(seoGeo.agents.slice(0, blank.agents.length).map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
     expect(seoGeo.agents.at(-1)?.name).toBe("paid-media-planner");
     for (const [i, agent] of seoGeo.agents.slice(0, blank.agents.length).entries()) {
@@ -262,7 +273,7 @@ describe("seo-geo", () => {
       expect(agent.system).toContain(base.system);
       expect(agent.system).not.toBe(base.system);
       expect(agent.skills?.slice(0, base.skills?.length)).toEqual(base.skills);
-      expect({ ...agent, system: "", skills: [] }).toEqual({ ...base, system: "", skills: [] });
+      expect({ ...agent, system: "", skills: [], tools: base.tools }).toEqual({ ...base, system: "", skills: [] });
     }
   });
 
