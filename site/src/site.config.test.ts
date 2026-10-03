@@ -33,6 +33,7 @@ describe("the site template invents no social proof", () => {
     expect(launchSafeSite(site)).toBe(false);
     const identified = { ...site, company: "Acme Search", contact: { ...site.contact, email: "hello@acme.com" } };
     expect(launchSafeSite(identified)).toBe(true);
+    expect(launchSafeSite({ ...identified, whoWeServe: { ...identified.whoWeServe, subtitle: "B2B SaaS companies with $2M–$50M ARR." } })).toBe(true);
     expect(launchSafeSite({ ...identified, pricing: { ...identified.pricing, subtitle: "$2,500 per month" } })).toBe(false);
     expect(launchSafeSite({ ...identified, faq: { ...identified.faq, items: [{ question: "Term?", answer: "Month-to-month after the first quarter." }] } })).toBe(false);
   });
