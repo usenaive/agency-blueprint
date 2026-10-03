@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import { isOperatorPath, operatorRedirect } from "./site/routing.ts";
 
 /**
@@ -24,8 +24,25 @@ const twoDoors = (): Plugin => ({
 
 const entry = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), twoDoors()],
+const googleSiteVerification = (token: string): Plugin => ({
+  name: "agency:google-site-verification",
+  transformIndexHtml: {
+    order: "pre",
+    handler(html, context) {
+      if (!/^[A-Za-z0-9_-]+$/.test(token) || context.filename.endsWith("/app/index.html")) return html;
+      return html.replace(
+        "</head>",
+        `    <meta name="google-site-verification" content="${token}" />\n  </head>`,
+      );
+    },
+  },
+});
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const verification = process.env["GOOGLE_SITE_VERIFICATION"] ?? env["GOOGLE_SITE_VERIFICATION"] ?? "";
+  return {
+  plugins: [react(), tailwindcss(), googleSiteVerification(verification), twoDoors()],
   /**
    * One build, two pages: `index.html` is the public site, served at `/`; `app/index.html` is the
    * operator dashboard, served for `/app` and everything under it. Same origin, so the site's
@@ -62,4 +79,5 @@ export default defineConfig({
    * exactly what the deployment does, and the point of seeing it here first.
    */
   server: { proxy: { "/api": "http://localhost:8789", "/mcp": "http://localhost:8789" } },
+  };
 });
