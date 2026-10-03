@@ -83,11 +83,11 @@ describe("naive.config.ts", () => {
         expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
       } else if (agent.name !== "paid-media-planner") {
         const measurement: Record<string, string[]> = {
-          "content-writer": ["googlesearchconsole.query_search_analytics"],
-          "content-reviser": ["googlesearchconsole.query_search_analytics", "googleanalytics.run_report"],
+          "content-writer": ["google_search_console.search_analytics_query"],
+          "content-reviser": ["google_search_console.search_analytics_query", "google_analytics.run_report"],
           "gap-researcher": [
-            "googlesearchconsole.query_search_analytics", "googlesearchconsole.list_sites",
-            "googlesearchconsole.inspect_url", "googleanalytics.run_report",
+            "google_search_console.search_analytics_query", "google_search_console.list_sites",
+            "google_search_console.inspect_url", "google_analytics.run_report",
           ],
         };
         expect([agent.name, connectionTools(agent)]).toEqual([agent.name, measurement[agent.name] ?? []]);

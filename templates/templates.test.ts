@@ -149,11 +149,11 @@ describe("connected accounts", () => {
 
   it("lets the SEO/GEO agency's own scheduled work read its Search Console and Analytics evidence", () => {
     const names = (agent: string) => connectionTools(seoGeo.agents.find((row) => row.name === agent)!).map(([name]) => name);
-    expect(names("content-writer")).toContain("googlesearchconsole.query_search_analytics");
-    expect(names("content-reviser")).toEqual(expect.arrayContaining(["googlesearchconsole.query_search_analytics", "googleanalytics.run_report"]));
+    expect(names("content-writer")).toContain("google_search_console.search_analytics_query");
+    expect(names("content-reviser")).toEqual(expect.arrayContaining(["google_search_console.search_analytics_query", "google_analytics.run_report"]));
     expect(names("gap-researcher")).toEqual(expect.arrayContaining([
-      "googlesearchconsole.query_search_analytics", "googlesearchconsole.list_sites",
-      "googlesearchconsole.inspect_url", "googleanalytics.run_report",
+      "google_search_console.search_analytics_query", "google_search_console.list_sites",
+      "google_search_console.inspect_url", "google_analytics.run_report",
     ]));
   });
 

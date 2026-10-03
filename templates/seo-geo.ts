@@ -59,16 +59,16 @@ const clientGate =
  * `request_tools` for a tool the task turns out to need that this list does not name.
  */
 const SEARCH_READ = [
-  "googlesearchconsole.query_search_analytics",
-  "googlesearchconsole.list_sites",
-  "googlesearchconsole.inspect_url",
-  "googleanalytics.run_report",
+  "google_search_console.search_analytics_query",
+  "google_search_console.list_sites",
+  "google_search_console.inspect_url",
+  "google_analytics.run_report",
 ];
 
 /** Founder Frame's own scheduled research and writing must use its connected measurement too. */
 const AGENCY_SEARCH_READ: Record<string, string[]> = {
-  "content-writer": ["googlesearchconsole.query_search_analytics"],
-  "content-reviser": ["googlesearchconsole.query_search_analytics", "googleanalytics.run_report"],
+  "content-writer": ["google_search_console.search_analytics_query"],
+  "content-reviser": ["google_search_console.search_analytics_query", "google_analytics.run_report"],
   "gap-researcher": SEARCH_READ,
 };
 
@@ -135,9 +135,9 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Briefs, articles and landing copy from the client's keywords and site.",
-    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (googlesearchconsole.query_search_analytics) rather than from a guess. A session opened by the audit runner names the audit's post_ id: read that draft with list_posts and write the pages it found missing, in its order. When your drafts are filed, hand their post_ ids to this client's GEO optimizer with send_to_agent (wait false) — list_agents names the one seat you may reach — so it tunes what you wrote rather than what it guesses you wrote.`,
+    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (google_search_console.search_analytics_query) rather than from a guess. A session opened by the audit runner names the audit's post_ id: read that draft with list_posts and write the pages it found missing, in its order. When your drafts are filed, hand their post_ ids to this client's GEO optimizer with send_to_agent (wait false) — list_agents names the one seat you may reach — so it tunes what you wrote rather than what it guesses you wrote.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics", ...HANDOFF],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", ...HANDOFF],
       OPERATOR,
     ),
     handoffs: ["geo-optimizer"],
@@ -151,7 +151,7 @@ const crew: AgentDecl[] = [
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
     system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. A session opened by the SEO writer names post_ ids: those drafts are the ones you tune, read them with list_posts first. Search the query yourself and read what IS being cited; the gap is the brief.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "googlesearchconsole.query_search_analytics", "googlesearchconsole.inspect_url"],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", "google_search_console.inspect_url"],
       OPERATOR,
     ),
     handoffs: false,
