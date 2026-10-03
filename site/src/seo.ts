@@ -17,6 +17,26 @@ const ensureLink = (rel: string, href: string): HTMLLinkElement => {
   return link;
 };
 
+/** Install this agency's GA4 tag once. Invalid or empty ids never load third-party code. */
+export function applyGoogleAnalytics(measurementId: string): void {
+  if (!/^G-[A-Z0-9]+$/.test(measurementId)) return;
+
+  if (document.head.querySelector("#agency-google-analytics") === null) {
+    const loader = document.createElement("script");
+    loader.id = "agency-google-analytics";
+    loader.async = true;
+    loader.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    document.head.append(loader);
+  }
+
+  if (document.head.querySelector("#agency-google-analytics-config") === null) {
+    const config = document.createElement("script");
+    config.id = "agency-google-analytics-config";
+    config.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config',${JSON.stringify(measurementId)});`;
+    document.head.append(config);
+  }
+}
+
 /** Keep the document head aligned with the operator-approved site profile. */
 export function applySeo(site: SiteProfile, href = window.location.href): void {
   const canonical = new URL("/", href).toString();

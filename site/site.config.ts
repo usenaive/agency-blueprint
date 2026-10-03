@@ -45,6 +45,8 @@ export interface SiteProfile {
   tagline: string;
   /** One sentence of voice guidance for whoever (or whatever) rewrites the copy. */
   tone: string;
+  /** Optional measurement for this one deployed agency; an empty id disables analytics. */
+  analytics: { googleMeasurementId: string };
   /** The site's whole colour budget; everything else is ink on paper. */
   palette: { accent: string; accentInk: string; ground: string; ink: string; muted: string };
   hero: { eyebrow: string; title: string; subtitle: string; cta: string; secondaryCta: string };
@@ -61,7 +63,7 @@ export interface SiteProfile {
 
 /** The section names an `update_site` may replace; anything else is refused by name. */
 export const SITE_SECTIONS = [
-  "company", "tagline", "tone", "palette", "hero", "proof", "services", "whoWeServe", "process", "pricing", "faq", "contact", "footer",
+  "company", "tagline", "tone", "analytics", "palette", "hero", "proof", "services", "whoWeServe", "process", "pricing", "faq", "contact", "footer",
 ] as const satisfies readonly (keyof SiteProfile)[];
 
 /**
@@ -119,6 +121,7 @@ export const site: SiteProfile = {
   company: "Your agency",
   tagline: ACTIVE.site.tagline,
   tone: "Confident, plain-spoken, evidence-first. No jargon, no hype.",
+  analytics: { googleMeasurementId: "" },
   palette: { accent: "#1d4ed8", accentInk: "#ffffff", ground: "#fbfaf8", ink: "#111114", muted: "#63605a" },
   hero: {
     eyebrow: ACTIVE.site.eyebrow,

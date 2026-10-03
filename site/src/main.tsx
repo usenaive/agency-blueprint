@@ -6,7 +6,7 @@ import { operatorRedirect } from "../routing.ts";
 import type { SiteProfile } from "../site.config.ts";
 import { App } from "./App.tsx";
 import { loadBlog, loadSite, type PublicPost } from "./profile.ts";
-import { applySeo } from "./seo.ts";
+import { applyGoogleAnalytics, applySeo } from "./seo.ts";
 
 // A pre-`/app` operator bookmark lands on the public site on a static deploy; send it on before paint.
 const legacy = operatorRedirect(location.pathname);
@@ -26,6 +26,7 @@ function paint(site: SiteProfile) {
     document.documentElement.style.setProperty(key, value);
   }
   applySeo(site);
+  applyGoogleAnalytics(site.analytics.googleMeasurementId);
 }
 
 function Site() {
