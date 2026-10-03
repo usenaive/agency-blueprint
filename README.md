@@ -453,6 +453,11 @@ load (`GET /api/site` is public and cached for a minute). Any agent — or you, 
 do the same later: `get_site` returns every section, `update_site` replaces whole sections and
 refuses one that has lost its shape.
 
+For a Google Search Console URL-prefix property, put the public verification token in an ignored
+`.env.production.local` file as `GOOGLE_SITE_VERIFICATION=...` before `pnpm build`. The build adds
+the verification meta tag to the public page's raw HTML, but never to the operator dashboard or to
+another agency unless that deployment supplies its own token.
+
 The proof strip carries **facts about how you work**, not numbers, and the template ships no
 case studies and no testimonials: a case study is a factual claim about someone else's
 business and a testimonial is words in a named person's mouth. Every prompt that touches the
