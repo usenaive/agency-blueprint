@@ -24,6 +24,11 @@ describe("naive.config.ts", () => {
     expect(result.config.name).toBe("agency");
     expect(result.config.blueprint).toBe("agency");
     expect(result.config.template).toBe(TEMPLATE);
+    // What the studio prints: "runs the <title> template", and the launch card's Day 1 line.
+    expect(result.config.title).toBe(TEMPLATES[TEMPLATE].title);
+    expect(result.config.description).toBe(TEMPLATES[TEMPLATE].description);
+    expect(result.config.roadmap).toEqual(TEMPLATES[TEMPLATE].roadmap);
+    expect(result.config.agents.flatMap((a) => a.schedules ?? []).every((s) => (s.summary ?? "") !== "")).toBe(true);
     // One repo carries every template of its blueprint — that is what makes a switch an edit and
     // never a re-clone, and `defineProject` refuses a repo that carries only some.
     expect(Object.keys(TEMPLATES).sort()).toEqual(["blank", "seo-geo"]);

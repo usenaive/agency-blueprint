@@ -326,6 +326,51 @@ describe("schedules", () => {
       expect(() => new Intl.DateTimeFormat("en-US", { timeZone: schedule.timezone })).not.toThrow();
     }
   });
+  it.each(all)("$name says what every fire comes to, in a few plain words for the launch card", (template) => {
+    expect(declared(template).map(([agent, schedule]) => [agent, schedule.summary])).toEqual([
+      ["sales", "Inbox and new leads"],
+      ["client-manager", "Client check-in"],
+      ["content-writer", "New blog post"],
+      ["content-reviser", "Fix weak pages"],
+      ["gap-researcher", "Competitor gap report"],
+    ]);
+  });
+});
+
+describe("the launch card's words", () => {
+  it("names each template the way an owner would, never by its id", () => {
+    expect(all.map((t) => [t.name, t.title])).toEqual([
+      ["blank", "Agency"],
+      ["seo-geo", "SEO & GEO agency"],
+    ]);
+    for (const t of all) {
+      expect(t.title.length).toBeLessThanOrEqual(80);
+      expect(t.description.length).toBeLessThanOrEqual(280);
+    }
+  });
+
+  it("says what Day 1 comes to, and claims no every-day line the weekday timers cannot keep", () => {
+    expect(all.map((t) => [t.name, t.roadmap])).toEqual([
+      ["blank", { day_one: "Set up your site, pipeline and first drafts" }],
+      ["seo-geo", { day_one: "Set up your site, pipeline and competitor gaps" }],
+    ]);
+    // Every timer is weekday-only or weekly, so "every day" would promise weekends that do not run.
+    for (const t of all) {
+      expect(t.roadmap.every_day).toBeUndefined();
+      for (const schedule of t.agents.flatMap((agent) => agent.schedules ?? [])) {
+        expect(schedule.cron.split(" ")[4]).not.toBe("*");
+      }
+    }
+  });
+
+  it("speaks in outcomes, never tool names or the prompt's own instructions", () => {
+    for (const t of all) {
+      const summaries = t.agents.flatMap((agent) => (agent.schedules ?? []).map((s) => s.summary!));
+      expect(t.roadmap.day_one!.length).toBeLessThanOrEqual(60);
+      for (const summary of summaries) expect(summary.length).toBeLessThanOrEqual(48);
+      for (const line of [t.roadmap.day_one!, ...summaries]) expect(line).not.toMatch(/project_context|_|\.|\(/);
+    }
+  });
 });
 
 describe("kindLabel", () => {

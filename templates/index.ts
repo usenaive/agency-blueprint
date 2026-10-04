@@ -19,7 +19,16 @@
  * This module is the browser's half, so it carries no agents and no demo rows: those live in
  * `templates/blank.ts` and `templates/seo-geo.ts`, which only the config and the server import.
  */
-import type { TemplateKind } from "@usenaive-sdk/blueprints";
+/**
+ * One kind of work a template files — a deliverable kind, a post kind. `id` is what rows carry.
+ * Declared here since engine 0.11, whose `Template` is only what the platform reads (name,
+ * description, agents); the screens' half of a template is this blueprint's own business.
+ */
+export interface TemplateKind {
+  id: string;
+  label: string;
+  description?: string;
+}
 
 export type TemplateName = "blank" | "seo-geo";
 
