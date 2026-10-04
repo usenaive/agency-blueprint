@@ -120,12 +120,22 @@ const system = (role: string): string => `${PREAMBLE} ${gate} ${role}`;
 const withMailbox = (role: string): string => `${PREAMBLE} ${gate} ${mailbox} ${role}`;
 const own = (role: string): string => `${PREAMBLE} ${gate} ${OWN_RECORD} ${role}`;
 
-const timer = (cron: string, input: string, budget_micro_usd: number): NonNullable<AgentDecl["schedules"]>[number] => ({
+/**
+ * `summary` is what a fire comes to in a few words an owner reads at a glance ("Client check-in") —
+ * the launch card's line for that day (≤48). Printed, never provisioned; `input` is what the agent reads.
+ */
+const timer = (
+  cron: string,
+  summary: string,
+  input: string,
+  budget_micro_usd: number,
+): NonNullable<AgentDecl["schedules"]>[number] => ({
   cron,
   timezone: AGENCY_TIMEZONE,
   /** A scheduled run has no operator behind it; without a persona it runs as nobody. */
   identity: AGENCY_IDENTITY,
   input,
+  summary,
   budget_micro_usd,
 });
 
@@ -174,6 +184,7 @@ export const roster: AgentDecl[] = [
     schedules: [
       timer(
         "30 8 * * 1-5",
+        "Inbox and new leads",
         "Read project_context. Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (list_clients): file any new reply as a lead first, note what it said on the client, and for every lead that moved or went quiet draft the next touch in full with add_client_note, next_action set to what you now wait on. A lead the operator has agreed to move to proposal: advance_pipeline it, then hand it to the proposal writer with send_to_agent (wait false, handoff_key its cli_ id) naming that id. Then add up to three new prospects that fit the ideal client. Send nothing.",
         10_000_000,
       ),
@@ -204,6 +215,7 @@ export const roster: AgentDecl[] = [
     schedules: [
       timer(
         "0 8 * * 1",
+        "Client check-in",
         "Read project_context. Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts); flag anything stalled or unscheduled as a note on the client and file a pending draft for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for, and draft the check-in as a note. Approve, send and publish nothing.",
         10_000_000,
       ),
@@ -234,6 +246,7 @@ export const roster: AgentDecl[] = [
     schedules: [
       timer(
         "0 7 * * 2,4",
+        "New blog post",
         "Read project_context. Take the next unwritten title from the editorial calendar (the note on the agency's own record) and file it as a pending draft — 900–1400 words, one target keyword, a real intro. If no calendar is filed yet, stop and file nothing: the gap researcher's handoff writes it. Publish nothing.",
         10_000_000,
       ),
@@ -261,6 +274,7 @@ export const roster: AgentDecl[] = [
     schedules: [
       timer(
         "0 9 * * 3",
+        "Fix weak pages",
         "Read project_context. Audit every published page and post; file revisions for the three weakest as pending drafts on the agency's own record, each with a one-line reason.",
         10_000_000,
       ),
@@ -288,6 +302,7 @@ export const roster: AgentDecl[] = [
     schedules: [
       timer(
         "0 9 * * 5",
+        "Competitor gap report",
         "Read project_context. Refresh the gap report against the named competitors: what changed, what is still missing, the ten highest-value gaps — as a note on the agency's own record.",
         10_000_000,
       ),

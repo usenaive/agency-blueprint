@@ -235,7 +235,9 @@ const posts: Post[] = [
 export const seoGeo: AgencyTemplate = {
   ...blank,
   name: "seo-geo",
+  title: "SEO & GEO agency",
   description: VOCABULARY["seo-geo"].description,
+  roadmap: { day_one: "Set up your site, pipeline and competitor gaps" },
   kinds: VOCABULARY["seo-geo"].kinds,
   words: { ...VOCABULARY["seo-geo"].words },
   seed: { clients, posts },

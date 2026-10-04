@@ -16,7 +16,7 @@ import type { AgentDecl, DefineInput, Template } from "@usenaive-sdk/blueprints"
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { roster } from "./agents.ts";
-import { VOCABULARY } from "./index.ts";
+import { VOCABULARY, type TemplateKind } from "./index.ts";
 
 export {
   AGENCY_IDENTITY, AGENCY_TIMEZONE, ASK_OPERATOR, budget, CONTEXT, crm, gate, HANDOFF, mailbox, MAILBOX_READ, MAILBOX_SEND,
@@ -31,8 +31,22 @@ export {
  * to each `name`; `naive.config.ts` publishes its `{name, role, description}` as `crew_per_client`.
  */
 export interface AgencyTemplate extends Template {
+  /** What an owner calls this template (≤80) — the studio prints "runs the <title> template". */
+  title: NonNullable<DefineInput["title"]>;
+  /**
+   * The first week in the owner's words, for the studio's launch card. Only `day_one`: every
+   * timer here is weekday-only or weekly, so an `every_day` line would claim weekends that do not
+   * run. Days 2–7 read each timer's own `summary` instead (`templates/agents.ts`).
+   */
+  roadmap: NonNullable<DefineInput["roadmap"]>;
   questions: NonNullable<DefineInput["questions"]>;
   crew: AgentDecl[];
+  /** The kinds this template's queue holds; the screens list them in this order. */
+  kinds: TemplateKind[];
+  /** The demo rows the store seeds on first run, keyed by collection (`clients`, `posts`). */
+  seed: Record<string, unknown>;
+  /** Every word a screen prints that changes with the template. */
+  words: Record<string, string>;
 }
 
 /**
@@ -114,7 +128,9 @@ const posts: Post[] = [
 
 export const blank: AgencyTemplate = {
   name: "blank",
+  title: "Agency",
   description: VOCABULARY.blank.description,
+  roadmap: { day_one: "Set up your site, pipeline and first drafts" },
   kinds: VOCABULARY.blank.kinds,
   words: { ...VOCABULARY.blank.words },
   seed: { clients, posts },

@@ -34,6 +34,10 @@ export default defineProject({
   blueprint: "agency",
   /** Chosen in `templates/index.ts`, so the config, the screens and the site cannot disagree. */
   template: TEMPLATE,
+  /** What the studio calls this template and says it does, and its first week on the launch card. */
+  title: ACTIVE_TEMPLATE.title,
+  description: ACTIVE_TEMPLATE.description,
+  roadmap: ACTIVE_TEMPLATE.roadmap,
   /** Every template this repo carries; the chosen one's agents become this project's crew. */
   templates: Object.values(TEMPLATES),
   /**
