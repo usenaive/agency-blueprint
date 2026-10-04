@@ -79,9 +79,11 @@ export function Blog({ site, posts }: SectionProps & { posts: PublicPost[] }) {
         {posts.map((post) => (
           <article className="rounded-xl border border-line bg-surface p-6" key={post.id}>
             <p className="eyebrow">{post.postedAt ?? post.scheduledFor}</p>
-            <h3 className="mt-3 text-lg font-semibold tracking-tight">{post.title}</h3>
+            <h3 className="mt-3 text-lg font-semibold tracking-tight">
+              <a className="hover:text-accent" href={post.path}>{post.title}</a>
+            </h3>
             <p className="mt-3 text-sm leading-6 text-muted">{post.summary}</p>
-            {post.body ? <p className="mt-4 line-clamp-4 text-sm leading-6 text-ink">{post.body}</p> : null}
+            <a className="mt-4 inline-block text-sm font-medium text-accent" href={post.path}>Read article →</a>
           </article>
         ))}
       </div>

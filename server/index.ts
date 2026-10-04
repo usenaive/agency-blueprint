@@ -28,6 +28,7 @@ const base = {
   dashboardPassword: process.env.DASHBOARD_PASSWORD,
   studioUrl: process.env.NAIVE_STUDIO_URL,
   appId: process.env.NAIVE_APP_ID,
+  publicShell: () => readFile(join(root, "dist", "site-shell.html"), "utf8"),
 };
 
 /**
@@ -102,13 +103,13 @@ async function handleStatic(res: ServerResponse, path: string): Promise<void> {
     res.end(content);
   } catch {
     res.writeHead(200, { "content-type": "text/html" });
-    res.end(await readFile(join(root, "dist", isOperatorPath(clean) ? "app/index.html" : "index.html")));
+    res.end(await readFile(join(root, "dist", isOperatorPath(clean) ? "app/index.html" : "site-shell.html")));
   }
 }
 
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
-  const handled = url.pathname === "/mcp" || url.pathname.startsWith("/api/") || ["/robots.txt", "/sitemap.xml", "/llms.txt"].includes(url.pathname)
+  const handled = url.pathname === "/mcp" || url.pathname.startsWith("/api/") || url.pathname.startsWith("/blog/") || ["/", "/robots.txt", "/sitemap.xml", "/llms.txt"].includes(url.pathname)
     ? handleApi(req, res, url)
     : handleStatic(res, url.pathname);
   handled.catch(() => send(res, 502, { error: "upstream unavailable" }));

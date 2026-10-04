@@ -75,6 +75,36 @@ describe("the store routes", () => {
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
   });
 
+  it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {
+    const upstream = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [
+        { id: "eml_1", address: "hello@founderframehq.com" },
+        { id: "eml_2", address: "leads@founderframehq.com" },
+      ] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ accepted: true }), { status: 202 }));
+    vi.stubGlobal("fetch", upstream);
+    const { call, store } = fixture({
+      config: { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" },
+    });
+    store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
+
+    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    expect(store.read().clients).toHaveLength(1);
+    expect(upstream).toHaveBeenCalledTimes(2);
+    expect(upstream.mock.calls[0]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails?limit=100");
+    expect(upstream.mock.calls[1]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails/eml_1/send");
+    const init = upstream.mock.calls[1]?.[1] as RequestInit;
+    expect(init.headers).toMatchObject({ authorization: "Bearer secret" });
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      to: ["leads@founderframehq.com"],
+      subject: "New Founder Frame inquiry: Summit Outdoor Co",
+    });
+
+    // A repeated form post returns the existing lead and does not send another notification.
+    expect((await call("POST", "/api/leads", lead)).status).toBe(200);
+    expect(upstream).toHaveBeenCalledTimes(2);
+  });
+
   it("bounds what the anonymous form may write: one open row per contact, a cap on open leads, a size on fields", async () => {
     const { call, writes, store } = fixture();
     expect((await call("POST", "/api/leads", lead)).status).toBe(201);
@@ -205,10 +235,22 @@ describe("the store routes", () => {
 });
 
 describe("public discovery documents", () => {
-  it("serves crawl directives, a canonical sitemap, and an agency-readable llms file", async () => {
-    const { call, store } = fixture();
+  it("serves crawl directives, dynamic metadata, permanent articles, a complete sitemap, and an agency-readable llms file", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-04T12:00:00Z"));
+    const shell = '<!doctype html><html><head><title>Agency services</title><meta name="description" content="generic" /></head><body><div id="root"></div><script type="module" src="/assets/site.js"></script></body></html>';
+    const { call, store } = fixture({ publicShell: () => Promise.resolve(shell) });
     store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
+    const company = store.createLead({ name: "Founder Frame", domain: "", contact: { name: "", email: "", role: "" } });
+    const live = store.createDraftPost({ clientId: company.id, title: "A safer <title>", summary: "Useful & specific", body: "## Answer\n\nA **clear** answer.\n\n- First", kind: "article", channel: "blog", scheduledFor: "2026-10-04" })!;
+    store.updatePost(live.id, { status: "posted" });
+    const future = store.createDraftPost({ clientId: company.id, title: "Future draft", summary: "Not public", body: "Wait", kind: "article", channel: "blog", scheduledFor: "2026-10-06" })!;
+    store.updatePost(future.id, { status: "posted" });
     const headers = { host: "founderframehq.com", "x-forwarded-proto": "https" };
+
+    const home = await call("GET", "/", "", headers);
+    expect(home.text).toContain("<title>Founder Frame —");
+    expect(home.text).toContain('<link rel="canonical" href="https://founderframehq.com/"');
 
     const robots = await call("GET", "/robots.txt", "", headers);
     expect(robots).toMatchObject({ status: 200, headers: { "content-type": "text/plain; charset=utf-8" } });
@@ -218,11 +260,27 @@ describe("public discovery documents", () => {
     const sitemap = await call("GET", "/sitemap.xml", "", headers);
     expect(sitemap).toMatchObject({ status: 200, headers: { "content-type": "application/xml; charset=utf-8" } });
     expect(sitemap.text).toContain("<loc>https://founderframehq.com/</loc>");
+    expect(sitemap.text).toContain(`<loc>https://founderframehq.com/blog/${live.id}</loc>`);
+    expect(sitemap.text).not.toContain(future.id);
+
+    const page = await call("GET", `/blog/${live.id}`, "", headers);
+    expect(page).toMatchObject({ status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+    expect(page.text).toContain("A safer &lt;title&gt;");
+    expect(page.text).toContain(`<link rel="canonical" href="https://founderframehq.com/blog/${live.id}"`);
+    expect(page.text).toContain("<h2>Answer</h2>");
+    expect(page.text).not.toContain('src="/assets/site.js"');
+    expect((await call("GET", `/blog/${future.id}`, "", headers)).status).toBe(404);
+
+    const feed = await call("GET", "/api/blog", "", headers);
+    expect(feed.body).toMatchObject([{ id: live.id, path: `/blog/${live.id}` }]);
+    expect(JSON.stringify(feed.body)).not.toContain(future.id);
 
     const llms = await call("GET", "/llms.txt", "", headers);
     expect(llms).toMatchObject({ status: 200, headers: { "content-type": "text/plain; charset=utf-8" } });
     expect(llms.text).toContain("# Founder Frame");
     expect(llms.text).toContain("mailto:hello@founderframehq.com");
+    expect(llms.text).toContain(`https://founderframehq.com/blog/${live.id}`);
+    vi.useRealTimers();
   });
 });
 
