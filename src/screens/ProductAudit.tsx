@@ -40,7 +40,7 @@ export interface AuditSnapshot {
 
 const changes = [
   ["Safe first publish", "Fresh installs now show no invented price, contract, timeline, proof or placeholder inbox."],
-  ["Complete setup identity", "SEO/GEO setup now collects public agency name, verified inbox and pricing posture before delivery."],
+  ["Complete setup identity", "SEO & GEO setup now collects public agency name, verified inbox and pricing posture before delivery."],
   ["Public Insights feed", "Posted blog articles have a privacy-filtered public API and render on the landing page."],
   ["Blog publishing fix", "A blog post publishes to the app feed instead of being sent to the social-post primitive."],
   ["Public-claims gate", "Articles with placeholders, unsupported client/timeline/term claims, or unsourced metrics are blocked before publication."],
@@ -79,7 +79,7 @@ export function ProductAudit() {
 
   const gaps = [
     ["Verify and personalize the public site", site, `${data.public_site.company}; ${data.public_site.contact_email || "no verified contact"}; ${data.public_site.prices.join(", ")}.`],
-    ["Publish one reviewed SEO/GEO article", data.content.posted_blog_articles > 0, `${data.content.posted_blog_articles} posted; ${data.content.draft_blog_articles} drafts.`],
+    ["Publish one reviewed SEO & GEO article", data.content.posted_blog_articles > 0, `${data.content.posted_blog_articles} posted; ${data.content.draft_blog_articles} drafts.`],
     ["Finish contact-ready prospect coverage", sales, `${data.crm.prospects} prospects; ${data.crm.named_contacts} named; ${data.crm.addressed_contacts} addressed.`],
     ["Approve the paid-media proposal", marketing, `${data.content.ad_plans} filed; ${data.content.approved_ad_plans} approved.`],
     ["Deduplicate internal agency records", data.crm.internal_records <= 1, `${data.crm.internal_records} name-only internal records.`],

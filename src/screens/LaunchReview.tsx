@@ -140,7 +140,7 @@ export function LaunchReview() {
         ))}
       </section>
 
-      {(!hasSearchConsole || !hasAnalytics) ? <div className="notice-fail mt-4 flex items-start gap-2"><AlertTriangle className="mt-0.5 shrink-0" size={16} /><span>SEO/GEO measurement is still limited. Connect {!hasSearchConsole ? "Google Search Console" : ""}{!hasSearchConsole && !hasAnalytics ? " and " : ""}{!hasAnalytics ? "Google Analytics" : ""} to the Founder Frame identity before treating ranking or traffic reports as verified.</span></div> : null}
+      {(!hasSearchConsole || !hasAnalytics) ? <div className="notice-fail mt-4 flex items-start gap-2"><AlertTriangle className="mt-0.5 shrink-0" size={16} /><span>SEO &amp; GEO measurement is still limited. Connect {!hasSearchConsole ? "Google Search Console" : ""}{!hasSearchConsole && !hasAnalytics ? " and " : ""}{!hasAnalytics ? "Google Analytics" : ""} to the Founder Frame identity before treating ranking or traffic reports as verified.</span></div> : null}
     </div>
   );
 }
