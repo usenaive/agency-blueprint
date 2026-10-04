@@ -115,6 +115,55 @@ export async function proxyFetch(
   });
 }
 
+/**
+ * Put a public-site inquiry in the agency persona's own inbox as well as its CRM. The anonymous
+ * route remains bounded by the lead rate limiter, duplicate leads are not sent twice, and a mail
+ * outage never discards the CRM row that is the source of truth.
+ */
+export async function notifyLead(
+  config: ProxyConfig,
+  lead: { id: string; name: string; domain: string; contact: { name: string; email: string }; services: string[]; notes: string[] },
+  agencyAddress: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  if (config.identityId === null || agencyAddress.trim() === "") return false;
+  const inboxes = await proxyFetch(
+    config,
+    { method: "GET", path: `/v1/identities/${config.identityId}/emails?limit=100` },
+    null,
+    fetchImpl,
+  );
+  if (!inboxes.ok) return false;
+  const rows = ((await inboxes.json()) as { data?: { id?: string; address?: string }[] }).data ?? [];
+  const sender = rows.find((row) => row.address?.toLowerCase() === agencyAddress.toLowerCase());
+  // Providers suppress a message sent from an address back to that exact address. A separate
+  // `leads@` inbox on the same identity still lands in the agency's native message feed and can
+  // wake the sales owner, without routing the visitor's information to a personal mailbox.
+  const recipient = rows.find((row) => row.address?.toLowerCase().startsWith("leads@")) ??
+    rows.find((row) => row.address !== undefined && row.address.toLowerCase() !== agencyAddress.toLowerCase());
+  if (sender?.id === undefined || recipient?.address === undefined) return false;
+  const sent = await proxyFetch(
+    config,
+    { method: "POST", path: `/v1/identities/${config.identityId}/emails/${sender.id}/send` },
+    JSON.stringify({
+      to: [recipient.address],
+      subject: `New Founder Frame inquiry: ${lead.name}`,
+      text: [
+        "A new inquiry was filed in the Founder Frame CRM.",
+        "",
+        `Lead: ${lead.name}`,
+        `Website: ${lead.domain}`,
+        `Contact: ${lead.contact.name} <${lead.contact.email}>`,
+        `Services: ${lead.services.join(", ") || "Not specified"}`,
+        `CRM ID: ${lead.id}`,
+        ...(lead.notes[0] ? ["", lead.notes[0]] : []),
+      ].join("\n"),
+    }),
+    fetchImpl,
+  );
+  return sent.ok;
+}
+
 /** A platform agent, as much of one as this dashboard ever reads. */
 export interface AgentRow {
   id: string;

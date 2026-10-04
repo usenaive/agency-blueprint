@@ -16,6 +16,7 @@ export interface PublicPost {
   body?: string;
   postedAt?: string;
   scheduledFor: string;
+  path: string;
 }
 
 export function validProfile(value: unknown): SiteProfile {
@@ -49,7 +50,8 @@ export async function loadBlog(doFetch: typeof fetch = fetch): Promise<PublicPos
       if (typeof post !== "object" || post === null || Array.isArray(post)) return false;
       const row = post as Record<string, unknown>;
       return typeof row.id === "string" && typeof row.title === "string" && typeof row.summary === "string" &&
-        typeof row.scheduledFor === "string" && (row.body === undefined || typeof row.body === "string") &&
+        typeof row.scheduledFor === "string" && typeof row.path === "string" && row.path.startsWith("/blog/") &&
+        (row.body === undefined || typeof row.body === "string") &&
         (row.postedAt === undefined || typeof row.postedAt === "string");
     });
   } catch {

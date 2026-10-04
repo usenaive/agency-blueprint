@@ -26,6 +26,9 @@ import { configFromEnv } from "./proxy.ts";
 import { handleRequest, SSE_RETRY, type ApiRequest } from "./routes.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
+/** Replaced with the Vite-built public document by `build-api.mjs`. */
+declare const PUBLIC_INDEX_HTML: string;
+
 const TABLE = "agency_store";
 const ROW = "singleton";
 
@@ -173,6 +176,7 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
       studioUrl: process.env["NAIVE_STUDIO_URL"],
       appId: process.env["NAIVE_APP_ID"],
       local: false,
+      publicShell: () => Promise.resolve(PUBLIC_INDEX_HTML),
     });
 
     // Write and release inside the same transaction the read was taken in: the next writer's

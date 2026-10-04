@@ -10,10 +10,11 @@
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
-import { collect, latestContext, listAgents, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
+import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
+import { articlePath, publishedArticle, renderArticle, renderHome } from "./public-site.ts";
 
 export interface ApiRequest {
   /** Upper-case. */
@@ -66,6 +67,8 @@ export interface ApiContext {
   appId: string | undefined;
   /** True on `pnpm serve` / `pnpm dev`. False in the deployed function. */
   local: boolean;
+  /** The built public shell, used to serve crawlable metadata and permanent article pages. */
+  publicShell?: () => Promise<string>;
 }
 
 /**
@@ -293,6 +296,32 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   const scheme = forwarded === "http" ? "http" : "https";
   const host = req.headers.host?.trim() || "localhost";
   const origin = `${scheme}://${host}`;
+  const store = ["/", "/sitemap.xml", "/llms.txt", "/api/site", "/api/blog"].includes(path) || path.startsWith("/blog/")
+    ? await ctx.store()
+    : null;
+  const profile = store === null ? null : store.site();
+  const articles = store === null ? [] : store.read().posts.filter((post) => publishedArticle(post));
+  if (path === "/") {
+    if (method !== "GET") return NOT_ALLOWED;
+    if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
+    return {
+      status: 200,
+      text: renderHome(await ctx.publicShell(), launchSafeSite(profile) ? profile : holdingSite, origin),
+      headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" },
+    };
+  }
+  const article = /^\/blog\/([\w-]+)$/.exec(path);
+  if (article !== null) {
+    if (method !== "GET") return NOT_ALLOWED;
+    if (ctx.publicShell === undefined || profile === null) return NO_ROUTE;
+    const post = articles.find((candidate) => candidate.id === article[1]);
+    if (post === undefined) return { status: 404, body: { error: "no such published article" } };
+    return {
+      status: 200,
+      text: renderArticle(await ctx.publicShell(), launchSafeSite(profile) ? profile : holdingSite, post, origin),
+      headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" },
+    };
+  }
   if (path === "/robots.txt") {
     if (method !== "GET") return NOT_ALLOWED;
     return {
@@ -305,17 +334,13 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     if (method !== "GET") return NOT_ALLOWED;
     return {
       status: 200,
-      text: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url></urlset>\n`,
+      text: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url>${articles.map((post) => `<url><loc>${origin}${articlePath(post)}</loc><lastmod>${post.scheduledFor}</lastmod></url>`).join("")}</urlset>\n`,
       headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" },
     };
   }
   if (path === "/llms.txt") {
     if (method !== "GET") return NOT_ALLOWED;
-    const store = await ctx.store();
-    const profile = store.site();
-    const articles = store.read().posts
-      .filter((post) => post.channel === "blog" && post.status === "posted" && post.kind === "article")
-      .slice(0, 12);
+    if (store === null || profile === null) return NO_ROUTE;
     return {
       status: 200,
       text: [
@@ -326,7 +351,7 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
         `- Website: ${origin}/`,
         `- Contact: mailto:${profile.contact.email}`,
         ...profile.services.map((service) => `- ${service.name}: ${service.description}`),
-        ...(articles.length === 0 ? [] : ["", "## Insights", ...articles.map((post) => `- ${post.title}: ${post.summary}`)]),
+        ...(articles.length === 0 ? [] : ["", "## Insights", ...articles.slice(0, 12).map((post) => `- [${post.title}](${origin}${articlePath(post)}): ${post.summary}`)]),
         "",
       ].join("\n"),
       headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
@@ -334,16 +359,15 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   }
   if (path === "/api/site") {
     if (method !== "GET") return NOT_ALLOWED;
-    const stored = (await ctx.store()).site();
+    const stored = profile ?? holdingSite;
     return { status: 200, body: launchSafeSite(stored) ? stored : holdingSite, headers: { "cache-control": "public, max-age=60" } };
   }
   if (path === "/api/blog") {
     if (method !== "GET") return NOT_ALLOWED;
-    const posts = (await ctx.store()).read().posts
-      .filter((post) => post.channel === "blog" && post.status === "posted" && post.kind === "article")
+    const posts = articles
       .sort((a, b) => (b.postedAt ?? b.scheduledFor).localeCompare(a.postedAt ?? a.scheduledFor))
       .slice(0, 6)
-      .map(({ id, title, summary, body, postedAt, scheduledFor }) => ({ id, title, summary, body, postedAt, scheduledFor }));
+      .map(({ id, title, summary, body, postedAt, scheduledFor }) => ({ id, title, summary, body, postedAt, scheduledFor, path: articlePath({ id }) }));
     return { status: 200, body: posts, headers: { "cache-control": "public, max-age=60" } };
   }
   if (path === "/api/leads") {
@@ -372,7 +396,12 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
         headers: { "retry-after": String(LEAD_WINDOW_MS / 1000) },
       };
     }
-    return { status: 201, body: store.createLead(body as LeadInput) };
+    const created = store.createLead(body as LeadInput);
+    if (ctx.config !== null) {
+      const address = store.site().contact.email;
+      await notifyLead(ctx.config, created, address).catch(() => false);
+    }
+    return { status: 201, body: created };
   }
   return null;
 }
@@ -635,7 +664,7 @@ function sameOrigin(req: ApiRequest): boolean {
 /** The whole route table, in order: `/mcp`, the door, the public site, the gate, the local token routes, the store, the platform. */
 export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (req.path === "/mcp") return mcpRoute(req, ctx);
-  if (["/robots.txt", "/sitemap.xml", "/llms.txt"].includes(req.path)) {
+  if (["/", "/robots.txt", "/sitemap.xml", "/llms.txt"].includes(req.path) || req.path.startsWith("/blog/")) {
     return (await publicRoutes(req, ctx)) ?? NO_ROUTE;
   }
   if (!req.path.startsWith("/api/")) return NO_ROUTE;

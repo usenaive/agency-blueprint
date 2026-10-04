@@ -13,7 +13,7 @@
  * the whole server contract.
  */
 import { build } from "esbuild";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,6 +24,14 @@ mkdirSync(join(dist, "api"), { recursive: true });
 // The one-function-per-route predecessor, in case `api:build` runs without the `vite build` that
 // empties `dist/`: a second entry would ship as a second function over a second connection.
 rmSync(join(dist, "api", "mcp.js"), { force: true });
+// A physical `index.html` wins over Vercel's root rewrite, so keeping that filename would serve the
+// generic build-time title before the dynamic function could inject the approved company profile.
+// The shell stays deployable under an unlinked internal name for the SPA fallbacks; `/` itself has
+// no file collision and therefore must pass through the function below.
+const index = join(dist, "index.html");
+const shell = join(dist, "site-shell.html");
+if (existsSync(index)) renameSync(index, shell);
+const publicShell = readFileSync(shell, "utf8");
 
 await build({
   entryPoints: [join(root, "server", "api-entry.ts")],
@@ -41,7 +49,10 @@ await build({
   // environment — so a runtime read there answers with this repository's default template while the
   // screens beside it show the built one. Substituted, the two halves of one deployment cannot
   // disagree. Unset it is `""`, falsy, and `templates/index.ts` keeps the default it names.
-  define: { "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? "") },
+  define: {
+    "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? ""),
+    PUBLIC_INDEX_HTML: JSON.stringify(publicShell),
+  },
 });
 
 // Seven rewrites, in this order. `/mcp` is the endpoint `naive.config.ts` declares; the three
@@ -59,12 +70,14 @@ writeFileSync(
     {
       rewrites: [
         { source: "/mcp", destination: "/api/app?__path=/mcp" },
+        { source: "/", destination: "/api/app?__path=/" },
+        { source: "/blog/:path*", destination: "/api/app?__path=/blog/:path*" },
         { source: "/robots.txt", destination: "/api/app?__path=/robots.txt" },
         { source: "/sitemap.xml", destination: "/api/app?__path=/sitemap.xml" },
         { source: "/llms.txt", destination: "/api/app?__path=/llms.txt" },
         { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
         { source: "/app/:path*", destination: "/app/index.html" },
-        { source: "/((?!api/).*)", destination: "/index.html" },
+        { source: "/((?!api/).*)", destination: "/site-shell.html" },
       ],
     },
     null,
