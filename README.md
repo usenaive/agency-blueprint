@@ -183,6 +183,12 @@ says `network` (someone the operator knows) or gives `referred_by` (the `cli_` i
 who introduced them, which must exist), which makes it a `referral`. Rows filed before sources
 existed have none. The agency's own name-only record isn't a lead and has no source.
 
+Each active client has a private referral link, `/?ref=<code>#contact`, from
+`get_referral_link`. The code is random (never the client's slug, so a link can't be made from
+a name) and is stamped when the client goes active. The site remembers it for the visit, and a
+lead filed through it lands as a `referral` from that client; an unknown code files an ordinary
+`site` lead. It goes through the same rate limit and open-lead cap as the rest of the form.
+
 ### The skills
 
 Skills are the platform's, referenced as `naive/<slug>` and resolved from the catalogue at
@@ -423,7 +429,7 @@ exist **only** on a local server. On the deployment they answer `404`, and Setti
 the platform mints that app's token itself and injects it, so the agents in your project
 already reach `/mcp` without one being handed to whoever finds the URL.
 
-Tools: `list_clients`, `get_client`, `create_lead`, `add_client_note`, `advance_pipeline`,
+Tools: `list_clients`, `get_client`, `create_lead`, `get_referral_link`, `add_client_note`, `advance_pipeline`,
 `list_posts`, `create_draft_post`, `approve_post`, `schedule_post`, `list_agents`,
 `start_agent_session`, `get_calendar`, `get_site`, `update_site`.
 

@@ -238,7 +238,8 @@ async function mcpRoute(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (!authorized(store, req.headers.authorization, ctx.mcpToken)) {
     return { status: 401, body: { error: "missing or invalid bearer token" } };
   }
-  const answer = await handleMcp(req.body, store, ctx.config);
+  // The public site and `/mcp` are one app, so this request's host is the site a referral link names.
+  const answer = await handleMcp(req.body, store, ctx.config, originOf(req));
   // A notification has no reply: 202 with no body, as the streamable-HTTP transport asks.
   return answer === null ? { status: 202 } : { status: 200, body: answer };
 }
@@ -290,12 +291,17 @@ const withinLeadSize = (lead: Partial<LeadInput>): boolean =>
  * cacheable for a minute so a burst of visitors is one read — and `POST /api/leads` is its contact
  * form, which lands as a CRM lead. Neither reads a row a visitor could not already see on the page.
  */
-async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
-  const { method, path } = req;
+/** The origin a visitor reached this app at, as the public pages print it in canonical links. */
+function originOf(req: ApiRequest): string {
   const forwarded = req.headers["x-forwarded-proto"]?.split(",")[0]?.trim();
   const scheme = forwarded === "http" ? "http" : "https";
   const host = req.headers.host?.trim() || "localhost";
-  const origin = `${scheme}://${host}`;
+  return `${scheme}://${host}`;
+}
+
+async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
+  const { method, path } = req;
+  const origin = originOf(req);
   const store = ["/", "/sitemap.xml", "/llms.txt", "/api/site", "/api/blog"].includes(path) || path.startsWith("/blog/")
     ? await ctx.store()
     : null;
@@ -399,8 +405,15 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     // The source is the server's to say, never the body's: a visitor who could post `referral` would
     // credit any client with an introduction. Only a signed-in operator's own form may say `manual`.
     const operator = (body as { source?: unknown }).source === "manual" && apiGate(req, ctx) === null;
-    const { source: _claimed, referredBy: _referrer, ...fields } = body as LeadInput;
-    const created = store.createLead({ ...fields, source: operator ? "manual" : "site" });
+    // A referral link's code names the client who sent this visitor. The code is the only proof:
+    // an unknown or mistyped one files an ordinary site lead and says nothing about why.
+    const ref = (body as { ref?: unknown }).ref;
+    const referrer = typeof ref === "string" && ref !== "" && ref.length <= 64 ? store.read().clients.find((c) => c.referralCode === ref) : undefined;
+    const { source: _claimed, referredBy: _referrer, ref: _ref, ...fields } = body as LeadInput & { ref?: unknown };
+    const created = store.createLead({
+      ...fields,
+      ...(operator ? { source: "manual" } : referrer ? { source: "referral", referredBy: referrer.id } : { source: "site" }),
+    });
     if (ctx.config !== null) {
       const address = store.site().contact.email;
       await notifyLead(ctx.config, created, address).catch(() => false);

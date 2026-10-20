@@ -1,6 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { SiteProfile } from "../site.config.ts";
-import { submitLead, type ContactForm } from "./lead.ts";
+import { referralCode, submitLead, type ContactForm } from "./lead.ts";
 
 const EMPTY: ContactForm = { company: "", website: "", name: "", email: "", services: [], note: "" };
 
@@ -13,6 +13,8 @@ export function Contact({ site }: { site: SiteProfile }) {
   const [form, setForm] = useState(EMPTY);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "offline">("idle");
   const serviceNames = site.services.map((s) => s.name);
+  // Remember a referral link's code on arrival, so it survives the visitor reading on before writing.
+  useEffect(() => void referralCode(), []);
 
   const set = (patch: Partial<ContactForm>) => setForm((f) => ({ ...f, ...patch }));
   const toggleService = (name: string) =>

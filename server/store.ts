@@ -44,6 +44,9 @@ export interface StoreState {
 export const LEAD_WINDOW_MS = 60 * 60 * 1000;
 export const LEADS_PER_WINDOW = 10;
 
+/** 12 URL-safe characters (72 random bits): unguessable, and short enough to read in a link. */
+const newReferralCode = (): string => randomBytes(9).toString("base64url");
+
 /** Whole sections of the site, each replacing the current one; a key outside `SITE_SECTIONS` is refused. */
 export type SitePatch = Partial<SiteProfile>;
 
@@ -88,6 +91,12 @@ export interface Store {
   addClientNote(id: string, note: string, nextAction?: string): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
   onboardClient(id: string): Client | null;
+  /**
+   * The client's referral code, stamped now when it has none (a client onboarded before links
+   * existed). Null for a client that does not exist or is not active: only a client the agency works
+   * for is asked to refer.
+   */
+  referralCode(id: string): string | null;
   updatePost(id: string, patch: PostPatch): Post | null;
   /**
    * Counts one public lead against the current window and says whether it may be filed. False is
@@ -252,8 +261,18 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       if (!client || client.stage === "churned") return client ?? null;
       client.stage = "active";
       client.onboardedAt ??= new Date().toISOString();
+      client.referralCode ??= newReferralCode();
       save();
       return client;
+    },
+    referralCode(id) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client || client.stage !== "active") return null;
+      if (client.referralCode === undefined) {
+        client.referralCode = newReferralCode();
+        save();
+      }
+      return client.referralCode;
     },
     updatePost(id, patch) {
       const post = state.posts.find((p) => p.id === id);

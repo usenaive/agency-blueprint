@@ -134,6 +134,31 @@ describe("mcp tools", () => {
     expect((await file({ name: "Mixed", domain: "mixed.example", source: "network", referred_by: anyClient })).result.isError).toBe(true);
   });
 
+  it("get_referral_link gives an active client its own stable link on this site, and refuses anyone else", async () => {
+    const store = freshStore();
+    const lead = store.createLead({ name: "Acme Dental", domain: "acmedental.example", contact: { name: "O", email: "o@acmedental.example", role: "" } });
+    const ask = async () => (await handleMcp(call("get_referral_link", { client: lead.id }), store, null, "https://agency.example")) as CallResult;
+
+    // A lead is not yet a client the agency works for.
+    expect((await ask()).result.isError).toBe(true);
+
+    store.onboardClient(lead.id);
+    const link = JSON.parse((await ask()).result.content[0]!.text) as { code: string; url: string };
+    expect(link.url).toBe(`https://agency.example/?ref=${link.code}#contact`);
+    // Random, never the slug, and the same every time it is asked for.
+    expect(link.code).toMatch(/^[\w-]{12}$/);
+    expect(link.code).not.toContain("acme");
+    expect((JSON.parse((await ask()).result.content[0]!.text) as { code: string }).code).toBe(link.code);
+  });
+
+  it("stamps a link for a client onboarded before links existed", async () => {
+    const store = freshStore();
+    const lead = store.createLead({ name: "Old Client", domain: "old.example", contact: { name: "O", email: "o@old.example", role: "" } });
+    store.onboardClient(lead.id);
+    delete (store.read().clients.find((c) => c.id === lead.id) as Client).referralCode;
+    expect(store.referralCode(lead.id)).toMatch(/^[\w-]{12}$/);
+  });
+
   it("the agency's own name-only record carries no source: it is not a lead", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio", source: "network" }), store, null)) as CallResult;
