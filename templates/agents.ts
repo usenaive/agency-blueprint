@@ -143,6 +143,16 @@ const timer = (
 const DAY_ONE = 20_000_000;
 
 /**
+ * The referral ask (plan P3), the one email the weekly check-in proposes. Who is ready is the
+ * store's rule (`list_referral_ready`), never the agent's guess, and `record_referral_ask` starts
+ * the cooldown, so a client is not asked again next Monday because nobody remembered.
+ */
+export const REFERRAL_ASK =
+  "Then referrals: list_referral_ready names the clients ready to be asked for an introduction; ask nobody else. " +
+  "For each, propose one short email with email.send (it waits for the operator's approval) to the client's contact: thank them for one specific piece of recent work, ask whether they know one business that could use the same help, and include their referral link exactly as given. " +
+  "Offer no reward, discount or fee, and claim no result the work did not show. Then record_referral_ask for that client.";
+
+/**
  * What every cold opener must carry (plan F2): one thing read on the prospect's own site. A generic
  * pitch is what a prospect deletes; a true, specific observation is what shows the work. `seo-geo`
  * goes further and audits first (`templates/seo-geo.ts`).
@@ -216,7 +226,7 @@ export const roster: AgentDecl[] = [
       "You are the client manager: every active client's calendar is yours to keep honest. Read list_clients, get_client and get_calendar before acting. Through the dashboard tools, file missing deliverables with create_draft_post, reslot with schedule_post, and record what you flagged with add_client_note. Approving and publishing are the operator's, never yours.",
     ),
     tools: tools(
-      [...CONTEXT, ...crm("list_clients", "get_client", "create_lead", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note"), ...MAILBOX_READ],
+      [...CONTEXT, ...crm("list_clients", "get_client", "create_lead", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note", "list_referral_ready", "record_referral_ask"), ...MAILBOX_READ],
       [...MAILBOX_SEND, ...OPERATOR],
     ),
     handoffs: false,
@@ -226,7 +236,7 @@ export const roster: AgentDecl[] = [
       timer(
         "0 8 * * 1",
         "Client check-in",
-        "Read project_context. Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts); flag anything stalled or unscheduled as a note on the client and file a pending draft for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for, and draft the check-in as a note. Approve, send and publish nothing.",
+        `Read project_context. Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts); flag anything stalled or unscheduled as a note on the client and file a pending draft for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for, and draft the check-in as a note. ${REFERRAL_ASK} Approve and publish nothing.`,
         10_000_000,
       ),
     ],

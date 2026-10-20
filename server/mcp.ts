@@ -86,6 +86,8 @@ export const TOOLS = [
     referred_by: str("For a referral: the id (cli_…) of the client who introduced them"),
   }, ["name"]) },
   { name: "get_referral_link", description: "An active client's private referral link to the agency's contact form. Whoever fills the form in through it is filed as a referral from that client, so quote this link exactly; never write one yourself.", inputSchema: obj({ client: str("Client id (cli_…), an active client") }, ["client"]) },
+  { name: "list_referral_ready", description: "The active clients ready to be asked for an introduction right now: with the agency at least 30 days, at least two pieces approved in the last 60, none turned down since, and not asked in the last 90. Each comes with its contact and referral link. Ask only these.", inputSchema: obj({}, []) },
+  { name: "record_referral_ask", description: "Record that you drafted a referral ask for this client, which starts its 90-day cooldown. Refused, with the reason, for a client list_referral_ready would not name.", inputSchema: obj({ client: str("Client id (cli_…)") }, ["client"]) },
   { name: "advance_pipeline", description: "Move a client to the next pipeline stage.", inputSchema: obj({ id: str("Client id") }, ["id"]) },
   { name: "add_client_note", description: "File a working note on a client — a drafted outreach or follow-up, a call summary, what a proposal is waiting on — for the operator to read on the client's page. Optionally restate what the client is waiting on next.", inputSchema: obj({
     id: str("Client id"), note: str("The note in full — a drafted follow-up goes here verbatim"),
@@ -141,6 +143,15 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       const code = store.referralCode(id);
       if (code === null) throw new ToolError("only an active client has a referral link (list_clients shows each client's stage)");
       return { client: id, code, url: `${origin}/?ref=${code}#contact` };
+    }
+    case "list_referral_ready":
+      return store.referralReady(new Date()).map((c) => ({
+        id: c.id, name: c.name, contact: c.contact, referral_link: `${origin}/?ref=${store.referralCode(c.id)}#contact`,
+      }));
+    case "record_referral_ask": {
+      const recorded = store.recordReferralAsk(need(params, "client"), new Date());
+      if ("refused" in recorded) throw new ToolError(recorded.refused);
+      return recorded.client;
     }
     case "list_clients":
       return store.read().clients;

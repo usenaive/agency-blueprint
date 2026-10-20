@@ -52,6 +52,8 @@ const WORK: Record<string, string> = {
     "In this agency every opener starts from a short public audit of the prospect: web_fetch its home page and one service page, and web_search the service it sells with its city or niche to see who ranks and whether an AI answer cites it. " +
     "File the audit as a note on the lead with add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
     "Public pages only, and no ranking, citation or traffic figure you did not see yourself.",
+  "client-manager":
+    "In this agency a referral ask leads with the gain the client's latest posted serp-report shows, quoted from that report (list_posts); with no gain in it, thank them for the work instead, and never state a gain the report does not show.",
 };
 const withWork = (name: string, text: string): string => (WORK[name] ? `${text} ${WORK[name]}` : text);
 
