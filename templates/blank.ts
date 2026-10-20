@@ -50,7 +50,21 @@ export interface AgencyTemplate extends Template {
 }
 
 /**
- * The three questions the studio asks before anything is provisioned (plan §4). Their answers are
+ * The people the operator already knows, for the first client (plan F1): a new agency has no
+ * clients to ask for a referral, and most first clients come through the founder's own network.
+ * Optional, because a list nobody has is one an agent would otherwise be tempted to invent.
+ */
+export const networkQuestion: AgencyTemplate["questions"][number] = {
+  key: "network",
+  type: "text",
+  optional: true,
+  label: "Who do you already know who might need this, or know someone who does?",
+  help: "Former colleagues, past employers, friends with businesses: a name, their company and how you know them. Sales drafts a short personal note to each for you to approve. Leave it blank to skip.",
+  placeholder: "Dana Kim, Brightline Bikes, my old manager at Shopify; Sam Ortiz, Ortiz Dental, college friend.",
+};
+
+/**
+ * The questions the studio asks before anything is provisioned (plan §4). Their answers are
  * the project context every agent reads first; `help` says which agent reads which, so the person
  * answering knows what the answer buys.
  */
@@ -76,6 +90,7 @@ export const questions: AgencyTemplate["questions"] = [
     help: "Shapes the pricing section of the site and the proposal skeleton.",
     placeholder: "Monthly retainer, $4k–$12k, three-month minimum.",
   },
+  networkQuestion,
 ];
 
 const clients: Client[] = [
