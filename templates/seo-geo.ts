@@ -42,6 +42,19 @@ const SKILLS: Record<string, string[]> = {
   "gap-researcher": ["naive/geo-answer-blocks"],
 };
 
+/**
+ * What a search agency's day-one and scheduled work adds, for agents whose system prompt has no room
+ * left (each is capped at 400 words). Plan F2: a search agency opens with a finding, so sales audits
+ * the prospect's public presence before it drafts the opener.
+ */
+const WORK: Record<string, string> = {
+  sales:
+    "In this agency every opener starts from a short public audit of the prospect: web_fetch its home page and one service page, and web_search the service it sells with its city or niche to see who ranks and whether an AI answer cites it. " +
+    "File the audit as a note on the lead with add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
+    "Public pages only, and no ranking, citation or traffic figure you did not see yourself.",
+};
+const withWork = (name: string, text: string): string => (WORK[name] ? `${text} ${WORK[name]}` : text);
+
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
 const clientGate =
   `You work for an SEO/GEO agency on one client's account. ${gate} ` +
@@ -274,6 +287,8 @@ export const seoGeo: AgencyTemplate = {
     ...blank.agents.map((agent) => ({
       ...agent,
       system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
+      ...(agent.intake ? { intake: { ...agent.intake, message: withWork(agent.name, agent.intake.message) } } : {}),
+      ...(agent.schedules ? { schedules: agent.schedules.map((s) => ({ ...s, input: withWork(agent.name, s.input) })) } : {}),
       skills: [...(agent.skills ?? []), ...(SKILLS[agent.name] ?? [])],
       tools: {
         default_config: agent.tools?.default_config ?? { permission: "deny" as const },
