@@ -12,6 +12,21 @@ import { STAGE_ORDER, TEMPLATE, nextStage, type Client } from "../data";
 
 const BLANK = { name: "", domain: "", contactName: "", contactEmail: "", contactRole: "" };
 
+/** How a lead's source reads on its row: the provenance chip, as `via email` does elsewhere. */
+const SOURCE_LABEL: Record<NonNullable<Client["source"]>, string> = {
+  site: "via website",
+  manual: "added by you",
+  outreach: "via outreach",
+  network: "via your network",
+  referral: "via referral",
+};
+
+function sourceText(c: Client, clients: readonly Client[]): string | null {
+  if (!c.source) return null;
+  const referrer = c.source === "referral" ? clients.find((row) => row.id === c.referredBy)?.name : undefined;
+  return referrer ? `referred by ${referrer}` : SOURCE_LABEL[c.source];
+}
+
 export function Crm() {
   const { data: clients, error, setData, setError } = useApi<Client[]>("/clients");
   const [form, setForm] = useState<typeof BLANK | null>(null);
@@ -51,6 +66,8 @@ export function Crm() {
           email: fields.contactEmail.trim(),
           role: fields.contactRole.trim(),
         },
+        // The server takes this only from a signed-in operator; the public form's leads are `site`.
+        source: "manual",
       });
       setData([...(clients ?? []), created]);
       setForm(null);
@@ -161,6 +178,7 @@ export function Crm() {
                           {c.contact.name} · {c.contact.role} · <span className="font-mono">{c.contact.email}</span>
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1.5">
+                          {sourceText(c, clients) ? <span className="chip chip-via">{sourceText(c, clients)}</span> : null}
                           {c.services.map((s) => (
                             <span key={s} className="chip chip-plain">{s}</span>
                           ))}

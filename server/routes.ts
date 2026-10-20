@@ -396,7 +396,11 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
         headers: { "retry-after": String(LEAD_WINDOW_MS / 1000) },
       };
     }
-    const created = store.createLead(body as LeadInput);
+    // The source is the server's to say, never the body's: a visitor who could post `referral` would
+    // credit any client with an introduction. Only a signed-in operator's own form may say `manual`.
+    const operator = (body as { source?: unknown }).source === "manual" && apiGate(req, ctx) === null;
+    const { source: _claimed, referredBy: _referrer, ...fields } = body as LeadInput;
+    const created = store.createLead({ ...fields, source: operator ? "manual" : "site" });
     if (ctx.config !== null) {
       const address = store.site().contact.email;
       await notifyLead(ctx.config, created, address).catch(() => false);

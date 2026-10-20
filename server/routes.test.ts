@@ -75,6 +75,21 @@ describe("the store routes", () => {
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
   });
 
+  it("says a lead came from the site, whatever the body claims; only a signed-in operator's form says manual", async () => {
+    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
+    const claimed = { ...lead, source: "referral", referredBy: "cli_victim" };
+    await call("POST", "/api/leads", claimed);
+    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
+    expect(state.clients.at(-1)?.referredBy).toBeUndefined();
+
+    // An anonymous `manual` is a visitor's claim too.
+    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "b@summitoutdoor.example" }, source: "manual" });
+    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
+
+    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "c@summitoutdoor.example" }, source: "manual" }, { authorization: "Bearer dash-secret" });
+    expect(state.clients.at(-1)).toMatchObject({ source: "manual" });
+  });
+
   it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {
     const upstream = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [

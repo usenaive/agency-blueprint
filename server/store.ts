@@ -6,7 +6,7 @@
 import { randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { STAGE_ORDER, type Client, type PipelineStage } from "../seed/clients.ts";
+import { STAGE_ORDER, type Client, type LeadSource, type PipelineStage } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
 import { sameShape, site, SITE_SECTIONS, withinBounds, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
@@ -53,6 +53,8 @@ export interface LeadInput {
   contact: { name: string; email: string; role: string };
   services?: string[];
   note?: string;
+  source?: LeadSource;
+  referredBy?: string;
 }
 
 export interface DraftPostInput {
@@ -188,6 +190,9 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         services: input.services ?? [],
         contact: input.contact,
         notes: input.note === undefined ? [] : [input.note],
+        // The agency's own name-only record is not a lead, so it has no source.
+        ...(input.source && !nameOnly(input) ? { source: input.source } : {}),
+        ...(input.referredBy && !nameOnly(input) ? { referredBy: input.referredBy } : {}),
       };
       state.clients.push(client);
       save();

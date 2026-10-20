@@ -12,6 +12,16 @@ export type PipelineStage = "lead" | "proposal" | "active" | "churned";
 /** The order `advance` walks; churned is a terminal side-exit, not a step. */
 export const STAGE_ORDER: readonly PipelineStage[] = ["lead", "proposal", "active", "churned"];
 
+/**
+ * Where a client first came from. `site` is the public contact form, `manual` the operator's own
+ * add-a-lead form, `outreach` an agent's prospecting, `network` someone the operator already knows,
+ * and `referral` an introduction from an existing client (`referredBy`). A row filed before sources
+ * existed has none, and reads as unknown.
+ */
+export type LeadSource = "site" | "manual" | "outreach" | "network" | "referral";
+
+export const LEAD_SOURCES: readonly LeadSource[] = ["site", "manual", "outreach", "network", "referral"];
+
 export interface Client {
   id: string;
   /** URL-safe handle; a template's per-client crew is suffixed with it (`seo-writer--acme`). */
@@ -25,4 +35,7 @@ export interface Client {
   nextAction?: string;
   /** Set when the client graduates and its agents are provisioned. */
   onboardedAt?: string;
+  source?: LeadSource;
+  /** The client (`cli_…`) that introduced this one, when `source` is `referral`. */
+  referredBy?: string;
 }
