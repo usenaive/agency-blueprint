@@ -132,6 +132,11 @@ describe("mcp tools", () => {
     expect((await file({ name: "Ghost", domain: "ghost.example", source: "referral" })).result.isError).toBe(true);
     expect((await file({ name: "Sneaky", domain: "sneaky.example", source: "site" })).result.isError).toBe(true);
     expect((await file({ name: "Mixed", domain: "mixed.example", source: "network", referred_by: anyClient })).result.isError).toBe(true);
+    // A prospect still at the lead stage, or the agency's own record, is not a client who can refer.
+    const prospect = (ACTIVE_TEMPLATE.seed.clients as Client[]).find((c) => c.stage === "lead")!.id;
+    expect((await file({ name: "Via Prospect", domain: "vp.example", referred_by: prospect })).result.isError).toBe(true);
+    const agency = lead(await file({ name: "Our Agency" })).id;
+    expect((await file({ name: "Via Agency", domain: "va.example", referred_by: agency })).result.isError).toBe(true);
   });
 
   it("the agency's own name-only record carries no source: it is not a lead", async () => {

@@ -3,7 +3,7 @@
  * blueprint is a delta on.
  *
  * Everything here is data: the seven-agent crew of `templates/agents.ts` with generic prompts,
- * generic deliverable kinds, the three setup questions whose answers the crew reads first, and a
+ * generic deliverable kinds, the setup questions whose answers the crew reads first, and a
  * demo seed that is plainly a demo. There is no per-client crew: this agency runs every client
  * through its own seven, which is a complete agency and the safe thing to get by accident
  * (`BLUEPRINTS.agency.default`).
@@ -59,7 +59,7 @@ export const networkQuestion: AgencyTemplate["questions"][number] = {
   type: "text",
   optional: true,
   label: "Who do you already know who might need this, or know someone who does?",
-  help: "Former colleagues, past employers, friends with businesses: a name, their company and how you know them. Sales drafts a short personal note to each for you to approve. Leave it blank to skip.",
+  help: "Former colleagues, past employers, friends with businesses: a name, their company and how you know them. Sales drafts a short personal note to each for you to review and send. Leave it blank to skip.",
   placeholder: "Dana Kim, Brightline Bikes, my old manager at Shopify; Sam Ortiz, Ortiz Dental, college friend.",
 };
 
