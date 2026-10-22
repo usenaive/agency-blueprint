@@ -153,8 +153,8 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       const referredBy = text(params, "referred_by");
       const source = text(params, "source") || (referredBy ? "referral" : "outreach");
       if (!(AGENT_SOURCES as readonly string[]).includes(source)) throw new ToolError(`source must be one of ${AGENT_SOURCES.join(", ")}`);
-      if (source === "referral" && !store.read().clients.some((c) => c.id === referredBy)) {
-        throw new ToolError("a referral needs referred_by: the id of the existing client who introduced them (list_clients)");
+      if (source === "referral" && !store.read().clients.some((c) => c.id === referredBy && c.stage !== "lead" && c.domain !== "")) {
+        throw new ToolError("a referral needs referred_by: the id of the existing client (past the lead stage, not the agency itself) who introduced them (list_clients)");
       }
       if (referredBy && source !== "referral") throw new ToolError("referred_by is only for a referral");
       return store.createLead({

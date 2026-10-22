@@ -148,7 +148,7 @@ const DAY_ONE = 20_000_000;
  * goes further and audits first (`templates/seo-geo.ts`).
  */
 export const OPENER =
-  "Before each opener, web_fetch the prospect's own site and name one specific thing you read there; never a generic compliment, and never a claim about the site you did not read.";
+  "Before each opener, web_fetch the prospect's own site and name one specific thing you read there; never a generic compliment, and never a claim about the site you did not read. If the site cannot be read (no domain, blocked, only a social page), say so in the note and draft the opener with no claim about the site.";
 
 export const roster: AgentDecl[] = [
   {
@@ -200,8 +200,8 @@ export const roster: AgentDecl[] = [
     intake: {
       message:
         `Read project_context. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name, each with a one-line why-now — and file every one with create_lead (source outreach). Draft (do not send) openers for the three best, as notes on each. ${OPENER} ` +
-        "Then the operator's own network, last because asking waits for them: if the context holds a network answer, use it; if it has none, ask the operator once with ask_operator who they already know who might need this work or know someone who does (name, company, how they know them). " +
-        "File each person named with create_lead (source network, their company as the name, the person as contact) and draft a short personal note to each with add_client_note — do not send. Write it in the operator's voice, say how they know each other, and ask for advice or an introduction rather than pitching; never claim a result, client or credential the context does not hold. If the answer is empty or the operator has nobody, stop there; never invent a contact.",
+        "Then the operator's own network, last because asking waits for them: if the context holds a network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there; on any other template, which asks no network question at setup, ask the operator once with ask_operator who they already know who might need this work or know someone who does (name, company, how they know them). " +
+        "File each person named with create_lead (source network, their company as the name, the person as contact_name) and draft a short personal note to each with add_client_note — do not send. Write it in the operator's voice, say how they know each other, and ask for advice or an introduction rather than pitching; never claim a result, client or credential the context does not hold. If the answer is empty or the operator has nobody, stop there; never invent a contact.",
       budget_micro_usd: DAY_ONE,
     },
   },

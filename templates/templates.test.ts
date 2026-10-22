@@ -98,7 +98,9 @@ describe("every template of this blueprint", () => {
   it.each(all)("$name drafts a personal note to each person the operator knows, and invents none", (template) => {
     const sales = template.agents.find((a) => a.name === "sales")!;
     const intake = sales.intake?.message ?? "";
-    expect(intake).toMatch(/network answer, use it; if it has none, ask the operator once with ask_operator/);
+    // On blank the question is optional: a missing answer is a skip, never a second ask.
+    expect(intake).toMatch(/network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there/);
+    expect(intake).toMatch(/on any other template, which asks no network question at setup, ask the operator once with ask_operator/);
     expect(intake).toMatch(/create_lead \(source network.*add_client_note — do not send/);
     expect(intake).toMatch(/never invent a contact/);
     // Prospects first, network last: asking parks the session, and the list should not wait on it.
@@ -309,11 +311,14 @@ describe("seo-geo", () => {
     const sales = seoGeo.agents.find((a) => a.name === "sales")!;
     for (const text of [sales.intake?.message ?? "", sales.schedules?.[0]?.input ?? ""]) {
       expect(text).toMatch(/short public audit of the prospect.*web_fetch.*web_search/);
+      // The audit is for cold openers; the personal notes to the operator's own network stay notes.
+      expect(text).toMatch(/every cold opener \(not the personal notes to people the operator knows\)/);
       expect(text).toMatch(/add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes/);
       expect(text).toMatch(/no ranking, citation or traffic figure you did not see yourself/);
     }
     // blank asks for one observation, not an audit.
     expect(blank.agents.find((a) => a.name === "sales")!.intake?.message).not.toMatch(/public audit/);
+    expect(blank.agents.find((a) => a.name === "sales")!.schedules?.[0]?.input).not.toMatch(/public audit/);
   });
 
   it("adds the specialism: the kinds, and the crew provisioned per client", () => {

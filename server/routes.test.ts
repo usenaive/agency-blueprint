@@ -116,6 +116,21 @@ describe("the store routes", () => {
     expect((await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "late@summitoutdoor.example" }, ref })).status).toBe(429);
   });
 
+  it("stores only the form's fields, and gives a visitor the lead's id rather than the CRM row", async () => {
+    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
+    const posted = await call("POST", "/api/leads", { ...lead, extra: "x", contact: { ...lead.contact, blob: "y".repeat(5000) } });
+    expect(posted.status).toBe(201);
+    const row = state.clients.at(-1)!;
+    expect(posted.body).toEqual({ id: row.id });
+    expect(row.contact).toEqual(lead.contact);
+    expect(row).not.toHaveProperty("extra");
+    // The dedupe reply is the id too: it never shows a visitor the agency's notes on that lead.
+    row.notes.push("internal: budget is tight");
+    expect(await call("POST", "/api/leads", lead)).toEqual({ status: 200, body: { id: row.id } });
+    // The signed-in operator's form still gets the full row.
+    expect((await call("POST", "/api/leads", lead, { authorization: "Bearer dash-secret" })).body).toMatchObject({ id: row.id, notes: ["internal: budget is tight"] });
+  });
+
   it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {
     const upstream = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [
