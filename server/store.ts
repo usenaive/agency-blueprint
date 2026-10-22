@@ -60,7 +60,10 @@ export function referralRefusal(client: Client, posts: readonly Post[], now: Dat
   if (client.onboardedAt === undefined || ago(client.onboardedAt) < activeDays) return `a client is asked only after ${activeDays} days with the agency`;
   if (client.referralAskedAt !== undefined && ago(client.referralAskedAt) < cooldownDays) return `this client was asked less than ${cooldownDays} days ago`;
   const recent = posts.filter((p) => p.clientId === client.id && ago(p.scheduledFor) >= 0 && ago(p.scheduledFor) <= recentDays);
-  if (recent.some((p) => p.status === "rejected")) return `this client turned down work in the last ${recentDays} days`;
+  // A draft is usually turned down before its slot comes round, so a rejection counts whatever its slot.
+  if (posts.some((p) => p.clientId === client.id && p.status === "rejected" && ago(p.scheduledFor) <= recentDays)) {
+    return `this client turned down work in the last ${recentDays} days`;
+  }
   if (recent.filter((p) => p.status === "approved" || p.status === "posted").length < minApproved) {
     return `a client is asked after approving at least ${minApproved} pieces in the last ${recentDays} days`;
   }
@@ -269,6 +272,8 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const to = next(client.stage);
       if (to === null) return client;
       client.stage = to;
+      // Active by the pipeline is onboarded too: the referral rule's 30 days count from this stamp.
+      if (to === "active") client.onboardedAt ??= new Date().toISOString();
       save();
       return client;
     },

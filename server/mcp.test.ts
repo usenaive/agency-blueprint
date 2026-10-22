@@ -186,6 +186,8 @@ describe("mcp tools", () => {
       ["one approved piece", client(), [post("approved", 10)], /at least 2 pieces/],
       ["approvals older than 60 days", client(), [post("approved", 70), post("posted", 80)], /at least 2 pieces/],
       ["work turned down lately", client(), [...happy, post("rejected", 5)], /turned down work/],
+      // A draft is turned down before its slot comes round: a future-slot rejection counts too.
+      ["a draft for next week just turned down", client(), [...happy, post("rejected", -7)], /turned down work/],
       ["asked a month ago", client({ referralAskedAt: daysAgo(30) }), happy, /less than 90 days ago/],
     ])("does not ask %s", (_why, row, posts, reason) => {
       expect(referralRefusal(row, posts, now)).toMatch(reason);
