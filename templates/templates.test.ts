@@ -311,11 +311,14 @@ describe("seo-geo", () => {
     const sales = seoGeo.agents.find((a) => a.name === "sales")!;
     for (const text of [sales.intake?.message ?? "", sales.schedules?.[0]?.input ?? ""]) {
       expect(text).toMatch(/short public audit of the prospect.*web_fetch.*web_search/);
+      // The audit is for cold openers; the personal notes to the operator's own network stay notes.
+      expect(text).toMatch(/every cold opener \(not the personal notes to people the operator knows\)/);
       expect(text).toMatch(/add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes/);
       expect(text).toMatch(/no ranking, citation or traffic figure you did not see yourself/);
     }
     // blank asks for one observation, not an audit.
     expect(blank.agents.find((a) => a.name === "sales")!.intake?.message).not.toMatch(/public audit/);
+    expect(blank.agents.find((a) => a.name === "sales")!.schedules?.[0]?.input).not.toMatch(/public audit/);
   });
 
   it("adds the specialism: the kinds, and the crew provisioned per client", () => {

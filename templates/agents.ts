@@ -148,7 +148,7 @@ const DAY_ONE = 20_000_000;
  * goes further and audits first (`templates/seo-geo.ts`).
  */
 export const OPENER =
-  "Before each opener, web_fetch the prospect's own site and name one specific thing you read there; never a generic compliment, and never a claim about the site you did not read.";
+  "Before each opener, web_fetch the prospect's own site and name one specific thing you read there; never a generic compliment, and never a claim about the site you did not read. If the site cannot be read (no domain, blocked, only a social page), say so in the note and draft the opener with no claim about the site.";
 
 export const roster: AgentDecl[] = [
   {
