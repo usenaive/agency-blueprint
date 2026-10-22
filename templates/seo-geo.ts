@@ -5,7 +5,8 @@
  * It is a **delta on `blank`**, and deliberately reads as one. The seven agency agents are
  * `blank`'s, with a sentence or two of search focus added to each and the search skills alongside;
  * the machinery around them — model, budget, deny-by-default toolset, approval gate, timers,
- * intakes — is shared, so what this file shows is exactly what the specialism changes: the words,
+ * intakes — is shared (search work is only ever appended to an intake or timer, `WORK`, never
+ * changing `blank`'s words), so what this file shows is exactly what the specialism changes: the words,
  * the kinds of work, the third question, the crew, and the demo seed.
  *
  * Switching to it widens: `naive up` creates nothing the operator loses, and the crew below is
@@ -49,7 +50,7 @@ const SKILLS: Record<string, string[]> = {
  */
 const WORK: Record<string, string> = {
   sales:
-    "In this agency every opener starts from a short public audit of the prospect: web_fetch its home page and one service page, and web_search the service it sells with its city or niche to see who ranks and whether an AI answer cites it. " +
+    "In this agency every cold opener (not the personal notes to people the operator knows) starts from a short public audit of the prospect: web_fetch its home page and one service page, and web_search the service it sells with its city or niche to see who ranks and whether an AI answer cites it. " +
     "File the audit as a note on the lead with add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
     "Public pages only, and no ranking, citation or traffic figure you did not see yourself.",
   "client-manager":
@@ -284,7 +285,8 @@ export const seoGeo: AgencyTemplate = {
   ],
   crew,
   // The seven are shared; only their focus and search skills are this template's. Every other field
-  // — model, budget, allow-list, timers, intake — stays `blank`'s, so a change there reaches both.
+  // — model, budget, allow-list, timers, intake — stays `blank`'s (`WORK` only appends to an intake
+  // or timer), so a change there reaches both.
   agents: [
     ...blank.agents.map((agent) => ({
       ...agent,

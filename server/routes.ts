@@ -387,7 +387,11 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     const open = store.read().clients.filter((c) => c.stage === "lead");
     const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
     const seen = open.find((c) => same(c.contact.email, body.contact!.email) && same(c.domain, body.domain!));
-    if (seen !== undefined) return { status: 200, body: seen };
+    // Only the signed-in operator's own form gets the CRM row back. A visitor gets the id alone: the
+    // row carries the agency's notes and next action, and later its source and referrer.
+    const signedIn = apiGate(req, ctx) === null;
+    const reply = (row: { id: string }) => (signedIn ? row : { id: row.id });
+    if (seen !== undefined) return { status: 200, body: reply(seen) };
     if (open.length >= OPEN_LEADS_CAP) {
       return { status: 429, body: { error: "the lead inbox is full — email the agency directly" }, headers: { "retry-after": "86400" } };
     }
@@ -404,21 +408,23 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     }
     // The source is the server's to say, never the body's: a visitor who could post `referral` would
     // credit any client with an introduction. Only a signed-in operator's own form may say `manual`.
-    const operator = (body as { source?: unknown }).source === "manual" && apiGate(req, ctx) === null;
+    // Fields are picked one by one, the contact's too: anything else the body carries is dropped.
+    const operator = (body as { source?: unknown }).source === "manual" && signedIn;
     // A referral link's code names the client who sent this visitor. The code is the only proof:
     // an unknown or mistyped one files an ordinary site lead and says nothing about why.
     const ref = (body as { ref?: unknown }).ref;
     const referrer = typeof ref === "string" && ref !== "" && ref.length <= 64 ? store.read().clients.find((c) => c.referralCode === ref) : undefined;
-    const { source: _claimed, referredBy: _referrer, ref: _ref, ...fields } = body as LeadInput & { ref?: unknown };
+    const { name, domain, contact, services, note } = body as LeadInput;
     const created = store.createLead({
-      ...fields,
+      name, domain, services, note,
+      contact: { name: contact.name, email: contact.email, role: typeof contact.role === "string" ? contact.role : "" },
       ...(operator ? { source: "manual" } : referrer ? { source: "referral", referredBy: referrer.id } : { source: "site" }),
     });
     if (ctx.config !== null) {
       const address = store.site().contact.email;
       await notifyLead(ctx.config, created, address).catch(() => false);
     }
-    return { status: 201, body: created };
+    return { status: 201, body: reply(created) };
   }
   return null;
 }

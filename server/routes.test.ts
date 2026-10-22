@@ -91,13 +91,16 @@ describe("the store routes", () => {
   });
 
   it("files a lead that came through a client's referral link as that client's referral, and a wrong code as a site lead", async () => {
-    const { call, state, store } = fixture();
+    // A deployed app, so the caller is a visitor and not the open local gate.
+    const { call, state, store } = fixture({ dashboardToken: "dash-secret", local: false });
     const referrer = store.createLead({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
     store.onboardClient(referrer.id);
     const code = store.referralCode(referrer.id)!;
 
-    await call("POST", "/api/leads", { ...lead, ref: code });
+    // A visitor's reply is the id alone either way, so it does not tell a good code from a bad one.
+    const sent = await call("POST", "/api/leads", { ...lead, ref: code });
     expect(state.clients.at(-1)).toMatchObject({ source: "referral", referredBy: referrer.id });
+    expect(sent.body).toEqual({ id: state.clients.at(-1)!.id });
     expect(state.clients.at(-1)).not.toHaveProperty("ref");
 
     await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "x@summitoutdoor.example" }, ref: "not-a-code" });
@@ -114,6 +117,21 @@ describe("the store routes", () => {
       await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: `r${i}@summitoutdoor.example` }, ref });
     }
     expect((await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "late@summitoutdoor.example" }, ref })).status).toBe(429);
+  });
+
+  it("stores only the form's fields, and gives a visitor the lead's id rather than the CRM row", async () => {
+    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
+    const posted = await call("POST", "/api/leads", { ...lead, extra: "x", contact: { ...lead.contact, blob: "y".repeat(5000) } });
+    expect(posted.status).toBe(201);
+    const row = state.clients.at(-1)!;
+    expect(posted.body).toEqual({ id: row.id });
+    expect(row.contact).toEqual(lead.contact);
+    expect(row).not.toHaveProperty("extra");
+    // The dedupe reply is the id too: it never shows a visitor the agency's notes on that lead.
+    row.notes.push("internal: budget is tight");
+    expect(await call("POST", "/api/leads", lead)).toEqual({ status: 200, body: { id: row.id } });
+    // The signed-in operator's form still gets the full row.
+    expect((await call("POST", "/api/leads", lead, { authorization: "Bearer dash-secret" })).body).toMatchObject({ id: row.id, notes: ["internal: budget is tight"] });
   });
 
   it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {

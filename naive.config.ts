@@ -41,7 +41,7 @@ export default defineProject({
   /** Every template this repo carries; the chosen one's agents become this project's crew. */
   templates: Object.values(TEMPLATES),
   /**
-   * The ≤3 questions the studio asks before provisioning (plan §4). The answers become the project
+   * The ≤4 questions the studio asks before provisioning (plan §4). The answers become the project
    * context every agent reads first (`project_context`, canonical-spec §31.8); no `{ from_env }`
    * reader is needed for an answer to a declared question.
    */
