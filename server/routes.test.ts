@@ -91,13 +91,16 @@ describe("the store routes", () => {
   });
 
   it("files a lead that came through a client's referral link as that client's referral, and a wrong code as a site lead", async () => {
-    const { call, state, store } = fixture();
+    // A deployed app, so the caller is a visitor and not the open local gate.
+    const { call, state, store } = fixture({ dashboardToken: "dash-secret", local: false });
     const referrer = store.createLead({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
     store.onboardClient(referrer.id);
     const code = store.referralCode(referrer.id)!;
 
-    await call("POST", "/api/leads", { ...lead, ref: code });
+    // A visitor's reply is the id alone either way, so it does not tell a good code from a bad one.
+    const sent = await call("POST", "/api/leads", { ...lead, ref: code });
     expect(state.clients.at(-1)).toMatchObject({ source: "referral", referredBy: referrer.id });
+    expect(sent.body).toEqual({ id: state.clients.at(-1)!.id });
     expect(state.clients.at(-1)).not.toHaveProperty("ref");
 
     await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "x@summitoutdoor.example" }, ref: "not-a-code" });
