@@ -98,7 +98,9 @@ describe("every template of this blueprint", () => {
   it.each(all)("$name drafts a personal note to each person the operator knows, and invents none", (template) => {
     const sales = template.agents.find((a) => a.name === "sales")!;
     const intake = sales.intake?.message ?? "";
-    expect(intake).toMatch(/network answer, use it; if it has none, ask the operator once with ask_operator/);
+    // On blank the question is optional: a missing answer is a skip, never a second ask.
+    expect(intake).toMatch(/network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there/);
+    expect(intake).toMatch(/on any other template, which asks no network question at setup, ask the operator once with ask_operator/);
     expect(intake).toMatch(/create_lead \(source network.*add_client_note — do not send/);
     expect(intake).toMatch(/never invent a contact/);
     // Prospects first, network last: asking parks the session, and the list should not wait on it.
