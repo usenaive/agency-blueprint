@@ -106,6 +106,12 @@ The network answer is for the first client, when there's nobody yet to ask for a
 day one `sales` files each person named as a `network` lead and drafts a short personal note to
 each for approval. An empty answer skips it, and no contact is ever invented.
 
+Cold openers show the work. In both templates `sales` reads the prospect's own site first and
+names one specific thing it read there. In `seo-geo` it runs a short public audit before each
+opener: what the prospect ranks for, whether AI answers cite it, and two or three concrete
+fixes, filed as a note on the lead, with the opener quoting one finding. It reports no ranking,
+citation or traffic figure it didn't see.
+
 Edit an answer later through the platform (`PATCH /v1/blueprints/installs/{id}`); the crew
 reads the new value on its next turn, no re-apply needed.
 
@@ -373,7 +379,7 @@ plus a re-apply.
 | To change… | Edit | Then |
 |---|---|---|
 | which template runs | `TEMPLATE` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
-| an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) — both templates share the seven, `seo-geo` only appends focus and search skills | `naive up` |
+| an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) — both templates share the seven, `seo-geo` only appends focus, search skills and search work (`WORK`) to an intake or timer | `naive up` |
 | add an agent to the crew | the `roster` in [`templates/agents.ts`](templates/agents.ts) | `naive up` |
 | the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) / [`templates/seo-geo.ts`](templates/seo-geo.ts) — at most four | `naive up` |
 | the per-client crew | `crew` in [`templates/seo-geo.ts`](templates/seo-geo.ts) | onboard a client |

@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
-import { AGENCY_IDENTITY, AGENCY_TIMEZONE, PREAMBLE } from "./agents.ts";
+import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE } from "./agents.ts";
 import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 import { seoGeo } from "./seo-geo.ts";
@@ -293,8 +293,32 @@ describe("seo-geo", () => {
       expect(agent.system).toContain(base.system);
       expect(agent.system).not.toBe(base.system);
       expect(agent.skills?.slice(0, base.skills?.length)).toEqual(base.skills);
-      expect({ ...agent, system: "", skills: [], tools: base.tools }).toEqual({ ...base, system: "", skills: [] });
+      // Day-one and scheduled work may only be added to, as the system prompt is: the search-specific
+      // part (F2's audit-first opener) rides on the end of blank's own words.
+      expect(agent.intake?.message.startsWith(base.intake?.message ?? "")).toBe(true);
+      for (const [j, schedule] of (agent.schedules ?? []).entries()) expect(schedule.input.startsWith(base.schedules![j]!.input)).toBe(true);
+      const shape = (a: typeof agent) => ({ ...a, system: "", skills: [], intake: { ...a.intake, message: "" }, schedules: a.schedules?.map((s) => ({ ...s, input: "" })) });
+      expect({ ...shape(agent), tools: base.tools }).toEqual(shape(base));
     }
+  });
+
+  it("opens every cold email with something read on the prospect's site, and in seo-geo with an audit", () => {
+    for (const template of [blank, seoGeo]) {
+      const sales = template.agents.find((a) => a.name === "sales")!;
+      expect(sales.intake?.message).toContain(OPENER);
+      expect(sales.schedules?.[0]?.input).toContain(OPENER);
+    }
+    const sales = seoGeo.agents.find((a) => a.name === "sales")!;
+    for (const text of [sales.intake?.message ?? "", sales.schedules?.[0]?.input ?? ""]) {
+      expect(text).toMatch(/short public audit of the prospect.*web_fetch.*web_search/);
+      // The audit is for cold openers; the personal notes to the operator's own network stay notes.
+      expect(text).toMatch(/every cold opener \(not the personal notes to people the operator knows\)/);
+      expect(text).toMatch(/add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes/);
+      expect(text).toMatch(/no ranking, citation or traffic figure you did not see yourself/);
+    }
+    // blank asks for one observation, not an audit.
+    expect(blank.agents.find((a) => a.name === "sales")!.intake?.message).not.toMatch(/public audit/);
+    expect(blank.agents.find((a) => a.name === "sales")!.schedules?.[0]?.input).not.toMatch(/public audit/);
   });
 
   it("adds the specialism: the kinds, and the crew provisioned per client", () => {
