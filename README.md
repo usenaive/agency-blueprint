@@ -100,6 +100,11 @@ what the dashboard's home screen shows.
 | `offer` | What does your agency sell, and to whom? | What does your agency sell, and to whom? (search and answer-engine work) |
 | `ideal_client` | Who is your ideal client — industry, size, geography? | same |
 | third | `pricing` — How do you price — retainer / project / hourly — and your typical range? | `competitors` — Which three competitors do your clients lose to in search? |
+| `network` (optional) | Who do you already know who might need this, or know someone who does? | — (four is the limit: `sales` asks this in its first session with `ask_operator`) |
+
+The network answer is for the first client, when there's nobody yet to ask for a referral. On
+day one `sales` files each person named as a `network` lead and drafts a short personal note to
+each for approval. An empty answer skips it, and no contact is ever invented.
 
 Edit an answer later through the platform (`PATCH /v1/blueprints/installs/{id}`); the crew
 reads the new value on its next turn, no re-apply needed.
@@ -370,7 +375,7 @@ plus a re-apply.
 | which template runs | `TEMPLATE` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
 | an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) — both templates share the seven, `seo-geo` only appends focus and search skills | `naive up` |
 | add an agent to the crew | the `roster` in [`templates/agents.ts`](templates/agents.ts) | `naive up` |
-| the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) / [`templates/seo-geo.ts`](templates/seo-geo.ts) — at most three | `naive up` |
+| the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) / [`templates/seo-geo.ts`](templates/seo-geo.ts) — at most four | `naive up` |
 | the per-client crew | `crew` in [`templates/seo-geo.ts`](templates/seo-geo.ts) | onboard a client |
 | what a tool may do | the `tools(allow, ask)` call on that agent — reads go in `allow`, anything that sends, posts or deletes goes in `ask` | `naive up` |
 | when a schedule fires | the `schedules` on that agent, and `AGENCY_TIMEZONE` for the zone all of them use | `naive up` |

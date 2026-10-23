@@ -185,13 +185,15 @@ export const roster: AgentDecl[] = [
       timer(
         "30 8 * * 1-5",
         "Inbox and new leads",
-        "Read project_context. Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (list_clients): file any new reply as a lead first, note what it said on the client, and for every lead that moved or went quiet draft the next touch in full with add_client_note, next_action set to what you now wait on. A lead the operator has agreed to move to proposal: advance_pipeline it, then hand it to the proposal writer with send_to_agent (wait false, handoff_key its cli_ id) naming that id. Then add up to three new prospects that fit the ideal client. Send nothing.",
+        "Read project_context. Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (list_clients): file any new reply as a lead first (create_lead with referred_by and the client's cli_ id when an existing client introduced them, source network when it is someone the operator knows, otherwise outreach), note what it said on the client, and for every lead that moved or went quiet draft the next touch in full with add_client_note, next_action set to what you now wait on. A lead the operator has agreed to move to proposal: advance_pipeline it, then hand it to the proposal writer with send_to_agent (wait false, handoff_key its cli_ id) naming that id. Then add up to three new prospects that fit the ideal client. Send nothing.",
         10_000_000,
       ),
     ],
     intake: {
       message:
-        "Read project_context. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name, each with a one-line why-now — and file every one with create_lead. Draft (do not send) openers for the three best, as notes on each.",
+        "Read project_context. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name, each with a one-line why-now — and file every one with create_lead (source outreach). Draft (do not send) openers for the three best, as notes on each. " +
+        "Then the operator's own network, last because asking waits for them: if the context holds a network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there; on any other template, which asks no network question at setup, ask the operator once with ask_operator who they already know who might need this work or know someone who does (name, company, how they know them). " +
+        "File each person named with create_lead (source network, their company as the name, the person as contact_name) and draft a short personal note to each with add_client_note — do not send. Write it in the operator's voice, say how they know each other, and ask for advice or an introduction rather than pitching; never claim a result, client or credential the context does not hold. If the answer is empty or the operator has nobody, stop there; never invent a contact.",
       budget_micro_usd: DAY_ONE,
     },
   },

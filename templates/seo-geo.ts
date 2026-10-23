@@ -264,6 +264,8 @@ export const seoGeo: AgencyTemplate = {
       help: "The gap researcher compares the site against these on day one and every Friday.",
       placeholder: "Three company names or domains.",
     },
+    // No network question: the engine allows four, and these four are spent. sales asks for the
+    // operator's network in its first session instead (`templates/agents.ts`).
   ],
   crew,
   // The seven are shared; only their focus and search skills are this template's. Every other field

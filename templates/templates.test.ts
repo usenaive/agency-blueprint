@@ -83,13 +83,33 @@ describe("every template of this blueprint", () => {
 
   it.each(all)("$name asks the setup questions its deliverables require", (template) => {
     if (template.name === "blank") {
-      expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text"]);
-      expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", "pricing"]);
+      expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text", "text"]);
+      expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", "pricing", "network"]);
     } else {
+      // Four is the engine's limit and seo-geo's four are spent, so its network is asked in session.
       expect(template.questions.map((q) => q.key)).toEqual([
         "public_identity", "offer", "ideal_client", "competitors",
       ]);
     }
+    // Only the network question may be skipped: an agency with no contacts to list still installs.
+    expect(template.questions.filter((q) => q.optional).map((q) => q.key)).toEqual(template.name === "blank" ? ["network"] : []);
+  });
+
+  it.each(all)("$name drafts a personal note to each person the operator knows, and invents none", (template) => {
+    const sales = template.agents.find((a) => a.name === "sales")!;
+    const intake = sales.intake?.message ?? "";
+    // On blank the question is optional: a missing answer is a skip, never a second ask.
+    expect(intake).toMatch(/network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there/);
+    expect(intake).toMatch(/on any other template, which asks no network question at setup, ask the operator once with ask_operator/);
+    expect(intake).toMatch(/create_lead \(source network.*add_client_note — do not send/);
+    expect(intake).toMatch(/never invent a contact/);
+    // Prospects first, network last: asking parks the session, and the list should not wait on it.
+    expect(intake.indexOf("fifteen prospects")).toBeLessThan(intake.indexOf("ask_operator"));
+    expect(intake).toMatch(/create_lead \(source outreach\)/);
+    expect(intake).toMatch(/ask for advice or an introduction rather than pitching; never claim a result/);
+    // The daily inbox pass files each new reply with where it came from.
+    const inbox = sales.schedules?.[0]?.input ?? "";
+    expect(inbox).toMatch(/referred_by and the client's cli_ id.*source network.*otherwise outreach/);
   });
 
   it.each(all)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
