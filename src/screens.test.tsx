@@ -344,9 +344,27 @@ describe("the CRM's first client", () => {
       name: "Acme Dental",
       domain: "acmedental.example",
       contact: { name: "Jordan Lee", email: "jordan@acmedental.example", role: "" },
+      source: "manual",
     }]);
     // And the board takes the row the server answered with, rather than one it drew itself.
     expect(screen.text()).toContain("Acme Dental");
+  });
+
+  it("says where each lead came from, and who referred it", async () => {
+    const row = (id: string, name: string, extra: Record<string, unknown>) =>
+      ({ id, slug: id, name, domain: `${id}.example`, stage: "lead", services: [], contact: { name: "C", email: `c@${id}.example`, role: "" }, notes: [], ...extra });
+    const clients = [
+      row("cli_a", "Acme Dental", { stage: "active", source: "site" }),
+      row("cli_b", "Bayside Ortho", { source: "referral", referredBy: "cli_a" }),
+      row("cli_c", "Cedar Legal", { source: "network" }),
+      row("cli_d", "Old Row Inc", {}),
+    ];
+    const screen = await render("/crm", (path) => ({ body: path === "/api/clients" ? clients : path.includes("/api/sessions") ? { data: [] } : [] }));
+    expect(screen.text()).toContain("via website");
+    expect(screen.text()).toContain("referred by Acme Dental");
+    expect(screen.text()).toContain("via your network");
+    // A row filed before sources existed carries no chip, rather than a guess.
+    expect(screen.text()).not.toContain("via outreach");
   });
 });
 

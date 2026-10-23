@@ -165,6 +165,13 @@ name-only filing of a name already on the pipeline returns that record, so five 
 it in the same minute share one row. A prospect filed with a domain or a contact is never that
 record, whatever its name.
 
+Every lead records where it came from, shown as a chip on its CRM row. The contact form's are
+`site` and the operator's own add-a-lead form's are `manual`; the server decides both, so a
+visitor's request can't claim another source. An agent's `create_lead` is `outreach` unless it
+says `network` (someone the operator knows) or gives `referred_by` (the `cli_` id of the client
+who introduced them, which must exist), which makes it a `referral`. Rows filed before sources
+existed have none. The agency's own name-only record isn't a lead and has no source.
+
 ### The skills
 
 Skills are the platform's, referenced as `naive/<slug>` and resolved from the catalogue at

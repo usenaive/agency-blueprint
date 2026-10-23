@@ -75,6 +75,36 @@ describe("the store routes", () => {
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
   });
 
+  it("says a lead came from the site, whatever the body claims; only a signed-in operator's form says manual", async () => {
+    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
+    const claimed = { ...lead, source: "referral", referredBy: "cli_victim" };
+    await call("POST", "/api/leads", claimed);
+    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
+    expect(state.clients.at(-1)?.referredBy).toBeUndefined();
+
+    // An anonymous `manual` is a visitor's claim too.
+    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "b@summitoutdoor.example" }, source: "manual" });
+    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
+
+    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "c@summitoutdoor.example" }, source: "manual" }, { authorization: "Bearer dash-secret" });
+    expect(state.clients.at(-1)).toMatchObject({ source: "manual" });
+  });
+
+  it("stores only the form's fields, and gives a visitor the lead's id rather than the CRM row", async () => {
+    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
+    const posted = await call("POST", "/api/leads", { ...lead, extra: "x", contact: { ...lead.contact, blob: "y".repeat(5000) } });
+    expect(posted.status).toBe(201);
+    const row = state.clients.at(-1)!;
+    expect(posted.body).toEqual({ id: row.id });
+    expect(row.contact).toEqual(lead.contact);
+    expect(row).not.toHaveProperty("extra");
+    // The dedupe reply is the id too: it never shows a visitor the agency's notes on that lead.
+    row.notes.push("internal: budget is tight");
+    expect(await call("POST", "/api/leads", lead)).toEqual({ status: 200, body: { id: row.id } });
+    // The signed-in operator's form still gets the full row.
+    expect((await call("POST", "/api/leads", lead, { authorization: "Bearer dash-secret" })).body).toMatchObject({ id: row.id, notes: ["internal: budget is tight"] });
+  });
+
   it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {
     const upstream = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [

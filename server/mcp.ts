@@ -14,6 +14,7 @@ import { listAgents, proxyFetch, type AgentRow, type ProxyConfig } from "./proxy
 import { SITE_SECTIONS } from "../site/site.config.ts";
 import { ACTIVE } from "../templates/index.ts";
 import type { DraftPostInput, Store } from "./store.ts";
+import type { LeadSource } from "../seed/clients.ts";
 
 export const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
@@ -71,6 +72,9 @@ const obj = (props: Record<string, unknown>, required: string[]) =>
   ({ type: "object", properties: props, required }) as const;
 const str = (description: string) => ({ type: "string", description }) as const;
 
+/** The sources an agent may name. `site` and `manual` belong to the two forms, never to an agent. */
+const AGENT_SOURCES = ["outreach", "network", "referral"] as const satisfies readonly LeadSource[];
+
 export const TOOLS = [
   { name: "list_clients", description: "All CRM clients with their pipeline stage.", inputSchema: obj({}, []) },
   { name: "get_client", description: "One client by id.", inputSchema: obj({ id: str("Client id (cli_…)") }, ["id"]) },
@@ -78,6 +82,8 @@ export const TOOLS = [
     name: str("Company name"), domain: str("Company domain, when known"),
     contact_name: str("Contact person, when known"), contact_email: str("Contact email, when known"), contact_role: str("Contact role, when known"),
     note: str("Optional first note"),
+    source: { type: "string", enum: AGENT_SOURCES, description: "Where this lead came from: outreach (your own prospecting, the default), network (someone the operator already knows) or referral (an existing client introduced them; give referred_by)" },
+    referred_by: str("For a referral: the id (cli_…) of the client who introduced them"),
   }, ["name"]) },
   { name: "advance_pipeline", description: "Move a client to the next pipeline stage.", inputSchema: obj({ id: str("Client id") }, ["id"]) },
   { name: "add_client_note", description: "File a working note on a client — a drafted outreach or follow-up, a call summary, what a proposal is waiting on — for the operator to read on the client's page. Optionally restate what the client is waiting on next.", inputSchema: obj({
@@ -136,12 +142,22 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       if (!client) throw new ToolError("no such client");
       return client;
     }
-    case "create_lead":
+    case "create_lead": {
+      const referredBy = text(params, "referred_by");
+      const source = text(params, "source") || (referredBy ? "referral" : "outreach");
+      if (!(AGENT_SOURCES as readonly string[]).includes(source)) throw new ToolError(`source must be one of ${AGENT_SOURCES.join(", ")}`);
+      if (source === "referral" && !store.read().clients.some((c) => c.id === referredBy && c.stage !== "lead" && c.domain !== "")) {
+        throw new ToolError("a referral needs referred_by: the id of the existing client (past the lead stage, not the agency itself) who introduced them (list_clients)");
+      }
+      if (referredBy && source !== "referral") throw new ToolError("referred_by is only for a referral");
       return store.createLead({
         name: need(params, "name"), domain: text(params, "domain"),
         contact: { name: text(params, "contact_name"), email: text(params, "contact_email"), role: text(params, "contact_role") },
         note: typeof params.note === "string" ? params.note : undefined,
+        source: source as LeadSource,
+        ...(referredBy ? { referredBy } : {}),
       });
+    }
     case "advance_pipeline": {
       const client = store.advanceClient(need(params, "id"));
       if (!client) throw new ToolError("no such client");

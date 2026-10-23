@@ -117,6 +117,34 @@ describe("mcp tools", () => {
     expect(store.read().clients.at(-1)?.id).toBe(lead.id);
   });
 
+  it("create_lead records where a lead came from: outreach by default, network when said, a referral only from a real client", async () => {
+    const store = freshStore();
+    const file = async (args: Record<string, unknown>) => (await handleMcp(call("create_lead", { contact_email: "a@x.example", ...args }), store, null)) as CallResult;
+    const lead = (answer: CallResult) => JSON.parse(answer.result.content[0]!.text) as Client;
+
+    expect(lead(await file({ name: "Prospect Co", domain: "prospect.example" })).source).toBe("outreach");
+    expect(lead(await file({ name: "Old Boss LLC", domain: "oldboss.example", source: "network" })).source).toBe("network");
+    const referred = lead(await file({ name: "Friend Of Acme", domain: "friend.example", referred_by: anyClient }));
+    expect([referred.source, referred.referredBy]).toEqual(["referral", anyClient]);
+
+    // A referral must name a client that exists, and an agent may not claim a form's source.
+    expect((await file({ name: "Ghost", domain: "ghost.example", source: "referral", referred_by: "cli_nobody" })).result.isError).toBe(true);
+    expect((await file({ name: "Ghost", domain: "ghost.example", source: "referral" })).result.isError).toBe(true);
+    expect((await file({ name: "Sneaky", domain: "sneaky.example", source: "site" })).result.isError).toBe(true);
+    expect((await file({ name: "Mixed", domain: "mixed.example", source: "network", referred_by: anyClient })).result.isError).toBe(true);
+    // A prospect still at the lead stage, or the agency's own record, is not a client who can refer.
+    const prospect = (ACTIVE_TEMPLATE.seed.clients as Client[]).find((c) => c.stage === "lead")!.id;
+    expect((await file({ name: "Via Prospect", domain: "vp.example", referred_by: prospect })).result.isError).toBe(true);
+    const agency = lead(await file({ name: "Our Agency" })).id;
+    expect((await file({ name: "Via Agency", domain: "va.example", referred_by: agency })).result.isError).toBe(true);
+  });
+
+  it("the agency's own name-only record carries no source: it is not a lead", async () => {
+    const store = freshStore();
+    const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio", source: "network" }), store, null)) as CallResult;
+    expect((JSON.parse(answer.result.content[0]!.text) as Client).source).toBeUndefined();
+  });
+
   it("add_client_note files the note verbatim and restates the next action when given", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("add_client_note", {
