@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
-import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE } from "./agents.ts";
+import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE, REFERRAL_ASK } from "./agents.ts";
 import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 import { seoGeo } from "./seo-geo.ts";
@@ -300,6 +300,23 @@ describe("seo-geo", () => {
       const shape = (a: typeof agent) => ({ ...a, system: "", skills: [], intake: { ...a.intake, message: "" }, schedules: a.schedules?.map((s) => ({ ...s, input: "" })) });
       expect({ ...shape(agent), tools: base.tools }).toEqual(shape(base));
     }
+  });
+
+  it("asks only ready clients for a referral, held for approval, with their link and no invented reward", () => {
+    for (const template of [blank, seoGeo]) {
+      const manager = template.agents.find((a) => a.name === "client-manager")!;
+      const configs = manager.tools?.configs ?? {};
+      expect(configs["dashboard.list_referral_ready"]?.permission).toBe("allow");
+      expect(configs["dashboard.record_referral_ask"]?.permission).toBe("allow");
+      // The ask itself is an email, so it waits for the operator like every other send.
+      expect(configs["email.send"]?.permission).toBe("ask");
+      const weekly = manager.schedules?.[0]?.input ?? "";
+      expect(weekly).toContain(REFERRAL_ASK);
+      expect(REFERRAL_ASK).toMatch(/list_referral_ready names the clients ready.*ask nobody else/);
+      expect(REFERRAL_ASK).toMatch(/referral link exactly as given.*Offer no reward, discount or fee.*record_referral_ask/);
+    }
+    const seoWeekly = seoGeo.agents.find((a) => a.name === "client-manager")!.schedules?.[0]?.input ?? "";
+    expect(seoWeekly).toMatch(/leads with the gain the client's latest posted serp-report shows.*never state a gain the report does not show/);
   });
 
   it("opens every cold email with something read on the prospect's site, and in seo-geo with an audit", () => {

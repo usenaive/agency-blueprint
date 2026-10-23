@@ -231,6 +231,8 @@ describe("openStore", () => {
     expect(store.advanceClient(id)?.stage).toBe("active");
     const onDisk = JSON.parse(readFileSync(file, "utf8")) as { clients: { id: string; stage: string }[] };
     expect(onDisk.clients.find((c) => c.id === id)?.stage).toBe("active");
+    // Reaching active by the pipeline starts the client's clock as onboarding does (the referral rule reads it).
+    expect(store.read().clients.find((c) => c.id === id)?.onboardedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it("never advances into churned, and answers null for unknown ids", () => {

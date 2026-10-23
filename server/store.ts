@@ -6,7 +6,7 @@
 import { randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { STAGE_ORDER, type Client, type LeadSource, type PipelineStage } from "../seed/clients.ts";
+import { REFERRAL_READY, STAGE_ORDER, type Client, type LeadSource, type PipelineStage } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
 import { sameShape, site, SITE_SECTIONS, withinBounds, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
@@ -46,6 +46,29 @@ export const LEADS_PER_WINDOW = 10;
 
 /** 12 URL-safe characters (72 random bits): unguessable, and short enough to read in a link. */
 const newReferralCode = (): string => randomBytes(9).toString("base64url");
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Why a client may not be asked for a referral at `now`, or null when it may (`REFERRAL_READY`).
+ * Recent work is judged by its calendar slot, the one date every post carries as an ISO day.
+ */
+export function referralRefusal(client: Client, posts: readonly Post[], now: Date): string | null {
+  const { activeDays, recentDays, minApproved, cooldownDays } = REFERRAL_READY;
+  const ago = (iso: string) => (now.getTime() - new Date(iso).getTime()) / DAY_MS;
+  if (client.stage !== "active") return "only an active client is asked for a referral";
+  if (client.onboardedAt === undefined || ago(client.onboardedAt) < activeDays) return `a client is asked only after ${activeDays} days with the agency`;
+  if (client.referralAskedAt !== undefined && ago(client.referralAskedAt) < cooldownDays) return `this client was asked less than ${cooldownDays} days ago`;
+  const recent = posts.filter((p) => p.clientId === client.id && ago(p.scheduledFor) >= 0 && ago(p.scheduledFor) <= recentDays);
+  // A draft is usually turned down before its slot comes round, so a rejection counts whatever its slot.
+  if (posts.some((p) => p.clientId === client.id && p.status === "rejected" && ago(p.scheduledFor) <= recentDays)) {
+    return `this client turned down work in the last ${recentDays} days`;
+  }
+  if (recent.filter((p) => p.status === "approved" || p.status === "posted").length < minApproved) {
+    return `a client is asked after approving at least ${minApproved} pieces in the last ${recentDays} days`;
+  }
+  return null;
+}
 
 /** Whole sections of the site, each replacing the current one; a key outside `SITE_SECTIONS` is refused. */
 export type SitePatch = Partial<SiteProfile>;
@@ -97,6 +120,10 @@ export interface Store {
    * for is asked to refer.
    */
   referralCode(id: string): string | null;
+  /** The active clients ready to be asked for an introduction at `now` (`REFERRAL_READY`). */
+  referralReady(now: Date): Client[];
+  /** Stamps the ask on a ready client; says why when the client is not ready (the rule, or the cooldown). */
+  recordReferralAsk(id: string, now: Date): { client: Client } | { refused: string };
   updatePost(id: string, patch: PostPatch): Post | null;
   /**
    * Counts one public lead against the current window and says whether it may be filed. False is
@@ -245,6 +272,8 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       const to = next(client.stage);
       if (to === null) return client;
       client.stage = to;
+      // Active by the pipeline is onboarded too: the referral rule's 30 days count from this stamp.
+      if (to === "active") client.onboardedAt ??= new Date().toISOString();
       save();
       return client;
     },
@@ -273,6 +302,18 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         save();
       }
       return client.referralCode;
+    },
+    referralReady(now) {
+      return state.clients.filter((c) => referralRefusal(c, state.posts, now) === null);
+    },
+    recordReferralAsk(id, now) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return { refused: "no such client" };
+      const refused = referralRefusal(client, state.posts, now);
+      if (refused !== null) return { refused };
+      client.referralAskedAt = now.toISOString();
+      save();
+      return { client };
     },
     updatePost(id, patch) {
       const post = state.posts.find((p) => p.id === id);

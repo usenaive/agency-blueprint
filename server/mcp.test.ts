@@ -7,7 +7,7 @@ import type { Post } from "../seed/posts";
 import { ACTIVE } from "../templates/index";
 import { ACTIVE_TEMPLATE } from "../templates/active";
 import { authorized, handleMcp, mintToken, TOOLS } from "./mcp";
-import { openStore, type Store } from "./store";
+import { openStore, referralRefusal, type Store } from "./store";
 
 /** The seeded rows are the active template's, so they are named by what they are, never by id. */
 const seedPosts = ACTIVE_TEMPLATE.seed.posts as Post[];
@@ -162,6 +162,64 @@ describe("mcp tools", () => {
     store.onboardClient(lead.id);
     delete (store.read().clients.find((c) => c.id === lead.id) as Client).referralCode;
     expect(store.referralCode(lead.id)).toMatch(/^[\w-]{12}$/);
+  });
+
+  describe("who is ready to be asked for a referral", () => {
+    const now = new Date("2026-06-01T12:00:00Z");
+    const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOString();
+    const day = (n: number) => daysAgo(n).slice(0, 10);
+    const client = (over: Partial<Client> = {}): Client => ({
+      id: "cli_r", slug: "r", name: "R", domain: "r.example", stage: "active", services: [], contact: { name: "R", email: "r@r.example", role: "" }, notes: [],
+      onboardedAt: daysAgo(45), ...over,
+    });
+    const post = (status: Post["status"], ago: number): Post => ({ id: `post_${status}_${ago}`, clientId: "cli_r", title: "t", summary: "s", kind: "article", channel: "blog", status, agent: "a", scheduledFor: day(ago), hue: 0 });
+    const happy = [post("approved", 10), post("posted", 20)];
+
+    it("asks a client with the agency a month, two pieces approved lately, nothing turned down and not asked lately", () => {
+      expect(referralRefusal(client(), happy, now)).toBeNull();
+    });
+
+    it.each([
+      ["a lead", client({ stage: "lead" }), happy, /only an active client/],
+      ["a churned client", client({ stage: "churned" }), happy, /only an active client/],
+      ["a client of two weeks", client({ onboardedAt: daysAgo(14) }), happy, /after 30 days/],
+      ["one approved piece", client(), [post("approved", 10)], /at least 2 pieces/],
+      ["approvals older than 60 days", client(), [post("approved", 70), post("posted", 80)], /at least 2 pieces/],
+      ["work turned down lately", client(), [...happy, post("rejected", 5)], /turned down work/],
+      // A draft is turned down before its slot comes round: a future-slot rejection counts too.
+      ["a draft for next week just turned down", client(), [...happy, post("rejected", -7)], /turned down work/],
+      ["asked a month ago", client({ referralAskedAt: daysAgo(30) }), happy, /less than 90 days ago/],
+    ])("does not ask %s", (_why, row, posts, reason) => {
+      expect(referralRefusal(row, posts, now)).toMatch(reason);
+    });
+
+    it("asks again once the cooldown has passed", () => {
+      expect(referralRefusal(client({ referralAskedAt: daysAgo(91) }), happy, now)).toBeNull();
+    });
+  });
+
+  it("list_referral_ready names ready clients with their link, and record_referral_ask starts the cooldown", async () => {
+    const store = freshStore();
+    const ready = store.createLead({ name: "Happy Co", domain: "happy.example", contact: { name: "H", email: "h@happy.example", role: "" } });
+    store.onboardClient(ready.id);
+    const row = store.read().clients.find((c) => c.id === ready.id)!;
+    row.onboardedAt = new Date(Date.now() - 40 * 86_400_000).toISOString();
+    const today = new Date().toISOString().slice(0, 10);
+    for (const status of ["approved", "posted"] as const) {
+      const draft = store.createDraftPost({ clientId: ready.id, title: status, summary: "s", kind: ACTIVE.kinds[0]!.id, channel: "blog", scheduledFor: today })!;
+      store.updatePost(draft.id, { status });
+    }
+    const list = async () => JSON.parse(((await handleMcp(call("list_referral_ready", {}), store, null, "https://agency.example")) as CallResult).result.content[0]!.text) as { id: string; referral_link: string }[];
+
+    const named = await list();
+    expect(named.map((c) => c.id)).toContain(ready.id);
+    expect(named.find((c) => c.id === ready.id)?.referral_link).toMatch(/^https:\/\/agency\.example\/\?ref=[\w-]{12}#contact$/);
+
+    expect(((await handleMcp(call("record_referral_ask", { client: ready.id }), store, null)) as CallResult).result.isError).toBeFalsy();
+    expect((await list()).map((c) => c.id)).not.toContain(ready.id);
+    // A second ask inside the cooldown is refused with the reason.
+    const again = (await handleMcp(call("record_referral_ask", { client: ready.id }), store, null)) as CallResult;
+    expect([again.result.isError, again.result.content[0]!.text]).toEqual([true, expect.stringMatching(/less than 90 days ago/)]);
   });
 
   it("the agency's own name-only record carries no source: it is not a lead", async () => {

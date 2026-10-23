@@ -43,4 +43,13 @@ export interface Client {
    * cannot be made from a name. Stamped when the client goes active.
    */
   referralCode?: string;
+  /** When this client was last asked for an introduction (ISO time); the cooldown counts from it. */
+  referralAskedAt?: string;
 }
+
+/**
+ * When a client is ready to be asked for a referral (plan P3): long enough with the agency, recent
+ * work they approved, nothing they turned down since, and not asked lately. Asking an unhappy or a
+ * brand-new client costs more trust than any introduction brings.
+ */
+export const REFERRAL_READY = { activeDays: 30, recentDays: 60, minApproved: 2, cooldownDays: 90 } as const;

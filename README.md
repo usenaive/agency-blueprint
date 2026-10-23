@@ -77,7 +77,7 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 |---|---|---|---|---|---|
 | `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
 | `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
-| `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
+| `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
 | `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
 | `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
 | `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
@@ -188,6 +188,13 @@ Each active client has a private referral link, `/?ref=<code>#contact`, from
 a name) and is stamped when the client goes active. The site remembers it for the visit, and a
 lead filed through it lands as a `referral` from that client; an unknown code files an ordinary
 `site` lead. It goes through the same rate limit and open-lead cap as the rest of the form.
+
+The Monday check-in asks ready clients for an introduction. `list_referral_ready` decides who
+is ready, in code rather than in the agent's judgment: active for 30 days, at least two pieces
+approved or posted in the last 60, nothing turned down since, and not asked in the last 90. For
+each, `client-manager` proposes one short email (held for approval like every send) with the
+client's referral link, offering no reward, then `record_referral_ask` starts the cooldown. In
+`seo-geo` the ask leads with the gain the latest posted SERP report shows, and only that.
 
 ### The skills
 
@@ -429,7 +436,7 @@ exist **only** on a local server. On the deployment they answer `404`, and Setti
 the platform mints that app's token itself and injects it, so the agents in your project
 already reach `/mcp` without one being handed to whoever finds the URL.
 
-Tools: `list_clients`, `get_client`, `create_lead`, `get_referral_link`, `add_client_note`, `advance_pipeline`,
+Tools: `list_clients`, `get_client`, `create_lead`, `get_referral_link`, `list_referral_ready`, `record_referral_ask`, `add_client_note`, `advance_pipeline`,
 `list_posts`, `create_draft_post`, `approve_post`, `schedule_post`, `list_agents`,
 `start_agent_session`, `get_calendar`, `get_site`, `update_site`.
 
