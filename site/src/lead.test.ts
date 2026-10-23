@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { submitLead, toLeadInput, type ContactForm } from "./lead.ts";
+import { describe, expect, it, vi } from "vitest";
+import { referralCode, submitLead, toLeadInput, type ContactForm } from "./lead.ts";
 
 const form: ContactForm = {
   company: " Summit Outdoor Co ",
@@ -50,5 +50,34 @@ describe("submitLead", () => {
       throw new TypeError("fetch failed");
     }) as typeof fetch;
     expect(await submitLead(form, doFetch)).toBe("offline");
+  });
+});
+
+describe("a referral link", () => {
+  it("sends the link's code with the lead, and nothing when there is none", () => {
+    expect(toLeadInput(form, "Ab3dEf6hIj9k").ref).toBe("Ab3dEf6hIj9k");
+    expect(toLeadInput(form)).not.toHaveProperty("ref");
+  });
+
+  it("remembers the code for the visit, so reading on before writing in still credits the referrer", () => {
+    const kept = new Map<string, string>();
+    vi.stubGlobal("sessionStorage", { setItem: (k: string, v: string) => kept.set(k, v), getItem: (k: string) => kept.get(k) ?? null });
+    try {
+      expect(referralCode("?ref=Ab3dEf6hIj9k")).toBe("Ab3dEf6hIj9k");
+      expect(referralCode("")).toBe("Ab3dEf6hIj9k");
+      expect(referralCode("?ref=Zz9")).toBe("Zz9");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("still reads the URL when the browser refuses storage", () => {
+    vi.stubGlobal("sessionStorage", { setItem: () => { throw new Error("denied"); }, getItem: () => { throw new Error("denied"); } });
+    try {
+      expect(referralCode("?ref=Ab3dEf6hIj9k")).toBe("Ab3dEf6hIj9k");
+      expect(referralCode("")).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -85,6 +85,7 @@ export const TOOLS = [
     source: { type: "string", enum: AGENT_SOURCES, description: "Where this lead came from: outreach (your own prospecting, the default), network (someone the operator already knows) or referral (an existing client introduced them; give referred_by)" },
     referred_by: str("For a referral: the id (cli_…) of the client who introduced them"),
   }, ["name"]) },
+  { name: "get_referral_link", description: "An active client's private referral link to the agency's contact form. Whoever fills the form in through it is filed as a referral from that client, so quote this link exactly; never write one yourself.", inputSchema: obj({ client: str("Client id (cli_…), an active client") }, ["client"]) },
   { name: "advance_pipeline", description: "Move a client to the next pipeline stage.", inputSchema: obj({ id: str("Client id") }, ["id"]) },
   { name: "add_client_note", description: "File a working note on a client — a drafted outreach or follow-up, a call summary, what a proposal is waiting on — for the operator to read on the client's page. Optionally restate what the client is waiting on next.", inputSchema: obj({
     id: str("Client id"), note: str("The note in full — a drafted follow-up goes here verbatim"),
@@ -133,8 +134,14 @@ async function platformAgents(config: ProxyConfig | null): Promise<AgentRow[]> {
   return roster;
 }
 
-async function callTool(name: string, params: Record<string, unknown>, store: Store, config: ProxyConfig | null): Promise<unknown> {
+async function callTool(name: string, params: Record<string, unknown>, store: Store, config: ProxyConfig | null, origin: string): Promise<unknown> {
   switch (name) {
+    case "get_referral_link": {
+      const id = need(params, "client");
+      const code = store.referralCode(id);
+      if (code === null) throw new ToolError("only an active client has a referral link (list_clients shows each client's stage)");
+      return { client: id, code, url: `${origin}/?ref=${code}#contact` };
+    }
     case "list_clients":
       return store.read().clients;
     case "get_client": {
@@ -236,7 +243,7 @@ const rpcError = (id: JsonRpcRequest["id"], code: number, message: string) =>
  * Handles one JSON-RPC message. Answers null for notifications (the caller
  * responds 202 with no body, per the streamable-HTTP transport).
  */
-export async function handleMcp(raw: string, store: Store, config: ProxyConfig | null): Promise<object | null> {
+export async function handleMcp(raw: string, store: Store, config: ProxyConfig | null, origin = ""): Promise<object | null> {
   let msg: JsonRpcRequest;
   try {
     msg = JSON.parse(raw) as JsonRpcRequest;
@@ -256,7 +263,7 @@ export async function handleMcp(raw: string, store: Store, config: ProxyConfig |
   if (msg.method === "tools/call") {
     const { name, arguments: args } = (msg.params ?? {}) as { name?: string; arguments?: Record<string, unknown> };
     try {
-      const result = await callTool(name ?? "", args ?? {}, store, config);
+      const result = await callTool(name ?? "", args ?? {}, store, config, origin);
       return rpcResult(msg.id, { content: [{ type: "text", text: JSON.stringify(result) }] });
     } catch (err) {
       if (err instanceof ToolError) {

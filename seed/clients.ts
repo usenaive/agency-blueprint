@@ -38,4 +38,9 @@ export interface Client {
   source?: LeadSource;
   /** The client (`cli_…`) that introduced this one, when `source` is `referral`. */
   referredBy?: string;
+  /**
+   * The private code in this client's referral link (`/?ref=…`). Random, never the slug, so a link
+   * cannot be made from a name. Stamped when the client goes active.
+   */
+  referralCode?: string;
 }
