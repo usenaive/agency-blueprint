@@ -319,7 +319,7 @@ never a new app:
 
 ```ts
 // templates/index.ts
-export const TEMPLATE: TemplateName = "blank";   // was "seo-geo"
+export const TEMPLATE: TemplateName = "seo-geo";   // was "blank", the default
 ```
 
 ```sh

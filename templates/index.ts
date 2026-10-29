@@ -196,10 +196,13 @@ export const VOCABULARY: Record<TemplateName, TemplateVocabulary> = { blank, "se
  * own between builds. Without the override it asked for `blank` and got this line's answer back, so
  * only the default template could ever be published. Unset — every run that is not that publisher —
  * nothing changes.
+ *
+ * The fallback is `blank`, the platform's own default for this blueprint (`BLUEPRINTS.agency.default`),
+ * so a clone and a studio install with no template named get the same agency.
  */
 const chosen = process.env["NAIVE_TEMPLATE"];
 export const TEMPLATE: TemplateName =
-  chosen === "blank" || chosen === "seo-geo" ? chosen : "seo-geo";
+  chosen === "blank" || chosen === "seo-geo" ? chosen : "blank";
 
 export const ACTIVE = VOCABULARY[TEMPLATE];
 
