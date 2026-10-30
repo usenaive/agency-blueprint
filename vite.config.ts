@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import { isOperatorPath, operatorRedirect } from "./site/routing.ts";
+import { TEMPLATE } from "./templates/index.ts";
 
 /**
  * The dev server's half of `site/routing.ts`: a deep link under `/app` is the operator bundle's
@@ -49,7 +50,12 @@ export default defineConfig(({ mode }) => {
    * `GET /api/site` and its contact form's `POST /api/leads` need no second host.
    */
   appType: "mpa",
-  build: { rollupOptions: { input: { site: entry("index.html"), app: entry("app/index.html") } } },
+  build: {
+    rollupOptions: { input: { site: entry("index.html"), app: entry("app/index.html") } },
+    // The one chunk over the default limit is `@google/model-viewer` (three.js, ~1 MB), emitted only
+    // in a product-design build and fetched only when the Studio screen shows a mesh.
+    chunkSizeWarningLimit: 1_100,
+  },
   /**
    * *** THE ONE WAY THE BROWSER LEARNS WHICH TEMPLATE THIS BUILD IS. ***
    *
@@ -71,7 +77,16 @@ export default defineConfig(({ mode }) => {
    * is falsy, and `templates/index.ts` keeps the default the file itself names. Nothing changes for
    * an operator who switches template by editing that line.
    */
-  define: { "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? "") },
+  define: {
+    "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? ""),
+    /**
+     * Whether this build is the product-design studio — read from `templates/index.ts` itself, so an
+     * operator who switched by editing that file's line gets it as surely as the publisher's
+     * `NAIVE_TEMPLATE`. A literal, so the bundler drops the `@google/model-viewer` import (three.js,
+     * ~1 MB) from every other template's build instead of emitting a chunk nobody fetches.
+     */
+    __AGENCY_STUDIO__: JSON.stringify(TEMPLATE === "product-design"),
+  },
   /**
    * `pnpm dev` keeps its demo without compiling a single seed row into the bundle: the screens
    * read the seeded **file** store through the real routes of a local `pnpm serve` on :8789. With

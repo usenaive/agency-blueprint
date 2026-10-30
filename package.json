@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.10",
+    "@google/model-viewer": "4.4.0",
     "lucide-react": "^0.548.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
