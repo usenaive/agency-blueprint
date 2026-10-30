@@ -16,9 +16,10 @@ approvals, agents, per-client workspaces) — plus an MCP server that lets any a
 the agency, and a crew of seven agents that read the three answers you give at install and
 start work the same day.
 
-It comes in **two templates**: `blank`, a working agency with no specialism, and `seo-geo`,
-the same agency specialised in search and answer-engine work. One repo carries both — see
-[The two templates](#-the-two-templates).
+It comes in **three templates**: `blank`, a working agency with no specialism; `seo-geo`,
+the same agency specialised in search and answer-engine work; and `product-design`, a studio
+for physical products run by four seats of its own. One repo carries all three — see
+[The templates](#-the-templates) and [The product design studio](#-the-product-design-studio).
 
 The engine is [`@usenaive-sdk/blueprints`](https://www.npmjs.com/package/@usenaive-sdk/blueprints),
 installed from the public npm registry like any other dependency. Nothing here resolves out
@@ -302,7 +303,7 @@ secret is in it.
 `/mcp` is untouched by all of this: agents carry their own bearer, which is not yours and
 does not open `/api/*`.
 
-## 🧩 The two templates
+## 🧩 The templates
 
 A **blueprint** is the machine, and it is shared: the screens, `/api/*`, `/mcp`, the store,
 the operator gate, the build and deploy, the approval flow. A **template** is data: the
@@ -313,8 +314,9 @@ demo seed, the words the screens print.
 |---|---|---|---|
 | `blank` | No specialism — the seven, generic | post, page, report, audit | none |
 | `seo-geo` | Search: audits, SERP work, answer-engine optimization | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
+| `product-design` | A product studio: concept meshes, dimensioned parts, studio stills, product video on request — its own four seats, not the seven | concept mesh, studio still, dimensioned part, product video | none |
 
-This repo carries **both**, so switching is an edit and a re-apply — never a re-clone, and
+This repo carries **all three**, so switching is an edit and a re-apply — never a re-clone, and
 never a new app:
 
 ```ts
@@ -337,6 +339,48 @@ template keeps its kind.
 The dashboard shows which template is active on **Settings**, and does not offer a switcher:
 a template is data compiled into the app *and* its config, so switching is the edit above
 plus a re-apply, and a button could not honestly do it.
+
+**`product-design` needs `@usenaive-sdk/blueprints` 0.13.0.** The engine refuses a repo whose
+template list is not exactly its own, so `naive.config.ts` carries only the templates the
+installed engine lists and warns about the rest (`agency: the installed
+@usenaive-sdk/blueprints does not list product-design; …`). On an older engine `blank` and
+`seo-geo` work as before; choosing `product-design` there fails with that version in the
+error, and `pnpm up @usenaive-sdk/blueprints@^0.13.0` is the fix.
+
+## 🧪 The product design studio
+
+`product-design` runs the same machine — CRM, public site, approvals, `/mcp` — as a studio for
+physical products. Its crew is four seats, not the seven:
+
+| Agent | Role | What it holds (besides `project_context`, `read_skill`, `ask_operator`, `request_tools`) | Skills | Timer | Day one |
+|---|---|---|---|---|---|
+| `account-manager` | Studio lead | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, list_posts, schedule_post}`, mailbox reads, `send_to_agent`, `list_agents`; `email.send` at **ask** | `naive/product-design`, `naive/client-onboarding` | Mon 09:00 studio check-in | Writes the **STUDIO NOTE** from your four answers before anything is made, then hands one first brief to `designer`. |
+| `designer` | Concept meshes | `generate_3d_model`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `send_to_agent` | `naive/product-design`, `naive/3d-modeling` | — | Waits for a brief. |
+| `engineer` | Dimensioned parts | `build_3d`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`, `send_to_agent` | `naive/product-design`, `naive/cad-parts` | — | Waits for a brief. |
+| `visualizer` | Stills & video | `generate_image`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`; `generate_video` at **ask** | `naive/product-design`, `naive/product-video-3d` | — | Waits for a brief. |
+
+The engine also gives every template crew the file tools (`bash`, read/write/edit) and `apps`
+at ask; `build_3d` runs on the session's computer.
+
+**The four setup questions are the studio questions:** what physical products the studio
+designs; who the work is for; which materials, sizes and features must be manufacturable and
+which are looks only; and what done means for a typical brief. The account manager writes
+them into the studio note — a note titled `STUDIO NOTE` on the agency's own CRM record — and
+every seat reads that note before it makes anything.
+
+**A look is not a part.** A brief with no sizes is a *look*: the designer makes one textured
+concept mesh with `generate_3d_model` (a GLB with no units — never claimed to fit anything),
+and the visualizer makes one studio still. A brief that names millimetres is a *part*: the
+engineer builds it with `build_3d` (`engine: "cad"`) and files it only when it is a watertight
+solid within 0.5 mm of the brief, as STEP + STL + a preview with its bounding box and volume.
+A product video is made only when the brief asks, and `generate_video` waits for your approval.
+
+**Studio** (`/app/studio`, in the rail under this template only) is where the files land: each
+deliverable filed on the `studio` channel, newest first, with the still as an image, the mesh
+turning in `<model-viewer>`, and STEP/STL as downloads. The screen reads files through
+`GET /api/files/:id`, which proxies the platform's file read with the dashboard's key — only for
+an id a deliverable names, behind the same gate as the queue. Approving a studio deliverable
+only marks it approved: nothing is posted, emailed or sent to a manufacturer.
 
 ## 🖥 Operating the agency
 
@@ -415,7 +459,7 @@ Two rules worth knowing before your first edit:
   `schedules` key at all owns nothing and deletes nothing — it is a *partial* set that is
   destructive.)
 
-Adding a template is the same shape: a module beside `blank.ts` and `seo-geo.ts` exporting an
+Adding a template is the same shape: a module beside `blank.ts`, `seo-geo.ts` and `product-design.ts` exporting an
 `AgencyTemplate`, its vocabulary in `templates/index.ts`, and its name in the `TemplateName`
 union. `templates/templates.test.ts` and `templates/bundle.test.ts` will tell you what you
 missed.
@@ -566,7 +610,7 @@ The config can declare more than this template uses:
 
 | Key | What it provisions |
 |---|---|
-| `blueprint` / `template` | which machine, and which data fills it (`agency` / `blank` \| `seo-geo`) |
+| `blueprint` / `template` | which machine, and which data fills it (`agency` / `blank` \| `seo-geo` \| `product-design`) |
 | `templates[]` | every template this repo carries; the chosen one's agents become the project's crew, the others' become `kept` |
 | `questions[]` | at most three, `text` or `choice`; the answers become the project's context |
 | `apps[]` | `name`, `type`, `description`, `deploy_dir`, `mcp` (the app's own MCP endpoint path, fullstack only), `required`, and `env` — literals, `{ from_env }` or `{ generate: true }`, written as the app's secrets |
