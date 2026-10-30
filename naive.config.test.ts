@@ -118,10 +118,19 @@ describe("naive.config.ts", () => {
     // and its one write is `ask`, so the change is live when the operator approves and not before.
     expect(byName["site-builder"]?.tools?.configs["dashboard.get_site"]).toEqual({ enabled: true, permission: "allow" });
     expect(byName["site-builder"]?.tools?.configs["dashboard.update_site"]).toEqual({ enabled: true, permission: "ask" });
-    // Both templates declare the same seven, so a switch narrows nothing here and `kept` is empty.
-    // The part that does differ — the per-client crew — is `server/proxy.ts`'s, because its names
-    // carry a client slug and cannot be declared statically.
-    expect(result.config.kept.agents).toEqual([]);
+    // `blank` and `seo-geo` declare the same seven, so between them a switch narrows nothing. What
+    // `kept` holds is every seat only a sibling template declares — on an engine that lists
+    // `product-design`, its four studio seats: a switch away from the studio leaves them standing
+    // rather than deleting them. On an engine that does not list it, nothing. The per-client crew is
+    // `server/proxy.ts`'s, because its names carry a client slug and cannot be declared statically.
+    const listed = BLUEPRINTS.agency?.templates ?? [];
+    const mine = new Set(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
+    const siblingsOnly = [...new Set(Object.values(TEMPLATES)
+      .filter((t) => listed.includes(t.name) && t.name !== TEMPLATE)
+      .flatMap((t) => t.agents.map((a) => a.name)))].filter((name) => !mine.has(name));
+    expect(result.config.kept.agents).toEqual(siblingsOnly);
+    expect(siblingsOnly).toEqual(listed.includes("product-design") && TEMPLATE !== "product-design"
+      ? ["account-manager", "designer", "engineer", "visualizer"] : siblingsOnly);
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
   }, 30_000);
 });
