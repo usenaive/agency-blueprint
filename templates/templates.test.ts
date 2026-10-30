@@ -451,6 +451,9 @@ describe("product-design", () => {
     expect(permission("visualizer", "generate_video")).toBe("ask");
     expect(seat("visualizer").system).toMatch(/ONE studio still with generate_image.*no text, no logo, no watermark/);
     expect(seat("visualizer").system).toMatch(/A product video only when the brief asks/);
+    // naive/product-video-3d renders with build_3d and a bash turntable; the visualizer holds neither.
+    expect(seat("visualizer").system).toMatch(/generate_video from the still.*Skip the skill's Blender and turntable steps/);
+    expect([permission("visualizer", "bash"), permission("visualizer", "build_3d")]).toEqual([undefined, undefined]);
   });
 
   it("files every file as one pending studio deliverable carrying its fil_ ids", () => {

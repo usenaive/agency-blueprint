@@ -129,8 +129,10 @@ describe("naive.config.ts", () => {
       .filter((t) => listed.includes(t.name) && t.name !== TEMPLATE)
       .flatMap((t) => t.agents.map((a) => a.name)))].filter((name) => !mine.has(name));
     expect(result.config.kept.agents).toEqual(siblingsOnly);
-    expect(siblingsOnly).toEqual(listed.includes("product-design") && TEMPLATE !== "product-design"
-      ? ["account-manager", "designer", "engineer", "visualizer"] : siblingsOnly);
+    // Pinned only for the default template: blank keeps seo-geo's extra seat too, so its list differs.
+    if (TEMPLATE === "seo-geo") {
+      expect(siblingsOnly).toEqual(listed.includes("product-design") ? ["account-manager", "designer", "engineer", "visualizer"] : []);
+    }
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
   }, 30_000);
 });

@@ -101,7 +101,7 @@ const designer: AgentDecl = {
       "The message names the client's cli_ id and the brief. Make ONE generate_3d_model per brief from the brief and the note, texture true, no logo or text. " +
       "It runs as a job: end the turn and wait for the GLB; never poll, never start a second. On failure retry once, then ask_operator. " +
       "Then send_to_agent visualizer, wait false: the cli_ id, the GLB fil_ id, the brief and a still prompt. " +
-      "A mesh has no units: never claim a size or that it can be manufactured. Never call build_3d.",
+      "A mesh has no units: never claim a size or that it can be manufactured. Never call build_3d, not even for the mesh clean-up naive/3d-modeling describes: file the GLB as it comes.",
   ),
   tools: tools(
     [...CONTEXT, "generate_3d_model", "view_image", "fetch_file", "publish_file", ...crm("list_clients", "get_client", "list_posts", "add_client_note"), ...HANDOFF],
@@ -148,7 +148,8 @@ const visualizer: AgentDecl = {
     `You are the visualizer: studio stills and product video. ${READ_NOTE} ` +
       "The message names the client's cli_ id, the brief and the GLB or preview fil_ id. Make ONE studio still with generate_image: plain background, no text, no logo, no watermark; view_image it and retry once if it breaks that. " +
       `${FILE_IT} For a look: ONE pending deliverable, kind concept, files the GLB then the still. ` +
-      "A product video only when the brief asks: generate_video waits for approval, then file it as kind product-video.",
+      "A product video only when the brief asks: generate_video from the still (it waits for approval), filed as kind product-video. " +
+      "Skip the skill's Blender and turntable steps.",
   ),
   tools: tools(
     [...CONTEXT, "generate_image", "view_image", "fetch_file", "publish_file", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "add_client_note")],
