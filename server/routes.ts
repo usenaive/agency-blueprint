@@ -13,6 +13,7 @@ import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches }
 import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
 import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
+import { FILE_ID } from "../seed/posts.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
 import { articlePath, publishedArticle, renderArticle, renderHome } from "./public-site.ts";
 
@@ -36,6 +37,11 @@ export interface ApiReply {
   text?: string;
   /** Set only by `/api/chat/:sid/stream` — piped, not buffered. */
   stream?: Response;
+  /**
+   * Set only by `GET /api/files/:id` — a platform file's bytes, piped as they come with the
+   * upstream status and the headers in `headers` (its type, length, disposition), never as SSE.
+   */
+  file?: Response;
   /**
    * Set by `/api/enter` (a cookie and a redirect, no body) and by a refused cookie (the header
    * that expires it). An array is several headers of that name — `set-cookie` is the one header
@@ -465,6 +471,11 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     const store = await ctx.store();
     const post = store.read().posts.find((p) => p.id === postNow[1]);
     if (!post) return { status: 404, body: { error: "no such post" } };
+    // A studio deliverable is a file the operator approves and hands over; there is no feed or
+    // network it could be posted to, and the social publisher below must never see one.
+    if (post.channel === "studio") {
+      return { status: 409, body: { error: "a studio deliverable is not posted anywhere — approve it on Studio and hand the files over yourself" } };
+    }
     if (post.channel === "blog") {
       const copy = `${post.title}\n${post.summary}\n${post.body ?? ""}`;
       const problems = [
@@ -501,6 +512,64 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
   }
 
   return null;
+}
+
+/** Which upstream headers a file keeps on its way to the browser; nothing else of the platform's is passed on. */
+const FILE_HEADERS = ["content-type", "content-length", "content-disposition", "etag", "last-modified"] as const;
+
+/**
+ * `GET /api/files/:id` — the bytes of one platform file a deliverable carries, for the Studio
+ * screen's `<img>`, `<model-viewer>` and download links (a browser cannot send the org's key, and
+ * must never hold it).
+ *
+ * Only an id some stored deliverable names is served: this route is the operator's view of their
+ * own queue, never a general read of every file in the organization under the org's key. Behind the
+ * same gate as `/api/posts`; 404 for any other id, 503 without a key (the house rule), and the
+ * platform's own status otherwise. `?download=true` is the platform's streamed read
+ * (`GET /v1/files/{id}`, scope `files:read`). `GET /api/files/:id/meta` is that file's name, type
+ * and size, which the screen needs to know how to show it.
+ */
+async function fileRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
+  const match = /^\/api\/files\/([^/]+)(\/meta)?$/.exec(req.path);
+  if (!match) return null;
+  if (req.method !== "GET") return NOT_ALLOWED;
+  const id = match[1]!;
+  const known = FILE_ID.test(id) && (await ctx.store()).read().posts.some((post) => post.files?.includes(id));
+  if (!known) return { status: 404, body: { error: "no such file on a deliverable" } };
+  if (ctx.config === null) return NOT_CONFIGURED;
+  let upstream: Response;
+  try {
+    if (match[2] !== undefined) {
+      // What the screen needs to choose an <img>, a <model-viewer> or a download link: a `fil_` id
+      // says nothing about what the file is. Only these four fields; the row's session, agent and
+      // library fields are the organization's, not this screen's.
+      const meta = await proxyFetch(ctx.config, { method: "GET", path: `/v1/files/${id}` }, null);
+      if (!meta.ok) return { status: meta.status === 404 ? 404 : 502, body: { error: meta.status === 404 ? "no such file" : "upstream unavailable" } };
+      const row = (await meta.json()) as { name?: unknown; content_type?: unknown; size_bytes?: unknown };
+      return {
+        status: 200,
+        body: {
+          id,
+          name: typeof row.name === "string" ? row.name : id,
+          content_type: typeof row.content_type === "string" ? row.content_type : "application/octet-stream",
+          size_bytes: typeof row.size_bytes === "number" ? row.size_bytes : null,
+        },
+      };
+    }
+    upstream = await proxyFetch(ctx.config, { method: "GET", path: `/v1/files/${id}?download=true` }, null);
+  } catch {
+    return { status: 502, body: { error: "upstream unavailable" } };
+  }
+  if (!upstream.ok) {
+    await upstream.body?.cancel().catch(() => {});
+    return { status: upstream.status === 404 ? 404 : 502, body: { error: upstream.status === 404 ? "no such file" : "upstream unavailable" } };
+  }
+  const headers: Record<string, string> = { "cache-control": "private, max-age=3600" };
+  for (const name of FILE_HEADERS) {
+    const value = upstream.headers.get(name);
+    if (value !== null) headers[name] = value;
+  }
+  return { status: upstream.status, file: upstream, headers };
 }
 
 /** Resolved once per instance: the agent the agency chat talks to. */
@@ -684,7 +753,7 @@ function sameOrigin(req: ApiRequest): boolean {
   }
 }
 
-/** The whole route table, in order: `/mcp`, the door, the public site, the gate, the local token routes, the store, the platform. */
+/** The whole route table, in order: `/mcp`, the door, the public site, the gate, the local token routes, the files, the store, the platform. */
 export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (req.path === "/mcp") return mcpRoute(req, ctx);
   if (["/", "/robots.txt", "/sitemap.xml", "/llms.txt"].includes(req.path) || req.path.startsWith("/blog/")) {
@@ -701,5 +770,5 @@ export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<A
   // Before the route table, so an unauthenticated caller cannot even map which routes exist.
   const denied = apiGate(req, ctx);
   if (denied !== null) return denied;
-  return (await tokenRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
+  return (await tokenRoutes(req, ctx)) ?? (await fileRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
 }

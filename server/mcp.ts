@@ -15,6 +15,7 @@ import { SITE_SECTIONS } from "../site/site.config.ts";
 import { ACTIVE } from "../templates/index.ts";
 import type { DraftPostInput, Store } from "./store.ts";
 import type { LeadSource } from "../seed/clients.ts";
+import { FILE_ID, MAX_POST_FILES, POST_CHANNELS, type PostChannel } from "../seed/posts.ts";
 
 export const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
@@ -99,8 +100,12 @@ export const TOOLS = [
   { name: "create_draft_post", description: "Add a pending draft to a client's content queue.", inputSchema: obj({
     client: str("Client id"), title: str("Title"), summary: str("One-line summary"),
     body: str("The draft itself, in full — this is what the operator reads before approving it."),
-    kind: str(ACTIVE.kinds.map((k) => k.id).join("|")), channel: str("blog|linkedin|x"),
+    kind: str(ACTIVE.kinds.map((k) => k.id).join("|")), channel: str(POST_CHANNELS.join("|")),
     scheduled_for: str("ISO day (YYYY-MM-DD)"),
+    files: {
+      type: "array", maxItems: MAX_POST_FILES, items: { type: "string", pattern: FILE_ID.source },
+      description: `Optional: the platform files this deliverable is (fil_… ids, at most ${MAX_POST_FILES}) — a mesh and its still, a part's STEP, STL and preview. Shown on the Studio screen for approval.`,
+    },
   }, ["client", "title", "summary", "kind", "channel", "scheduled_for"]) },
   { name: "approve_post", description: "Approve a post for publishing.", inputSchema: obj({ id: str("Post id") }, ["id"]) },
   { name: "schedule_post", description: "Reslot a post on the calendar.", inputSchema: obj({
@@ -127,6 +132,20 @@ const need = (params: Record<string, unknown>, key: string): string => {
 };
 const text = (params: Record<string, unknown>, key: string): string =>
   typeof params[key] === "string" ? (params[key] as string) : "";
+
+/**
+ * `files` as an agent sent it: absent is none; anything else must be a list of at most
+ * `MAX_POST_FILES` platform file ids. Refused whole, never trimmed — a deliverable filed without the
+ * file the agent meant to attach is one the operator would approve blind.
+ */
+function fileIds(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new ToolError("files must be a list of fil_ ids");
+  if (value.length > MAX_POST_FILES) throw new ToolError(`files takes at most ${MAX_POST_FILES} ids`);
+  const bad = value.filter((id) => typeof id !== "string" || !FILE_ID.test(id));
+  if (bad.length > 0) throw new ToolError(`files must hold only platform file ids (fil_…); refused: ${bad.map((id) => JSON.stringify(id)).join(", ")}`);
+  return [...new Set(value as string[])];
+}
 
 /** The whole roster, cursor followed: a crew on page four is an agent this tool can still start. */
 async function platformAgents(config: ProxyConfig | null): Promise<AgentRow[]> {
@@ -192,11 +211,15 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       return store.read().posts.filter((p) => p.clientId === client && (params.state === undefined || p.status === params.state));
     }
     case "create_draft_post": {
+      const channel = need(params, "channel");
+      if (!(POST_CHANNELS as readonly string[]).includes(channel)) throw new ToolError(`channel must be one of ${POST_CHANNELS.join(", ")}`);
+      const files = fileIds(params.files);
       const post = store.createDraftPost({
         clientId: need(params, "client"), title: need(params, "title"), summary: need(params, "summary"),
         body: typeof params.body === "string" && params.body !== "" ? params.body : undefined,
-        kind: need(params, "kind") as DraftPostInput["kind"], channel: need(params, "channel") as DraftPostInput["channel"],
+        kind: need(params, "kind") as DraftPostInput["kind"], channel: channel as PostChannel,
         scheduledFor: need(params, "scheduled_for"), agent: "mcp",
+        ...(files.length > 0 ? { files } : {}),
       });
       if (!post) throw new ToolError("no such client");
       return post;

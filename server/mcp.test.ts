@@ -267,6 +267,44 @@ describe("mcp tools", () => {
     expect(JSON.parse(without.result.content[0]!.text)).not.toHaveProperty("body");
   });
 
+  /**
+   * A product-design deliverable IS its files: a concept mesh and its still, a part's STEP + STL +
+   * preview. The queue carries their `fil_` ids so the Studio screen can show them; anything that is
+   * not one, or too many, is refused whole rather than filed without the file the agent meant.
+   */
+  it("files a studio deliverable with its fil_ ids, and refuses anything that is not one", async () => {
+    const store = freshStore();
+    const base = { client: anyClient, title: "Carafe", summary: "Concept + still", kind: ACTIVE.kinds[0]!.id, channel: "studio", scheduled_for: "2026-10-30" };
+    const filed = (await handleMcp(call("create_draft_post", { ...base, files: ["fil_glb1", "fil_png1", "fil_glb1"] }), store, null)) as CallResult;
+    expect(filed.result.isError).toBeUndefined();
+    const post = JSON.parse(filed.result.content[0]!.text) as { id: string; channel: string; files: string[] };
+    expect(post.channel).toBe("studio");
+    expect(post.files).toEqual(["fil_glb1", "fil_png1"]);
+    expect(store.read().posts.find((p) => p.id === post.id)?.files).toEqual(["fil_glb1", "fil_png1"]);
+    // No files is a row with no `files` at all, as every word-only row has always been.
+    const plain = (await handleMcp(call("create_draft_post", { ...base, files: [] }), store, null)) as CallResult;
+    expect(JSON.parse(plain.result.content[0]!.text)).not.toHaveProperty("files");
+
+    const before = store.read().posts.length;
+    for (const [files, why] of [
+      ["fil_glb1", /files must be a list of fil_ ids/],
+      [["https://example.com/a.glb"], /only platform file ids \(fil_…\); refused: "https:\/\/example\.com\/a\.glb"/],
+      [["fil_ok", "../fil_x"], /refused: "\.\.\/fil_x"/],
+      [Array.from({ length: 9 }, (_, i) => `fil_${i}`), /at most 8 ids/],
+    ] as const) {
+      const refused = (await handleMcp(call("create_draft_post", { ...base, files }), store, null)) as CallResult;
+      expect(refused.result.isError).toBe(true);
+      expect(refused.result.content[0]!.text).toMatch(why);
+    }
+    const badChannel = (await handleMcp(call("create_draft_post", { ...base, channel: "tiktok" }), store, null)) as CallResult;
+    expect(badChannel.result.isError).toBe(true);
+    expect(badChannel.result.content[0]!.text).toBe("channel must be one of blog, linkedin, x, studio");
+    expect(store.read().posts.length).toBe(before);
+    // And the schema the agent reads says the same.
+    const tool = TOOLS.find((t) => t.name === "create_draft_post")!;
+    expect(tool.inputSchema.properties).toMatchObject({ files: { type: "array", maxItems: 8, items: { pattern: "^fil_[A-Za-z0-9]+$" } } });
+  });
+
   it("filters list_posts and get_calendar by client, state and range", async () => {
     const store = freshStore();
     const ready = (await handleMcp(call("list_posts", { client: readyPost.clientId, state: "ready" }), store, null)) as CallResult;

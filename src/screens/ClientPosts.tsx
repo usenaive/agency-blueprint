@@ -94,7 +94,7 @@ export function ClientPosts() {
                 >
                   <FileText size={14} strokeWidth={1.75} /> {tab === "pending" || tab === "ready" ? "Read and decide" : "Read"}
                 </button>
-                {tab === "approved" ? (
+                {tab === "approved" && p.channel !== "studio" ? (
                   <button type="button" className="btn btn-ghost btn-sm" title="Publish now instead of waiting for the slot" onClick={() => void move(p.id, "posted")}>
                     <Send size={14} strokeWidth={1.75} /> Post now
                   </button>
