@@ -24,16 +24,17 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { blank } from "../templates/blank.ts";
+import { productDesign } from "../templates/product-design.ts";
 import { seoGeo } from "../templates/seo-geo.ts";
 
 const src = dirname(fileURLToPath(import.meta.url));
 const root = dirname(src);
 
 /** The modules whose contents may never ship. Paths are relative to the blueprint root. */
-const FORBIDDEN = ["templates/blank.ts", "templates/seo-geo.ts", "templates/active.ts"];
+const FORBIDDEN = ["templates/blank.ts", "templates/seo-geo.ts", "templates/product-design.ts", "templates/active.ts"];
 
 /** Every template's rows, not just the active one's — a switch must not make this guard blind. */
-const SEED_IDS = [blank, seoGeo].flatMap((template) => [
+const SEED_IDS = [blank, seoGeo, productDesign].flatMap((template) => [
   ...(template.seed.clients as Client[]).map((client) => client.id),
   ...(template.seed.posts as Post[]).map((post) => post.id),
 ]);

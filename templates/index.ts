@@ -17,7 +17,8 @@
  * its MCP token — are never touched by a switch.
  *
  * This module is the browser's half, so it carries no agents and no demo rows: those live in
- * `templates/blank.ts` and `templates/seo-geo.ts`, which only the config and the server import.
+ * `templates/blank.ts`, `templates/seo-geo.ts` and `templates/product-design.ts`, which only the
+ * config and the server import.
  */
 /**
  * One kind of work a template files — a deliverable kind, a post kind. `id` is what rows carry.
@@ -30,7 +31,7 @@ export interface TemplateKind {
   description?: string;
 }
 
-export type TemplateName = "blank" | "seo-geo";
+export type TemplateName = "blank" | "seo-geo" | "product-design";
 
 /**
  * The project's name on the platform — `defineProject({ name })` and the `?project=` the dashboard
@@ -180,7 +181,63 @@ const seoGeo: TemplateVocabulary = {
   },
 };
 
-export const VOCABULARY: Record<TemplateName, TemplateVocabulary> = { blank, "seo-geo": seoGeo };
+/**
+ * `product-design` — a studio for physical products, not a marketing agency. A deliverable is a
+ * file the operator approves: a concept mesh (a look, no units), a studio still, a dimensioned part
+ * (STEP + STL, checked) or a product video. It runs on the same machine — CRM, site, approvals —
+ * and adds one screen, Studio, where those files are shown (`src/screens/Studio.tsx`).
+ */
+const productDesign: TemplateVocabulary = {
+  description: "A product design studio: concept meshes for looks, dimensioned parts when a brief names millimetres, studio stills, and product video on request — every file held for your approval.",
+  kinds: [
+    { id: "concept", label: "Concept mesh", description: "A textured 3D look, no units." },
+    { id: "still", label: "Studio still", description: "A product image on a plain background." },
+    { id: "part", label: "Dimensioned part", description: "STEP + STL, checked." },
+    { id: "product-video", label: "Product video", description: "A short clip of the product, made only when the brief asks." },
+  ],
+  words: {
+    brand: "Lumen Product Studio",
+    crmSubtitle: "Every brand that briefs the studio, by pipeline stage — the account manager reads each brief against the studio note.",
+    onboarding:
+      "Moving a client to active starts their briefs: the account manager routes each one to the designer, the engineer or the visualizer, and every file they make waits on Studio for you.",
+    clientsSubtitle: "Every active client — open one to see its briefs, calendar and deliverables.",
+    noActiveClients: "No active clients yet — advance one on the CRM.",
+    agentsSubtitle: "The studio's four: account manager, designer, engineer and visualizer.",
+    noCrew: "This studio runs every brief through its four designers.",
+  },
+  site: {
+    tagline: "Physical products, designed and shown before they are made.",
+    eyebrow: "Concept · Engineering · Visuals",
+    title: "A product studio that shows you the object before anyone makes it.",
+    subtitle:
+      "We turn a brief into a concept you can turn around in 3D, a part dimensioned to the millimetre when it has to fit, and studio images to sell it — every file approved by you before it leaves.",
+    cta: "Send a brief",
+    services: [
+      {
+        name: "Concept",
+        headline: "See the look before you commit",
+        description: "A textured 3D concept of the product from your brief, to turn around and judge — a look, not a drawing.",
+        deliverables: ["Concept mesh (GLB)", "Material and colour direction", "One round of changes per brief", "Approval before anything leaves"],
+      },
+      {
+        name: "Engineering",
+        headline: "Parts that fit, to the millimetre",
+        description: "When a brief gives sizes, we model the part to them and check it before handing it over.",
+        deliverables: ["STEP and STL files", "Checked bounding box and volume", "Preview render", "Nothing sent to a manufacturer without you"],
+      },
+      {
+        name: "Visuals",
+        headline: "Images that sell the product",
+        description: "Studio stills on a plain background, and a short product video when the brief asks for one.",
+        deliverables: ["Studio still", "Product video on request", "No text, logo or watermark added", "Approval workflow — nothing ships unseen"],
+      },
+    ],
+    contactSubtitle: "Tell us what the product is and who it is for. We reply within one business day.",
+    footerNote: "Concept, engineering and visuals for physical products.",
+  },
+};
+
+export const VOCABULARY: Record<TemplateName, TemplateVocabulary> = { blank, "seo-geo": seoGeo, "product-design": productDesign };
 
 /**
  * **The line you edit to switch template**, then `naive up`. `naive.config.ts` declares it to the
@@ -199,7 +256,7 @@ export const VOCABULARY: Record<TemplateName, TemplateVocabulary> = { blank, "se
  */
 const chosen = process.env["NAIVE_TEMPLATE"];
 export const TEMPLATE: TemplateName =
-  chosen === "blank" || chosen === "seo-geo" ? chosen : "seo-geo";
+  chosen === "blank" || chosen === "seo-geo" || chosen === "product-design" ? chosen : "seo-geo";
 
 export const ACTIVE = VOCABULARY[TEMPLATE];
 

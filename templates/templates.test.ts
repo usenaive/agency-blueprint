@@ -15,6 +15,7 @@ import { TEMPLATES } from "./active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE, REFERRAL_ASK } from "./agents.ts";
 import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
+import { productDesign, STUDIO_NOTE } from "./product-design.ts";
 import { seoGeo } from "./seo-geo.ts";
 
 /** Plan §2.1's roster, name and role, in the order the studio lists them. */
@@ -30,6 +31,12 @@ const ROSTER = [
 const SEO_ROSTER = [...ROSTER, ["paid-media-planner", "Paid media planning"]];
 
 const all = Object.values(TEMPLATES);
+/**
+ * The two templates that run the agency's seven. `product-design` is a studio of four with its own
+ * questions, timers and chain (its own `describe` below); every rule about the machine — the gate,
+ * deny-by-default, the persona, outward tools at `ask`, the demo seed — is still held over `all`.
+ */
+const agencies = all.filter((t) => t.name !== "product-design");
 const clientsOf = (t: (typeof all)[number]) => t.seed.clients as Client[];
 const postsOf = (t: (typeof all)[number]) => t.seed.posts as Post[];
 const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -48,12 +55,12 @@ const prose = (t: (typeof all)[number]): string =>
   ]);
 
 describe("every template of this blueprint", () => {
-  it("carries both, so a switch is an edit and never a re-clone", () => {
-    expect(all.map((t) => t.name).sort()).toEqual(["blank", "seo-geo"]);
+  it("carries all three, so a switch is an edit and never a re-clone", () => {
+    expect(all.map((t) => t.name).sort()).toEqual(["blank", "product-design", "seo-geo"]);
     expect(TEMPLATES[TEMPLATE].name).toBe(TEMPLATE);
   });
 
-  it.each(all)("$name declares the seven that run an agency, with the gate in every prompt", (template) => {
+  it.each(agencies)("$name declares the seven that run an agency, with the gate in every prompt", (template) => {
     expect(template.agents.map((a) => [a.name, a.role])).toEqual(template.name === "seo-geo" ? SEO_ROSTER : ROSTER);
     for (const agent of [...template.agents, ...template.crew]) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
@@ -67,7 +74,7 @@ describe("every template of this blueprint", () => {
    * the answers are the client's), a two-sentence public description, a private prompt of 150–400
    * words, skills from the platform catalogue only, and a day-one intake capped at $2.
    */
-  it.each(all)("$name writes each of the seven to the plan's shape", (template) => {
+  it.each(agencies)("$name writes each of the seven to the plan's shape", (template) => {
     for (const agent of template.agents) {
       const at = agent.name;
       expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
@@ -81,7 +88,7 @@ describe("every template of this blueprint", () => {
     }
   });
 
-  it.each(all)("$name asks the setup questions its deliverables require", (template) => {
+  it.each(agencies)("$name asks the setup questions its deliverables require", (template) => {
     if (template.name === "blank") {
       expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text", "text"]);
       expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", "pricing", "network"]);
@@ -95,7 +102,7 @@ describe("every template of this blueprint", () => {
     expect(template.questions.filter((q) => q.optional).map((q) => q.key)).toEqual(template.name === "blank" ? ["network"] : []);
   });
 
-  it.each(all)("$name drafts a personal note to each person the operator knows, and invents none", (template) => {
+  it.each(agencies)("$name drafts a personal note to each person the operator knows, and invents none", (template) => {
     const sales = template.agents.find((a) => a.name === "sales")!;
     const intake = sales.intake?.message ?? "";
     // On blank the question is optional: a missing answer is a skip, never a second ask.
@@ -112,7 +119,7 @@ describe("every template of this blueprint", () => {
     expect(inbox).toMatch(/referred_by and the client's cli_ id.*source network.*otherwise outreach/);
   });
 
-  it.each(all)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
+  it.each(agencies)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
     // `seo-geo` spends its third question on competitors, so its context holds no pricing answer;
     // the site-builder and the proposal-writer, who both write from one, are told to ask the operator
     // instead — never to read the absence as "free" or to invent a tier.
@@ -160,7 +167,7 @@ describe("connected accounts", () => {
     // Blank needs only the mailbox-facing seats. SEO/GEO additionally grants read-only measurement
     // to its own writer, reviser and gap researcher, plus read-only ad evidence to its planner.
     for (const agent of template.agents) {
-      const outward = agent.name === "sales" || agent.name === "client-manager" ||
+      const outward = agent.name === "sales" || agent.name === "client-manager" || agent.name === "account-manager" ||
         (template.name === "seo-geo" && ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"].includes(agent.name));
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
@@ -215,6 +222,10 @@ describe("handoffs", () => {
     "gap-researcher": ["content-writer"],
     "audit-runner": ["seo-writer"],
     "seo-writer": ["geo-optimizer"],
+    // product-design: the studio lead routes each brief; the two makers hand their file to the visualizer.
+    "account-manager": ["designer", "engineer", "visualizer"],
+    designer: ["visualizer"],
+    engineer: ["visualizer"],
   };
   const handoffTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
     ["send_to_agent", "list_agents"].filter((name) => agent.tools?.configs[name]?.permission === "allow");
@@ -250,7 +261,7 @@ describe("handoffs", () => {
     }
   });
 
-  it.each(all)("$name has the writer wait for the researcher on day one, and only then write the calendar", (template) => {
+  it.each(agencies)("$name has the writer wait for the researcher on day one, and only then write the calendar", (template) => {
     const writer = template.agents.find((a) => a.name === "content-writer")!;
     expect(writer.intake?.message).toMatch(/Do not write the calendar or a post yet/);
     expect(writer.schedules?.[0]?.input).toMatch(/If no calendar is filed yet, stop/);
@@ -352,6 +363,132 @@ describe("seo-geo", () => {
   });
 });
 
+describe("product-design", () => {
+  const seat = (name: string) => productDesign.agents.find((a) => a.name === name)!;
+  const permission = (name: string, tool: string) => seat(name).tools?.configs[tool]?.permission;
+
+  it("is a studio of four, with no per-client crew", () => {
+    expect(productDesign.agents.map((a) => [a.name, a.role])).toEqual([
+      ["account-manager", "Studio lead"],
+      ["designer", "Concept meshes"],
+      ["engineer", "Dimensioned parts"],
+      ["visualizer", "Stills & video"],
+    ]);
+    expect(productDesign.crew).toEqual([]);
+    expect(productDesign.words.noCrew).toBe("This studio runs every brief through its four designers.");
+    expect(productDesign.kinds.map((k) => k.id)).toEqual(["concept", "still", "part", "product-video"]);
+  });
+
+  it("asks the four studio questions, all required — the engine's cap", () => {
+    expect(productDesign.questions.map((q) => q.key)).toEqual(["products", "audience", "manufacturable", "done"]);
+    expect(productDesign.questions.filter((q) => q.optional)).toEqual([]);
+    for (const q of productDesign.questions) expect([q.key, (q.help ?? "").length > 0]).toEqual([q.key, true]);
+  });
+
+  it("writes each seat to the plan's shape, every one reading the product-design skill first", () => {
+    for (const agent of productDesign.agents) {
+      const at = agent.name;
+      expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
+      expect([at, agent.description?.match(/[.!?](\s|$)/g)?.length]).toEqual([at, 2]);
+      const n = words(agent.system ?? "");
+      expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
+      expect([at, agent.skills?.[0]]).toEqual([at, "naive/product-design"]);
+      for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
+      // Only the studio lead has a day one: every other seat waits for a brief, so nothing is made
+      // before the studio note exists.
+      expect([at, agent.intake?.budget_micro_usd]).toEqual([at, at === "account-manager" ? 20_000_000 : undefined]);
+    }
+    expect(Object.fromEntries(productDesign.agents.map((a) => [a.name, a.skills]))).toEqual({
+      "account-manager": ["naive/product-design", "naive/client-onboarding"],
+      designer: ["naive/product-design", "naive/3d-modeling"],
+      engineer: ["naive/product-design", "naive/cad-parts"],
+      visualizer: ["naive/product-design", "naive/product-video-3d"],
+    });
+  });
+
+  it("writes the studio note on day one before anything is made, then hands ONE first brief to the designer", () => {
+    const intake = seat("account-manager").intake?.message ?? "";
+    expect(intake).toMatch(new RegExp(`^Read project_context\\. Before any other tool: write the ${STUDIO_NOTE}`));
+    const note = intake.indexOf(STUDIO_NOTE);
+    for (const tool of ["generate_3d_model", "generate_image", "generate_video", "build_3d"]) {
+      const at = intake.indexOf(tool);
+      expect([tool, at === -1 || at > note]).toEqual([tool, true]);
+    }
+    expect(intake).toMatch(/hand ONE first brief to designer \(send_to_agent, wait false\)/);
+    expect(intake).toMatch(/pour-over carafe/);
+    // And every maker refuses to make anything until that note exists.
+    for (const name of ["designer", "engineer", "visualizer"]) {
+      expect([name, seat(name).system]).toEqual([name, expect.stringContaining(`read the note titled ${STUDIO_NOTE}`)]);
+      expect([name, seat(name).system]).toEqual([name, expect.stringMatching(/If there is none yet, make nothing and stop/)]);
+    }
+  });
+
+  it("routes a look to the designer and a part — millimetres — to the engineer", () => {
+    const lead = seat("account-manager").system ?? "";
+    expect(lead).toMatch(/names sizes in millimetres is a part: hand it to engineer/);
+    expect(lead).toMatch(/is a look: hand it to designer/);
+    expect(lead).toMatch(/contradicts the note.*ask_operator once/);
+    expect(lead).toMatch(/Never email a client before the deliverable is approved/);
+  });
+
+  it("gives the designer meshes and never build_3d, and the engineer build_3d and never a generated mesh", () => {
+    expect(permission("designer", "generate_3d_model")).toBe("allow");
+    expect(permission("designer", "build_3d")).toBeUndefined();
+    expect(seat("designer").system).toMatch(/Never call build_3d/);
+    expect(seat("designer").system).toMatch(/never poll/);
+    expect(permission("engineer", "build_3d")).toBe("allow");
+    expect(permission("engineer", "generate_3d_model")).toBeUndefined();
+    expect(seat("engineer").system).toMatch(/engine cad/);
+    expect(seat("engineer").system).toMatch(/watertight is true and every bbox_mm edge is within 0\.5 mm/);
+    expect(seat("engineer").system).toMatch(/Never call generate_3d_model\./);
+    for (const name of ["account-manager", "visualizer"]) {
+      expect([name, permission(name, "build_3d"), permission(name, "generate_3d_model")]).toEqual([name, undefined, undefined]);
+    }
+  });
+
+  it("makes one still per look and holds product video for the operator", () => {
+    expect(permission("visualizer", "generate_image")).toBe("allow");
+    expect(permission("visualizer", "generate_video")).toBe("ask");
+    expect(seat("visualizer").system).toMatch(/ONE studio still with generate_image.*no text, no logo, no watermark/);
+    expect(seat("visualizer").system).toMatch(/A product video only when the brief asks/);
+  });
+
+  it("files every file as one pending studio deliverable carrying its fil_ ids", () => {
+    for (const name of ["engineer", "visualizer"]) {
+      expect(permission(name, "dashboard.create_draft_post")).toBe("allow");
+      expect([name, seat(name).system]).toEqual([name, expect.stringMatching(/create_draft_post.*channel studio.*files the fil_ ids/)]);
+    }
+    expect(seat("engineer").system).toMatch(/Kind part, files the STEP, the STL and the preview; the summary carries bbox_mm and volume_cm3/);
+    expect(seat("visualizer").system).toMatch(/kind concept, files the GLB then the still/);
+    // The designer and the lead file no deliverable: the designer's mesh rides on the visualizer's.
+    for (const name of ["account-manager", "designer"]) expect(permission(name, "dashboard.create_draft_post")).toBeUndefined();
+  });
+
+  it("holds nothing outward at allow", () => {
+    const OUTWARD = ["social.post", "email.send", "generate_video", "dashboard.approve_post", "dashboard.update_site", "apps"];
+    for (const agent of productDesign.agents) {
+      for (const [tool, config] of Object.entries(agent.tools?.configs ?? {})) {
+        if (OUTWARD.includes(tool) || tool.startsWith("social.")) expect([agent.name, tool, config.permission]).toEqual([agent.name, tool, "ask"]);
+      }
+      expect(agent.tools?.configs).not.toHaveProperty("social.post");
+    }
+    expect(permission("account-manager", "email.send")).toBe("ask");
+  });
+
+  it("runs one weekly timer, the studio check-in, that proposes nothing outward", () => {
+    const fires = productDesign.agents.flatMap((agent) => (agent.schedules ?? []).map((s) => [agent.name, s.cron, s.summary, s.budget_micro_usd]));
+    expect(fires).toEqual([["account-manager", "0 9 * * 1", "Studio check-in", 5_000_000]]);
+    expect(seat("account-manager").schedules?.[0]?.input).toMatch(/Propose nothing outward, make nothing, and send nothing/);
+  });
+
+  it("seeds only demo rows on the studio channel, with no file that does not exist", () => {
+    for (const post of productDesign.seed.posts as Post[]) {
+      expect([post.id, post.channel, post.files]).toEqual([post.id, "studio", undefined]);
+      expect(post.summary).toMatch(/^Demo row —/);
+    }
+  });
+});
+
 /**
  * The schedules, which are template data like everything else here — and the one place this
  * blueprint fires without an operator watching, so the two fields nobody sets by accident matter
@@ -362,7 +499,7 @@ describe("schedules", () => {
   const declared = (template: (typeof all)[number]) =>
     template.agents.flatMap((agent) => (agent.schedules ?? []).map((schedule) => [agent.name, schedule] as const));
 
-  it.each(all)("$name runs the plan's five timers, and none for the site-builder or the proposal-writer", (template) => {
+  it.each(agencies)("$name runs the plan's five timers, and none for the site-builder or the proposal-writer", (template) => {
     expect(declared(template).map(([agent, schedule]) => [agent, schedule.cron])).toEqual([
       // A pipeline goes stale in days: weekday mornings, before the weekly review it feeds.
       ["sales", "30 8 * * 1-5"],
@@ -387,7 +524,7 @@ describe("schedules", () => {
       expect(() => new Intl.DateTimeFormat("en-US", { timeZone: schedule.timezone })).not.toThrow();
     }
   });
-  it.each(all)("$name says what every fire comes to, in a few plain words for the launch card", (template) => {
+  it.each(agencies)("$name says what every fire comes to, in a few plain words for the launch card", (template) => {
     expect(declared(template).map(([agent, schedule]) => [agent, schedule.summary])).toEqual([
       ["sales", "Inbox and new leads"],
       ["client-manager", "Client check-in"],
@@ -403,6 +540,7 @@ describe("the launch card's words", () => {
     expect(all.map((t) => [t.name, t.title])).toEqual([
       ["blank", "Agency"],
       ["seo-geo", "SEO & GEO agency"],
+      ["product-design", "Product design studio"],
     ]);
     for (const t of all) {
       expect(t.title.length).toBeLessThanOrEqual(80);
@@ -414,6 +552,7 @@ describe("the launch card's words", () => {
     expect(all.map((t) => [t.name, t.roadmap])).toEqual([
       ["blank", { day_one: "Set up your site, pipeline and first drafts" }],
       ["seo-geo", { day_one: "Set up your site, pipeline and competitor gaps" }],
+      ["product-design", { day_one: "Write the studio note and make the first concept look" }],
     ]);
     // Every timer is weekday-only or weekly, so "every day" would promise weekends that do not run.
     for (const t of all) {

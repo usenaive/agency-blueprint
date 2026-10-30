@@ -1,8 +1,8 @@
 /** The committed config must load and validate through the real `naive up` loader. */
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
-import { describe, expect, it } from "vitest";
-import { loadConfig } from "@usenaive-sdk/blueprints";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { BLUEPRINTS, loadConfig } from "@usenaive-sdk/blueprints";
 import { TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE } from "./templates/blank.ts";
 import { TEMPLATE } from "./templates/index.ts";
@@ -31,7 +31,7 @@ describe("naive.config.ts", () => {
     expect(result.config.agents.flatMap((a) => a.schedules ?? []).every((s) => (s.summary ?? "") !== "")).toBe(true);
     // One repo carries every template of its blueprint — that is what makes a switch an edit and
     // never a re-clone, and `defineProject` refuses a repo that carries only some.
-    expect(Object.keys(TEMPLATES).sort()).toEqual(["blank", "seo-geo"]);
+    expect(Object.keys(TEMPLATES).sort()).toEqual(["blank", "product-design", "seo-geo"]);
     // One app: the public site at `/` and the operator UI under `/app` share a server, so the
     // site's read of its own copy (`/api/site`) is same-origin. The app is what the crew files into
     // and the operator approves on, so an install cannot leave it out.
@@ -170,6 +170,48 @@ describe("the agency persona", () => {
       // And the zone must be one the API's own `assertTimezone` accepts — it validates through
       // `Intl`, so a typo'd zone is a deployment that cannot be scheduled at all.
       expect(() => new Intl.DateTimeFormat("en-US", { timeZone: schedule.timezone })).not.toThrow();
+    }
+  }, 30_000);
+});
+
+/**
+ * `product-design` is carried ahead of the engine that lists it (`@usenaive-sdk/blueprints` 0.13.0):
+ * `defineProject` refuses a repo whose list is not exactly the engine's, so the config filters to the
+ * installed engine's list and says what it left out. On the committed engine (0.11.4) it is skipped
+ * with a warning and choosing it is a clear error; on 0.13.0 it is carried and installs its four.
+ */
+describe("the installed engine's template list", () => {
+  const listed = BLUEPRINTS.agency?.templates ?? [];
+  const original = process.env["NAIVE_TEMPLATE"];
+  afterEach(() => {
+    if (original === undefined) delete process.env["NAIVE_TEMPLATE"];
+    else process.env["NAIVE_TEMPLATE"] = original;
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it("carries product-design exactly when the engine lists it, and says so out loud when it does not", async () => {
+    vi.resetModules();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await import("./naive.config.ts");
+    const said = warn.mock.calls.map((call) => String(call[0])).join("\n");
+    if (listed.includes("product-design")) expect(said).not.toMatch(/does not list/);
+    else expect(said).toMatch(/does not list product-design; left out until an engine that lists them is installed/);
+  }, 30_000);
+
+  it("installs the studio of four on an engine that lists it, and refuses by name on one that does not", async () => {
+    vi.resetModules();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    process.env["NAIVE_TEMPLATE"] = "product-design";
+    const load = import("./naive.config.ts");
+    if (listed.includes("product-design")) {
+      const config = (await load).default;
+      expect(config.template).toBe("product-design");
+      expect(config.agents.map((a) => a.name)).toEqual(["account-manager", "designer", "engineer", "visualizer"]);
+      expect(config.questions.map((q) => q.key)).toEqual(["products", "audience", "manufacturable", "done"]);
+      expect(config.crew_per_client ?? []).toEqual([]);
+    } else {
+      await expect(load).rejects.toThrow(/product-design template needs @usenaive-sdk\/blueprints >= 0\.13\.0/);
     }
   }, 30_000);
 });
