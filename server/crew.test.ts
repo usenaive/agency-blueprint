@@ -37,6 +37,18 @@ describe("clientCrew — what the CEO hires for one client (ADR-1766)", () => {
     });
   });
 
+  it("locks the browser only to a public website address, never a wildcard, a list, a port or a private host", () => {
+    for (const domain of ["*", "*.acme.test", "localhost", "10.0.0.1", "acme.test, evil.example", "https://acme.test", "acme.test:8080", "acme.test/path", "intranet"]) {
+      expect(clientCrew({ ...ACME, domain }, TEMPLATES.security.crew, [])).toEqual({
+        ok: false,
+        reason: `Acme's domain "${domain}" is not a public website address, so its team's browser cannot be limited to it`,
+      });
+    }
+    const got = clientCrew({ ...ACME, domain: " Acme.Test " }, TEMPLATES.security.crew, []);
+    if (!got.ok) throw new Error(got.reason);
+    expect(got.create[0]?.tools?.configs?.browser?.config?.allowed_domains).toEqual(["acme.test"]);
+  });
+
   it("lists a seat the client already has instead of hiring it twice", () => {
     const got = clientCrew(ACME, TEMPLATES.security.crew, ["customer-tester--acme", "other--acme"]);
     if (!got.ok) throw new Error(got.reason);

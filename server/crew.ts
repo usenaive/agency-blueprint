@@ -17,13 +17,25 @@ export type ClientCrew =
   | { ok: true; create: AgentCreateBody[]; existing: string[]; identity: string | null }
   | { ok: false; reason: string };
 
-/** A tool allow-listed to `CLIENT_DOMAIN` is allow-listed to this client's domain instead; null when it has none. */
-function scopeTo<T extends Pick<AgentDecl, "tools">>(decl: T, domain: string): T | null {
+/**
+ * A public website's hostname: dot-separated labels of letters, digits and hyphens ending in a
+ * letter TLD. No scheme, port, path, list or wildcard, and no IP literal or bare internal name, so a
+ * client's domain (which a lead or an agent wrote) can only ever narrow a browser, never widen it.
+ */
+const HOSTNAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+
+/**
+ * A tool allow-listed to `CLIENT_DOMAIN` is allow-listed to this client's domain instead: `"none"`
+ * when the client has no domain, `"invalid"` when it is not a public hostname.
+ */
+function scopeTo<T extends Pick<AgentDecl, "tools">>(decl: T, domain: string): T | "none" | "invalid" {
   const configs = decl.tools?.configs ?? {};
   const scoped = Object.entries(configs).filter(([, tool]) => (tool.config?.allowed_domains as unknown[] | undefined)?.includes(CLIENT_DOMAIN));
   if (scoped.length === 0) return decl;
-  if (domain.trim() === "") return null;
-  const swap = (list: unknown[]) => list.map((d) => (d === CLIENT_DOMAIN ? domain.trim() : d));
+  const host = domain.trim().toLowerCase();
+  if (host === "") return "none";
+  if (!HOSTNAME.test(host)) return "invalid";
+  const swap = (list: unknown[]) => list.map((d) => (d === CLIENT_DOMAIN ? host : d));
   const rewritten = scoped.map(([name, tool]) => [name, { ...tool, config: { ...tool.config, allowed_domains: swap(tool.config!.allowed_domains as unknown[]) } }]);
   return { ...decl, tools: { ...decl.tools!, configs: { ...configs, ...Object.fromEntries(rewritten) } } };
 }
@@ -38,7 +50,8 @@ export function clientCrew(client: Who, crew: readonly AgentDecl[], roster: read
   for (const { identity: _persona, ...seat } of crew) {
     const name = `${seat.name}--${client.slug}`;
     const scoped = scopeTo(seat, client.domain);
-    if (scoped === null) return { ok: false, reason: `${client.name} has no domain, and this team's browser is limited to the client's own site` };
+    if (scoped === "none") return { ok: false, reason: `${client.name} has no domain, and this team's browser is limited to the client's own site` };
+    if (scoped === "invalid") return { ok: false, reason: `${client.name}'s domain "${client.domain}" is not a public website address, so its team's browser cannot be limited to it` };
     if (roster.includes(name)) {
       existing.push(name);
       continue;
