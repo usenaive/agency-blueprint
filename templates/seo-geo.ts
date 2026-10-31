@@ -16,7 +16,7 @@
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
-import { AGENCY_IDENTITY, blank, budget, crm, gate, HANDOFF, model, OPERATOR, PREAMBLE, questions, tools, type AgencyTemplate } from "./blank.ts";
+import { AGENCY_IDENTITY, appTools, blank, budget, crm, gate, HANDOFF, model, OPERATOR, PREAMBLE, questions, site, specialise, tools, type AgencyTemplate } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
 
 /** What each shared agent additionally does when the agency's specialism is search. */
@@ -56,7 +56,6 @@ const WORK: Record<string, string> = {
   "client-manager":
     "In this agency a referral ask leads with the gain the client's latest posted serp-report shows, quoted from that report (list_posts); with no gain in it, thank them for the work instead, and never state a gain the report does not show.",
 };
-const withWork = (name: string, text: string): string => (WORK[name] ? `${text} ${WORK[name]}` : text);
 
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
 const clientGate =
@@ -108,12 +107,12 @@ const paidMediaPlanner: AgentDecl = {
   description: "Builds evidence-backed paid-search and paid-social proposals. It cannot launch campaigns or spend.",
   system:
     `${PREAMBLE} ${gate} You are the agency's paid-media planner. Produce a proposal, never a live campaign. ` +
-    "Read dashboard.get_site and the CRM before drafting. State which ad-account integrations are actually connected; an unavailable channel is recommendation-only. " +
+    "Read landing-page.get_site and the CRM before drafting. State which ad-account integrations are actually connected; an unavailable channel is recommendation-only. " +
     "Use operator-selectable budget scenarios unless project_context contains an approved budget. Never invent a benchmark, forecast, contract term, reporting cadence or result. " +
     "Cover channel rationale, audiences and exclusions, campaign structure, three creative concepts, landing-page match, conversion events, attribution, experiment design and stop rules. " +
     "File the plan as a pending ad-plan on the agency profile. You have no authority to create, mutate, launch, fund or purchase anything.",
   tools: tools(
-    ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "get_site"), ...AD_READ],
+    ["web_search", "web_fetch", ...crm("list_clients", "get_client"), ...appTools("seo-geo", "list_posts", "create_draft_post"), ...site("get_site"), ...AD_READ],
     OPERATOR,
   ),
   skills: ["naive/proposal-writing"],
@@ -153,9 +152,10 @@ const crew: AgentDecl[] = [
     description: "Briefs, articles and landing copy from the client's keywords and site.",
     system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (google_search_console.search_analytics_query) rather than from a guess. A session opened by the audit runner names the audit's post_ id: read that draft with list_posts and write the pages it found missing, in its order. When your drafts are filed, hand their post_ ids to this client's GEO optimizer with send_to_agent (wait false) — list_agents names the one seat you may reach — so it tunes what you wrote rather than what it guesses you wrote.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", ...HANDOFF],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client"), ...appTools("seo-geo", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", ...HANDOFF],
       OPERATOR,
     ),
+    skills: ["naive/seo-content-brief"],
     handoffs: ["geo-optimizer"],
     identity: AGENCY_IDENTITY,
   },
@@ -167,9 +167,10 @@ const crew: AgentDecl[] = [
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
     system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. A session opened by the SEO writer names post_ ids: those drafts are the ones you tune, read them with list_posts first. Search the query yourself and read what IS being cited; the gap is the brief.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", "google_search_console.inspect_url"],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client"), ...appTools("seo-geo", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", "google_search_console.inspect_url"],
       OPERATOR,
     ),
+    skills: ["naive/geo-answer-blocks"],
     handoffs: false,
     identity: AGENCY_IDENTITY,
   },
@@ -181,9 +182,10 @@ const crew: AgentDecl[] = [
     description: "Recurring technical and content audits of the client's site and rankings.",
     system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings as an audit or serp-report draft. When the audit is filed, hand its post_ id to this client's SEO writer with send_to_agent (wait false) — list_agents names the one seat you may reach — with the pages it found missing, in order of value, so they are written from the audit and not from a guess. A number you did not read from the client's account is a number you may not report; say plainly which property was missing.`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), ...SEARCH_READ, ...HANDOFF],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client"), ...appTools("seo-geo", "list_posts", "create_draft_post"), ...SEARCH_READ, ...HANDOFF],
       OPERATOR,
     ),
+    skills: ["naive/technical-seo-audit", "naive/keyword-gap-analysis"],
     handoffs: ["seo-writer"],
     identity: AGENCY_IDENTITY,
   },
@@ -284,24 +286,6 @@ export const seoGeo: AgencyTemplate = {
     // operator's network in its first session instead (`templates/agents.ts`).
   ],
   crew,
-  // The seven are shared; only their focus and search skills are this template's. Every other field
-  // — model, budget, allow-list, timers, intake — stays `blank`'s (`WORK` only appends to an intake
-  // or timer), so a change there reaches both.
-  agents: [
-    ...blank.agents.map((agent) => ({
-      ...agent,
-      system: `${agent.system} ${FOCUS[agent.name] ?? ""}`.trim(),
-      ...(agent.intake ? { intake: { ...agent.intake, message: withWork(agent.name, agent.intake.message) } } : {}),
-      ...(agent.schedules ? { schedules: agent.schedules.map((s) => ({ ...s, input: withWork(agent.name, s.input) })) } : {}),
-      skills: [...(agent.skills ?? []), ...(SKILLS[agent.name] ?? [])],
-      tools: {
-        default_config: agent.tools?.default_config ?? { permission: "deny" as const },
-        configs: {
-          ...(agent.tools?.configs ?? {}),
-          ...Object.fromEntries((AGENCY_SEARCH_READ[agent.name] ?? []).map((name) => [name, { enabled: true, permission: "allow" as const }])),
-        },
-      },
-    })),
-    paidMediaPlanner,
-  ],
+  // The seven are shared; only their focus, search skills and search reads are this template's.
+  agents: [...specialise(blank.agents, { focus: FOCUS, skills: SKILLS, work: WORK, reads: AGENCY_SEARCH_READ }), paidMediaPlanner],
 };

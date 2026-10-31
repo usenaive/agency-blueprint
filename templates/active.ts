@@ -9,9 +9,13 @@
  */
 import { blank, type AgencyTemplate } from "./blank.ts";
 import { TEMPLATE, type TemplateName } from "./index.ts";
+import { advertising } from "./advertising.ts";
+import { marketResearch } from "./market-research.ts";
+import { recruiting } from "./recruiting.ts";
+import { security } from "./security.ts";
 import { seoGeo } from "./seo-geo.ts";
 
 /** All of them, not just the chosen one: `defineProject` refuses a repo that carries only some. */
-export const TEMPLATES: Record<TemplateName, AgencyTemplate> = { blank, "seo-geo": seoGeo };
+export const TEMPLATES: Record<TemplateName, AgencyTemplate> = { blank, "seo-geo": seoGeo, "market-research": marketResearch, advertising, security, recruiting };
 
 export const ACTIVE_TEMPLATE: AgencyTemplate = TEMPLATES[TEMPLATE];

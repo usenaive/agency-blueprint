@@ -12,13 +12,17 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isOperatorPath, operatorRedirect } from "../site/routing.ts";
 import { configFromEnv } from "./proxy.ts";
-import { handleRequest, isLoopback, SSE_RETRY, type ApiContext } from "./routes.ts";
+import { appOf } from "./apps.ts";
+import { handleRequest, isLoopback, type ApiContext } from "./routes.ts";
 import { openStore } from "./store.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const store = openStore(join(root, "data", "store.json"));
-/** Local runs mint their own tokens from Settings; the platform's bearer is injected on the deploy. */
+/** Which app this local run is (`APP_ID=seo-geo pnpm serve`); each keeps its own file, as each deploy keeps its own database. */
+const app = appOf(process.env.APP_ID);
+const store = openStore(join(root, "data", `${app}.json`), app);
+/** Set `VETTA_MCP_TOKEN` to call `/mcp` locally; the platform injects it on the deploy. */
 const base = {
+  app,
   store: () => Promise.resolve(store),
   config: configFromEnv(process.env),
   mcpToken: process.env.VETTA_MCP_TOKEN,
@@ -56,15 +60,6 @@ const readBody = (req: IncomingMessage): Promise<string> =>
     req.on("error", reject);
   });
 
-async function relay(res: ServerResponse, upstream: Response): Promise<void> {
-  res.writeHead(upstream.status, { "content-type": "text/event-stream", "cache-control": "no-cache" });
-  res.write(SSE_RETRY);
-  if (upstream.body !== null) {
-    const reader = upstream.body.getReader();
-    for (let next = await reader.read(); !next.done; next = await reader.read()) res.write(next.value);
-  }
-  res.end();
-}
 
 async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
   const headers: Record<string, string | undefined> = {};
@@ -79,7 +74,6 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
     body: await readBody(req),
   }, contextFor(req));
 
-  if (reply.stream) return relay(res, reply.stream);
   if (reply.text !== undefined) return void res.writeHead(reply.status, reply.headers ?? {}).end(reply.text);
   // `/api/enter` answers with a cookie and a `location` and nothing else. An array value is several
   // headers of one name, which is how Node's `writeHead` takes it: `set-cookie` cannot be joined.
@@ -102,12 +96,22 @@ async function handleStatic(res: ServerResponse, path: string): Promise<void> {
     res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
     res.end(content);
   } catch {
+    // The same answer the deployed function gives: only the landing page is a public site.
+    if (!isOperatorPath(clean) && app !== "landing-page") return void res.writeHead(302, { location: "/app" }).end();
     res.writeHead(200, { "content-type": "text/html" });
     res.end(await readFile(join(root, "dist", isOperatorPath(clean) ? "app/index.html" : "site-shell.html")));
   }
 }
 
+/** The same three headers `build-api.mjs` gives the deployed host, on every local response. */
+const SECURITY_HEADERS = {
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=()",
+};
+
 const server = createServer((req, res) => {
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) res.setHeader(name, value);
   const url = new URL(req.url ?? "/", "http://localhost");
   const handled = url.pathname === "/mcp" || url.pathname.startsWith("/api/") || url.pathname.startsWith("/blog/") || ["/", "/robots.txt", "/sitemap.xml", "/llms.txt"].includes(url.pathname)
     ? handleApi(req, res, url)
@@ -116,4 +120,4 @@ const server = createServer((req, res) => {
 });
 
 const port = Number(process.env.PORT ?? 8789);
-server.listen(port, () => console.log(`dashboard on :${port} (${base.config === null ? "no NAIVE_API_KEY — store routes only" : "platform mode"})`));
+server.listen(port, () => console.log(`${app} on :${port} (${base.config === null ? "no NAIVE_API_KEY — store routes only" : "platform mode"})`));

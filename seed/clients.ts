@@ -45,11 +45,17 @@ export interface Client {
   referralCode?: string;
   /** When this client was last asked for an introduction (ISO time); the cooldown counts from it. */
   referralAskedAt?: string;
+  /** When Onboard asked the CEO to hire this client's team (ADR-1766); cleared when it is recorded. */
+  onboardingRequestedAt?: string;
+  /** Landing page only: the referral code the lead arrived with, for the CRM to resolve. */
+  ref?: string;
+  /** Landing page only: the sales seat has filed this lead into the CRM. */
+  filed?: boolean;
 }
 
 /**
- * When a client is ready to be asked for a referral (plan P3): long enough with the agency, recent
- * work they approved, nothing they turned down since, and not asked lately. Asking an unhappy or a
- * brand-new client costs more trust than any introduction brings.
+ * When a client is ready to be asked for a referral (plan P3): long enough with the agency and not
+ * asked lately. Asking a brand-new client costs more trust than any introduction brings. The work
+ * they approved is no longer counted: it lives in the app that filed it, not the CRM (ADR-1766).
  */
-export const REFERRAL_READY = { activeDays: 30, recentDays: 60, minApproved: 2, cooldownDays: 90 } as const;
+export const REFERRAL_READY = { activeDays: 30, cooldownDays: 90 } as const;

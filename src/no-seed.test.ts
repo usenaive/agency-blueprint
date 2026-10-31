@@ -77,7 +77,7 @@ describe("no seed row reaches the shipped dashboard bundle", () => {
   it("is actually walking the whole app", async () => {
     // A bundle of nothing satisfies every assertion above and guards nothing.
     const { inputs } = await bundle({ file: "src/main.tsx" });
-    expect(inputs.filter((path) => path.startsWith("src/screens/")).length).toBeGreaterThan(8);
+    expect(inputs.filter((path) => path.startsWith("src/screens/") || path.startsWith("src/apps/")).length).toBeGreaterThan(6);
     expect(SEED_IDS.length).toBeGreaterThan(8);
   });
 

@@ -1,5 +1,7 @@
 /**
- * Every route this dashboard answers, in one table over one store (ADR-0374).
+ * Every route an app answers, in one table over one store (ADR-0374). Which rows a deployment
+ * serves is its `APP_ID` (`server/apps.ts`, ADR-1766): the public site is only `landing-page`'s, the
+ * pipeline only `crm`'s, and every app serves its own queue of work.
  *
  * `server/index.ts` (node `http`, `pnpm serve`) and `server/api-entry.ts` (the deployed function)
  * are thin adapters: each builds an `ApiRequest`, calls `handleRequest`, and writes the `ApiReply`.
@@ -9,10 +11,13 @@
  * Nothing here touches a socket, a file or a database: the store arrives through `ctx.store()`,
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
-import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
-import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
-import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
+import { authorized, bearerOf, handleMcp, sameSecret, ticketMatches } from "./mcp.ts";
+import { identityConnections, type ProxyConfig } from "./proxy.ts";
+import { LEAD_WINDOW_MS, type EventPatch, type LeadInput, type PostPatch, type Store } from "./store.ts";
+import { EVENT_STATUSES } from "../seed/events.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
+import type { AppId } from "./apps.ts";
+import { clientCrew, onboardDraft } from "./crew.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
 import { articlePath, publishedArticle, renderArticle, renderHome } from "./public-site.ts";
 
@@ -34,8 +39,6 @@ export interface ApiReply {
   body?: unknown;
   /** Written verbatim for public discovery documents such as robots.txt and sitemap.xml. */
   text?: string;
-  /** Set only by `/api/chat/:sid/stream` — piped, not buffered. */
-  stream?: Response;
   /**
    * Set by `/api/enter` (a cookie and a redirect, no body) and by a refused cookie (the header
    * that expires it). An array is several headers of that name — `set-cookie` is the one header
@@ -45,6 +48,8 @@ export interface ApiReply {
 }
 
 export interface ApiContext {
+  /** Which primitive app this deployment is (`APP_ID`). */
+  app: AppId;
   /** Opens the store on first call and memoises it for this request. Platform-only routes never call it. */
   store(): Promise<Store>;
   config: ProxyConfig | null;
@@ -71,11 +76,6 @@ export interface ApiContext {
   publicShell?: () => Promise<string>;
 }
 
-/**
- * Every relayed stream opens with this, so the browser's `EventSource` reconnects cheaply when the
- * function hits its duration ceiling instead of backing off to the default three seconds' guesswork.
- */
-export const SSE_RETRY = "retry: 3000\n\n";
 
 const NO_ROUTE: ApiReply = { status: 404, body: { error: "no such route" } };
 const NOT_ALLOWED: ApiReply = { status: 405, body: { error: "method not allowed" } };
@@ -215,7 +215,7 @@ function sessionRoute(req: ApiRequest, ctx: ApiContext): ApiReply {
   const studio = ctx.studioUrl && ctx.appId ? `${ctx.studioUrl.replace(/\/+$/, "")}/apps/${ctx.appId}/open` : null;
   return {
     status: 200,
-    body: { authenticated: apiGate(req, ctx) === null, studio_url: studio, password_enabled: Boolean(ctx.dashboardPassword) },
+    body: { authenticated: apiGate(req, ctx) === null, studio_url: studio, password_enabled: Boolean(ctx.dashboardPassword), app: ctx.app },
     headers: { "cache-control": "no-store" },
   };
 }
@@ -235,46 +235,20 @@ async function mcpRoute(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   // unreachable: it is what the platform dials to decide the endpoint can serve its tools.
   const store = await ctx.store();
   if (req.method !== "POST") return { status: 405, body: { error: "POST only" } };
-  if (!authorized(store, req.headers.authorization, ctx.mcpToken)) {
+  if (!authorized(req.headers.authorization, ctx.mcpToken)) {
     return { status: 401, body: { error: "missing or invalid bearer token" } };
   }
-  // The public site and `/mcp` are one app, so this request's host is the site a referral link names.
-  const answer = await handleMcp(req.body, store, ctx.config, originOf(req));
+  // On the landing page, this request's host is the public site `get_site` reports.
+  const answer = await handleMcp(req.body, store, ctx.config, originOf(req), ctx.app);
   // A notification has no reply: 202 with no body, as the streamable-HTTP transport asks.
   return answer === null ? { status: 202 } : { status: 200, body: answer };
-}
-
-/**
- * Token minting for the Settings screen — **local only**. Minting is unauthenticated (the dashboard
- * has no user auth), so on a public URL it would hand any visitor this app's agent tools. The
- * platform already mints and injects `VETTA_MCP_TOKEN` on the deployment, so nothing is lost there.
- */
-async function tokenRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
-  if (!req.path.startsWith("/api/mcp/tokens")) return null;
-  if (!ctx.local) return NO_ROUTE;
-  const store = await ctx.store();
-  if (req.path === "/api/mcp/tokens") {
-    if (req.method === "GET") {
-      return { status: 200, body: store.mcpTokens().map(({ id, name, createdAt }) => ({ id, name, createdAt })) };
-    }
-    if (req.method !== "POST") return NOT_ALLOWED;
-    const { name } = parse(req.body) as { name?: string };
-    if (!name) return { status: 400, body: { error: "name is required" } };
-    return { status: 201, body: mintToken(store, name) };
-  }
-  const revoke = /^\/api\/mcp\/tokens\/([\w-]+)$/.exec(req.path);
-  if (revoke === null) return NO_ROUTE;
-  if (req.method !== "DELETE") return NOT_ALLOWED;
-  return store.removeMcpToken(revoke[1]!)
-    ? { status: 200, body: { ok: true } }
-    : { status: 404, body: { error: "no such token" } };
 }
 
 /**
  * What an anonymous form may put in the CRM: a bounded number of *open* leads (the store is the one
  * durable thing the deployed entry has — a per-process counter would reset on every cold start), one
  * row per contact-and-domain while it is still a lead, and fields no longer than the form's own.
- * The sales agent working the pipeline (`advance_pipeline`) is what frees the inbox again.
+ * The sales agent filing each lead into the CRM (`landing-page.mark_lead_filed`) frees the inbox again.
  */
 export const OPEN_LEADS_CAP = 200;
 const LEAD_FIELD_MAX = 200;
@@ -384,7 +358,9 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
     }
     if (!withinLeadSize(body)) return { status: 400, body: { error: "a field is longer than the form allows" } };
     const store = await ctx.store();
-    const open = store.read().clients.filter((c) => c.stage === "lead");
+    // Open means not yet filed into the CRM: `mark_lead_filed` is what frees the inbox, and a
+    // returning visitor is a new message once their last one is in the CRM (ADR-1766).
+    const open = store.read().clients.filter((c) => c.stage === "lead" && c.filed !== true);
     const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
     const seen = open.find((c) => same(c.contact.email, body.contact!.email) && same(c.domain, body.domain!));
     // Only the signed-in operator's own form gets the CRM row back. A visitor gets the id alone: the
@@ -407,35 +383,43 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
       };
     }
     // The source is the server's to say, never the body's: a visitor who could post `referral` would
-    // credit any client with an introduction. Only a signed-in operator's own form may say `manual`.
-    // Fields are picked one by one, the contact's too: anything else the body carries is dropped.
-    const operator = (body as { source?: unknown }).source === "manual" && signedIn;
-    // A referral link's code names the client who sent this visitor. The code is the only proof:
-    // an unknown or mistyped one files an ordinary site lead and says nothing about why.
+    // credit any client with an introduction. Fields are picked one by one, the contact's too.
+    // A referral link's code is kept as given: the clients are the CRM's, which resolves it when the
+    // sales seat files this lead (`crm.create_lead {ref}`); an unknown code files an ordinary lead.
     const ref = (body as { ref?: unknown }).ref;
-    const referrer = typeof ref === "string" && ref !== "" && ref.length <= 64 ? store.read().clients.find((c) => c.referralCode === ref) : undefined;
     const { name, domain, contact, services, note } = body as LeadInput;
     const created = store.createLead({
-      name, domain, services, note,
+      name, domain, services, note, source: "site",
       contact: { name: contact.name, email: contact.email, role: typeof contact.role === "string" ? contact.role : "" },
-      ...(operator ? { source: "manual" } : referrer ? { source: "referral", referredBy: referrer.id } : { source: "site" }),
+      ...(typeof ref === "string" && ref !== "" && ref.length <= 64 ? { ref } : {}),
     });
-    if (ctx.config !== null) {
-      const address = store.site().contact.email;
-      await notifyLead(ctx.config, created, address).catch(() => false);
-    }
     return { status: 201, body: reply(created) };
   }
   return null;
 }
 
-/** The store-backed routes: the CRM pipeline and the content queue. */
+/** The store-backed routes: the pipeline (the CRM's; the landing page's leads), and each app's queue. */
 async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   const { method, path } = req;
+  const crm = ctx.app === "crm";
 
-  if (path === "/api/clients") {
-    return method === "GET" ? { status: 200, body: (await ctx.store()).read().clients } : NOT_ALLOWED;
+  if (path === "/api/clients" && (crm || ctx.app === "landing-page")) {
+    if (method === "GET") return { status: 200, body: (await ctx.store()).read().clients };
+    if (method !== "POST" || !crm) return NOT_ALLOWED;
+    // The operator's own "Add a client": signed in (the gate ran), so its source is `manual`.
+    const body = parse(req.body) as Partial<LeadInput>;
+    if (!body.name || !body.domain || !body.contact?.name || !body.contact.email) {
+      return { status: 400, body: { error: "name, domain and contact {name, email} are required" } };
+    }
+    if (!withinLeadSize(body)) return { status: 400, body: { error: "a field is longer than the form allows" } };
+    const { name, domain, contact } = body as LeadInput;
+    const created = (await ctx.store()).createLead({
+      name, domain, source: "manual",
+      contact: { name: contact.name, email: contact.email, role: typeof contact.role === "string" ? contact.role : "" },
+    });
+    return { status: 201, body: created };
   }
+  if (!crm && /^\/api\/clients\//.test(path)) return NO_ROUTE;
   if (path === "/api/posts") {
     return method === "GET" ? { status: 200, body: (await ctx.store()).read().posts } : NOT_ALLOWED;
   }
@@ -450,13 +434,17 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
   const onboard = /^\/api\/clients\/([\w-]+)\/onboard$/.exec(path);
   if (onboard) {
     if (method !== "POST") return NOT_ALLOWED;
-    const client = (await ctx.store()).onboardClient(onboard[1]!);
-    if (!client) return { status: 404, body: { error: "no such client" } };
-    if (client.stage !== "active") return { status: 409, body: { error: "a churned client cannot be onboarded" } };
-    // With a key present, fan out the client's crew on the platform; without one the store move
-    // still lands, so the pipeline works before the key does.
-    const agents = ctx.config === null ? null : await provisionClientAgents(ctx.config, client.slug);
-    return { status: 200, body: { client, agents } };
+    const store = await ctx.store();
+    const found = store.read().clients.find((c) => c.id === onboard[1]);
+    if (!found) return { status: 404, body: { error: "no such client" } };
+    if (found.stage === "churned") return { status: 409, body: { error: "a churned client cannot be onboarded" } };
+    // No team to hire: the client is simply active. Otherwise the CEO hires it, behind a card per
+    // agent (ADR-1766): this app holds a read key and creates nothing. A client the team cannot be
+    // scoped to is refused here, before a chat is opened that could only fail.
+    if (ACTIVE_TEMPLATE.crew.length === 0) return { status: 200, body: { client: store.onboardClient(found.id), draft: null, url: null } };
+    const crew = clientCrew(found, ACTIVE_TEMPLATE.crew, []);
+    if (!crew.ok) return { status: 422, body: { error: crew.reason } };
+    return { status: 200, body: { client: store.requestOnboarding(found.id), ...onboardDraft(found, ctx.studioUrl) } };
   }
 
   const postNow = /^\/api\/posts\/([\w-]+)\/post-now$/.exec(path);
@@ -477,15 +465,8 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
       ];
       if (problems.length > 0) return { status: 409, body: { error: `publication blocked: ${problems.join("; ")}` } };
     }
-    // The app's own public feed publishes blog articles. Social channels still go through the
-    // identity-bound publisher; treating `blog` as a social platform made a valid article fail.
-    const upstream = ctx.config === null ? null : upstreamFor("POST", "/api/social/posts", ctx.config.identityId);
-    if (post.channel !== "blog" && ctx.config !== null && upstream !== null) {
-      const published = await proxyFetch(ctx.config, upstream, JSON.stringify({
-        content: post.summary, title: post.title, platforms: [post.channel],
-      }));
-      if (!published.ok) return { status: 502, body: { error: "publish failed" } };
-    }
+    // A blog article is published by the landing page's own feed. Nothing here posts to a social
+    // network: that is a platform write, which no app makes (ADR-1766).
     return { status: 200, body: store.updatePost(post.id, { status: "posted" }) };
   }
 
@@ -503,111 +484,31 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
   return null;
 }
 
-/** Resolved once per instance: the agent the agency chat talks to. */
-let chatAgent: string | null = null;
-async function chatAgentId(config: ProxyConfig): Promise<string | null> {
-  if (chatAgent !== null) return chatAgent;
-  // The whole roster: `client-manager` is one row among an agency's hundreds, and resolving it over
-  // page one alone answered "no client-manager agent in this organization" for an org that has one.
-  const roster = await listAgents(config);
-  if (roster === null) return null;
-  chatAgent = roster.find((a) => a.name === "client-manager")?.id ?? null;
-  return chatAgent;
+/** The calendar's own rows: `GET /api/events`, and `PATCH /api/events/:id` to mark one done or move it. */
+async function eventRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
+  const store = await ctx.store();
+  if (req.path === "/api/events") {
+    return req.method === "GET" ? { status: 200, body: [...(store.read().events ?? [])].sort((a, b) => a.start.localeCompare(b.start)) } : NOT_ALLOWED;
+  }
+  const one = /^\/api\/events\/([\w-]+)$/.exec(req.path);
+  if (one === null) return NO_ROUTE;
+  if (req.method !== "PATCH") return NOT_ALLOWED;
+  const body = parse(req.body) as EventPatch;
+  if (body.status !== undefined && !(EVENT_STATUSES as readonly string[]).includes(body.status)) return { status: 400, body: { error: `status must be one of ${EVENT_STATUSES.join(", ")}` } };
+  const event = store.updateEvent(one[1]!, { status: body.status, start: body.start });
+  return event ? { status: 200, body: event } : { status: 404, body: { error: "no such event" } };
 }
 
 /**
- * Everything that needs the org's key: chat, the agent roster, an agent's spend, the sessions
- * behind the approval queue and the agent history, the client's social accounts, the timers, and
- * this project's context (the setup answers) from its latest applied install.
+ * `GET /api/accounts` — the agency persona's connected accounts, for the SEO & GEO and Ads screens:
+ * search and analytics on one, ad accounts on the other. A read; the one platform call either makes.
  */
-const PLATFORM_ROUTE = /^\/api\/(chat|agents|social|sessions|deployments|context|product-audit)(\/|$)/;
-
-async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
-  if (!PLATFORM_ROUTE.test(req.path)) return NO_ROUTE;
-  const config = ctx.config;
-  if (config === null) return NOT_CONFIGURED;
-  try {
-    if (req.method === "POST" && req.path === "/api/chat") {
-      const agent = await chatAgentId(config);
-      if (agent === null) return { status: 503, body: { error: "no client-manager agent in this organization" } };
-      const message = parse(req.body).message;
-      const created = await proxyFetch(config, { method: "POST", path: "/v1/sessions" },
-        JSON.stringify({ agent_id: agent, message: typeof message === "string" ? message : "" }));
-      return { status: created.status, body: await created.json() };
-    }
-    if (req.method === "GET" && (req.path === "/api/agents" || req.path === "/api/deployments")) {
-      // Assembled here rather than relayed: the upstream pages at 20, so the screen that lists the
-      // agency's own agents was showing whichever twenty came first — never `sales`, on a real org;
-      // and a timer past the first hundred read as an agent with none.
-      const rows = await collect(config, req.path === "/api/agents" ? "/v1/agents" : "/v1/deployments");
-      if (rows === null) return { status: 502, body: { error: "upstream unavailable" } };
-      return { status: 200, body: { data: rows, has_more: false, next_cursor: null } };
-    }
-    if (req.method === "GET" && req.path === "/api/context") {
-      const found = await latestContext(config);
-      if (found === null) return { status: 502, body: { error: "upstream unavailable" } };
-      return found.context === null
-        ? { status: 404, body: { error: "no applied install for this project" } }
-        : { status: 200, body: found };
-    }
-    if (req.method === "GET" && req.path === "/api/product-audit") {
-      const platform = await productAuditPlatform(config);
-      if (platform === null) return { status: 502, body: { error: "upstream unavailable" } };
-      const store = await ctx.store();
-      const site = store.site();
-      const state = store.read();
-      const posts = state.posts;
-      const externalProspects = state.clients.filter((client) =>
-        (client.domain.trim() !== "" || client.contact.email.trim() !== "") &&
-        (client.stage === "lead" || client.stage === "proposal"));
-      const internalRecords = state.clients.filter((client) => client.domain.trim() === "" && client.contact.email.trim() === "");
-      const answers = (() => {
-        const value = platform.context.context as { answers?: { key?: string; value?: unknown }[] } | null;
-        return value?.answers ?? [];
-      })();
-      const hasPricingAnswer = answers.some((answer) => ["pricing", "public_identity"].includes(answer.key ?? "") && String(answer.value ?? "").trim() !== "");
-      const namedContacts = externalProspects.filter((client) => client.contact.name.trim() !== "").length;
-      const addressedContacts = externalProspects.filter((client) => client.contact.email.trim() !== "").length;
-      return {
-        status: 200,
-        body: {
-          ...platform,
-          expected_agents: ACTIVE_TEMPLATE.agents.length,
-          public_site: {
-            company: site.company,
-            contact_email: site.contact.email,
-            placeholder_email: site.contact.email === "" || /\.example$/i.test(site.contact.email),
-            generic_company: site.company === "Your agency" || site.company === ACTIVE_TEMPLATE.words.brand,
-            pricing_without_answer: !hasPricingAnswer && site.pricing.tiers.some((tier) => /\$\s*\d/.test(tier.price)),
-            prices: site.pricing.tiers.map((tier) => tier.price),
-          },
-          content: {
-            total: posts.length,
-            posted_blog_articles: posts.filter((post) => post.channel === "blog" && post.kind === "article" && post.status === "posted").length,
-            draft_blog_articles: posts.filter((post) => post.channel === "blog" && post.kind === "article" && post.status !== "posted").length,
-            ad_plans: posts.filter((post) => post.kind === "ad-plan").length,
-            approved_ad_plans: posts.filter((post) => post.kind === "ad-plan" && ["approved", "posted"].includes(post.status)).length,
-          },
-          crm: {
-            records: state.clients.length,
-            prospects: externalProspects.length,
-            working_notes: externalProspects.reduce((sum, client) => sum + client.notes.length, 0),
-            internal_records: internalRecords.length,
-            named_contacts: namedContacts,
-            addressed_contacts: addressedContacts,
-          },
-          setup_has_paste_artifacts: answers.some((answer) => /^\s*>/m.test(String(answer.value ?? ""))),
-        },
-      };
-    }
-    const upstream = upstreamFor(req.method, req.path, config.identityId, req.query);
-    if (upstream === null) return NO_ROUTE;
-    const answer = await proxyFetch(config, upstream, req.method === "GET" ? null : req.body || "{}");
-    if (upstream.sse) return { status: answer.status, stream: answer };
-    return { status: answer.status, body: await answer.json() };
-  } catch {
-    return { status: 502, body: { error: "upstream unavailable" } };
-  }
+async function accountsRoute(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
+  if (req.method !== "GET") return NOT_ALLOWED;
+  if (ctx.config === null) return NOT_CONFIGURED;
+  const rows = await identityConnections(ctx.config).catch(() => null);
+  if (rows === null) return { status: 502, body: { error: "upstream unavailable" } };
+  return { status: 200, body: { data: ctx.app === "ads" ? rows.filter((r) => /ads/i.test(r.connector)) : rows } };
 }
 
 /**
@@ -687,19 +588,30 @@ function sameOrigin(req: ApiRequest): boolean {
 /** The whole route table, in order: `/mcp`, the door, the public site, the gate, the local token routes, the store, the platform. */
 export async function handleRequest(req: ApiRequest, ctx: ApiContext): Promise<ApiReply> {
   if (req.path === "/mcp") return mcpRoute(req, ctx);
+  const site = ctx.app === "landing-page";
+  // Only the landing page is a public site; every other app opens on its screen.
+  if (req.path === "/" && !site) return { status: 302, headers: { location: DASHBOARD } };
   if (["/", "/robots.txt", "/sitemap.xml", "/llms.txt"].includes(req.path) || req.path.startsWith("/blog/")) {
-    return (await publicRoutes(req, ctx)) ?? NO_ROUTE;
+    return (site ? await publicRoutes(req, ctx) : null) ?? NO_ROUTE;
   }
-  if (!req.path.startsWith("/api/")) return NO_ROUTE;
+  // Any other path: the public site's own page on the landing page (its script routes it), and
+  // this app's screen everywhere else — no other app is a public site (ADR-1766).
+  if (!req.path.startsWith("/api/")) {
+    if (!site) return { status: 302, headers: { location: DASHBOARD } };
+    if (req.method !== "GET" || ctx.publicShell === undefined) return NO_ROUTE;
+    return { status: 200, text: await ctx.publicShell(), headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } };
+  }
   // The two routes that must run before the gate: the one that gets a browser through it, and the
   // one that tells the browser whether it is.
   if (req.path === "/api/enter") return enterRoute(req, ctx);
   if (req.path === "/api/session") return sessionRoute(req, ctx);
-  // The public site's own two routes: a visitor holds no bearer.
-  const open = await publicRoutes(req, ctx);
+  // The public site's own routes: a visitor holds no bearer.
+  const open = site ? await publicRoutes(req, ctx) : null;
   if (open !== null) return open;
   // Before the route table, so an unauthenticated caller cannot even map which routes exist.
   const denied = apiGate(req, ctx);
   if (denied !== null) return denied;
-  return (await tokenRoutes(req, ctx)) ?? (await storeRoutes(req, ctx)) ?? platformRoutes(req, ctx);
+  if (req.path === "/api/accounts" && (ctx.app === "seo-geo" || ctx.app === "ads")) return accountsRoute(req, ctx);
+  if (ctx.app === "calendar" && req.path.startsWith("/api/events")) return eventRoutes(req, ctx);
+  return (await storeRoutes(req, ctx)) ?? NO_ROUTE;
 }

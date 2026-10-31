@@ -2,12 +2,12 @@
  * The `agency` blueprint, declared.
  *
  * This is the file `naive up` reads. A person clones this repo, sets NAIVE_API_KEY, runs
- * `naive up`, and the platform provisions everything below into their organization: the one app
- * (public site at `/`, operator dashboard under `/app`) and the chosen template's seven agents.
+ * `naive up`, and the platform provisions everything below into their organization: one app per
+ * primitive the template picks, and the chosen template's seven agents.
  * Re-running is idempotent — resources are keyed by name.
  *
- * The blueprint is the machine and is shared: the screens, `/api/*`, `/mcp`, the store, the
- * operator bearer, the build and the approval flow do not change with the template. The template
+ * The blueprint is the machine and is shared: the apps, `/api/*`, `/mcp`, the store, the sign-in
+ * and the build do not change with the template. The template
  * is data — `templates/blank.ts` and `templates/seo-geo.ts` — and this repo carries **both**, so
  * switching is one edit in `templates/index.ts` plus `naive up`: never a re-clone, never a new app.
  *
@@ -17,9 +17,9 @@
  * URL, its MCP token — are untouched. The per-client crew follows the same rule in
  * `server/proxy.ts`.
  *
- * The dashboard declares its MCP endpoint (`mcp: "/mcp"`), so every agent in the project is
- * offered the dashboard's CRM tools automatically on each turn — no per-agent wiring; the platform
- * mints the token and injects it into the app as `VETTA_MCP_TOKEN`.
+ * Every app declares its MCP endpoint (`mcp: "/mcp"`), so every agent in the project is offered
+ * each app's tools automatically on each turn — no per-agent wiring; the platform mints each app's
+ * token and injects it as `VETTA_MCP_TOKEN`.
  *
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
  * via the workspace protocol.
@@ -27,7 +27,16 @@
 import { defineProject } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
-import { PROJECT, TEMPLATE } from "./templates/index.ts";
+import { ACTIVE, PROJECT, TEMPLATE, type AppId } from "./templates/index.ts";
+
+/** What the Studio's Apps rail says each app is. */
+const APP_DESCRIPTIONS: Record<AppId, string> = {
+  crm: "Clients and the pipeline: leads, proposals, active clients, notes, referrals, and onboarding each client's team.",
+  "landing-page": "The agency's public site, its blog, and the inbox for leads from its contact form.",
+  "seo-geo": "Search work for clients — pages, articles, answer blocks, ranking reports and audits — with search measurement.",
+  ads: "Ad work for clients — briefs, concepts, copy, statics and video — with the agency's ad accounts.",
+  calendar: "Client meetings and the days each client deliverable is due, across every app.",
+};
 
 export default defineProject({
   name: PROJECT,
@@ -47,8 +56,8 @@ export default defineProject({
    */
   questions: ACTIVE_TEMPLATE.questions,
   /**
-   * The crew the dashboard provisions per client at onboarding (`server/proxy.ts`), published so
-   * the studio can show it. Names carry the client's slug at runtime, so only the shape is here.
+   * The team the CEO hires per client at onboarding (`server/crew.ts`), published so the studio can
+   * show it. Names carry the client's slug at runtime, so only the shape is here.
    */
   crew_per_client: ACTIVE_TEMPLATE.crew.map(({ name, role, description }) => ({ name, role, description })),
 
@@ -66,9 +75,8 @@ export default defineProject({
    * whose identity was not provisioned rather than creating one that runs as nobody, so a persona
    * dropped from this list fails the apply by name instead of quietly emptying every toolset.
    *
-   * It is also the persona the dashboard's own connection routes act as: export its `idn_` id as
-   * `NAIVE_IDENTITY_ID` and the accounts a client's Connections tab lists are exactly the accounts
-   * its agents can reach.
+   * It is also the persona whose connected accounts the SEO & GEO and Ads apps list (the platform
+   * writes its `idn_` id as `NAIVE_IDENTITY_ID`), so what they show is exactly what the agents reach.
    */
   identities: [
     {
@@ -77,63 +85,39 @@ export default defineProject({
     },
   ],
 
-  apps: [
-    {
-      name: "dashboard",
-      type: "fullstack",
-      description:
-        "The agency's public site at / — served from the site profile the team edits — and the operator dashboard under /app: CRM pipeline, approvals, agents, per-client workspaces.",
-      deploy_dir: "dist",
-      mcp: "/mcp",
-      /** The one app the crew files into and the site is served from; the template cannot run without it. */
-      required: true,
-      /**
-       * The deployed dashboard calls the platform on your behalf — the agency chat, the agent
-       * roster, each client's connections, and the per-client crew provisioned at onboarding — so
-       * it needs the same key you run `naive up` with. `{ from_env }` reads your shell at apply
-       * time, so no secret sits in this file and an unset variable refuses the apply by name. The
-       * other two are literals and only when set: a base URL and an identity id are not secrets,
-       * and a `{ from_env }` on an unset optional would refuse the whole apply.
-       *
-       * Without the key the dashboard still runs: the CRM and the deliverable queue are the app's
-       * own database, so they work, and every platform-backed route answers 503 "not configured"
-       * in the screen that asked for it instead of pretending.
-       *
-       * `DASHBOARD_TOKEN` is the operator's own bearer for `/api/*` — the CRM holds client
-       * contacts and their email addresses, the roster holds system prompts, and the queue and the
-       * session relay are writable, so the deployed URL cannot be open. It is `{ generate: true }`
-       * (`canonical-spec §29.7`): the value is "any long random string", asking a person to invent
-       * entropy was never a setup question, and a hosted install has no shell to read one out of.
-       * The platform makes one, once, on the apply that creates the app, and no later apply rolls
-       * it out from under the running build. It is unreadable by design — no route returns an app
-       * secret — so the dashboard comes up CLOSED rather than open, and an operator who wants a
-       * token they know sets their own with `POST /v1/apps/{id}/secrets`, once.
-       *
-       * `DASHBOARD_PASSWORD` is the one credential made to be handed to a person. Also
-       * `{ generate: true }`, but for this name the platform generates a password-shaped value
-       * (four groups of four, `kq7m-x2rt-8bvn-pz4h`) and keeps a copy it will show the operator
-       * from the studio's Access panel (`GET /v1/apps/{id}/access`, audited) — for the browser the
-       * studio cannot hand back signed in, or a colleague's. `/api/enter` trades it for the same
-       * cookie a ticket earns; rotation is `POST /v1/apps/{id}/access`, never a re-apply.
-       *
-       * `NAIVE_API_URL` and `NAIVE_IDENTITY_ID` are deliberately NOT here. They were `process.env`
-       * reads, evaluated when this declaration is BUILT — so the publisher's shell was baked into
-       * the bytes every customer installs — and on a hosted apply there is no shell at all, so both
-       * silently vanished and the dashboard fell back to the production base URL with no persona.
-       * Declaring them with `{ from_env }` would be worse: a laptop apply would then refuse for
-       * want of two variables nobody has. The platform knows both and writes them into this app
-       * itself, the way it already writes `VETTA_MCP_TOKEN`.
-       */
-      env: {
-        NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
-        DASHBOARD_TOKEN: { generate: true as const },
-        DASHBOARD_PASSWORD: { generate: true as const },
-      },
+  /**
+   * One app per primitive the template picks (ADR-1766): `crm`, `landing-page`, `seo-geo`, `ads`.
+   * Each is this repo's one build deployed on its own, told which it is by the literal `APP_ID`,
+   * with its own database (so its own data) and its own MCP tools, which every agent is offered as
+   * `<app>.<tool>`. There is no agency dashboard: the Studio draws the company, and each app opens
+   * from its Apps rail with its own chat. Apps never call each other; agents carry data between
+   * them. Every app's key is the read preset, so none can create an agent — the CEO hires each
+   * client's team behind its approval cards (option B).
+   *
+   * `NAIVE_API_KEY` is minted by the platform as each app's own read key (§29.7, ADR-1484).
+   * `DASHBOARD_TOKEN` and `DASHBOARD_PASSWORD` are `{ generate: true }`: the app's sign-in secret and
+   * the password the Studio's Access panel shows, invented once by the platform on the apply that
+   * creates the app and never readable back. `NAIVE_API_URL`, `NAIVE_STUDIO_URL` and `NAIVE_APP_ID`
+   * are the platform's to write and are not declared here.
+   */
+  apps: ACTIVE.apps.map((id) => ({
+    name: id,
+    type: "fullstack" as const,
+    description: APP_DESCRIPTIONS[id],
+    deploy_dir: "dist",
+    mcp: "/mcp",
+    /** The CRM holds the clients every other app's work names; a template cannot run without it. */
+    required: id === "crm",
+    env: {
+      APP_ID: id,
+      NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
+      DASHBOARD_TOKEN: { generate: true as const },
+      DASHBOARD_PASSWORD: { generate: true as const },
     },
-  ],
+  })),
 
   // No `agents:` here. They are the template's — `templates/agents.ts` declares the seven every
   // agency has, `templates/seo-geo.ts` adds its focus to them, and the per-client crew
-  // (`seo-writer--<slug>`, …) is provisioned at onboarding by the dashboard server, since its
-  // names carry a client slug and cannot be declared statically.
+  // (`seo-writer--<slug>`, …) is hired at onboarding by the CEO from `crm.get_client_crew`, since
+  // its names carry a client slug and cannot be declared statically.
 });

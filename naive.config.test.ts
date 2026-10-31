@@ -34,7 +34,7 @@ describe("naive.config.ts", () => {
     expect(result.config.agents.flatMap((a) => a.schedules ?? []).every((s) => (s.summary ?? "") !== "")).toBe(true);
     // One repo carries every template of its blueprint — that is what makes a switch an edit and
     // never a re-clone, and `defineProject` refuses a repo that carries only some.
-    expect(Object.keys(TEMPLATES).sort()).toEqual(["blank", "seo-geo"]);
+    expect(Object.keys(TEMPLATES).sort()).toEqual(["advertising", "blank", "market-research", "security", "seo-geo"]);
     // One app: the public site at `/` and the operator UI under `/app` share a server, so the
     // site's read of its own copy (`/api/site`) is same-origin. The app is what the crew files into
     // and the operator approves on, so an install cannot leave it out.

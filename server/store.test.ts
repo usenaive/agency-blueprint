@@ -6,6 +6,7 @@ import type { Client } from "../seed/clients";
 import type { Post } from "../seed/posts";
 import { ACTIVE_TEMPLATE } from "../templates/active";
 import { MAX_ITEMS, MAX_TEXT, site, withinBounds } from "../site/site.config";
+import { kindApp } from "./apps";
 import { emptyState, LEAD_WINDOW_MS, LEADS_PER_WINDOW, openStore, openStoreOver, seedState, type StoreState } from "./store";
 
 /**
@@ -18,6 +19,8 @@ const seedClients = ACTIVE_TEMPLATE.seed.clients as Client[];
 const seedPosts = ACTIVE_TEMPLATE.seed.posts as Post[];
 const clientAt = (stage: Client["stage"]): string => seedClients.find((c) => c.stage === stage)!.id;
 const postAt = (status: Post["status"]): string => seedPosts.find((p) => p.status === status)!.id;
+/** Every seeded post at once: each app's file holds only its own kinds (ADR-1766). */
+const everyPost = () => openStoreOver({ clients: structuredClone(seedClients), posts: structuredClone(seedPosts), site_profile: site }, () => {});
 
 const dirs: string[] = [];
 const storeFile = () => {
@@ -124,10 +127,14 @@ describe("the public form's rate window", () => {
 });
 
 describe("openStore", () => {
-  it("seeds clients and posts on first run", () => {
-    const store = openStore(storeFile());
-    expect(store.read().clients).toHaveLength((ACTIVE_TEMPLATE.seed.clients as unknown[]).length);
-    expect(store.read().posts).toHaveLength((ACTIVE_TEMPLATE.seed.posts as unknown[]).length);
+  it("seeds each app with its own share of the demo: the CRM every client, the landing page its leads", () => {
+    const crm = openStore(storeFile()).read();
+    expect(crm.clients).toHaveLength(seedClients.length);
+    for (const app of ["crm", "landing-page", "seo-geo", "ads"] as const) {
+      expect(openStore(storeFile(), app).read().posts).toEqual(seedPosts.filter((p) => kindApp(p.kind) === app));
+    }
+    expect(openStore(storeFile(), "landing-page").read().clients.every((c) => c.stage === "lead")).toBe(true);
+    expect(openStore(storeFile(), "ads").read().clients).toEqual([]);
   });
 
   it("creates a lead at the lead stage with a slug derived from the name", () => {
@@ -242,7 +249,7 @@ describe("openStore", () => {
   });
 
   it("updates a post's status with the posted/rejected side effects", () => {
-    const store = openStore(storeFile());
+    const store = everyPost();
     const posted = store.updatePost(postAt("approved"), { status: "posted" });
     expect(posted?.postedAt).toBe("just now");
     expect(posted?.clicks).toBe(0);
@@ -252,7 +259,7 @@ describe("openStore", () => {
   });
 
   it("reschedules a post without touching its status", () => {
-    const store = openStore(storeFile());
+    const store = everyPost();
     const moved = store.updatePost(postAt("pending"), { scheduledFor: "2025-03-20" });
     expect(moved?.scheduledFor).toBe("2025-03-20");
     expect(moved?.status).toBe("pending");
@@ -272,8 +279,9 @@ describe("openStore", () => {
 
   it("reopens from disk rather than reseeding", () => {
     const file = storeFile();
-    const id = postAt("pending");
-    openStore(file).updatePost(id, { status: "approved" });
-    expect(openStore(file).read().posts.find((p) => p.id === id)?.status).toBe("approved");
+    const pending = seedPosts.find((p) => p.status === "pending")!;
+    const app = kindApp(pending.kind);
+    openStore(file, app).updatePost(pending.id, { status: "approved" });
+    expect(openStore(file, app).read().posts.find((p) => p.id === pending.id)?.status).toBe("approved");
   });
 });

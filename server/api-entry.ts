@@ -10,7 +10,7 @@
  *
  * One `pg.Client` per invocation, never a `Pool`: an instance serves one request and is frozen
  * between them, so a pooled connection is a leaked backend on the database. The connection is
- * opened lazily, on the first `ctx.store()` call, so `/api/chat`, `/api/agents` and `/api/social/*`
+ * opened lazily, on the first `ctx.store()` call, so `/api/session` and `/api/accounts`
  * open none at all.
  *
  * The whole request is **one transaction over the locked document row**. It used to be a plain
@@ -23,7 +23,8 @@
  */
 import { Client } from "pg";
 import { configFromEnv } from "./proxy.ts";
-import { handleRequest, SSE_RETRY, type ApiRequest } from "./routes.ts";
+import { appOf } from "./apps.ts";
+import { handleRequest, type ApiRequest } from "./routes.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
 /** Replaced with the Vite-built public document by `build-api.mjs`. */
@@ -137,22 +138,6 @@ export function requestFrom(req: Request): ApiRequest {
   };
 }
 
-/** The session relay: piped, not buffered, and opened with a retry hint so a drop is cheap. */
-async function pipe(res: Reply, upstream: Response): Promise<void> {
-  res.setHeader("content-type", "text/event-stream");
-  res.setHeader("cache-control", "no-cache");
-  res.status(upstream.status);
-  res.write(SSE_RETRY);
-  try {
-    if (upstream.body !== null) {
-      const reader = upstream.body.getReader();
-      for (let next = await reader.read(); !next.done; next = await reader.read()) res.write(next.value);
-    }
-  } catch {
-    // The browser reconnects on its own; there is no status left to change.
-  }
-  res.end();
-}
 
 export default async function handler(req: Request, res: Reply): Promise<void> {
   const open: { client: Client | null; state: StoreState | null; store: Store | null; dirty: boolean } = {
@@ -169,6 +154,7 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
         }
         return open.store;
       },
+      app: appOf(process.env["APP_ID"]),
       config: configFromEnv(process.env),
       mcpToken: process.env["VETTA_MCP_TOKEN"],
       dashboardToken: process.env["DASHBOARD_TOKEN"],
@@ -188,7 +174,6 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
       await open.client.query("commit");
     }
     for (const [name, value] of Object.entries(reply.headers ?? {})) res.setHeader(name, value);
-    if (reply.stream) return await pipe(res, reply.stream);
     if (reply.text !== undefined) return res.status(reply.status).end(reply.text);
     if (reply.body === undefined) return res.status(reply.status).end();
     return res.status(reply.status).json(reply.body);

@@ -1,5 +1,5 @@
 /**
- * The two templates of the `agency` blueprint, held to what a template is.
+ * The templates of the `agency` blueprint, held to what a template is.
  *
  * A template is DATA — agents and prompts, tool allow-lists, deliverable kinds, schedules, the
  * demo seed, the screen vocabulary. The blueprint around it is shared, so the tests below are
@@ -14,7 +14,13 @@ import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE, OPENER, PREAMBLE, REFERRAL_ASK } from "./agents.ts";
 import { blank } from "./blank.ts";
-import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
+import { APP_IDS, TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
+import { TOOLS_OF } from "../server/apps.ts";
+import { advertising } from "./advertising.ts";
+import { marketResearch } from "./market-research.ts";
+import { recruiting } from "./recruiting.ts";
+import { security } from "./security.ts";
+import { CLIENT_DOMAIN } from "./agents.ts";
 import { seoGeo } from "./seo-geo.ts";
 
 /** Plan §2.1's roster, name and role, in the order the studio lists them. */
@@ -29,18 +35,38 @@ const ROSTER = [
 ];
 const SEO_ROSTER = [...ROSTER, ["paid-media-planner", "Paid media planning"]];
 
+/** Each template's setup questions, in order. Four is the engine's limit. */
+const QUESTIONS: Record<string, string[]> = {
+  blank: ["offer", "ideal_client", "pricing", "network"],
+  "seo-geo": ["public_identity", "offer", "ideal_client", "competitors"],
+  "market-research": ["offer", "ideal_client", "pricing", "coverage"],
+  advertising: ["offer", "ideal_client", "pricing", "formats"],
+  security: ["offer", "ideal_client", "pricing", "products"],
+  recruiting: ["offer", "ideal_client", "pricing", "markets"],
+};
+
+/** The seats that read a connected account, per template, beyond the two mailbox seats every one has. */
+const READERS: Record<string, string[]> = {
+  "seo-geo": ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner", "seo-writer", "geo-optimizer", "audit-runner"],
+  advertising: ["creative-director", "media-planner", "performance-analyst"],
+};
+
+/** The specialisms that are a plain delta on blank: the same seven and nothing more. */
+const DELTAS = [marketResearch, advertising, security, recruiting];
+
 const all = Object.values(TEMPLATES);
 const clientsOf = (t: (typeof all)[number]) => t.seed.clients as Client[];
 const postsOf = (t: (typeof all)[number]) => t.seed.posts as Post[];
 const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
-/** Every string a template puts in front of a person or a model. Skill refs are catalogue slugs, not prose. */
+/** Every string a template puts in front of a person or a model. Skill refs and a kind's screen tag are ids, not prose. */
 const prose = (t: (typeof all)[number]): string =>
   JSON.stringify([
     t.description,
     t.words,
-    t.kinds,
-    t.agents.map(({ skills: _, ...agent }) => agent),
+    t.kinds.map(({ app: _, ...kind }) => kind),
+    // Tool names are not prose: `seo-geo.list_posts` is an app's address, not a claim of a specialism.
+    t.agents.map(({ skills: _, tools: __, ...agent }) => agent),
     t.crew,
     t.seed,
     t.questions,
@@ -49,7 +75,7 @@ const prose = (t: (typeof all)[number]): string =>
 
 describe("every template of this blueprint", () => {
   it("carries both, so a switch is an edit and never a re-clone", () => {
-    expect(all.map((t) => t.name).sort()).toEqual(["blank", "seo-geo"]);
+    expect(all.map((t) => t.name).sort()).toEqual(["advertising", "blank", "market-research", "recruiting", "security", "seo-geo"]);
     expect(TEMPLATES[TEMPLATE].name).toBe(TEMPLATE);
   });
 
@@ -82,15 +108,9 @@ describe("every template of this blueprint", () => {
   });
 
   it.each(all)("$name asks the setup questions its deliverables require", (template) => {
-    if (template.name === "blank") {
-      expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text", "text"]);
-      expect(template.questions.map((q) => q.key)).toEqual(["offer", "ideal_client", "pricing", "network"]);
-    } else {
-      // Four is the engine's limit and seo-geo's four are spent, so its network is asked in session.
-      expect(template.questions.map((q) => q.key)).toEqual([
-        "public_identity", "offer", "ideal_client", "competitors",
-      ]);
-    }
+    // Four is the engine's limit; every template but blank spends them, so its network is asked in session.
+    expect(template.questions.map((q) => q.type)).toEqual(["text", "text", "text", "text"]);
+    expect(template.questions.map((q) => q.key)).toEqual(QUESTIONS[template.name]);
     // Only the network question may be skipped: an agency with no contacts to list still installs.
     expect(template.questions.filter((q) => q.optional).map((q) => q.key)).toEqual(template.name === "blank" ? ["network"] : []);
   });
@@ -154,17 +174,17 @@ describe("connected accounts", () => {
    * ended up able to call `web_search` and `web_fetch` and nothing else.
    */
   const connectionTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
-    Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard."));
+    Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !APP_IDS.some((app) => name.startsWith(`${app}.`)));
 
   it.each(all)("$name grants connected accounts only to agents that consume them", (template) => {
-    // Blank needs only the mailbox-facing seats. SEO/GEO additionally grants read-only measurement
-    // to its own writer, reviser and gap researcher, plus read-only ad evidence to its planner.
+    // Every template's mailbox seats read the inbox. SEO/GEO also grants read-only measurement and ad
+    // evidence; advertising lets its creative director read what already ran; research reads none.
+    const readers = new Set(READERS[template.name] ?? []);
     for (const agent of template.agents) {
-      const outward = agent.name === "sales" || agent.name === "client-manager" ||
-        (template.name === "seo-geo" && ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"].includes(agent.name));
+      const outward = agent.name === "sales" || agent.name === "client-manager" || readers.has(agent.name);
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
-    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
+    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, readers.has(agent.name)]);
   });
 
   it("lets the SEO/GEO agency's own scheduled work read its Search Console and Analytics evidence", () => {
@@ -215,6 +235,14 @@ describe("handoffs", () => {
     "gap-researcher": ["content-writer"],
     "audit-runner": ["seo-writer"],
     "seo-writer": ["geo-optimizer"],
+    "desk-researcher": ["competitor-analyst"],
+    "competitor-analyst": ["voice-of-customer"],
+    "creative-director": ["copywriter"],
+    copywriter: ["designer", "video-producer"],
+    "customer-tester": ["edge-tester"],
+    "media-planner": ["creative-director", "performance-analyst"],
+    sourcer: ["screener"],
+    screener: ["outreach-writer"],
   };
   const handoffTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
     ["send_to_agent", "list_agents"].filter((name) => agent.tools?.configs[name]?.permission === "allow");
@@ -306,8 +334,8 @@ describe("seo-geo", () => {
     for (const template of [blank, seoGeo]) {
       const manager = template.agents.find((a) => a.name === "client-manager")!;
       const configs = manager.tools?.configs ?? {};
-      expect(configs["dashboard.list_referral_ready"]?.permission).toBe("allow");
-      expect(configs["dashboard.record_referral_ask"]?.permission).toBe("allow");
+      expect(configs["crm.list_referral_ready"]?.permission).toBe("allow");
+      expect(configs["crm.record_referral_ask"]?.permission).toBe("allow");
       // The ask itself is an email, so it waits for the operator like every other send.
       expect(configs["email.send"]?.permission).toBe("ask");
       const weekly = manager.schedules?.[0]?.input ?? "";
@@ -349,6 +377,69 @@ describe("seo-geo", () => {
   it("widens over blank: it drops no agent blank declares", () => {
     const gone = blank.agents.map((a) => a.name).filter((name) => !seoGeo.agents.some((a) => a.name === name));
     expect(gone).toEqual([]);
+  });
+});
+
+describe.each(DELTAS)("$name", (template) => {
+  it("is a delta on blank, not a fork of it: the same seven, with only focus, skills and work added", () => {
+    expect(template.agents.map((a) => a.name)).toEqual(blank.agents.map((a) => a.name));
+    for (const [i, agent] of template.agents.entries()) {
+      const base = blank.agents[i]!;
+      expect(agent.system).toContain(base.system);
+      expect(agent.skills?.slice(0, base.skills?.length)).toEqual(base.skills);
+      expect(agent.intake?.message.startsWith(base.intake?.message ?? "")).toBe(true);
+      for (const [j, schedule] of (agent.schedules ?? []).entries()) expect(schedule.input.startsWith(base.schedules![j]!.input)).toBe(true);
+      const shape = (a: typeof agent) => ({ ...a, system: "", skills: [], intake: { ...a.intake, message: "" }, schedules: a.schedules?.map((s) => ({ ...s, input: "" })) });
+      expect(shape(agent)).toEqual(shape(base));
+    }
+  });
+
+  it("provisions a crew per client on the shared model, and some seat files every kind it declares", () => {
+    expect(template.crew.length).toBeGreaterThanOrEqual(2);
+    for (const member of template.crew) expect(member.model).toBe(blank.agents[0]!.model);
+    // `article` is the seven's own blog; every other kind is a client deliverable a crew seat files.
+    const filed = template.crew.map((member) => member.system ?? "").join(" ");
+    for (const kind of template.kinds.map((k) => k.id).filter((k) => k !== "article")) {
+      expect([kind, filed.includes(` ${kind} draft`)]).toEqual([kind, true]);
+    }
+  });
+});
+
+describe("security", () => {
+  it("tests only the client's own domain, with writes allowed and every signup approved by a person", () => {
+    expect(security.crew.map((m) => m.name)).toEqual(["customer-tester", "edge-tester"]);
+    for (const member of security.crew) {
+      const browser = member.tools?.configs.browser;
+      expect(browser?.permission).toBe("allow");
+      expect(browser?.config).toMatchObject({ allowed_domains: [CLIENT_DOMAIN], allow_writes: true, ask_actions: ["signup"] });
+      // The live product's users are real: every seat repeats the limits.
+      expect(member.system).toMatch(/never pay, upgrade, delete, invite.*never load-test.*ask_operator/);
+    }
+  });
+
+  it("gives no seat of the seven a browser: only the crew tests a product", () => {
+    for (const agent of security.agents) expect(agent.tools?.configs.browser).toBeUndefined();
+  });
+});
+
+describe("market-research", () => {
+  it("makes every crew seat source every figure, and reads public data through the catalogue", () => {
+    for (const member of marketResearch.crew) {
+      expect(member.system).toMatch(/Every figure carries the URL it came from.*Never invent a number, a respondent or a quote/);
+      for (const tool of ["data_search", "data_describe", "data_run"]) expect(member.tools?.configs[tool]?.permission).toBe("allow");
+    }
+  });
+});
+
+describe("advertising", () => {
+  it("makes ads and stops there: no seat can launch, mutate an ad account, or render video without approval", () => {
+    for (const agent of [...advertising.agents, ...advertising.crew]) {
+      const names = Object.keys(agent.tools?.configs ?? {});
+      expect(names.filter((name) => /^(ads_|metaads\.(create|update|delete)|googleads\.(mutate|create))/.test(name))).toEqual([]);
+    }
+    const producer = advertising.crew.find((a) => a.name === "video-producer")!;
+    expect(producer.tools?.configs["generate_video"]?.permission).toBe("ask");
+    for (const member of advertising.crew) expect(member.system).toMatch(/launch, pause and edit no campaign, set no budget or bid and spend nothing/);
   });
 });
 
@@ -403,6 +494,10 @@ describe("the launch card's words", () => {
     expect(all.map((t) => [t.name, t.title])).toEqual([
       ["blank", "Agency"],
       ["seo-geo", "SEO & GEO agency"],
+      ["market-research", "Market research agency"],
+      ["advertising", "Advertising agency"],
+      ["security", "Security agency"],
+      ["recruiting", "Recruiting agency"],
     ]);
     for (const t of all) {
       expect(t.title.length).toBeLessThanOrEqual(80);
@@ -414,6 +509,10 @@ describe("the launch card's words", () => {
     expect(all.map((t) => [t.name, t.roadmap])).toEqual([
       ["blank", { day_one: "Set up your site, pipeline and first drafts" }],
       ["seo-geo", { day_one: "Set up your site, pipeline and competitor gaps" }],
+      ["market-research", { day_one: "Set up your site, pipeline and first research" }],
+      ["advertising", { day_one: "Set up your site, pipeline and first campaign plan" }],
+      ["security", { day_one: "Set up your site, pipeline and first tests" }],
+      ["recruiting", { day_one: "Set up your site, pipeline and first open roles" }],
     ]);
     // Every timer is weekday-only or weekly, so "every day" would promise weekends that do not run.
     for (const t of all) {
@@ -464,5 +563,34 @@ describe("what the README promises about spend", () => {
     // The recurring cap is a different number on a different clock, and must be stated as one.
     expect(readme).toContain(`**${usd(cap)}**`);
     expect(readme).not.toContain("$14 ");
+  });
+});
+
+describe("agents call each app by name (ADR-1766)", () => {
+  it.each(all)("$name names only tools an app serves, and never the old dashboard", (template) => {
+    for (const agent of [...template.agents, ...template.crew]) {
+      for (const name of Object.keys(agent.tools?.configs ?? {})) {
+        expect([agent.name, name.startsWith("dashboard.")]).toEqual([agent.name, false]);
+        const app = APP_IDS.find((id) => name.startsWith(`${id}.`));
+        if (app !== undefined) expect([agent.name, TOOLS_OF[app]]).toEqual([agent.name, expect.arrayContaining([name.slice(app.length + 1)])]);
+      }
+      expect([agent.name, JSON.stringify([agent.system, agent.schedules, agent.intake]).includes("dashboard.")]).toEqual([agent.name, false]);
+    }
+  });
+
+  it.each(all)("$name files every lead from the site into the CRM through the sales seat", (template) => {
+    const sales = template.agents.find((a) => a.name === "sales")!;
+    for (const tool of ["landing-page.list_new_leads", "landing-page.mark_lead_filed", "crm.create_lead"]) {
+      expect(sales.tools?.configs?.[tool]?.permission).toBe("allow");
+    }
+  });
+});
+
+describe("every client team seat loads a skill", () => {
+  it.each(all)("$name gives each seat at least one skill from the platform catalogue", (template) => {
+    for (const seat of template.crew) {
+      expect([seat.name, (seat.skills ?? []).length > 0]).toEqual([seat.name, true]);
+      for (const ref of seat.skills ?? []) expect([seat.name, ref]).toEqual([seat.name, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
+    }
   });
 });
