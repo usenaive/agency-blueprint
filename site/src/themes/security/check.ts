@@ -46,7 +46,11 @@ export function readHeaders(headers: Headers, https: boolean): CheckLine[] {
 
 export async function checkThisPage(): Promise<CheckLine[] | null> {
   try {
-    const res = await fetch(location.pathname, { cache: "no-store" });
+    // This page's own URL, absolute: a bare pathname such as `//host/x` is protocol-relative and would
+    // send the request to another host.
+    const self = new URL(location.href);
+    self.hash = "";
+    const res = await fetch(self.href, { cache: "no-store", credentials: "same-origin" });
     return readHeaders(res.headers, location.protocol === "https:");
   } catch {
     return null;
