@@ -43,8 +43,9 @@ Screenshot:  the hero headline on ruled paper with its hand-drawn underline and 
 - **Grid:** a 7.5rem margin column left of the red line holds entry numbers and notes; content
   hangs from the line. Body leading equals the rule spacing (1.75rem).
 - **Shape:** no radius, no cards; ink, rules and paper only.
-- **Motion:** each mark is one SVG stroke drawn by its dash offset (0.9 s, ease out) when its entry
-  crosses 75% of the viewport; ticks stagger 90 ms. Still at rest. Reduced motion: every mark drawn.
+- **Motion:** native scroll. Each mark is one SVG stroke drawn once by its dash offset (0.4 s, ease
+  out) when its entry crosses 75% of the viewport; no stagger, nothing scrubbed. Hovers 0.4 s at most.
+  Still at rest. Reduced motion: every mark drawn, no transitions.
 
 ## Genericness test
 
@@ -58,4 +59,7 @@ only "illustration" is the pen marking the actual copy.
   stretched marks draw as one line; only two headings are circled, so the circle means something, and
   it starts clear of the first letter; the nav says "Studies"; phone: no repeated name, stacked
   checkboxes, the circle stays inside the margin. CTA hover flags verified by hand as artifacts.
+- **2026-11-01, calm pass** (owner: "difficult to scroll and too flashy"): pen strokes cut from 0.9 s plus 0.35 s per-path and
+  90 ms tick staggers to one 0.4 s stroke; button fill 0.55 s and link 0.5 s to 0.4 s; the global
+  `scroll-behavior: smooth` (`site.css`) removed. Lede capped at 48ch and four lines.
 - **Open:** mobile LCP about 2.7 s (the lede waits on the serif); type sits near, not on, the rules.

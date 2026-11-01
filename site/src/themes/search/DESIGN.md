@@ -34,7 +34,7 @@ Metaphor:    a crawler's parse of the page: tags, schema types, answer lengths
 Signature:   the parse line at 40% of the viewport; each block that crosses it is marked parsed
              and its machine reading appears in the left margin, in mono
 Emotion:     calm precision; "these people can see what Google sees"
-Motion verb: sweep, like a scan line (left to right, top to bottom)
+Motion verb: mark, like a parser: a block is read once and stays read
 Screenshot:  the hero headline with its annotations in the margin and the answer card beside it
 ```
 
@@ -50,17 +50,17 @@ Screenshot:  the hero headline with its annotations in the margin and the answer
 - **Grid:** 12 columns, gutter 24 px (16 on phones). Columns 1 to 2 are the machine margin; human
   content hangs from column 3. On phones the margin folds into a mono line above each block.
 - **Shape:** radius 2 px on controls only; no cards, no shadows.
-- **Motion:** one ease (`expo.out`), hovers 0.35 s, the hero sweep 1.1 s. Motion is transform,
-  opacity and clip-path only.
+- **Motion:** native scroll; one ease (`expo.out`), every transition 0.4 s at most and one-time.
+  No hero sweep, no scrubbed rule. Motion is transform, opacity and clip-path only.
 - **Sections, one family each:** hero = split frame (statement left, answer card right); proof =
-  facts row; services = index list; who we serve = statement; process = timeline whose rule fills
-  as it is parsed; insights = index list (only when posts exist); pricing = comparison table;
+  facts row; services = index list; who we serve = statement; process = timeline under one
+  accent rule; insights = index list (only when posts exist); pricing = comparison table;
   FAQ = answer blocks with word counts; contact = footer finale with the wordmark.
-- **Idle:** the parse line's caret blinks; everything else holds still at rest. This is a reading
+- **Idle:** everything holds still at rest, the parse caret included. This is a reading
   page for a B2B buyer, so the hovers and the parse carry the life.
 - **Reduced motion:** no sweep; every block renders parsed, annotations visible.
-- **No smooth-scroll library:** native scroll is the better usability choice for a sales page;
-  GSAP's ScrollTrigger is the one clock for the parse.
+- **No smooth scroll of any kind:** no library and no `scroll-behavior: smooth`; native scroll is the
+  better usability choice for a sales page. GSAP's ScrollTrigger only flips the parsed class.
 
 ## Genericness test
 
@@ -79,6 +79,10 @@ section labels replaced by the machine margin, which carries real information.
 - **Measurement artifacts, verified by hand:** `noHoverChange` on two CTAs, `keyboard.stuck` and
   `invisibleFocus` come from smooth scrolling (`site.css`) while the checker measures; with instant
   scroll every `.s-btn` fill sweeps and Tab reaches every form field.
+- **2026-11-01, calm pass** (owner: "difficult to scroll and too flashy"): removed the 1.1 s hero sweep, the scroll-scrubbed
+  process rule (now a static accent rule) and the endlessly blinking caret; note wipe 0.7 s and row
+  rule 0.9 s cut to 0.4 s, hovers capped at 0.4 s; `site.css` smooth scroll removed. Lede capped at
+  52ch and four lines.
 - **Outside this theme, owed:**
   1. The public site is rendered by JavaScript, so the first response has no `<h1>`, `<main>` or text
      (audit FAIL). Crawlers that do not run JavaScript, including many AI crawlers, see an empty page.

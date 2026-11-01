@@ -48,7 +48,7 @@
 
 /* ---------- pen marks ---------- */
 .r-mark { position: absolute; overflow: visible; pointer-events: none; }
-.r-mark path { fill: none; stroke: var(--accent); stroke-width: 2.2px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-dasharray: var(--len, 4000px); stroke-dashoffset: var(--len, 4000px); transition: stroke-dashoffset 0.9s var(--pen); }
+.r-mark path { fill: none; stroke: var(--accent); stroke-width: 2.2px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-dasharray: var(--len, 4000px); stroke-dashoffset: var(--len, 4000px); transition: stroke-dashoffset 0.4s var(--pen); }
 .is-drawn .r-mark path { stroke-dashoffset: 0; }
 .r-underlined, .r-circled { position: relative; display: inline-block; }
 .r-mark--underline { left: -1%; width: 86%; bottom: -0.16em; height: 0.24em; }
@@ -60,12 +60,12 @@
 .r-pen::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.3em; height: 0.42em; background: var(--accent);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 5 Q 5 1 10 5 T 20 5 T 30 5 T 40 5' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") left center / auto 100% repeat-x;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8'%3E%3Cpath d='M0 5 Q 5 1 10 5 T 20 5 T 30 5 T 40 5' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") left center / auto 100% repeat-x;
-  transform-origin: left; scale: 0 1; transition: scale 0.5s var(--pen); }
+  transform-origin: left; scale: 0 1; transition: scale 0.4s var(--pen); }
 .r-pen--strong { font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; }
 .r-pen:focus-visible::after { scale: 1 1; }
 .r-inline { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
 .r-btn { position: relative; isolation: isolate; overflow: clip; display: inline-flex; align-items: center; min-height: 3rem; padding: 0.8rem 1.35rem; background: var(--accent); color: var(--accent-ink); border: 0; font: 600 1.0625rem/1 var(--f-text); text-decoration: none; cursor: pointer; transition: scale 0.2s var(--pen); }
-.r-btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: circle(0% at 50% 50%); transition: clip-path 0.55s var(--pen); }
+.r-btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: circle(0% at 50% 50%); transition: clip-path 0.4s var(--pen); }
 .r-btn--small { min-height: 2.5rem; padding: 0.55rem 1rem; font-size: 0.9688rem; }
 .r-btn:focus-visible::before { clip-path: circle(75% at 50% 50%); }
 .r-btn:active { scale: 0.98; }
@@ -85,7 +85,9 @@
 .r-num--owner { font-size: 1.35rem; color: var(--accent); line-height: 1.2; }
 .r-eyebrow { margin: 0 0 var(--lh); font-style: italic; color: var(--muted); }
 .r-display { margin: 0; max-width: 15ch; font-size: var(--t-mega); font-weight: 460; line-height: 1.02; letter-spacing: -0.028em; text-wrap: balance; }
-.r-lede { margin: calc(var(--lh) * 1.5) 0 0; max-width: 34rem; font-size: 1.25rem; line-height: var(--lh); }
+.r-lede { margin: calc(var(--lh) * 1.5) 0 0; max-width: 48ch; font-size: 1.25rem; line-height: var(--lh);
+  /* An operator's long profile copy stops at four lines instead of flooding the hero. */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 .r-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; margin-top: calc(var(--lh) * 1.5); }
 .r-margin-notes { display: grid; gap: 1.25rem; align-content: start; padding: 0.5rem 0 0 2rem; }
 .r-margin-notes p { margin: 0; font: 500 1.45rem/1.15 var(--f-pen); color: var(--accent); rotate: -1.5deg; }
@@ -100,7 +102,6 @@
 .r-services p { margin: 0.4rem 0 0; color: var(--muted); }
 .r-ticks { margin: var(--lh) 0 0; padding: 0; list-style: none; }
 .r-ticks li { display: flex; gap: 0.6rem; }
-.r-ticks .r-mark path { transition-delay: calc(0.25s + var(--i, 0) * 90ms) !important; }
 
 .r-posts { margin: calc(var(--lh) * 1.5) 0 0; padding: 0; list-style: none; }
 .r-post { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 1.5rem; padding: 0.2rem 0; color: var(--ink); text-decoration: none; }
@@ -184,6 +185,5 @@
 @media (min-width: 481px) { .r-jump nav a:last-child { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  html:has(.r-site) { scroll-behavior: auto; }
   .r-site *, .r-site *::before, .r-site *::after { transition: none !important; animation: none !important; }
 }

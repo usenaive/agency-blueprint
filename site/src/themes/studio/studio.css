@@ -1,7 +1,8 @@
 /*
  * The studio theme (DESIGN.md): a production artboard. Archivo, expanded and heavy for display;
  * JetBrains Mono only for specs. Profile colors: ground, ink, muted, accent (the field yellow).
- * Layout: a pinned hero stage whose field is re-cropped by `frames.ts`; sections hang as frames.
+ * Layout: a hero stage whose field shows one placement at a time; sections hang as frames. Native
+ * scroll; motion is hover and click feedback only, 0.4 s at most.
  */
 .a-site {
   --line: color-mix(in srgb, var(--ink) 16%, transparent);
@@ -30,7 +31,7 @@
 /* ---------- header ---------- */
 .a-head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; display: flex; align-items: center; gap: 2.25rem; height: 4rem; background: var(--ground); border-bottom: 1px solid var(--ink); }
 .a-mark { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--ink); text-decoration: none; font-weight: 800; font-stretch: 112%; font-size: 1.1rem; letter-spacing: -0.02em; white-space: nowrap; }
-.a-mark__moon { width: 0.95rem; height: 0.95rem; border: 1.5px solid var(--ink); border-radius: 50%; background: linear-gradient(90deg, var(--ink) 50%, var(--accent) 50%); transition: rotate 0.5s var(--out); }
+.a-mark__moon { width: 0.95rem; height: 0.95rem; border: 1.5px solid var(--ink); border-radius: 50%; background: linear-gradient(90deg, var(--ink) 50%, var(--accent) 50%); transition: rotate 0.4s var(--out); }
 .a-nav { display: flex; gap: 1.6rem; font-size: 0.9375rem; font-weight: 500; }
 .a-head .a-btn { margin-left: auto; }
 .a-jump { display: none; position: relative; }
@@ -39,7 +40,7 @@
 
 /* ---------- controls ---------- */
 .a-btn { position: relative; isolation: isolate; overflow: clip; display: inline-flex; align-items: center; gap: 0.6rem; min-height: 3rem; padding: 0.95rem 1.4rem; background: var(--ink); color: var(--ground); border: 0; font: 760 0.9688rem/1 var(--f-text); font-stretch: 108%; text-decoration: none; cursor: pointer; transition: color 0.3s var(--out), scale 0.2s var(--out); }
-.a-btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--accent); clip-path: inset(0 100% 0 0); transition: clip-path 0.45s var(--snap); }
+.a-btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--accent); clip-path: inset(0 100% 0 0); transition: clip-path 0.4s var(--snap); }
 .a-btn--ink::before { background: var(--ground); }
 .a-btn--small { min-height: 2.5rem; padding: 0.6rem 1rem; font-size: 0.875rem; }
 .a-btn:focus-visible { color: var(--accent-ink); }
@@ -65,13 +66,14 @@
 }
 
 /* ---------- the hero: one ad, every placement ---------- */
-.a-hero { position: relative; height: 330svh; }
-.a-stage { position: sticky; top: 4rem; height: calc(100svh - 4rem); overflow: clip; }
-.a-adfield { position: absolute; inset: 0; background: var(--accent); clip-path: inset(10% 32% 10% 32%); }
+.a-stage { position: relative; container-type: size; height: clamp(34rem, calc(100svh - 4rem), 52rem); overflow: clip; }
+/* The field is the picked placement's largest box inside 86% x 80% of the stage. */
+.a-adfield { --r: 0.8; position: absolute; left: 50%; top: 50%; width: min(86cqw, 80cqh * var(--r)); height: min(86cqw / var(--r), 80cqh); translate: -50% -50%; background: var(--accent); transition: width 0.4s var(--out), height 0.4s var(--out); }
 .a-corner { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 .a-corner::before, .a-corner::after { content: ""; position: absolute; background: var(--ink); }
 .a-corner::before { width: 1.1rem; height: 1.5px; top: -0.75px; }
 .a-corner::after { width: 1.5px; height: 1.1rem; left: -0.75px; }
+.a-corner--tr, .a-corner--br { left: 100%; } .a-corner--bl, .a-corner--br { top: 100%; }
 .a-corner--tl::before { right: 0.45rem; } .a-corner--tl::after { bottom: 0.45rem; }
 .a-corner--tr::before { left: 0.45rem; } .a-corner--tr::after { bottom: 0.45rem; }
 .a-corner--bl::before { right: 0.45rem; } .a-corner--bl::after { top: 0.45rem; }
@@ -79,15 +81,17 @@
 .a-hero__copy { position: relative; z-index: 2; display: grid; align-content: center; height: 100%; max-width: 70rem; }
 .a-kicker { margin: 0 0 1.25rem; font: 500 0.8125rem/1.3 var(--f-mono); }
 .a-display { margin: 0; max-width: 13ch; font-size: var(--t-mega); font-weight: 820; font-stretch: 125%; line-height: 0.92; letter-spacing: -0.035em; text-wrap: balance; }
-.a-lede { margin: 1.6rem 0 0; max-width: 34rem; font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.2rem); line-height: 1.5; }
+.a-lede { margin: 1.6rem 0 0; max-width: 46ch; font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.2rem); line-height: 1.5;
+  /* An operator's long profile copy stops at four lines instead of flooding the hero. */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 /* Over the frame, the secondary link keeps a paper backing so its highlighter stays visible. */
 .a-stage .a-link { background-color: var(--ground); padding: 0.4rem 0.55rem 0.45rem; }
 .a-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; margin-top: 2rem; }
 .a-readout { position: absolute; z-index: 2; left: 0; bottom: 1.25rem; margin: 0; display: flex; gap: 1.1rem; font: 500 0.8125rem/1 var(--f-mono); }
 .a-readout b { font-weight: 700; }
-.a-ratios { position: absolute; z-index: 2; right: 0; bottom: 1.25rem; margin: 0; list-style: none; display: flex; gap: 0.4rem; font: 500 0.75rem/1 var(--f-mono); }
-.a-ratios li { padding: 0.35rem 0.5rem; border: 1px solid var(--ink); transition: background-color 0.3s, color 0.3s; }
-.a-ratios .is-on { background: var(--ink); color: var(--ground); }
+.a-ratios { position: absolute; z-index: 2; right: 0; bottom: 1.25rem; display: flex; gap: 0.4rem; }
+.a-ratios button { min-height: 2.25rem; padding: 0 0.6rem; border: 1px solid var(--ink); background: var(--ground); color: var(--ink); font: 500 0.75rem/1 var(--f-mono); cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.a-ratios [aria-pressed="true"] { background: var(--ink); color: var(--ground); }
 
 /* ---------- sections ---------- */
 .a-section { padding-top: clamp(4.5rem, 11vh, 8rem); }
@@ -191,7 +195,6 @@
   .a-jump nav a { padding: 0.85rem 1rem; color: var(--ink); text-decoration: none; font-weight: 600; }
   .a-jump nav a + a { border-top: 1px solid var(--line); }
   .a-jump nav a:last-child { background: var(--accent); }
-  .a-hero { height: 260svh; }
   .a-readout { bottom: 0.9rem; flex-direction: column; gap: 0.3rem; }
   .a-ratios { bottom: 0.9rem; }
   .a-wall { grid-template-columns: minmax(0, 1fr); gap: 4rem; padding-inline: 1.6rem; }
@@ -204,15 +207,9 @@
   .a-contact, .a-form { grid-template-columns: minmax(0, 1fr); }
   .a-post { grid-template-columns: minmax(0, 1fr) auto; } .a-post span { grid-column: 1 / -1; }
 }
-@media (max-width: 480px) {
-  .a-head .a-btn { display: none; }
-  .a-ratios { display: none; }
-}
+@media (max-width: 480px) { .a-head .a-btn { display: none; } }
 @media (min-width: 481px) { .a-jump nav a:last-child { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  html:has(.a-site) { scroll-behavior: auto; }
-  .a-hero { height: auto; }
-  .a-stage { position: relative; top: 0; height: calc(100svh - 4rem); min-height: 40rem; }
   .a-site *, .a-site *::before, .a-site *::after { transition: none !important; animation: none !important; }
 }

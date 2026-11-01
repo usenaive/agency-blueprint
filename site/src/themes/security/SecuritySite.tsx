@@ -1,7 +1,7 @@
 /**
  * The `security` template's public site (DESIGN.md beside this file). Same `site_profile` as every
- * theme. Its one moving part is the console in the hero: a passive check of this page, read from the
- * headers the browser actually received (`check.ts`), resolving line by line.
+ * theme. Its signature is the console in the hero: a passive check of this page, read from the
+ * headers the browser actually received (`check.ts`); every line resolves at once when the result arrives.
  */
 import "@fontsource-variable/instrument-sans/wdth.css";
 import "@fontsource-variable/jetbrains-mono";
@@ -42,7 +42,6 @@ function Header({ site, posts }: { site: SiteProfile; posts: PublicPost[] }) {
 /** The signature: this page's own passive check, from the headers this browser received. */
 function Console() {
   const [lines, setLines] = useState<CheckLine[] | null>(null);
-  const [shown, setShown] = useState(0);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     let live = true;
@@ -50,13 +49,11 @@ function Console() {
       if (!live) return;
       if (result === null) return setFailed(true);
       setLines(result);
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return setShown(result.length);
-      result.forEach((_, i) => setTimeout(() => live && setShown((n) => Math.max(n, i + 1)), 260 + i * 140));
     });
     return () => { live = false; };
   }, []);
   const host = typeof location === "undefined" ? "" : location.hostname;
-  const done = lines !== null && shown >= lines.length;
+  const done = lines !== null;
   const inPlace = lines?.filter((l) => l.status === "pass").length ?? 0;
   return (
     <figure className="g-console" aria-labelledby="g-console-title">
@@ -67,7 +64,7 @@ function Console() {
       <ol className="g-console__lines">
         {NAMES.map((name, i) => {
           const line = lines?.[i];
-          const ready = line !== undefined && i < shown;
+          const ready = line !== undefined;
           return (
             <li key={name} className={ready ? `is-${line.status}` : "is-pending"}>
               <span className="g-console__name">{name}</span>

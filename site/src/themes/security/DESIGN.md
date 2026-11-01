@@ -32,9 +32,9 @@ as report sections, with their deliverables as a checklist.
 ```
 Idea:        The page runs a passive security check on itself while you read the headline.
 Metaphor:    an exposure report: outside (dark band, what anyone can see) and inside (paper, the work)
-Signature:   the check console; seven lines resolve one by one from this page's real response
+Signature:   the check console; seven lines resolve from this page's real response
 Emotion:     calm, exact, nothing to hide
-Motion verb: resolve, line by line, like output arriving
+Motion verb: resolve: the result arrives and every line settles at once
 Screenshot:  the condensed headline on the dark band beside the console showing its own results
 ```
 
@@ -49,9 +49,9 @@ Screenshot:  the condensed headline on the dark band beside the console showing 
   dark, so the page opens and closes outside. The inside (paper): rules, services as report sections,
   audience, process, tiers, FAQ.
 - **Shape:** square corners; 1 px rules; no cards, no shadows.
-- **Motion:** console lines resolve at 140 ms intervals as the real result arrives; CTA fill rises
-  from the bottom (0.45 s). Nothing moves at rest: a security buyer reads, and the console has done
-  its work once. Under reduced motion every line shows at once.
+- **Motion:** native scroll. Console lines resolve together when the real result arrives (0.35 s
+  fade from pending); CTA fill rises from the bottom (0.4 s). Nothing moves at rest: a security buyer
+  reads, and the console has done its work once. Under reduced motion there are no transitions.
 - **Honesty rules:** the console reports only what the browser actually received. A header that is
   missing says "not set". On plain http (local preview) HTTPS and HSTS read "local preview", never pass.
 
@@ -68,6 +68,9 @@ back "not set"; the dark band is a structural "outside", not a mood; amber, not 
   the doubled rule under the last service is gone; phone eyebrow and console status alignment;
   filled buttons get a dark inner ring on focus. Hover, `keyboard.stuck` and `invisibleFocus` flags were
   smooth-scroll artifacts, verified by hand (every `.g-btn` fills; Tab reaches every field).
+- **2026-11-01, calm pass** (owner: "difficult to scroll and too flashy"): console lines no longer stagger in over 1.1 s
+  (260 ms + 140 ms each); hovers capped at 0.4 s; `site.css` smooth scroll removed. Lede capped at
+  44ch and four lines.
 - **Owed, outside this theme:** server-rendered HTML, a real 404, og:image and favicon (see
   `themes/search/DESIGN.md`). The three response headers this check reads were added for every
   template (`server/index.ts`, `build-api.mjs`); CSP and framing are left for a policy of their own.

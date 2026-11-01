@@ -82,7 +82,6 @@ function Inspector({ site }: { site: SiteProfile }) {
 function Hero({ site }: { site: SiteProfile }) {
   return (
     <section className="s-hero" aria-labelledby="s-h1">
-      <span className="s-sweep" data-sweep aria-hidden="true" />
       <Block name="hero" notes={["<h1>", "the page's one title"]} className="s-hero__title">
         <p className="s-kicker">{site.hero.eyebrow}</p>
         <h1 id="s-h1" className="s-display">{site.hero.title}</h1>
@@ -183,7 +182,6 @@ function Process({ site }: { site: SiteProfile }) {
         <p className="s-sub">{subtitle}</p>
       </Block>
       <div className="s-steps">
-        <span className="s-steps__rule" data-rule aria-hidden="true" />
         <ol>
           {steps.map((step, i) => (
             <li key={step.title}>

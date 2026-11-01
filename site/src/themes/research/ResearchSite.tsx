@@ -23,7 +23,7 @@ function Mark({ kind, className = "" }: { kind: keyof typeof PATHS; className?: 
   const { box, d } = PATHS[kind];
   return (
     <svg className={`r-mark r-mark--${kind} ${className}`} viewBox={box} preserveAspectRatio="none" aria-hidden="true">
-      {d.map((path, i) => <path key={path} d={path} style={{ transitionDelay: `${i * 0.35}s` }} />)}
+      {d.map((path) => <path key={path} d={path} />)}
     </svg>
   );
 }

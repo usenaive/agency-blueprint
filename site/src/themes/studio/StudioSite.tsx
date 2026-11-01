@@ -1,16 +1,23 @@
 /**
  * The `advertising` template's public site (DESIGN.md beside this file): one ad, re-cropped through
  * every placement it has to run in. Same `site_profile` as every theme; the specs it prints are real
- * placement sizes (`frames.ts`).
+ * placement sizes.
  */
 import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource-variable/jetbrains-mono";
 import "./studio.css";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { SiteProfile } from "../../../site.config.ts";
 import type { PublicPost } from "../../profile.ts";
 import { useLeadForm } from "../useLeadForm.ts";
-import { PLACEMENTS, startFrames } from "./frames.ts";
+
+/** Real placement sizes; the hero's frame shows one at a time, picked by the reader. */
+const PLACEMENTS = [
+  { ratio: 1, label: "1:1", size: "1080 × 1080", use: "feed, square" },
+  { ratio: 4 / 5, label: "4:5", size: "1080 × 1350", use: "feed, portrait" },
+  { ratio: 9 / 16, label: "9:16", size: "1080 × 1920", use: "stories and reels" },
+  { ratio: 1200 / 628, label: "1.91:1", size: "1200 × 628", use: "link ads" },
+] as const;
 
 function Arrow() {
   return <svg className="a-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.8" /></svg>;
@@ -51,15 +58,14 @@ function Header({ site, posts }: { site: SiteProfile; posts: PublicPost[] }) {
 }
 
 function Hero({ site }: { site: SiteProfile }) {
-  const [at, setAt] = useState(0);
-  const root = useRef<HTMLElement>(null);
-  useEffect(() => (root.current ? startFrames(root.current, setAt) : undefined), []);
+  const [at, setAt] = useState(1);
   const p = PLACEMENTS[at]!;
   return (
-    <section className="a-hero" data-hero ref={root} aria-labelledby="a-h1">
-      <div className="a-stage" data-stage>
-        <span className="a-adfield" data-field aria-hidden="true" />
-        {["tl", "tr", "bl", "br"].map((c) => <span key={c} className={`a-corner a-corner--${c}`} data-corner aria-hidden="true" />)}
+    <section className="a-hero" aria-labelledby="a-h1">
+      <div className="a-stage">
+        <span className="a-adfield" style={{ "--r": p.ratio } as CSSProperties} aria-hidden="true">
+          {["tl", "tr", "bl", "br"].map((c) => <span key={c} className={`a-corner a-corner--${c}`} />)}
+        </span>
         <div className="a-hero__copy">
           <p className="a-kicker">{site.hero.eyebrow}</p>
           <h1 id="a-h1" className="a-display">{site.hero.title}</h1>
@@ -72,9 +78,9 @@ function Hero({ site }: { site: SiteProfile }) {
         <p className="a-readout">
           <b>{p.label}</b><span>{p.size}</span><span>{p.use}</span>
         </p>
-        <ol className="a-ratios" aria-hidden="true">
-          {PLACEMENTS.map((x, i) => <li key={x.label} className={i === at ? "is-on" : undefined}>{x.label}</li>)}
-        </ol>
+        <div className="a-ratios" role="group" aria-label="Placement">
+          {PLACEMENTS.map((x, i) => <button key={x.label} type="button" aria-pressed={i === at} onClick={() => setAt(i)}>{x.label}</button>)}
+        </div>
       </div>
     </section>
   );

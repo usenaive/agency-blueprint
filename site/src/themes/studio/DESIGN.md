@@ -27,9 +27,9 @@ disc.
 ```
 Idea:        One ad, re-cropped through every placement it has to run in.
 Metaphor:    a production artboard: a flat field, crop marks, a spec line
-Signature:   the pinned hero; scroll moves the frame through 1:1, 4:5, 9:16 and 1.91:1 with crop marks
+Signature:   the hero frame at 4:5 with crop marks; the reader picks 1:1, 4:5, 9:16 or 1.91:1 to re-crop it
 Emotion:     confident, bold, made by people who ship ads
-Motion verb: re-crop: the frame snaps between ratios, the content holds still
+Motion verb: re-crop: one click, the frame resizes, the content holds still
 Screenshot:  the headline with the yellow 9:16 frame cutting through it, crop marks and "1080 × 1920"
 ```
 
@@ -42,9 +42,9 @@ Screenshot:  the headline with the yellow 9:16 frame cutting through it, crop ma
 - **Layout:** sections are artboards: services hang as frames of different ratios with crop marks;
   process is a storyboard strip of 16:9 panels; the brief form sits on the yellow field.
 - **Shape:** square; crop marks, not borders; no shadows.
-- **Motion:** one scrubbed timeline in the hero (clip-path inset and corner marks, no layout
-  properties); hovers 0.4 s. At rest the frame holds still on purpose: an artboard waits for you.
-  Reduced motion: a static 4:5 frame, no pin.
+- **Motion:** native scroll; nothing pins, scrubs or moves on its own. The hero frame opens at 4:5 and
+  re-crops only when the reader picks a placement (0.4 s resize; the field is sized in CSS from
+  container units, no script). Hovers 0.4 s at most. Reduced motion: no transitions at all.
 
 ## QA log
 
@@ -55,6 +55,10 @@ Screenshot:  the headline with the yellow 9:16 frame cutting through it, crop ma
 - **Pass 1** (fresh critic, evidence only): 6.2. Fixed after it: the hero's secondary link keeps a
   paper backing over the frame; phone cards fit their words (the ratio stays in the label); lists
   follow the text instead of sinking to the card's foot.
+- **2026-11-01, calm pass** (owner: "difficult to scroll and too flashy"): the hero was a 330svh sticky stage scrubbed by
+  GSAP, so one 800 px wheel moved `scrollY` 800 but the headline 0 px for three screens; it is now one
+  viewport tall and the headline moves 800 px with the wheel. `frames.ts` and the timeline are gone; the
+  placement chips are buttons. The lede is capped at 46ch and four lines.
 - **Open, and the biggest gain:** the frame re-crops nothing. A real sample ad inside it (headline,
   product, logo), re-laid out per placement, is what turns the signature into proof; it needs real
   imagery, so it waits for assets. Mobile LCP about 2.6 s.
