@@ -30,12 +30,15 @@
  * attempted": the gate is drawn rather than the page bouncing or coming up blank.
  */
 import { useEffect, useState, type ReactNode } from "react";
+import type { AppId } from "../templates";
 import { apiGet, apiMessage } from "./api";
 
 export interface Session {
   authenticated: boolean;
   studio_url: string | null;
   password_enabled: boolean;
+  /** Which primitive app this deployment is (ADR-1766); its screen is the one drawn. */
+  app?: AppId;
 }
 
 /** Set on the automatic bounce; cleared once a session answers `authenticated`. */
@@ -70,7 +73,7 @@ function clearAttempted(): void {
 
 type State = { kind: "asking" } | { kind: "answered"; session: Session } | { kind: "failed"; message: string };
 
-export function Gate({ children }: { children: ReactNode }) {
+export function Gate({ children }: { children: (app: AppId) => ReactNode }) {
   const [state, setState] = useState<State>({ kind: "asking" });
   const denied = new URLSearchParams(location.search).get("entry") === "denied";
   const framed = window.self !== window.top;
@@ -97,7 +100,7 @@ export function Gate({ children }: { children: ReactNode }) {
     }
   }, [session, bouncing]);
 
-  if (session?.authenticated) return <>{children}</>;
+  if (session?.authenticated) return <>{children(session.app ?? "crm")}</>;
   if (state.kind === "asking" || bouncing) return <Frame />;
   if (state.kind === "failed") {
     return (

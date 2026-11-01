@@ -11,6 +11,7 @@
  * No seed row lives here, so this module is server- and config-safe; the browser never imports it.
  */
 import type { AgentDecl } from "@usenaive-sdk/blueprints";
+import { APP_IDS, type AppId } from "./index.ts";
 
 /** Modest daily budget per agent; retune after the first week. */
 export const budget = { cap_micro_usd: 60_000_000, max_task_micro_usd: 20_000_000, period: "day" } as const;
@@ -51,8 +52,13 @@ export const tools = (allow: string[], ask: string[] = []): AgentDecl["tools"] =
   },
 });
 
-/** The dashboard's own MCP tools reach an agent as `dashboard.<tool>`; deny-by-default means each is named. */
-export const crm = (...names: string[]): string[] => names.map((name) => `dashboard.${name}`);
+/** Each app's MCP tools reach an agent as `<app>.<tool>` (ADR-1766); deny-by-default means each is named. */
+export const appTools = (app: AppId, ...names: string[]): string[] => names.map((name) => `${app}.${name}`);
+export const crm = (...names: string[]): string[] => appTools("crm", ...names);
+export const site = (...names: string[]): string[] => appTools("landing-page", ...names);
+export const calendar = (...names: string[]): string[] => appTools("calendar", ...names);
+/** A queue tool in every app that files work (the calendar files none), for a seat whose work spans them all. */
+export const everyApp = (...names: string[]): string[] => APP_IDS.filter((app) => app !== "calendar").flatMap((app) => appTools(app, ...names));
 
 /**
  * The two built-ins every template agent holds: `project_context` (the setup answers, §31.8 —
@@ -82,6 +88,12 @@ export const OPERATOR = [...ASK_OPERATOR, ...REQUEST_TOOLS];
  * `handoffs` names a target; tools are deny-by-default, so the list alone offers nothing.
  */
 export const HANDOFF = ["send_to_agent", "list_agents"];
+
+/**
+ * Stands for the client's own domain in a crew tool's `config.allowed_domains`; onboarding writes the
+ * client's real domain in its place (`server/proxy.ts`), so a crew seat reaches only its own client.
+ */
+export const CLIENT_DOMAIN = "{client.domain}";
 
 /**
  * The paragraph every `system` in this blueprint opens with. The setup answers are the operator's
@@ -116,6 +128,38 @@ export const mailbox =
 export const OWN_RECORD =
   "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own CRM record: find it with list_clients, or create it once with create_lead from the project name alone; never ask for a domain or contact.";
 
+/**
+ * What a specialised template changes on the seven, and nothing else: a focus appended to each
+ * system prompt, work appended to each intake and timer (never replacing `blank`'s words), extra
+ * catalogue skills, and read-only connected-account tools. Model, budget, timers and the rest of the
+ * allow-list stay `blank`'s, so a change there reaches every template.
+ */
+export interface Specialism {
+  focus: Record<string, string>;
+  skills?: Record<string, string[]>;
+  work?: Record<string, string>;
+  reads?: Record<string, string[]>;
+}
+
+export const specialise = (agents: AgentDecl[], { focus, skills = {}, work = {}, reads = {} }: Specialism): AgentDecl[] =>
+  agents.map((agent) => {
+    const add = (text: string): string => (work[agent.name] ? `${text} ${work[agent.name]}` : text);
+    return {
+      ...agent,
+      system: `${agent.system} ${focus[agent.name] ?? ""}`.trim(),
+      ...(agent.intake ? { intake: { ...agent.intake, message: add(agent.intake.message) } } : {}),
+      ...(agent.schedules ? { schedules: agent.schedules.map((s) => ({ ...s, input: add(s.input) })) } : {}),
+      skills: [...(agent.skills ?? []), ...(skills[agent.name] ?? [])],
+      tools: {
+        default_config: agent.tools?.default_config ?? { permission: "deny" as const },
+        configs: {
+          ...(agent.tools?.configs ?? {}),
+          ...Object.fromEntries((reads[agent.name] ?? []).map((name) => [name, { enabled: true, permission: "allow" as const }])),
+        },
+      },
+    };
+  });
+
 const system = (role: string): string => `${PREAMBLE} ${gate} ${role}`;
 const withMailbox = (role: string): string => `${PREAMBLE} ${gate} ${mailbox} ${role}`;
 const own = (role: string): string => `${PREAMBLE} ${gate} ${OWN_RECORD} ${role}`;
@@ -148,7 +192,7 @@ const DAY_ONE = 20_000_000;
  * the cooldown, so a client is not asked again next Monday because nobody remembered.
  */
 export const REFERRAL_ASK =
-  "Then referrals: list_referral_ready names the clients ready to be asked for an introduction; ask nobody else. " +
+  "Then referrals: list_referral_ready names the clients ready to be asked for an introduction; ask nobody else (give it the url landing-page.get_site answers). " +
   "For each, propose one short email with email.send (it waits for the operator's approval) to the client's contact: thank them for one specific piece of recent work, ask whether they know one business that could use the same help, and include their referral link exactly as given. " +
   "Offer no reward, discount or fee, and claim no result the work did not show. Then record_referral_ask for that client.";
 
@@ -169,16 +213,16 @@ export const roster: AgentDecl[] = [
     description:
       "Keeps the public site true to the agency: rewrites hero, services, who-we-serve, process, pricing and FAQ from the project context. Proposes every change through update_site; nothing goes live without you.",
     system: system(
-      "You are the site builder: the public site must describe this agency in its own words. Read the site first with dashboard.get_site, then rewrite the sections that still say generic things from the context answers — the hero from the offer, who-we-serve from the ideal client, pricing from the pricing answer when the context holds one (when it does not, ask the operator once with ask_operator and leave that section as it stands), and services, process and FAQ to match. Propose the whole rewrite as one update_site call, which waits for the operator. Never write a case study, a testimonial, a number or a client name the context does not give you; the proof strip carries facts about how the agency works, never results.",
+      "You are the site builder: the public site must describe this agency in its own words. Read the site first with landing-page.get_site, then rewrite the sections that still say generic things from the context answers — the hero from the offer, who-we-serve from the ideal client, pricing from the pricing answer when the context holds one (when it does not, ask the operator once with ask_operator and leave that section as it stands), and services, process and FAQ to match. Propose the whole rewrite as one update_site call, which waits for the operator. Never write a case study, a testimonial, a number or a client name the context does not give you; the proof strip carries facts about how the agency works, never results.",
     ),
-    tools: tools([...CONTEXT, "web_fetch", ...crm("get_site")], [...crm("update_site"), ...OPERATOR]),
+    tools: tools([...CONTEXT, "web_fetch", ...site("get_site")], [...site("update_site"), ...OPERATOR]),
     handoffs: false,
     skills: ["naive/landing-page-copy"],
     identity: AGENCY_IDENTITY,
     schedules: [],
     intake: {
       message:
-        "Read project_context. Then read the site (dashboard.get_site) and rewrite every section that still says generic things — hero, services, who we serve, process, FAQ, and pricing if the context holds a pricing answer (if it does not, ask the operator once with ask_operator and leave that section for now) — so it describes THIS agency in its own words, from the answers. Do not invent case studies, testimonials or numbers. Propose the rewrite as one update_site call.",
+        "Read project_context. Then read the site (landing-page.get_site) and rewrite every section that still says generic things — hero, services, who we serve, process, FAQ, and pricing if the context holds a pricing answer (if it does not, ask the operator once with ask_operator and leave that section for now) — so it describes THIS agency in its own words, from the answers. Do not invent case studies, testimonials or numbers. Propose the rewrite as one update_site call.",
       budget_micro_usd: DAY_ONE,
     },
   },
@@ -193,7 +237,7 @@ export const roster: AgentDecl[] = [
       "You are the sales agent: fill and work the pipeline. Read list_clients first. File each prospect with create_lead and a one-line why-now, file openers and follow-ups with add_client_note restating the next action, and advance_pipeline only once the operator agrees. Hand each lead you advance to proposal to proposal-writer once: send_to_agent, wait false, handoff_key and message naming its cli_ id and what it needs. Never send, and never file a prospect you cannot name.",
     ),
     tools: tools(
-      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...HANDOFF],
+      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note", "advance_pipeline"), ...site("list_new_leads", "mark_lead_filed"), ...calendar("list_events", "create_event"), ...MAILBOX_READ, ...HANDOFF],
       [...MAILBOX_SEND, ...OPERATOR],
     ),
     handoffs: ["proposal-writer"],
@@ -203,7 +247,7 @@ export const roster: AgentDecl[] = [
       timer(
         "30 8 * * 1-5",
         "Inbox and new leads",
-        `Read project_context. Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (list_clients): file any new reply as a lead first (create_lead with referred_by and the client's cli_ id when an existing client introduced them, source network when it is someone the operator knows, otherwise outreach), note what it said on the client, and for every lead that moved or went quiet draft the next touch in full with add_client_note, next_action set to what you now wait on. A lead the operator has agreed to move to proposal: advance_pipeline it, then hand it to the proposal writer with send_to_agent (wait false, handoff_key its cli_ id) naming that id. Then add up to three new prospects that fit the ideal client. For any opener you draft: ${OPENER} Send nothing.`,
+        `Read project_context. Then file the site's new leads (landing-page.list_new_leads → crm.create_lead with source site and its ref → landing-page.mark_lead_filed). Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (list_clients): file any new reply as a lead first (create_lead with referred_by and the client's cli_ id when an existing client introduced them, source network when it is someone the operator knows, otherwise outreach), note what it said on the client, and put any call a lead has agreed to on the calendar (calendar.create_event, kind meeting — the invite is a draft for the operator), for every lead that moved or went quiet draft the next touch in full with add_client_note, next_action set to what you now wait on. A lead the operator has agreed to move to proposal: advance_pipeline it, then hand it to the proposal writer with send_to_agent (wait false, handoff_key its cli_ id) naming that id. Then add up to three new prospects that fit the ideal client. For any opener you draft: ${OPENER} Send nothing.`,
         10_000_000,
       ),
     ],
@@ -223,10 +267,10 @@ export const roster: AgentDecl[] = [
     description:
       "Owns every client that goes active: runs onboarding, keeps each calendar honest, and flags a stall before the client notices. Drafts the check-in; you send it.",
     system: withMailbox(
-      "You are the client manager: every active client's calendar is yours to keep honest. Read list_clients, get_client and get_calendar before acting. Through the dashboard tools, file missing deliverables with create_draft_post, reslot with schedule_post, and record what you flagged with add_client_note. Approving and publishing are the operator's, never yours.",
+      "You are the client manager: every active client's calendar is yours to keep honest. Read list_clients, get_client and get_calendar before acting. Each kind of work is filed in the app that holds it, and create_draft_post names that app when you pick the wrong one: file missing deliverables there with create_draft_post, reslot with schedule_post, and record what you flagged with add_client_note. Approving and publishing are the operator's, never yours.",
     ),
     tools: tools(
-      [...CONTEXT, ...crm("list_clients", "get_client", "create_lead", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note", "list_referral_ready", "record_referral_ask"), ...MAILBOX_READ],
+      [...CONTEXT, ...crm("list_clients", "get_client", "create_lead", "add_client_note", "list_referral_ready", "record_referral_ask"), ...everyApp("get_calendar", "list_posts", "create_draft_post", "schedule_post"), ...calendar("list_events", "create_event", "update_event"), ...site("get_site"), ...MAILBOX_READ],
       [...MAILBOX_SEND, ...OPERATOR],
     ),
     handoffs: false,
@@ -236,7 +280,7 @@ export const roster: AgentDecl[] = [
       timer(
         "0 8 * * 1",
         "Client check-in",
-        `Read project_context. Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts); flag anything stalled or unscheduled as a note on the client and file a pending draft for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for, and draft the check-in as a note. ${REFERRAL_ASK} Approve and publish nothing.`,
+        `Read project_context. Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts); flag anything stalled or unscheduled as a note on the client and file a pending draft for each deliverable the calendar is missing. Keep the calendar app current: every deliverable's due day (calendar.create_event, kind deliverable, with its app and post_ id), every client meeting, and what was done (calendar.update_event). Read the mailbox (email.read, since = 7 days ago) for anything a client asked for, and draft the check-in as a note. ${REFERRAL_ASK} Approve and publish nothing.`,
         10_000_000,
       ),
     ],
@@ -254,10 +298,10 @@ export const roster: AgentDecl[] = [
     description:
       "Writes the agency's own blog: one post per slot, each against a named intent and keyword from the editorial calendar. Files drafts; you approve.",
     system: own(
-      "You are the content writer for the agency's own blog. Read the site (dashboard.get_site) and the queue (list_posts) first, so you never repeat a title. Through the dashboard tools, file the editorial calendar as a note and every post as a pending draft with create_draft_post — one target keyword, a named search intent, a real introduction, in the agency's voice from the context. The calendar is written from the gap researcher's handoff, whose message names the agency record's cli_ id and the ten gaps. Never publish, never write for a client whose record you have not read, and never cite a statistic you did not fetch.",
+      "You are the content writer for the agency's own blog. Read the site (landing-page.get_site) and the queue (list_posts) first, so you never repeat a title. Through the app tools, file the editorial calendar as a note and every post as a pending draft with create_draft_post — one target keyword, a named search intent, a real introduction, in the agency's voice from the context. The calendar is written from the gap researcher's handoff, whose message names the agency record's cli_ id and the ten gaps. Never publish, never write for a client whose record you have not read, and never cite a statistic you did not fetch.",
     ),
     tools: tools(
-      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "list_posts", "create_draft_post", "add_client_note", "get_site")],
+      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note"), ...site("list_posts", "create_draft_post", "get_site")],
       OPERATOR,
     ),
     handoffs: false,
@@ -273,7 +317,7 @@ export const roster: AgentDecl[] = [
     ],
     intake: {
       message:
-        "Read project_context and the site (dashboard.get_site). File one short note on the agency's own record: who the blog is for, the voice it is written in, and the shape of the four-week calendar to come. Do not write the calendar or a post yet — the gap researcher is comparing the site against its competitors right now and hands you its report when it is filed; the calendar is written from those gaps, in that session.",
+        "Read project_context and the site (landing-page.get_site). File one short note on the agency's own record: who the blog is for, the voice it is written in, and the shape of the four-week calendar to come. Do not write the calendar or a post yet — the gap researcher is comparing the site against its competitors right now and hands you its report when it is filed; the calendar is written from those gaps, in that session.",
       budget_micro_usd: DAY_ONE,
     },
   },
@@ -285,9 +329,9 @@ export const roster: AgentDecl[] = [
     description:
       "Keeps what is already published sharp: finds thin, stale or off-voice pages and posts and files a revision for each. Never rewrites what is performing.",
     system: own(
-      "You are the content reviser. Read every page of the public site (dashboard.get_site) and every posted item in the queue (list_posts) before judging anything. Through the dashboard tools, file each revision as a pending draft with create_draft_post, titled for the page it replaces, with a one-line reason — thin, stale, or not in the agency's voice from the context. Never edit the site directly, never revise what is performing, and never file more than three revisions in one session.",
+      "You are the content reviser. Read every page of the public site (landing-page.get_site) and every posted item in the queue (list_posts) before judging anything. Through the app tools, file each revision as a pending draft with create_draft_post, titled for the page it replaces, with a one-line reason — thin, stale, or not in the agency's voice from the context. Never edit the site directly, never revise what is performing, and never file more than three revisions in one session.",
     ),
-    tools: tools([...CONTEXT, "web_fetch", ...crm("list_clients", "create_lead", "list_posts", "create_draft_post", "get_site")], OPERATOR),
+    tools: tools([...CONTEXT, "web_fetch", ...crm("list_clients", "create_lead"), ...site("list_posts", "create_draft_post", "get_site")], OPERATOR),
     handoffs: false,
     skills: ["naive/content-revision"],
     identity: AGENCY_IDENTITY,
@@ -313,9 +357,9 @@ export const roster: AgentDecl[] = [
     description:
       "Compares the agency's site against named competitors: keywords they rank for that you do not, page types you lack, on-page elements missing. Files a gap report the writers work from.",
     system: own(
-      "You are the gap researcher. Read the agency's site (dashboard.get_site) first, then the competitors — the ones the context names, or three you find and say how you chose. Compare keywords, page types and on-page elements, and file one gap report with add_client_note on the agency's own record: the ten highest-value misses, each with the evidence you fetched. Then hand it to content-writer with send_to_agent, wait false, the message naming the agency record's cli_ id and the ten gaps. Never present a guess as a ranking, never name a competitor you did not visit, and never change the site yourself.",
+      "You are the gap researcher. Read the agency's site (landing-page.get_site) first, then the competitors — the ones the context names, or three you find and say how you chose. Compare keywords, page types and on-page elements, and file one gap report with add_client_note on the agency's own record: the ten highest-value misses, each with the evidence you fetched. Then hand it to content-writer with send_to_agent, wait false, the message naming the agency record's cli_ id and the ten gaps. Never present a guess as a ranking, never name a competitor you did not visit, and never change the site yourself.",
     ),
-    tools: tools([...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "create_lead", "add_client_note", "get_site"), ...HANDOFF], OPERATOR),
+    tools: tools([...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "create_lead", "add_client_note"), ...site("get_site"), ...HANDOFF], OPERATOR),
     handoffs: ["content-writer"],
     skills: ["naive/keyword-gap-analysis"],
     identity: AGENCY_IDENTITY,

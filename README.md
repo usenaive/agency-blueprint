@@ -1,8 +1,7 @@
 # 🏢 Agency Blueprint
 
 **An entire agency in one repository — clone it, run `naive up`, and the Naive platform
-provisions the CRM dashboard, the public website and the crew of agents into your own
-organization.**
+provisions the agency's apps and its crew of agents into your own organization.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![engine: @usenaive-sdk/blueprints](https://img.shields.io/npm/v/@usenaive-sdk/blueprints?label=engine%3A%20%40usenaive-sdk%2Fblueprints&color=0a7ea4)](https://www.npmjs.com/package/@usenaive-sdk/blueprints)
@@ -10,15 +9,17 @@ organization.**
 [![node](https://img.shields.io/node/v/@usenaive-sdk/blueprints?label=node)](https://nodejs.org)
 [![React](https://img.shields.io/badge/react-19-149eca.svg)](https://react.dev)
 
-It ships one app with two doors: the agency's public site at `/`, whose copy is data the crew
-edits through approvals, and the operator dashboard under `/app` (home, CRM pipeline,
-approvals, agents, per-client workspaces) — plus an MCP server that lets any agent operate
-the agency, and a crew of seven agents that read the three answers you give at install and
-start work the same day.
+A template is **agents plus apps**, nothing else (ADR-1766). This repo ships five primitive
+apps — **CRM**, **Landing page**, **SEO & GEO**, **Ads** and **Calendar** — each deployed on its own with its
+own data and its own MCP tools, and a crew of seven agents that read the three answers you give
+at install and start work the same day. There is no agency dashboard: the Studio
+(app.usenaive.ai) draws the company — Home, approvals, agents, chat — and each app opens from
+its Apps rail.
 
-It comes in **two templates**: `blank`, a working agency with no specialism, and `seo-geo`,
-the same agency specialised in search and answer-engine work. One repo carries both — see
-[The two templates](#-the-two-templates).
+It comes in **six templates**: `blank`, a working agency with no specialism, and five
+specialisms of it — `recruiting` (role briefs, shortlists, screening and outreach), `seo-geo` (search and answer-engine work), `market-research` (sizing,
+competitor teardowns, customer insight), `advertising` (paid campaigns and the creative to run in them) and `security` (customer-journey and edge-case testing of clients' live products).
+One repo carries all six — see [The templates](#-the-templates).
 
 The engine is [`@usenaive-sdk/blueprints`](https://www.npmjs.com/package/@usenaive-sdk/blueprints),
 installed from the public npm registry like any other dependency. Nothing here resolves out
@@ -30,22 +31,28 @@ of a private workspace: a clone plus `pnpm install` is the whole toolchain.
 flowchart LR
   repo["this repo<br/>naive.config.ts + templates/"]
   repo -->|naive up| plat["Naive platform"]
-  plat --> dash["dashboard app<br/>public site at /, operator UI at /app, /api/* and /mcp"]
+  plat --> apps["five apps<br/>crm · landing-page · seo-geo · ads · calendar<br/>each its own data, /api/* and /mcp"]
   plat --> crew["seven agents<br/>five timers, seven day-one sessions"]
   plat --> idn["agency identity<br/>owns the mailbox, holds the connected accounts"]
 ```
 
-- **The one app** (`dashboard`, fullstack, `required`) — this repo's built UI plus a thin
-  server that talks to the platform on your behalf. It serves the **public site** at `/`
-  (hero · proof strip · services · who we serve · process · pricing · FAQ · contact) and the
-  **operator dashboard** under `/app`. The site's copy is a `site_profile` record in the
-  app's own store, read by the page over the public, cacheable `GET /api/site` and rewritten
-  by the `site-builder` through `dashboard.update_site` — which is held at `ask`, so every
-  edit lands on **Approvals** first. The contact form posts to `POST /api/leads`, the one
-  other public route, and lands as a CRM lead — one open row per contact and domain, ten new
-  leads an hour and at most 200 open ones before the form answers `429`, and the page takes a
-  served section only in the seed's shape, within its lengths. The old operator paths (`/crm`, `/approvals`,
-  …) redirect to `/app/*`.
+- **Five apps**, one per id in the template's `apps` (`templates/index.ts`). Each is this repo's
+  one build deployed on its own and told which it is by `APP_ID`, so each has its own database
+  and serves only its own screen, routes and tools:
+
+  | App | Owns | Its agents' tools |
+  |---|---|---|
+  | `crm` (required) | clients and the pipeline, notes, referrals, onboarding, and work whose kind names no other app (research and QA reports) | `crm.list_clients`, `crm.create_lead`, `crm.get_client_crew`, `crm.record_onboarding`, … |
+  | `landing-page` | the public site at `/` (its copy is a `site_profile` record), the agency's own blog, and the contact form's lead inbox | `landing-page.get_site`, `landing-page.update_site*`, `landing-page.list_new_leads`, … |
+  | `seo-geo` | search work for clients (pages, articles, answer blocks, ranking reports, audits) and search measurement | `seo-geo.list_posts`, `seo-geo.create_draft_post`, … |
+  | `ads` | ad work for clients (audits, campaign plans, briefs, concepts, copy, statics, video, performance reports) and the ad accounts | `ads.list_posts`, `ads.create_draft_post`, … |
+  | `calendar` | client meetings and the day each deliverable is due (pointing at the app that holds it) | `calendar.list_events`, `calendar.create_event`, `calendar.update_event` |
+
+  **Apps never call each other.** No app knows another's address; agents carry data between
+  them. A visitor's message lands in the landing page's inbox, and the `sales` agent files it
+  into the CRM on its next run (`landing-page.list_new_leads` → `crm.create_lead` →
+  `landing-page.mark_lead_filed`). **No app can write to the platform**: each holds the read key
+  the platform mints it, so none can create an agent, send or publish.
 - **Seven agents** — the active template's crew, each with a role, a private system prompt,
   a deny-by-default tool allow-list, skills from the platform catalogue, a daily budget, and a
   first message that runs on day one. See [The crew](#-the-crew).
@@ -59,11 +66,14 @@ a mailbox or a connected account, and a scheduled fire without one runs as nobod
 ([`templates/blank.ts`](templates/blank.ts)), because an omitted zone is UTC by the
 platform's default and 08:00 UTC is nobody's Monday morning.
 
-A template may also declare a **per-client crew**, provisioned by the dashboard server when
-you onboard a client — their names carry the client's slug, so they are per-client resources
-and cannot be declared in `naive.config.ts`. `seo-geo` declares three (`seo-writer--<slug>`,
-`geo-optimizer--<slug>`, `audit-runner--<slug>`), published to the studio as `crew_per_client`;
-`blank` declares none and runs every client through the agency's own seven.
+A template may also declare a **per-client team**, hired when you onboard a client — their names
+carry the client's slug, so they cannot be declared in `naive.config.ts`. Moving a client to
+active in the CRM opens a CEO chat with the request typed; the CEO reads `crm.get_client_crew`
+(each seat named `<seat>--<slug>`, a browser locked to the client's own domain, seats it
+already has listed so none is hired twice), hires each with an approval card you answer, and
+calls `crm.record_onboarding`. `seo-geo` declares three (`seo-writer--<slug>`,
+`geo-optimizer--<slug>`, `audit-runner--<slug>`); `blank` declares none and runs every client
+through the agency's own seven.
 
 ## 👥 The crew
 
@@ -75,14 +85,14 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 
 | Agent | Role | Tools | Skills | Timer (`America/New_York`) | First message (day one) |
 |---|---|---|---|---|---|
-| `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
-| `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
-| `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
-| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
-| `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
-| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
-| `proposal-writer` | Proposals | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
-| `paid-media-planner` (`seo-geo`) | Paid media | `web_search`, `web_fetch`, dashboard reads/writes, read-only Google/Meta Ads tools | `naive/proposal-writing` | — | A zero-baseline plan with operator-selectable budget scenarios, integration-aware channels, measurement and stop rules. It cannot mutate campaigns or spend. |
+| `site-builder` | Public site | `web_fetch`, `landing-page.get_site`, `landing-page.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
+| `sales` | Pipeline | `web_search`, `web_fetch`, `crm.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `landing-page.{list_new_leads, mark_lead_filed}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
+| `client-manager` | Delivery | `crm.{list_clients, get_client, create_lead, add_client_note, list_referral_ready, record_referral_ask}`, each app's `{get_calendar, list_posts, create_draft_post, schedule_post}`, `landing-page.get_site`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
+| `content-writer` | Content | `web_search`, `web_fetch`, `crm.{list_clients, get_client, create_lead, add_client_note}`, `landing-page.{list_posts, create_draft_post, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
+| `content-reviser` | Revisions | `web_fetch`, `crm.{list_clients, create_lead}`, `landing-page.{list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
+| `gap-researcher` | Research | `web_search`, `web_fetch`, `crm.{list_clients, create_lead, add_client_note}`, `landing-page.get_site`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
+| `proposal-writer` | Proposals | `web_fetch`, `crm.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
+| `paid-media-planner` (`seo-geo`) | Paid media | `web_search`, `web_fetch`, CRM reads, `seo-geo` queue writes, read-only Google/Meta Ads tools | `naive/proposal-writing` | — | A zero-baseline plan with operator-selectable budget scenarios, integration-aware channels, measurement and stop rules. It cannot mutate campaigns or spend. |
 
 Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
 `ask_operator*` and `request_tools*`. No agent holds `approve_post`, `start_agent_session` or
@@ -91,8 +101,7 @@ Every agent also holds `project_context` and `read_skill` (`allow`) and the two 
 ### Setup questions
 
 A template asks at most four questions before anything is provisioned, and the answers become
-the project's context — what every agent reads first, and
-what the dashboard's home screen shows.
+the project's context — what every agent reads first.
 
 | | `blank` | `seo-geo` |
 |---|---|---|
@@ -131,8 +140,8 @@ $10 per fire.
 Day one leaves you: a rewritten site waiting on Approvals, fifteen leads, an onboarding
 checklist, an editorial calendar and a first draft, three revisions, a gap report and a
 proposal skeleton — all filed on the agency's own client record or as pending drafts, nothing
-sent, nothing published. The dashboard's home screen (`/app`) shows each of those sessions and
-what it is waiting on.
+sent, nothing published. The Studio's Home shows each of those sessions and what it is
+waiting on.
 
 ### Handoffs
 
@@ -157,19 +166,10 @@ message names (`get_client`, `list_posts`) before writing a line. The timers sta
 fallback — the content writer's Tuesday/Thursday run takes the next title from the calendar the
 handoff wrote, and files nothing while no calendar exists yet.
 
-The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
-entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
-`seo-writer--acme` and no other client's writer. Provisioning a client whose crew already exists
-patches the declaration onto each seat (the platform mints a version only where something
-differs), so a crew provisioned before this field existed gains the chain. A seat the active
-template no longer declares is kept as it stands (widen, never narrow).
-
-A client is provisioned once by the lead→active move on the CRM board, and after that from
-**Re-provision crew** on the client's own Agents tab — which is the same route (`POST
-/api/clients/<id>/onboard`, idempotent for an active client), run again, printing what it did to
-each seat. That button is how a standing crew gains a seat, a tool or a handoff the template has
-since declared; without it nothing in the dashboard could reach the upsert again, because the
-board offers the lead→active move only while the client is not yet active.
+The per-client team's `handoffs` name the seat (`"seo-writer"`); `crm.get_client_crew` slugs each
+entry like the agent's own name, so `audit-runner--acme` may reach `seo-writer--acme` and no other
+client's writer. A seat the client already has is listed as already hired, not hired again; a
+seat the active template no longer declares is kept as it stands (widen, never narrow).
 
 Agents file the agency's own record with `create_lead` from the project name alone; a second
 name-only filing of a name already on the pipeline returns that record, so five intakes filing
@@ -218,7 +218,7 @@ pnpm install
 
 export NAIVE_API_KEY=sk_...                     # your platform API key
 naive claim                                     # bind this clone to your organization
-pnpm build                                      # site + dashboard + api → dist/
+pnpm build                                      # every app's screen + the site + api → dist/
 naive up                                        # provision everything in naive.config.ts
 ```
 
@@ -228,9 +228,8 @@ It is idempotent — every resource is keyed by its name, so re-running it is al
 it ships an app only when that app's build output actually changed, which is why `pnpm build`
 comes first.
 
-`NAIVE_API_KEY` is declared on the dashboard app as `{ from_env }`, so it is read from your
-shell at apply time and never written into this repository. An unset variable refuses the
-apply by name rather than deploying a dashboard that cannot reach the platform.
+`NAIVE_API_KEY` is declared on every app as `{ from_env }`; the platform mints each app its own
+read key for it (§29.7), so no key of yours is written into an app or this repository.
 
 **Then give the agency a mailbox.** `naive up` provisions the persona but not an inbox on it —
 an inbox is an address, and the address is yours to choose. Provision one on the `agency`
@@ -253,13 +252,13 @@ as the mailbox, and it asks you for one through **Approvals** rather than guessi
 | Script | What it does |
 |---|---|
 | `pnpm install` | installs the toolchain, including the blueprint engine and the `naive` CLI |
-| `pnpm build` | builds the one app to `dist/`: the site at `index.html`, the dashboard at `app/index.html`, the server at `dist/api/app.js` |
+| `pnpm build` | builds the one tree every app deploys to `dist/`: the site at `index.html`, the app screens at `app/index.html`, the server at `dist/api/app.js` |
 | `pnpm test` | the whole vitest suite — routes, MCP, templates, screens, config, the built bundles |
 | `pnpm typecheck` | `tsc --noEmit` over the whole repo |
-| `pnpm dev` | hot-reloading UI — the site at `/`, the dashboard at `/app` |
-| `pnpm serve` | the dashboard server on `:8789`, over a JSON file store |
+| `pnpm dev` | hot-reloading UI — the site at `/`, an app's screen at `/app` |
+| `pnpm serve` | one app's server on `:8789` (`APP_ID=…`, default `crm`), over a JSON file store |
 
-### 🔐 Getting into the deployed dashboard
+### 🔐 Getting into a deployed app
 
 Every `/api/*` route on the deployment is behind the app's `DASHBOARD_TOKEN`, because the CRM
 holds client names, domains, contacts and their email addresses, the roster holds system
@@ -267,15 +266,15 @@ prompts, and the queue is a writable surface. You never have to invent that valu
 never see it: `naive.config.ts` declares it `{ generate: true }`, the platform makes one on
 the apply that creates the app, and no route anywhere returns an app secret.
 
-You get in by opening the dashboard from the studio that installed it. That mints a
+You get in by opening an app from the studio that installed it. That mints a
 short-lived entry ticket, the browser posts it to `POST /api/enter`, and the server trades it
 for an `HttpOnly` session cookie the browser then attaches to every call to its own API by
 itself — the credential never passes through the DOM, a URL or storage. Deployed, the cookie
-is `Secure; SameSite=None; Partitioned`, because the studio also shows the dashboard inside
+is `Secure; SameSite=None; Partitioned`, because the studio also shows each app inside
 its own page and a `Lax` cookie never reaches a framed cross-site document; partitioned
-(CHIPS), the framed and the top-level dashboard each sign in once and never see each other's
+(CHIPS), the framed and the top-level app each sign in once and never see each other's
 cookie. Since such a cookie rides on cross-site requests, a cookie-authenticated write
-(`POST`/`PUT`/`PATCH`/`DELETE` to a gated route) must also be the dashboard's own —
+(`POST`/`PUT`/`PATCH`/`DELETE` to a gated route) must also be the app's own —
 `Sec-Fetch-Site: same-origin` or `none`, or failing that an `Origin` on this host — or it is
 `403 cross-site request refused`; bearers, reads and `/api/enter` are not asked. A browser that
 signed in before the cookie was partitioned still holds the old `Lax` one under the same name
@@ -286,10 +285,10 @@ that somehow has no token answers `503 not configured — set DASHBOARD_TOKEN` o
 route rather than serving your CRM to whoever finds the URL.
 
 Opening `/app` directly, or from a browser the studio cannot hand back — a colleague's, or one
-signed out of the studio too — lands on a sign-in screen rather than the dashboard: the SPA
+signed out of the studio too — lands on a sign-in screen rather than the app: the SPA
 asks `GET /api/session` before it mounts a single screen, sends a first-time visitor to the
 studio once (the `naive.entry.attempted` flag in `sessionStorage`), and otherwise offers an
-**Open in the Studio** link and a **dashboard password** form. Inside the studio's frame it
+**Open in the Studio** link and a **password** form. Inside the studio's frame it
 never bounces — the link opens the studio in the top window instead. That password is the second
 generated secret, `DASHBOARD_PASSWORD` — the one credential a person may hold. The studio's
 Access panel shows it (audited) and rotates it; the form posts it to the same `/api/enter`,
@@ -302,7 +301,7 @@ secret is in it.
 `/mcp` is untouched by all of this: agents carry their own bearer, which is not yours and
 does not open `/api/*`.
 
-## 🧩 The two templates
+## 🧩 The templates
 
 A **blueprint** is the machine, and it is shared: the screens, `/api/*`, `/mcp`, the store,
 the operator gate, the build and deploy, the approval flow. A **template** is data: the
@@ -313,8 +312,11 @@ demo seed, the words the screens print.
 |---|---|---|---|
 | `blank` | No specialism — the seven, generic | post, page, report, audit | none |
 | `seo-geo` | Search: audits, SERP work, answer-engine optimization | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
+| `market-research` | Research: market sizing, competitor teardowns, voice of customer — every figure sourced | market sizing, competitor teardown, customer insight, trend brief, article | `desk-researcher`, `competitor-analyst`, `voice-of-customer` |
+| `advertising` | Creative: briefs, concepts, copy, statics and video spots; never buys media | creative brief, campaign concept, ad copy, static ad, video spot, article | `creative-director`, `copywriter`, `designer`, `video-producer` |
+| `security` | Product testing: browser agents use a client's live product as its customer would, then red-team the edges; the browser reaches only that client's domain, test accounts only | journey report, gap report, retest, article | `customer-tester`, `edge-tester` |
 
-This repo carries **both**, so switching is an edit and a re-apply — never a re-clone, and
+This repo carries **all of them**, so switching is an edit and a re-apply — never a re-clone, and
 never a new app:
 
 ```ts
@@ -327,60 +329,38 @@ pnpm build && naive up
 ```
 
 **Switching widens, and never narrows.** Agents the new template declares are created. Agents
-only the old one declared are *reported* and left standing — `naive up` lists them, and the
-dashboard lists any per-client crew it did not provision on that client's Agents tab. Nothing
+only the old one declared are *reported* and left standing — `naive up` lists them. Nothing
 is deleted by a switch: deleting an agent takes an explicit `removed:` tombstone in
 `naive.config.ts`. Your own rows are never touched — clients, deliverables, connections, the
 app, its URL and its MCP token all survive a switch, and a deliverable filed under the old
 template keeps its kind.
 
-The dashboard shows which template is active on **Settings**, and does not offer a switcher:
-a template is data compiled into the app *and* its config, so switching is the edit above
-plus a re-apply, and a button could not honestly do it.
+No screen offers a switcher: a template is data compiled into the apps *and* the config, so
+switching is the edit above plus a re-apply, and a button could not honestly do it.
 
 ## 🖥 Operating the agency
 
-| Screen (under `/app`) | What it does |
+Everything is in the Studio. Its rail holds Home, the approval inbox, the agents and their
+chats, and under **Apps** the four apps — each a single screen:
+
+| App | Its screen |
 |---|---|
-| Home | Your three answers (from the latest applied install's context), day one's sessions, approvals due, the crew with each timer's next fire, pipeline counts — each card says *not configured* without `NAIVE_API_KEY` |
-| CRM | Pipeline board (lead → proposal → active → churned), contacts, notes, advance-stage, and **Add a client** — the first one included |
-| Approvals | Every agent that has stopped on you: the call it wants to make with the arguments it proposed (approve or reject, with a reason), or the question it asked (answer it, and the agent carries on) |
-| Agents | Every agent in the organization, read from the platform: its budget, what it has spent this period, its sessions and why each one stopped — plus chat with the client-manager |
-| Clients | Active clients; each opens a workspace with Overview · Connections · Calendar · Agents · Posts |
-| Settings | Platform wiring, and MCP access tokens on a local server |
+| CRM | the pipeline board (lead → proposal → active → churned), **Add a client**, each client's page (overview, notes, its work), and **Move to active**, which hands the client's team to the CEO |
+| Landing page | how search engines and AI read the site, the discovery files, the contact form's leads (waiting for sales / in the CRM), and the blog's queue |
+| SEO & GEO | search work by client, and whether Search Console and Analytics are connected |
+| Ads | ad work by client, and the ad accounts connected |
+| Calendar | meetings and deliverable due days, by day, filtered by kind; mark one done |
 
-Nothing publishes without you, and it is the tool policy that says so rather than the
-prompts: no agency agent is granted a tool that can publish — not the dashboard's
-`approve_post`, and not the platform's `social.post`. They file posts as *pending*, and only
-the client's Posts tab moves them onward — from inside the draft, not from the row, because a
-deliverable approved off one truncated line is a deliverable nobody read.
+Nothing publishes without you, and it is the tool policy that says so rather than the prompts:
+agents file work as *pending*, and you approve it from inside the draft on the app's client
+page — never from a one-line row. An agent's outward tools (`email.send`, any connector that
+sends, `landing-page.update_site`) are held at `ask` and wait on the Studio's approvals;
+`ask_operator` and `request_tools` are how an agent asks you a question or for a capability.
 
-An agent's outward tools work the same way from the other side: `email.send` (and any
-connector operation that sends) is granted, and held at `ask`. The call stops the turn and
-appears on **Approvals** with its arguments, so the agent may compose the email and may not
-send it without you.
-
-**Approvals is also where an agent asks for what it lacks.** Every agent of this blueprint is
-told that the tools offered in a turn are the complete list of what it can do, and holds two
-doors to you. `ask_operator` asks a question — which inbox, which client, whether to proceed;
-it lands on **Approvals** with the session parked behind it, and your answer wakes the session.
-`request_tools` asks for a capability — `generate_video` and a video model, `email.read`, a
-connector's tool — naming the exact tools, permission and reason; it lands on **Approvals** as a
-tool card, and approving it mints a new version of that agent and re-pins the running session, so
-the tool is offered from its next turn. No `naive up` is needed for that — but the next `up`
-writes the template's toolset back, so a grant you want to keep belongs in `templates/*.ts`
-too. What neither door can do is conjure an account or an inbox: a granted `email.read`
-still reads nothing until the persona has an inbox, and a granted `googlesearchconsole.*` still
-needs the property connected to the identity.
-
-The sales agent files what it drafts on the client row: `add_client_note` carries the outreach
-or follow-up in full and restates what the client is waiting on, and shows on the client's page.
-Nothing it files is sent; `email.send` is the send, and it always waits for you.
-
-**A fresh deployment is empty, and that is correct.** The CRM, the calendar and the queue
-start with nothing in them, and fill with what you and your agents put there. No screen has a
-sample row compiled into it: a template's demo rows reach a screen only over HTTP, only from
-a local `pnpm serve`, and a test fails the build if one ever reaches the bundle.
+**A fresh deployment is empty, and that is correct.** Each app starts with nothing in it, and
+fills with what you and your agents put there. No screen has a sample row compiled into it: a
+template's demo rows reach a screen only from a local `pnpm serve`, and a test fails the build
+if one ever reaches the bundle.
 
 ## 🛠 Building on top of it
 
@@ -399,9 +379,10 @@ plus a re-apply.
 | what a tool may do | the `tools(allow, ask)` call on that agent — reads go in `allow`, anything that sends, posts or deletes goes in `ask` | `naive up` |
 | when a schedule fires | the `schedules` on that agent, and `AGENCY_TIMEZONE` for the zone all of them use | `naive up` |
 | the deliverable kinds, and the words the screens print | `VOCABULARY` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
-| the dashboard's screens | [`src/screens/`](src/screens) | `pnpm build && naive up` |
-| a new MCP tool for agents to call | [`server/mcp.ts`](server/mcp.ts) and [`server/routes.ts`](server/routes.ts) | `pnpm build && naive up` |
-| the public site's copy and branding | nothing to build: ask the `site-builder`, or call `dashboard.update_site`, and approve it on **Approvals** — [`site/site.config.ts`](site/site.config.ts) is only the seed a fresh store starts from | approve |
+| which apps a template has | `apps` in its `VOCABULARY` entry, [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
+| an app's screen | [`src/apps/<app>/`](src/apps) | `pnpm build && naive up` |
+| a new MCP tool for agents to call | [`server/mcp.ts`](server/mcp.ts), and its app's list in [`server/apps.ts`](server/apps.ts) | `pnpm build && naive up` |
+| the public site's copy and branding | nothing to build: ask the `site-builder`, or call `landing-page.update_site`, and approve it — [`site/site.config.ts`](site/site.config.ts) is only the seed a fresh store starts from | approve |
 
 Two rules worth knowing before your first edit:
 
@@ -422,54 +403,20 @@ missed.
 
 ## 🔌 The MCP server
 
-The dashboard server exposes the whole agency to outside agents over MCP (streamable HTTP,
-JSON-RPC over `POST /mcp`).
+Every app serves its own tools over MCP (streamable HTTP, JSON-RPC over `POST /mcp`), and
+declares the endpoint in `naive.config.ts` (`mcp: "/mcp"`). On `naive up` the platform mints
+each app a bearer, injects it as `VETTA_MCP_TOKEN`, and offers every agent in the project each
+app's tools on every turn as `<app>.<tool>` — no per-agent wiring. The agents' tool policies are
+deny-by-default, so each names the tools it works with ([`server/apps.ts`](server/apps.ts) lists
+each app's, and a test fails if an agent names one no app serves). `/mcp` takes the platform's
+bearer and nothing else; your platform API key is never accepted there.
 
-1. **Mint a token** on the Settings screen of a local `pnpm serve` (Settings → MCP access →
-   mint). The token is shown once; only its hash is stored. Revoke from the same screen. Your
-   platform API key is never accepted at `/mcp`.
-2. **Point a client at it** — endpoint `http://<host>:8789/mcp`, header
-   `Authorization: Bearer mcp_...`.
-
-Minting is unauthenticated — the dashboard has no user login — so the three token routes
-exist **only** on a local server. On the deployment they answer `404`, and Settings says so:
-the platform mints that app's token itself and injects it, so the agents in your project
-already reach `/mcp` without one being handed to whoever finds the URL.
-
-Tools: `list_clients`, `get_client`, `create_lead`, `get_referral_link`, `list_referral_ready`, `record_referral_ask`, `add_client_note`, `advance_pipeline`,
-`list_posts`, `create_draft_post`, `approve_post`, `schedule_post`, `list_agents`,
-`start_agent_session`, `get_calendar`, `get_site`, `update_site`.
-
-### Agents and the CRM
-
-The agency's own agents use the same MCP server, with no per-agent wiring. The dashboard app
-declares its endpoint in `naive.config.ts` (`mcp: "/mcp"`); on `naive up` the platform mints
-a bearer token for it, injects it into the app as the `VETTA_MCP_TOKEN` secret, and from then
-on every agent in the project is offered the dashboard's tools on every turn as
-`dashboard.<tool>` (`dashboard.create_lead`, `dashboard.get_calendar`, …). The agents' tool
-policies are deny-by-default, so each one names the CRM tools it works with; none gets
-`approve_post` or `start_agent_session` — approving and spending stay with you. Nor does
-any hold the platform's `social.post`.
-
-The **agency mailbox** reaches an agent as the platform's own `email.*` tools: `email.inboxes`
-and `email.read` (`allow`) and `email.send` (`ask`). They are offered to a turn only when the
-turn's identity owns an inbox — no inbox, no tools, not "tools that return nothing" — which is
-why provisioning one is a Get-started step. The client's **connected accounts** reach an agent
-as `<connector>.<tool>` — one namespaced name per operation, because deny-by-default means a
-connection nobody named is a connection nobody can use. Gmail is one of those connectors, not
-the agency mailbox: an agency that also wants its agents in a real Google account connects it
-from a Connections tab and names `gmail.fetch_emails` / `gmail.send_email` in `blank.ts`.
-Naming is only half of it: inboxes and accounts hang off an **identity**, and the resolution
-runs `session → agent → identity → {inboxes, connected accounts}`, so an agent that holds no
-persona is offered none of these tools however carefully its allow-list reads. This blueprint
-declares one persona (`agency`) and names it on every agent and every schedule; the per-client
-crew is granted it at onboarding by the dashboard server, since `POST /v1/agents` has no
-identity field and the grant is a call of its own. The `seo-geo` crew reads the client's own
-search and analytics accounts and writes to neither.
-
-Outside clients keep using tokens minted from a local server's Settings screen. The platform
-token is never shown in the dashboard and cannot be revoked from it; drop `mcp` from the
-config and run `naive up` to retire it.
+The **agency mailbox** reaches an agent as the platform's own `email.*` tools, offered only when
+the turn's identity owns an inbox. The client's **connected accounts** reach an agent as
+`<connector>.<tool>`, resolved `session → agent → identity → {inboxes, connected accounts}`, so
+an agent with no persona is offered none of them. This blueprint declares one persona (`agency`)
+and names it on every agent and schedule; the CEO grants it to each per-client seat it hires
+(`crm.get_client_crew` names it), since `POST /v1/agents` has no identity field.
 
 ## 🌐 The public site is data
 
@@ -479,14 +426,14 @@ beside the CRM. [`site/site.config.ts`](site/site.config.ts) is the **seed** a f
 starts from: generic copy that claims nothing about anyone, with the hero, services and
 footer line coming from the active template. Personalizing it is not a build: the
 `site-builder`'s day-one session reads your answers and proposes a rewrite through
-`dashboard.update_site`, you approve it on **Approvals**, and the page shows it on the next
+`landing-page.update_site`, you approve it on **Approvals**, and the page shows it on the next
 load (`GET /api/site` is public and cached for a minute). Any agent — or you, over MCP — can
 do the same later: `get_site` returns every section, `update_site` replaces whole sections and
 refuses one that has lost its shape.
 
 For a Google Search Console URL-prefix property, put the public verification token in an ignored
 `.env.production.local` file as `GOOGLE_SITE_VERIFICATION=...` before `pnpm build`. The build adds
-the verification meta tag to the public page's raw HTML, but never to the operator dashboard or to
+the verification meta tag to the public page's raw HTML, but never to an app's screen or to
 another agency unless that deployment supplies its own token.
 
 The proof strip carries **facts about how you work**, not numbers, and the template ships no
@@ -497,32 +444,22 @@ have.
 
 ## 💻 Running it locally
 
-Run `NAIVE_API_KEY=sk_... pnpm serve` for the app on `:8789` (after `pnpm build`) — the site
-at `/`, the dashboard at `/app` — and `pnpm dev` beside it for the hot-reloading UI: the dev
-server proxies `/api` and `/mcp` to `:8789`, so the screens read the same routes the deployment
-serves. CRM, calendar and queue
-state persist in a JSON file under `data/`, seeded on first run from the active template's
-demo rows — that demo agency is the local file store's, and it is the only place it exists.
+Run one app at a time: `pnpm build`, then `APP_ID=crm pnpm serve` (or `landing-page`, `seo-geo`,
+`ads`; unset is `crm`) on `:8789`, and `pnpm dev` beside it for the hot-reloading UI. Each app
+keeps its state in its own JSON file, `data/<app>.json`, seeded on first run with its share of
+the active template's demo rows — the only place that demo exists. The landing page serves the
+public site at `/`; every app's screen is at `/app`.
 
-Optional: `NAIVE_API_URL` (defaults to the hosted platform), `NAIVE_IDENTITY_ID` (the `idn_`
-id of the `agency` persona — it routes the dashboard's connection calls through the same
-identity the agents hold, so what a Connections tab lists is what an agent can reach), `PORT`,
-`VETTA_MCP_TOKEN` (to exercise `/mcp` locally), and `DASHBOARD_TOKEN` — unset, a local server
-leaves `/api/*` open to a loopback caller so development needs no credential; set, it is
-enforced here exactly as on the deploy. That bypass is taken from the request's own socket,
-never from a header a caller can write, so a LAN peer or a tunnel is gated like the internet.
-With the token set, `DASHBOARD_PASSWORD` enables the sign-in screen's password form and
-`NAIVE_STUDIO_URL` + `NAIVE_APP_ID` its studio link; all three are the platform's on the
-deploy and may stay unset here.
+Optional: `NAIVE_API_KEY` (the read key; SEO & GEO and Ads read connected accounts with it, and
+the CRM reads the roster for `get_client_crew`), `NAIVE_API_URL`, `NAIVE_IDENTITY_ID`, `PORT`,
+`VETTA_MCP_TOKEN` (to call `/mcp` locally), and `DASHBOARD_TOKEN` — unset, a local server leaves
+`/api/*` open to a loopback caller; set, it is enforced exactly as on the deploy. With the token
+set, `DASHBOARD_PASSWORD` enables the sign-in screen's password form and `NAIVE_STUDIO_URL` +
+`NAIVE_APP_ID` its studio link (and the CRM's link to the CEO chat).
 
-Without a key the deployment still runs: the CRM and the content queue are the app's own
-database, so they work, while the agency chat, the agent roster and the connections say *not
-configured — set `NAIVE_API_KEY`* in the screen that asked for them. Anything else that fails
-says so where you asked for it, rather than showing you rows that are not yours.
-
-One route table serves both halves: [`server/routes.ts`](server/routes.ts) holds every path,
-`/mcp` included, and `server/index.ts` (node `http`) and `server/api-entry.ts` (the deployed
-function) are thin adapters over it.
+One route table serves every app: [`server/routes.ts`](server/routes.ts) holds every path, `/mcp`
+included, and serves an app only its own; `server/index.ts` (node `http`) and
+`server/api-entry.ts` (the deployed function) are thin adapters over it.
 
 ## 📦 The `naive.config.ts` shape
 
@@ -539,20 +476,19 @@ export default defineProject({
   questions: ACTIVE_TEMPLATE.questions,   // the three, from the template
   crew_per_client: ACTIVE_TEMPLATE.crew.map(({ name, role, description }) => ({ name, role, description })),
   identities: [{ name: "agency", description: "The agency itself — …" }],
-  apps: [
-    {
-      name: "dashboard",                   // the site at /, the operator UI at /app
-      type: "fullstack",
-      deploy_dir: "dist",
-      mcp: "/mcp",
-      required: true,
-      env: {
-        NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
-        DASHBOARD_TOKEN: { generate: true },
-        DASHBOARD_PASSWORD: { generate: true },
-      },
+  apps: ACTIVE.apps.map((id) => ({       // crm, landing-page, seo-geo, ads
+    name: id,
+    type: "fullstack",
+    deploy_dir: "dist",                  // one build; APP_ID says which app it is
+    mcp: "/mcp",
+    required: id === "crm",
+    env: {
+      APP_ID: id,
+      NAIVE_API_KEY: { from_env: "NAIVE_API_KEY" },
+      DASHBOARD_TOKEN: { generate: true },
+      DASHBOARD_PASSWORD: { generate: true },
     },
-  ],
+  })),
   // No `agents:` — they are the template's.
 });
 ```

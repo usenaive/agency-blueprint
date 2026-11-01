@@ -40,7 +40,7 @@ async function render(answer: () => Promise<Session>) {
   const host = document.createElement("div");
   document.body.append(host);
   await act(async () => {
-    createRoot(host).render(<Gate><main data-testid="app">The dashboard</main></Gate>);
+    createRoot(host).render(<Gate>{() => <main data-testid="app">The dashboard</main>}</Gate>);
   });
   const settle = () => act(async () => { await new Promise((r) => setTimeout(r, 20)); });
   await settle();

@@ -55,6 +55,18 @@ await build({
   },
 });
 
+/**
+ * Response headers every page carries, matching `SECURITY_HEADERS` in `server/index.ts` (keep the two
+ * equal; `build-api.test.ts` pins this one). Only headers that cannot break a page: no framing rule, because the studio
+ * may embed the dashboard, and no content-security policy, which needs one written for the
+ * analytics tag first.
+ */
+const SECURITY_HEADERS = {
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=()",
+};
+
 // Seven rewrites, in this order. `/mcp` is the endpoint `naive.config.ts` declares; the three
 // discovery documents stay dynamic so they use the request's real custom domain and approved site
 // profile; `/api/(.*)` carries every dashboard route to the same function with its own path intact; `/app/:path*` is
@@ -77,8 +89,11 @@ writeFileSync(
         { source: "/llms.txt", destination: "/api/app?__path=/llms.txt" },
         { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
         { source: "/app/:path*", destination: "/app/index.html" },
-        { source: "/((?!api/).*)", destination: "/site-shell.html" },
+        // Through the function, which knows its APP_ID: the landing page answers its site's page,
+        // every other app redirects to its screen (ADR-1766).
+        { source: "/((?!api/).*)", destination: "/api/app?__path=/$1" },
       ],
+      headers: [{ source: "/(.*)", headers: Object.entries(SECURITY_HEADERS).map(([key, value]) => ({ key, value })) }],
     },
     null,
     2,

@@ -56,9 +56,16 @@ describe("build-api.mjs", () => {
   });
 
   it("writes the public discovery and app rewrites in the order that makes them work", () => {
-    const { rewrites } = JSON.parse(readFileSync(join(dist, "vercel.json"), "utf8")) as {
+    const { rewrites, headers } = JSON.parse(readFileSync(join(dist, "vercel.json"), "utf8")) as {
       rewrites: { source: string; destination: string }[];
+      headers: { source: string; headers: { key: string; value: string }[] }[];
     };
+    // Every page carries the three headers that cannot break one; framing and CSP are left out on purpose.
+    expect(headers).toEqual([{ source: "/(.*)", headers: [
+      { key: "x-content-type-options", value: "nosniff" },
+      { key: "referrer-policy", value: "strict-origin-when-cross-origin" },
+      { key: "permissions-policy", value: "camera=(), microphone=(), geolocation=()" },
+    ] }]);
     expect(rewrites).toEqual([
       { source: "/mcp", destination: "/api/app?__path=/mcp" },
       { source: "/", destination: "/api/app?__path=/" },
@@ -68,7 +75,7 @@ describe("build-api.mjs", () => {
       { source: "/llms.txt", destination: "/api/app?__path=/llms.txt" },
       { source: "/api/(.*)", destination: "/api/app?__path=/api/$1" },
       { source: "/app/:path*", destination: "/app/index.html" },
-      { source: "/((?!api/).*)", destination: "/site-shell.html" },
+      { source: "/((?!api/).*)", destination: "/api/app?__path=/$1" },
     ]);
     // The operator dashboard's fallback comes before the public site's, and the site's — last —
     // must never swallow a function.
@@ -89,9 +96,10 @@ describe("build-api.mjs", () => {
     expect(blank).not.toContain("NAIVE_TEMPLATE");
   });
 
-  it("bundles the whole route table, not just /mcp", () => {
+  it("bundles the whole route table of every app, not just /mcp", () => {
     const bundle = readFileSync(join(dist, "api", "app.js"), "utf8");
-    for (const path of ["/api/clients", "/api/posts", "/api/leads", "/api/mcp/tokens", "/mcp"]) {
+    // Every app is this one bundle, told which it is by APP_ID (ADR-1766), so it carries every route.
+    for (const path of ["/api/clients", "/api/posts", "/api/leads", "/api/accounts", "/mcp"]) {
       expect(bundle).toContain(path);
     }
   });

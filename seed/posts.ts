@@ -9,7 +9,10 @@ export type PostStatus = "pending" | "ready" | "approved" | "posted" | "rejected
 
 export interface Post {
   id: string;
+  /** The CRM's `cli_…`. Outside the CRM the client is the CRM's, so the id is carried as given. */
   clientId: string;
+  /** The client's name as the filing agent gave it, for an app that does not hold the CRM (ADR-1766). */
+  clientName?: string;
   title: string;
   summary: string;
   /**

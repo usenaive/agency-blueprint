@@ -113,6 +113,7 @@ describe("the function itself", () => {
   afterEach(() => {
     delete process.env["DASHBOARD_TOKEN"];
     delete process.env["DATABASE_URL"];
+    delete process.env["APP_ID"];
   });
 
   it("serves every path, and opens no database connection for a route that has no store in it", async () => {
@@ -142,7 +143,7 @@ describe("the function itself", () => {
     // not an error: the gate screen shows what exists.
     const { res, written } = reply();
     await handler({ method: "GET", url: "/api/app?__path=/api/session", headers: {} }, res);
-    expect(written).toEqual({ status: 200, body: { authenticated: false, studio_url: null, password_enabled: false } });
+    expect(written).toEqual({ status: 200, body: { authenticated: false, studio_url: null, password_enabled: false, app: "crm" } });
 
     process.env["NAIVE_STUDIO_URL"] = "https://app.usenaive.ai";
     process.env["NAIVE_APP_ID"] = "app_123";
@@ -152,7 +153,7 @@ describe("the function itself", () => {
       await handler({ method: "GET", url: "/api/app?__path=/api/session", headers: {} }, shown.res);
       expect(shown.written).toEqual({
         status: 200,
-        body: { authenticated: false, studio_url: "https://app.usenaive.ai/apps/app_123/open", password_enabled: true },
+        body: { authenticated: false, studio_url: "https://app.usenaive.ai/apps/app_123/open", password_enabled: true, app: "crm" },
       });
       const entered = reply();
       await handler({ method: "POST", url: "/api/app?__path=/api/enter", headers: {}, body: { password: "kq7m-x2rt-8bvn-pz4h" } }, entered.res);
@@ -179,6 +180,8 @@ describe("the function itself", () => {
    */
   it("keeps every one of eight concurrent writes", async () => {
     process.env["DATABASE_URL"] = "postgresql://u:p@db.test:5432/postgres";
+    // The public form is the landing page's (ADR-1766).
+    process.env["APP_ID"] = "landing-page";
     const names = ["Alta", "Bluefin", "Cedar", "Dunbar", "Elmore", "Foxglove", "Granby", "Halvard"];
 
     const created = await Promise.all(names.map((name) =>

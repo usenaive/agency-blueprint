@@ -4,9 +4,9 @@
  */
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { hashToken } from "./mcp.ts";
 import { handleRequest, isLoopback, OPEN_LEADS_CAP, type ApiContext, type ApiRequest } from "./routes.ts";
 import { LEAD_WINDOW_MS, LEADS_PER_WINDOW } from "./store.ts";
+import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -22,6 +22,8 @@ function fixture(overrides: Partial<ApiContext> = {}) {
   let writes = 0;
   const store: Store = openStoreOver(state, () => { writes += 1; });
   const ctx: ApiContext = {
+    // The CRM by default; a test of another app's rows says which (ADR-1766).
+    app: "crm",
     store: () => Promise.resolve(store),
     config: null,
     mcpToken: "platform-token",
@@ -59,7 +61,7 @@ describe("the store routes", () => {
   });
 
   it("files a lead, persists it, and refuses one that is missing its contact", async () => {
-    const { call, writes } = fixture();
+    const { call, writes } = fixture({ app: "landing-page" });
     const created = await call("POST", "/api/leads", lead);
     expect(created.status).toBe(201);
     // Two: the rate window's count and the row itself. Both are the same document, so the deployed
@@ -75,44 +77,35 @@ describe("the store routes", () => {
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
   });
 
-  it("says a lead came from the site, whatever the body claims; only a signed-in operator's form says manual", async () => {
-    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
-    const claimed = { ...lead, source: "referral", referredBy: "cli_victim" };
-    await call("POST", "/api/leads", claimed);
-    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
-    expect(state.clients.at(-1)?.referredBy).toBeUndefined();
+  it("says a lead came from the site, whatever the body claims; only the CRM's own form says manual", async () => {
+    const site = fixture({ app: "landing-page", dashboardToken: "dash-secret", local: false });
+    await site.call("POST", "/api/leads", { ...lead, source: "referral", referredBy: "cli_victim" });
+    expect(site.state.clients.at(-1)).toMatchObject({ source: "site" });
+    expect(site.state.clients.at(-1)?.referredBy).toBeUndefined();
+    // Signed in or not: the landing page's form is the public one.
+    await site.call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "c@summitoutdoor.example" }, source: "manual" }, { authorization: "Bearer dash-secret" });
+    expect(site.state.clients.at(-1)).toMatchObject({ source: "site" });
 
-    // An anonymous `manual` is a visitor's claim too.
-    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "b@summitoutdoor.example" }, source: "manual" });
-    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
-
-    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "c@summitoutdoor.example" }, source: "manual" }, { authorization: "Bearer dash-secret" });
-    expect(state.clients.at(-1)).toMatchObject({ source: "manual" });
+    const crm = fixture({ dashboardToken: "dash-secret", local: false });
+    expect((await crm.call("POST", "/api/clients", lead)).status).toBe(401);
+    expect((await crm.call("POST", "/api/clients", lead, { authorization: "Bearer dash-secret" })).status).toBe(201);
+    expect(crm.state.clients.at(-1)).toMatchObject({ source: "manual", stage: "lead" });
+    expect((await crm.call("POST", "/api/clients", { name: "x" }, { authorization: "Bearer dash-secret" })).status).toBe(400);
   });
 
-  it("files a lead that came through a client's referral link as that client's referral, and a wrong code as a site lead", async () => {
-    // A deployed app, so the caller is a visitor and not the open local gate.
-    const { call, state, store } = fixture({ dashboardToken: "dash-secret", local: false });
-    const referrer = store.createLead({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
-    store.onboardClient(referrer.id);
-    const code = store.referralCode(referrer.id)!;
-
+  it("keeps a referral link's code on the lead for the CRM to resolve, since the clients are the CRM's", async () => {
+    const { call, state } = fixture({ app: "landing-page", dashboardToken: "dash-secret", local: false });
     // A visitor's reply is the id alone either way, so it does not tell a good code from a bad one.
-    const sent = await call("POST", "/api/leads", { ...lead, ref: code });
-    expect(state.clients.at(-1)).toMatchObject({ source: "referral", referredBy: referrer.id });
+    const sent = await call("POST", "/api/leads", { ...lead, ref: "abc123" });
+    expect(state.clients.at(-1)).toMatchObject({ source: "site", ref: "abc123" });
     expect(sent.body).toEqual({ id: state.clients.at(-1)!.id });
+    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "x@summitoutdoor.example" }, ref: "x".repeat(65) });
     expect(state.clients.at(-1)).not.toHaveProperty("ref");
-
-    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "x@summitoutdoor.example" }, ref: "not-a-code" });
-    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
-    expect(state.clients.at(-1)?.referredBy).toBeUndefined();
   });
 
   it("puts a referral-link lead through the same rate limit as every other public lead", async () => {
-    const { call, store } = fixture();
-    const referrer = store.createLead({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
-    store.onboardClient(referrer.id);
-    const ref = store.referralCode(referrer.id)!;
+    const { call } = fixture({ app: "landing-page" });
+    const ref = "abc123";
     for (let i = 0; i < LEADS_PER_WINDOW; i += 1) {
       await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: `r${i}@summitoutdoor.example` }, ref });
     }
@@ -120,7 +113,7 @@ describe("the store routes", () => {
   });
 
   it("stores only the form's fields, and gives a visitor the lead's id rather than the CRM row", async () => {
-    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
+    const { call, state } = fixture({ app: "landing-page", dashboardToken: "dash-secret", local: false });
     const posted = await call("POST", "/api/leads", { ...lead, extra: "x", contact: { ...lead.contact, blob: "y".repeat(5000) } });
     expect(posted.status).toBe(201);
     const row = state.clients.at(-1)!;
@@ -134,38 +127,20 @@ describe("the store routes", () => {
     expect((await call("POST", "/api/leads", lead, { authorization: "Bearer dash-secret" })).body).toMatchObject({ id: row.id, notes: ["internal: budget is tight"] });
   });
 
-  it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {
-    const upstream = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [
-        { id: "eml_1", address: "hello@founderframehq.com" },
-        { id: "eml_2", address: "leads@founderframehq.com" },
-      ] }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ accepted: true }), { status: 202 }));
+  it("calls the platform for nothing when a public lead lands: the sales seat files it into the CRM", async () => {
+    const upstream = vi.fn();
     vi.stubGlobal("fetch", upstream);
     const { call, store } = fixture({
+      app: "landing-page",
       config: { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" },
     });
-    store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
-
     expect((await call("POST", "/api/leads", lead)).status).toBe(201);
     expect(store.read().clients).toHaveLength(1);
-    expect(upstream).toHaveBeenCalledTimes(2);
-    expect(upstream.mock.calls[0]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails?limit=100");
-    expect(upstream.mock.calls[1]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails/eml_1/send");
-    const init = upstream.mock.calls[1]?.[1] as RequestInit;
-    expect(init.headers).toMatchObject({ authorization: "Bearer secret" });
-    expect(JSON.parse(String(init.body))).toMatchObject({
-      to: ["leads@founderframehq.com"],
-      subject: "New Founder Frame inquiry: Summit Outdoor Co",
-    });
-
-    // A repeated form post returns the existing lead and does not send another notification.
-    expect((await call("POST", "/api/leads", lead)).status).toBe(200);
-    expect(upstream).toHaveBeenCalledTimes(2);
+    expect(upstream).not.toHaveBeenCalled();
   });
 
   it("bounds what the anonymous form may write: one open row per contact, a cap on open leads, a size on fields", async () => {
-    const { call, writes, store } = fixture();
+    const { call, writes, store } = fixture({ app: "landing-page" });
     expect((await call("POST", "/api/leads", lead)).status).toBe(201);
     // The same contact again, however it is cased, is the row already filed — not a second write.
     const again = await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "Jordan@SummitOutdoor.example " } });
@@ -198,7 +173,7 @@ describe("the store routes", () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(0);
-      const { call, store } = fixture();
+      const { call, store } = fixture({ app: "landing-page" });
       const file = (i: number) =>
         call("POST", "/api/leads", { ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
       for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect((await file(i)).status).toBe(201);
@@ -222,8 +197,13 @@ describe("the store routes", () => {
     expect(((await call("POST", `/api/clients/${client.id}/advance`)).body as { stage: string }).stage).toBe("proposal");
     const onboarded = await call("POST", `/api/clients/${client.id}/onboard`);
     expect(onboarded.status).toBe(200);
-    // No key on this server, so no crew is provisioned and the report says so rather than lying.
-    expect(onboarded.body).toMatchObject({ agents: null, client: { stage: "active" } });
+    // This app hires nobody (ADR-1766): a template with a team asks the CEO, and the client goes
+    // active only when the CEO records it; with no team there is nothing to hire.
+    if (ACTIVE_TEMPLATE.crew.length === 0) {
+      expect(onboarded.body).toEqual({ client: expect.objectContaining({ stage: "active" }), draft: null, url: null });
+    } else {
+      expect(onboarded.body).toMatchObject({ client: { stage: "proposal", onboardingRequestedAt: expect.any(String) }, draft: expect.stringContaining(`crm.get_client_crew for ${client.id}`), url: null });
+    }
 
     client.stage = "churned";
     expect(await call("POST", `/api/clients/${client.id}/onboard`)).toEqual({
@@ -259,6 +239,7 @@ describe("the store routes", () => {
     const upstream = vi.fn();
     vi.stubGlobal("fetch", upstream);
     const { call, store } = fixture({
+      app: "landing-page",
       config: { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" },
     });
     const client = store.createLead(lead);
@@ -287,9 +268,45 @@ describe("the store routes", () => {
 
   it("names the method as the problem when the path exists but the verb does not", async () => {
     const { call } = fixture();
-    for (const [method, path] of [["POST", "/api/clients"], ["GET", "/api/leads"], ["GET", "/api/posts/post_1"]] as const) {
+    for (const [method, path] of [["PUT", "/api/clients"], ["GET", "/api/posts/post_1"]] as const) {
       expect(await call(method, path)).toEqual({ status: 405, body: { error: "method not allowed" } });
     }
+    expect(await fixture({ app: "landing-page" }).call("GET", "/api/leads")).toEqual({ status: 405, body: { error: "method not allowed" } });
+  });
+
+  it("serves each app only its own rows (ADR-1766)", async () => {
+    // Only the landing page is a public site; every other app opens on its screen.
+    expect(await fixture().call("GET", "/")).toEqual({ status: 302, headers: { location: "/app" } });
+    for (const path of ["/api/site", "/api/leads", "/sitemap.xml"]) expect((await fixture().call("POST", path)).status).toBe(404);
+    // The pipeline is the CRM's; the landing page lists its leads and moves nobody.
+    const site = fixture({ app: "landing-page" });
+    expect((await site.call("POST", "/api/clients/cli_1/advance")).status).toBe(404);
+    expect((await fixture({ app: "seo-geo" }).call("GET", "/api/clients")).status).toBe(404);
+    // Every app has its own queue.
+    expect(await fixture({ app: "ads" }).call("GET", "/api/posts")).toEqual({ status: 200, body: [] });
+  });
+
+  it("links the studio's CEO chat from Onboard, and refuses a client its team cannot be scoped to", async () => {
+    if (ACTIVE_TEMPLATE.crew.length === 0) return;
+    const { call, store } = fixture({ studioUrl: "https://studio.test" });
+    const client = store.createLead(lead);
+    const { body } = await call("POST", `/api/clients/${client.id}/onboard`);
+    expect((body as { url: string }).url).toMatch(/^https:\/\/studio\.test\/orchestrator\?new=1&draft=Onboard\+Summit/);
+    const scoped = ACTIVE_TEMPLATE.crew.some((seat) => JSON.stringify(seat.tools ?? {}).includes("{client.domain}"));
+    const bare = store.createLead({ ...lead, name: "No Site", domain: "", contact: { ...lead.contact, email: "n@x.example" } });
+    expect((await call("POST", `/api/clients/${bare.id}/onboard`)).status).toBe(scoped ? 422 : 200);
+  });
+
+  it("reads the persona's accounts for SEO & GEO and Ads, with a GET and nothing else", async () => {
+    const upstream = vi.fn(async (url: RequestInfo | URL, _init?: RequestInit) =>
+      new Response(JSON.stringify(String(url).endsWith("/v1/identities/idn_1") ? { connections: ["c1", "c2"] } : String(url).endsWith("c1") ? { connector: "googleads", status: "active" } : { connector: "googlesearchconsole", status: "active" })));
+    vi.stubGlobal("fetch", upstream);
+    const config = { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" };
+    expect((await fixture({ app: "ads", config }).call("GET", "/api/accounts")).body).toEqual({ data: [{ connector: "googleads", status: "active" }] });
+    expect(((await fixture({ app: "seo-geo", config }).call("GET", "/api/accounts")).body as { data: unknown[] }).data).toHaveLength(2);
+    expect(upstream.mock.calls.every(([, init]) => init?.method === "GET")).toBe(true);
+    expect((await fixture({ app: "ads" }).call("GET", "/api/accounts")).status).toBe(503);
+    expect((await fixture({ config }).call("GET", "/api/accounts")).status).toBe(404);
   });
 });
 
@@ -298,7 +315,7 @@ describe("public discovery documents", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-04T12:00:00Z"));
     const shell = '<!doctype html><html><head><title>Agency services</title><meta name="description" content="generic" /></head><body><div id="root"></div><script type="module" src="/assets/site.js"></script></body></html>';
-    const { call, store } = fixture({ publicShell: () => Promise.resolve(shell) });
+    const { call, store } = fixture({ app: "landing-page", publicShell: () => Promise.resolve(shell) });
     store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
     const company = store.createLead({ name: "Founder Frame", domain: "", contact: { name: "", email: "", role: "" } });
     const live = store.createDraftPost({ clientId: company.id, title: "A safer <title>", summary: "Useful & specific", body: "## Answer\n\nA **clear** answer.\n\n- First", kind: "article", channel: "blog", scheduledFor: "2026-10-04" })!;
@@ -369,38 +386,20 @@ describe("/mcp", () => {
     await expect(call("GET", "/mcp")).rejects.toBe(down);
   });
 
-  it("accepts a token minted from Settings and answers a notification with a bodiless 202", async () => {
-    const { call, store } = fixture();
-    store.addMcpToken("desktop", hashToken("mcp_local"));
-    const listed = await call("POST", "/mcp", rpc("tools/list"), { authorization: "Bearer mcp_local" });
-    expect(listed.status).toBe(200);
-    expect(await call("POST", "/mcp", rpc("notifications/initialized"), { authorization: "Bearer mcp_local" }))
-      .toEqual({ status: 202 });
-  });
-});
-
-describe("/api/mcp/tokens is local-only", () => {
-  it("mints, lists and revokes on a local server", async () => {
+  it("answers a notification with a bodiless 202, and takes no bearer but the platform's", async () => {
     const { call } = fixture();
-    expect(await call("GET", "/api/mcp/tokens")).toEqual({ status: 200, body: [] });
-    const minted = await call("POST", "/api/mcp/tokens", { name: "desktop" });
-    expect(minted.status).toBe(201);
-    const { id, token } = minted.body as { id: string; token: string };
-    expect(token).toMatch(/^mcp_/);
-    expect((await call("GET", "/api/mcp/tokens")).body).toHaveLength(1);
-    // The hash is kept, never the token: the list cannot hand it back.
-    expect(JSON.stringify((await call("GET", "/api/mcp/tokens")).body)).not.toContain(token);
-    expect(await call("DELETE", `/api/mcp/tokens/${id}`)).toEqual({ status: 200, body: { ok: true } });
-    expect(await call("DELETE", `/api/mcp/tokens/${id}`)).toEqual({ status: 404, body: { error: "no such token" } });
-    expect(await call("POST", "/api/mcp/tokens", {})).toEqual({ status: 400, body: { error: "name is required" } });
+    expect(await call("POST", "/mcp", rpc("notifications/initialized"), { authorization: "Bearer platform-token" })).toEqual({ status: 202 });
+    expect((await fixture({ mcpToken: undefined }).call("POST", "/mcp", rpc("tools/list"), { authorization: "Bearer " })).status).toBe(401);
   });
 
-  it("does not exist on the deployment, where an unauthenticated mint would hand out the agency", async () => {
-    const { call } = fixture({ local: false, dashboardToken: "dash" });
-    for (const [method, path] of [["GET", "/api/mcp/tokens"], ["POST", "/api/mcp/tokens"], ["DELETE", "/api/mcp/tokens/tok_1"]] as const) {
-      expect(await call(method, path, { name: "x" }, { authorization: "Bearer dash" }))
-        .toEqual({ status: 404, body: { error: "no such route" } });
-    }
+  it("lists each app's own tools, so an agent reaches them as <app>.<tool>", async () => {
+    const names = async (app: ApiContext["app"]) =>
+      ((await fixture({ app }).call("POST", "/mcp", rpc("tools/list"), { authorization: "Bearer platform-token" })).body as { result: { tools: { name: string }[] } })
+        .result.tools.map((t) => t.name);
+    expect(await names("crm")).toContain("get_client_crew");
+    expect(await names("crm")).not.toContain("get_site");
+    expect(await names("landing-page")).toEqual(expect.arrayContaining(["get_site", "update_site", "list_new_leads", "mark_lead_filed"]));
+    expect(await names("ads")).toEqual(["list_posts", "create_draft_post", "approve_post", "schedule_post", "get_calendar"]);
   });
 });
 
@@ -436,7 +435,7 @@ describe("the /api/* gate", () => {
    * Neither reads a row back — the lead is answered as created, and the CRM stays behind the gate.
    */
   it("leaves the site's copy and its contact form open to a visitor, and nothing else", async () => {
-    const { call, store } = fixture(deployed);
+    const { call, store } = fixture({ ...deployed, app: "landing-page" });
     const copy = await call("GET", "/api/site");
     expect(copy.status).toBe(200);
     expect(copy.headers).toEqual({ "cache-control": "public, max-age=60" });
@@ -677,7 +676,8 @@ describe("the /api/* gate", () => {
         });
         expect(handoff.status).toBe(303);
         // The public site's contact form is not gated, so it is not this guard's either.
-        expect((await call("POST", "/api/leads", lead, { ...cookie, "sec-fetch-site": "cross-site" })).status).toBe(201);
+        const site = fixture({ ...deployed, app: "landing-page" });
+        expect((await site.call("POST", "/api/leads", lead, { ...cookie, "sec-fetch-site": "cross-site" })).status).toBe(201);
         // The wrong cookie is still the wrong cookie, before any question of origin.
         expect((await advance({ cookie: "dashboard_session=nope", "sec-fetch-site": "same-origin" })).reply.status).toBe(401);
       });
@@ -755,6 +755,7 @@ describe("the /api/* gate", () => {
         authenticated: false,
         studio_url: "https://app.usenaive.ai/apps/app_123/open",
         password_enabled: true,
+        app: "crm",
       });
       expect(reply.headers?.["set-cookie"]).toBeUndefined();
       // Nothing secret rides along: not the token, not the password.
@@ -769,11 +770,11 @@ describe("the /api/* gate", () => {
       // A deployment with no token is closed, and says so the same way the gate does.
       expect((await fixture({ ...studio, dashboardToken: undefined }).call("GET", "/api/session")).body).toMatchObject({ authenticated: false });
       // A genuinely local `pnpm serve` with nothing set is in, because its gate stands open.
-      expect((await fixture().call("GET", "/api/session")).body).toEqual({ authenticated: true, studio_url: null, password_enabled: false });
+      expect((await fixture().call("GET", "/api/session")).body).toEqual({ authenticated: true, studio_url: null, password_enabled: false, app: "crm" });
     });
 
     it("has no studio link unless both the studio and the app id are known, and no password door unless one is set", async () => {
-      expect((await fixture(deployed).call("GET", "/api/session")).body).toEqual({ authenticated: false, studio_url: null, password_enabled: false });
+      expect((await fixture(deployed).call("GET", "/api/session")).body).toEqual({ authenticated: false, studio_url: null, password_enabled: false, app: "crm" });
       expect((await fixture({ ...deployed, studioUrl: "https://app.usenaive.ai" }).call("GET", "/api/session")).body).toMatchObject({ studio_url: null });
       expect((await fixture({ ...deployed, appId: "app_123" }).call("GET", "/api/session")).body).toMatchObject({ studio_url: null });
       expect((await fixture({ ...deployed, dashboardPassword: "" }).call("GET", "/api/session")).body).toMatchObject({ password_enabled: false });
@@ -799,163 +800,39 @@ describe("the /api/* gate", () => {
   });
 });
 
-describe("the platform routes", () => {
-  const config = { baseUrl: "https://api.test", apiKey: "sk_test", identityId: "idn_1", project: "agency" };
 
-  it("says the key is missing rather than swallowing it, and only for routes that need one", async () => {
-    const { call } = fixture();
-    expect(await call("GET", "/api/agents")).toEqual({
-      status: 503, body: { error: "not configured — set NAIVE_API_KEY" },
-    });
-    expect(await call("GET", "/api/social/accounts")).toMatchObject({ status: 503 });
-    // The store routes are the app's own database and keep working without any key at all.
-    expect((await call("GET", "/api/clients")).status).toBe(200);
-    expect(await call("GET", "/api/nothing")).toEqual({ status: 404, body: { error: "no such route" } });
+describe("review fixes (ADR-1766)", () => {
+  it("frees the landing page's inbox as leads are filed, and takes a returning visitor's new message", async () => {
+    const { call, store } = fixture({ app: "landing-page" });
+    const first = (await call("POST", "/api/leads", lead)).body as { id: string };
+    store.markLeadFiled(first.id);
+    const again = await call("POST", "/api/leads", { ...lead, note: "Writing again." });
+    expect(again.status).toBe(201);
+    expect((again.body as { id: string }).id).not.toBe(first.id);
+    for (let i = store.read().clients.length; i < OPEN_LEADS_CAP + 5; i += 1) {
+      const row = store.createLead({ ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
+      store.markLeadFiled(row.id);
+    }
+    expect((await call("POST", "/api/leads", { ...lead, domain: "late.example", contact: { ...lead.contact, email: "late@late.example" } })).status).not.toBe(429);
   });
 
-  it("proxies the agent roster with the key on the upstream request only", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ data: [{ id: "agt_1", name: "sales" }], has_more: false, next_cursor: null }), { status: 200 }),
-    );
-    vi.stubGlobal("fetch", fetchImpl);
-    const { call } = fixture({ config });
-    const reply = await call("GET", "/api/agents");
-    expect(reply).toEqual({ status: 200, body: { data: [{ id: "agt_1", name: "sales" }], has_more: false, next_cursor: null } });
-    expect(fetchImpl).toHaveBeenCalledWith("https://api.test/v1/agents?limit=100", expect.objectContaining({ method: "GET" }));
-    expect(JSON.stringify(reply.body)).not.toContain("sk_test");
+  it("serves the public site's shell only from the landing page; every other app sends a path to its screen", async () => {
+    const shell = "<!doctype html><title>site</title>";
+    const site = await fixture({ app: "landing-page", publicShell: () => Promise.resolve(shell) }).call("GET", "/pricing");
+    expect(site).toMatchObject({ status: 200, text: shell });
+    for (const app of ["crm", "seo-geo", "ads"] as const) {
+      expect(await fixture({ app, publicShell: () => Promise.resolve(shell) }).call("GET", "/pricing")).toEqual({ status: 302, headers: { location: "/app" } });
+    }
   });
+});
 
-  /**
-   * The platform pages at 20 and a real agency org has 600+ agents, so page one is not the roster:
-   * `GET /api/agents` returned twenty rows and neither `sales` nor `client-manager` — the org's own
-   * two agents — appeared in their own dashboard.
-   */
-  it("follows the cursor to the end of the roster, on the screen and for the agency chat", async () => {
-    const pageOf = (rows: { id: string; name: string }[], next: string | null) =>
-      new Response(JSON.stringify({ data: rows, has_more: next !== null, next_cursor: next }), { status: 200 });
-    const fetchImpl = vi.fn(async (url: string, _init?: RequestInit) =>
-      url.includes("after=agt_20")
-        ? pageOf([{ id: "agt_21", name: "sales" }, { id: "agt_22", name: "client-manager" }], null)
-        : pageOf([{ id: "agt_20", name: "seo-writer--acme" }], "agt_20"));
-    vi.stubGlobal("fetch", fetchImpl);
-    const { call } = fixture({ config });
-
-    const roster = (await call("GET", "/api/agents")).body as { data: { name: string }[] };
-    expect(roster.data.map((a) => a.name)).toEqual(["seo-writer--acme", "sales", "client-manager"]);
-    // 100 is the spec's ceiling, so the roster is read in as few round trips as the platform allows.
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.test/v1/agents?limit=100");
-    expect(fetchImpl.mock.calls[1]?.[0]).toBe("https://api.test/v1/agents?limit=100&after=agt_20");
-
-    // And the chat resolves `client-manager` off the second page instead of saying it does not exist.
-    const created = await call("POST", "/api/chat", { message: "hi" });
-    expect(created.status).not.toBe(503);
-    const session = fetchImpl.mock.calls.find(([url]) => url.endsWith("/v1/sessions"));
-    expect(JSON.parse(String(session?.[1]?.body))).toMatchObject({ agent_id: "agt_22" });
-  });
-
-  it("hands the session relay back as a stream instead of buffering it", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response("event: message.delta\ndata: {}\n\n", { status: 200 }),
-    ));
-    const { call } = fixture({ config });
-    const reply = await call("GET", "/api/chat/ses_abc/stream");
-    expect(reply.stream).toBeInstanceOf(Response);
-    expect(reply.body).toBeUndefined();
-  });
-
-  /**
-   * A tool held at `ask` parks the session with the blocked call in `pending_actions`, and until
-   * this route existed the dashboard could not see one: the moment the whole approval gate exists
-   * for reached the operator as silence, resolvable only from a terminal.
-   */
-  it("reads the sessions a parked approval lives in, and passes only the filters the platform declares", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    vi.stubGlobal("fetch", fetchImpl);
-    const { call } = fixture({ config });
-    expect((await call("GET", "/api/sessions?status=idle&agent_id=agt_1&secret=x")).status).toBe(200);
-    const url = new URL(String(fetchImpl.mock.calls[0]?.[0]));
-    expect(url.pathname).toBe("/v1/sessions");
-    expect([...url.searchParams]).toEqual([["limit", "100"], ["agent_id", "agt_1"], ["status", "idle"]]);
-  });
-
-  it("resolves a parked call, and reports what the platform answered rather than assuming", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: "ses_1", pending_actions: [] }), { status: 202 }),
-    );
-    vi.stubGlobal("fetch", fetchImpl);
-    const { call } = fixture({ config });
-    const decided = { tool_call_id: "call_1", decision: "deny", reason: "not this client" };
-    const reply = await call("POST", "/api/sessions/ses_1/tool_confirmations", decided);
-    expect(reply).toEqual({ status: 202, body: { id: "ses_1", pending_actions: [] } });
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.test/v1/sessions/ses_1/tool_confirmations");
-    expect(JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body))).toEqual(decided);
-  });
-
-  it("reads what an agent has spent this period", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ agent_id: "agt_1", period: "day", spent_micro_usd: 1_250_000 }), { status: 200 }),
-    );
-    vi.stubGlobal("fetch", fetchImpl);
-    const { call } = fixture({ config });
-    expect((await call("GET", "/api/agents/agt_1/spend")).body).toMatchObject({ spent_micro_usd: 1_250_000 });
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe("https://api.test/v1/agents/agt_1/spend");
-  });
-
-  /**
-   * The home screen's context card: the setup answers live on the latest APPLIED install of this
-   * project, so the route lists installs narrowed by project, picks the newest applied one, and
-   * reads its context — the day-one lines ride along from that install's report.
-   */
-  it("reads this project's context from its latest applied install, and says when there is none", async () => {
-    const installs = [
-      { id: "bpi_old", status: "applied", applied_at: "2026-09-01T00:00:00Z", report: { intake: [] } },
-      { id: "bpi_failed", status: "failed", applied_at: "2026-09-09T00:00:00Z", report: null },
-      {
-        id: "bpi_new", status: "applied", applied_at: "2026-09-08T00:00:00Z",
-        report: {
-          agents: [{ name: "sales", action: "created", id: "agt_1" }, { name: "site-builder", action: "refused", reason: "no host" }],
-          intake: [{ name: "sales", action: "created", id: "ses_1" }, { name: "site-builder", action: "skipped", reason: "agent refused" }],
-        },
-      },
-    ];
-    const context = { object: "project_context", answers: [{ key: "offer", label: "What does your agency sell?", value: "Paid social" }] };
-    const session = { id: "ses_1", status: "idle", stop_reason: "awaiting_approval", pending_actions: [{ tool_call_id: "c1" }] };
-    const fetchImpl = vi.fn().mockImplementation((url: string) =>
-      Promise.resolve(new Response(JSON.stringify(
-        url.includes("/context") ? context
-        : url.endsWith("/v1/sessions/ses_1") ? session
-        : { data: installs, has_more: false, next_cursor: null }), { status: 200 })));
-    vi.stubGlobal("fetch", fetchImpl);
-    const { call } = fixture({ config });
-    const reply = await call("GET", "/api/context");
-    expect(reply).toEqual({
-      status: 200,
-      body: {
-        context,
-        // The team is the agents the apply left standing — the refused one is not on it.
-        team: [{ name: "sales", id: "agt_1" }],
-        // Each opened intake is read by its own id, so it is found long after it left the recent list.
-        intake: [
-          { name: "sales", action: "created", id: "ses_1", session: { status: "idle", stop_reason: "awaiting_approval", waiting: true } },
-          { name: "site-builder", action: "skipped", reason: "agent refused", session: null },
-        ],
-      },
-    });
-    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
-      expect.stringMatching(/^https:\/\/api\.test\/v1\/blueprints\/installs\?project=[\w-]+&limit=100$/),
-      "https://api.test/v1/blueprints/installs/bpi_new/context",
-      "https://api.test/v1/sessions/ses_1",
-    ]);
-
-    fetchImpl.mockResolvedValue(new Response(JSON.stringify({ data: [], has_more: false, next_cursor: null }), { status: 200 }));
-    expect(await call("GET", "/api/context")).toEqual({ status: 404, body: { error: "no applied install for this project" } });
-    // And without a key it is the same 503 as every platform-backed screen — "not configured", not an error.
-    expect(await fixture().call("GET", "/api/context")).toMatchObject({ status: 503 });
-  });
-
-  it("answers 502 when the platform cannot be reached at all", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("econnrefused")));
-    const { call } = fixture({ config });
-    expect(await call("GET", "/api/agents")).toEqual({ status: 502, body: { error: "upstream unavailable" } });
+describe("the calendar's routes (ADR-1766)", () => {
+  it("lists its events and marks one done; no other app serves them", async () => {
+    const { call, store } = fixture({ app: "calendar" });
+    const e = store.createEvent({ kind: "meeting", title: "Kickoff", clientId: "cli_1", start: "2026-11-04T15:00:00Z" });
+    expect((await call("GET", "/api/events")).body).toEqual([e]);
+    expect((await call("PATCH", `/api/events/${e.id}`, { status: "done" })).body).toMatchObject({ status: "done" });
+    expect((await call("PATCH", `/api/events/${e.id}`, { status: "maybe" })).status).toBe(400);
+    expect((await fixture().call("GET", "/api/events")).status).toBe(404);
   });
 });

@@ -8,21 +8,16 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { REFERRAL_READY, STAGE_ORDER, type Client, type LeadSource, type PipelineStage } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
+import type { CalendarEvent, EventStatus } from "../seed/events.ts";
 import { sameShape, site, SITE_SECTIONS, withinBounds, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
-
-/** A minted MCP credential: only the SHA-256 hash of the token is kept. */
-export interface McpToken {
-  id: string;
-  name: string;
-  hash: string;
-  createdAt: string;
-}
+import { kindApp, type AppId } from "./apps.ts";
 
 export interface StoreState {
   clients: Client[];
   posts: Post[];
-  mcpTokens?: McpToken[];
+  /** The calendar app's rows. Absent on every other app's document. */
+  events?: CalendarEvent[];
   /** The public site. Absent on a document written before the site was data; read as the seed. */
   site_profile?: SiteProfile;
   /** The public lead form's fixed window. Absent until the first lead of the first window lands. */
@@ -53,20 +48,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * Why a client may not be asked for a referral at `now`, or null when it may (`REFERRAL_READY`).
  * Recent work is judged by its calendar slot, the one date every post carries as an ISO day.
  */
-export function referralRefusal(client: Client, posts: readonly Post[], now: Date): string | null {
-  const { activeDays, recentDays, minApproved, cooldownDays } = REFERRAL_READY;
+export function referralRefusal(client: Client, now: Date): string | null {
+  const { activeDays, cooldownDays } = REFERRAL_READY;
   const ago = (iso: string) => (now.getTime() - new Date(iso).getTime()) / DAY_MS;
   if (client.stage !== "active") return "only an active client is asked for a referral";
   if (client.onboardedAt === undefined || ago(client.onboardedAt) < activeDays) return `a client is asked only after ${activeDays} days with the agency`;
   if (client.referralAskedAt !== undefined && ago(client.referralAskedAt) < cooldownDays) return `this client was asked less than ${cooldownDays} days ago`;
-  const recent = posts.filter((p) => p.clientId === client.id && ago(p.scheduledFor) >= 0 && ago(p.scheduledFor) <= recentDays);
-  // A draft is usually turned down before its slot comes round, so a rejection counts whatever its slot.
-  if (posts.some((p) => p.clientId === client.id && p.status === "rejected" && ago(p.scheduledFor) <= recentDays)) {
-    return `this client turned down work in the last ${recentDays} days`;
-  }
-  if (recent.filter((p) => p.status === "approved" || p.status === "posted").length < minApproved) {
-    return `a client is asked after approving at least ${minApproved} pieces in the last ${recentDays} days`;
-  }
   return null;
 }
 
@@ -81,6 +68,8 @@ export interface LeadInput {
   note?: string;
   source?: LeadSource;
   referredBy?: string;
+  /** A referral code the landing page's lead arrived with (ADR-1766). */
+  ref?: string;
 }
 
 export interface DraftPostInput {
@@ -90,9 +79,21 @@ export interface DraftPostInput {
   /** The draft itself. Absent when the agent filed only a line about it. */
   body?: string;
   kind: Post["kind"];
+  /** The client's name, kept on the row by an app that does not hold the CRM. */
+  clientName?: string;
   channel: Post["channel"];
   scheduledFor: string;
   agent?: string;
+}
+
+export type EventInput = Omit<CalendarEvent, "id" | "status">;
+export interface EventPatch {
+  title?: string;
+  start?: string;
+  end?: string;
+  where?: string;
+  notes?: string;
+  status?: EventStatus;
 }
 
 export interface PostPatch {
@@ -105,15 +106,21 @@ export interface PostPatch {
 export interface Store {
   read(): StoreState;
   createLead(input: LeadInput): Client;
-  createDraftPost(input: DraftPostInput): Post | null;
-  mcpTokens(): McpToken[];
-  addMcpToken(name: string, hash: string): McpToken;
-  removeMcpToken(id: string): boolean;
+  /** Null when the client is not in this store, unless `anyClient` (an app whose clients are the CRM's). */
+  createDraftPost(input: DraftPostInput, anyClient?: boolean): Post | null;
   advanceClient(id: string): Client | null;
   /** Appends a working note to the client and, when given, replaces what it is waiting on. */
   addClientNote(id: string, note: string, nextAction?: string): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
   onboardClient(id: string): Client | null;
+  /** Stamps that Onboard asked the CEO to hire this client's team; null for no such client. */
+  requestOnboarding(id: string): Client | null;
+  /** Landing page: marks a lead filed into the CRM; idempotent, null for no such lead. */
+  markLeadFiled(id: string): Client | null;
+  /** Calendar: adds a meeting or a deliverable's due date, scheduled. */
+  createEvent(input: EventInput): CalendarEvent;
+  /** Calendar: reschedules, renotes or closes an event; null for no such event. */
+  updateEvent(id: string, patch: EventPatch): CalendarEvent | null;
   /**
    * The client's referral code, stamped now when it has none (a client onboarded before links
    * existed). Null for a client that does not exist or is not active: only a client the agency works
@@ -142,11 +149,28 @@ export interface Store {
  * operator's data, and a deployed dashboard that showed them would be presenting fiction as the
  * customer's CRM.
  */
-export const seedState = (): StoreState => ({
-  clients: structuredClone(ACTIVE_TEMPLATE.seed.clients as Client[]),
-  posts: structuredClone(ACTIVE_TEMPLATE.seed.posts as Post[]),
+export const seedState = (app: AppId = "crm"): StoreState => ({
+  // The CRM holds the clients; the landing page's inbox holds the leads; the others hold none.
+  clients: structuredClone((ACTIVE_TEMPLATE.seed.clients as Client[]).filter((c) => app === "crm" || (app === "landing-page" && c.stage === "lead"))),
+  posts: structuredClone((ACTIVE_TEMPLATE.seed.posts as Post[]).filter((p) => kindApp(p.kind) === app)),
   site_profile: structuredClone(site),
+  ...(app === "calendar" ? { events: seedEvents() } : {}),
 });
+
+/** The demo calendar: each seeded deliverable on its due day, and a weekly check-in per active client. */
+function seedEvents(): CalendarEvent[] {
+  const clients = ACTIVE_TEMPLATE.seed.clients as Client[];
+  const name = (id: string) => clients.find((c) => c.id === id)?.name;
+  const due = (ACTIVE_TEMPLATE.seed.posts as Post[]).map((p, i): CalendarEvent => ({
+    id: `evt_d${i}`, kind: "deliverable", title: p.title, clientId: p.clientId, clientName: name(p.clientId),
+    start: p.scheduledFor, app: kindApp(p.kind), ref: p.id, status: p.status === "posted" ? "done" : p.status === "rejected" ? "cancelled" : "scheduled",
+  }));
+  const meetings = clients.filter((c) => c.stage === "active").map((c, i): CalendarEvent => ({
+    id: `evt_m${i}`, kind: "meeting", title: `Weekly check-in with ${c.name}`, clientId: c.id, clientName: c.name,
+    start: `2026-11-0${3 + (i % 3)}T15:00:00Z`, end: `2026-11-0${3 + (i % 3)}T15:30:00Z`, where: "Video call", status: "scheduled",
+  }));
+  return [...meetings, ...due];
+}
 
 /**
  * What a fresh **deployed** document is created with: no rows, because nothing has happened yet,
@@ -161,13 +185,13 @@ const next = (stage: PipelineStage): PipelineStage | null => {
   return candidate === undefined || candidate === "churned" ? null : candidate;
 };
 
-/** Opens (and on first run seeds) the JSON store at `file`. */
-export function openStore(file: string): Store {
+/** Opens (and on first run seeds with `app`'s share of the demo) the JSON store at `file`. */
+export function openStore(file: string, app: AppId = "crm"): Store {
   let state: StoreState;
   try {
     state = JSON.parse(readFileSync(file, "utf8")) as StoreState;
   } catch {
-    state = seedState();
+    state = seedState(app);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, JSON.stringify(state, null, 2));
   }
@@ -229,16 +253,18 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         // The agency's own name-only record is not a lead, so it has no source.
         ...(input.source && !nameOnly(input) ? { source: input.source } : {}),
         ...(input.referredBy && !nameOnly(input) ? { referredBy: input.referredBy } : {}),
+        ...(input.ref && !nameOnly(input) ? { ref: input.ref } : {}),
       };
       state.clients.push(client);
       save();
       return client;
     },
-    createDraftPost(input) {
-      if (!state.clients.some((c) => c.id === input.clientId)) return null;
+    createDraftPost(input, anyClient = false) {
+      if (!anyClient && !state.clients.some((c) => c.id === input.clientId)) return null;
       const post: Post = {
         id: `post_${randomBytes(4).toString("hex")}`,
         clientId: input.clientId,
+        ...(input.clientName === undefined ? {} : { clientName: input.clientName }),
         title: input.title,
         summary: input.summary,
         ...(input.body === undefined ? {} : { body: input.body }),
@@ -252,19 +278,6 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       state.posts.push(post);
       save();
       return post;
-    },
-    mcpTokens: () => state.mcpTokens ?? [],
-    addMcpToken(name, hash) {
-      const token: McpToken = { id: `tok_${randomBytes(4).toString("hex")}`, name, hash, createdAt: new Date().toISOString() };
-      (state.mcpTokens ??= []).push(token);
-      save();
-      return token;
-    },
-    removeMcpToken(id) {
-      const before = state.mcpTokens?.length ?? 0;
-      state.mcpTokens = (state.mcpTokens ?? []).filter((t) => t.id !== id);
-      save();
-      return state.mcpTokens.length < before;
     },
     advanceClient(id) {
       const client = state.clients.find((c) => c.id === id);
@@ -290,9 +303,41 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       if (!client || client.stage === "churned") return client ?? null;
       client.stage = "active";
       client.onboardedAt ??= new Date().toISOString();
+      delete client.onboardingRequestedAt;
       client.referralCode ??= newReferralCode();
       save();
       return client;
+    },
+    requestOnboarding(id) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return null;
+      client.onboardingRequestedAt = new Date().toISOString();
+      save();
+      return client;
+    },
+    markLeadFiled(id) {
+      const client = state.clients.find((c) => c.id === id);
+      if (!client) return null;
+      if (client.filed !== true) {
+        client.filed = true;
+        save();
+      }
+      return client;
+    },
+    createEvent(input) {
+      const event: CalendarEvent = { ...input, id: `evt_${randomBytes(4).toString("hex")}`, status: "scheduled" };
+      (state.events ??= []).push(event);
+      save();
+      return event;
+    },
+    updateEvent(id, patch) {
+      const event = (state.events ?? []).find((e) => e.id === id);
+      if (!event) return null;
+      for (const key of ["title", "start", "end", "where", "notes", "status"] as const) {
+        if (patch[key] !== undefined) (event as unknown as Record<string, unknown>)[key] = patch[key];
+      }
+      save();
+      return event;
     },
     referralCode(id) {
       const client = state.clients.find((c) => c.id === id);
@@ -304,12 +349,12 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       return client.referralCode;
     },
     referralReady(now) {
-      return state.clients.filter((c) => referralRefusal(c, state.posts, now) === null);
+      return state.clients.filter((c) => referralRefusal(c, now) === null);
     },
     recordReferralAsk(id, now) {
       const client = state.clients.find((c) => c.id === id);
       if (!client) return { refused: "no such client" };
-      const refused = referralRefusal(client, state.posts, now);
+      const refused = referralRefusal(client, now);
       if (refused !== null) return { refused };
       client.referralAskedAt = now.toISOString();
       save();

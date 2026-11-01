@@ -19,8 +19,8 @@ import { roster } from "./agents.ts";
 import { VOCABULARY, type TemplateKind } from "./index.ts";
 
 export {
-  AGENCY_IDENTITY, AGENCY_TIMEZONE, ASK_OPERATOR, budget, CONTEXT, crm, gate, HANDOFF, mailbox, MAILBOX_READ, MAILBOX_SEND,
-  model, OPERATOR, OWN_RECORD, PREAMBLE, REQUEST_TOOLS, roster, tools,
+  AGENCY_IDENTITY, AGENCY_TIMEZONE, appTools, ASK_OPERATOR, budget, CLIENT_DOMAIN, CONTEXT, crm, everyApp, gate, HANDOFF, mailbox, MAILBOX_READ, MAILBOX_SEND,
+  calendar, model, OPERATOR, OWN_RECORD, PREAMBLE, REQUEST_TOOLS, roster, site, specialise, tools,
 } from "./agents.ts";
 
 /**

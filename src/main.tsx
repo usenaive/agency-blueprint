@@ -2,62 +2,45 @@ import "@fontsource-variable/inter";
 import "./app.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider, type RouteObject } from "react-router";
+import type { AppId } from "../templates";
+import { SCREENS } from "./apps";
 import { Gate } from "./Gate";
-import { Shell } from "./Shell";
-import { AgencyAgents } from "./screens/AgencyAgents";
-import { Approvals } from "./screens/Approvals";
-import { ClientAgents } from "./screens/ClientAgents";
-import { ClientCalendar } from "./screens/ClientCalendar";
-import { ClientConnections } from "./screens/ClientConnections";
 import { ClientOverview } from "./screens/ClientOverview";
 import { ClientPosts } from "./screens/ClientPosts";
-import { ClientWorkspace } from "./screens/ClientWorkspace";
-import { Clients } from "./screens/Clients";
-import { Crm } from "./screens/Crm";
-import { Home } from "./screens/Home";
-import { LaunchReview } from "./screens/LaunchReview";
-import { ProductAudit } from "./screens/ProductAudit";
-import { Settings } from "./screens/Settings";
+import { ClientWorkspace, WorkClient } from "./screens/ClientWorkspace";
 
-// The operator dashboard lives under `/app`; `/` is the agency's public site (`site/`). The basename
-// keeps every link in the screens as it was written, and the redirect from the old root paths is
-// the public bundle's and the servers' (`site/routing.ts`).
-const router = createBrowserRouter([
-  {
-    path: "/",
-    Component: Shell,
-    children: [
-      { index: true, Component: Home },
-      { path: "launch-review", Component: LaunchReview },
-      { path: "product-audit", Component: ProductAudit },
-      { path: "crm", Component: Crm },
-      { path: "approvals", Component: Approvals },
-      { path: "agents", Component: AgencyAgents },
-      { path: "clients", Component: Clients },
-      {
-        path: "clients/:id",
-        Component: ClientWorkspace,
-        children: [
-          { index: true, element: <Navigate to="overview" replace /> },
-          { path: "overview", Component: ClientOverview },
-          { path: "connections", Component: ClientConnections },
-          { path: "calendar", Component: ClientCalendar },
-          { path: "agents", Component: ClientAgents },
-          { path: "posts", Component: ClientPosts },
-        ],
-      },
-      { path: "settings", Component: Settings },
-    ],
-  },
-], { basename: "/app" });
+/** The app's pane; the Studio draws the frame, the rail and the head around it (ADR-1766). */
+const Pane = () => <main className="pane min-h-dvh"><Outlet /></main>;
+
+/**
+ * One app's routes under `/app`: its screen, and the page for one client. The CRM holds the
+ * clients, so its client page has the record; every other app knows a client by its work.
+ */
+function routesFor(app: AppId): RouteObject[] {
+  const client: RouteObject = app === "crm"
+    ? {
+      path: "clients/:id",
+      Component: ClientWorkspace,
+      children: [
+        { index: true, element: <Navigate to="overview" replace /> },
+        { path: "overview", Component: ClientOverview },
+        { path: "posts", Component: ClientPosts },
+      ],
+    }
+    : { path: "work/:id", Component: WorkClient, children: [{ index: true, Component: ClientPosts }] };
+  return [{ path: "/", Component: Pane, children: [{ index: true, Component: SCREENS[app].Component }, client, { path: "*", element: <Navigate to="/" replace /> }] }];
+}
 
 // The gate is outside the router on purpose: no screen mounts, and so no screen fetches, until
-// `/api/session` says the browser is in (`src/Gate.tsx`).
+// `/api/session` says the browser is in and which app this is (`src/Gate.tsx`).
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Gate>
-      <RouterProvider router={router} />
+      {(app) => {
+        document.title = SCREENS[app].label;
+        return <RouterProvider router={createBrowserRouter(routesFor(app), { basename: "/app" })} />;
+      }}
     </Gate>
   </StrictMode>,
 );

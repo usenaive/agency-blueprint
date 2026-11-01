@@ -1,9 +1,9 @@
 import { ArrowRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { apiMessage, apiSend, useApi } from "../api";
-import { PageHeader, STAGE_LABEL } from "../components/kit";
-import { STAGE_ORDER, TEMPLATE, nextStage, type Client } from "../data";
+import { apiMessage, apiSend, useApi } from "../../api";
+import { PageHeader, STAGE_LABEL } from "../../components/kit";
+import { STAGE_ORDER, TEMPLATE, nextStage, type Client } from "../../data";
 
 /** The pipeline: lead → proposal → active → churned. Every column is the CRM's own rows — the
  * same rows the sales agent writes over MCP — so a board with nothing on it means nobody has
@@ -31,16 +31,23 @@ export function Crm() {
   const { data: clients, error, setData, setError } = useApi<Client[]>("/clients");
   const [form, setForm] = useState<typeof BLANK | null>(null);
   const [saving, setSaving] = useState(false);
+  /** The CEO request to paste where the platform named no studio to open (a local run). */
+  const [handoff, setHandoff] = useState<string | null>(null);
 
   const advance = async (c: Client) => {
     const to = nextStage(c.stage);
     if (to === null) return;
     try {
-      // Graduating into active is onboarding: the server also provisions the client's agents.
-      const updated = to === "active"
-        ? (await apiSend<{ client: Client }>("POST", `/clients/${c.id}/onboard`)).client
-        : await apiSend<Client>("POST", `/clients/${c.id}/advance`);
-      setData((clients ?? []).map((row) => (row.id === c.id ? updated : row)));
+      if (to !== "active") {
+        const updated = await apiSend<Client>("POST", `/clients/${c.id}/advance`);
+        return setData((clients ?? []).map((row) => (row.id === c.id ? updated : row)));
+      }
+      // Graduating into active is onboarding. This app hires nobody (ADR-1766): with a team to
+      // hire, it opens the CEO's chat with the request typed, and each agent waits on its card.
+      const onboarded = await apiSend<{ client: Client; draft: string | null; url: string | null }>("POST", `/clients/${c.id}/onboard`);
+      setData((clients ?? []).map((row) => (row.id === c.id ? onboarded.client : row)));
+      if (onboarded.url !== null) window.open(onboarded.url, "_top");
+      else if (onboarded.draft !== null) setHandoff(onboarded.draft);
     } catch (err: unknown) {
       setError(apiMessage(err));
     }
@@ -58,7 +65,7 @@ export function Crm() {
     setSaving(true);
     setError(null);
     try {
-      const created = await apiSend<Client>("POST", "/leads", {
+      const created = await apiSend<Client>("POST", "/clients", {
         name: fields.name.trim(),
         domain: fields.domain.trim(),
         contact: {
@@ -66,7 +73,7 @@ export function Crm() {
           email: fields.contactEmail.trim(),
           role: fields.contactRole.trim(),
         },
-        // The server takes this only from a signed-in operator; the public form's leads are `site`.
+        // The CRM's own form: the server files it as `manual` (the public form is the landing page's).
         source: "manual",
       });
       setData([...(clients ?? []), created]);
@@ -137,6 +144,18 @@ export function Crm() {
 
       <p className="absence mb-4">{TEMPLATE.words.onboarding}</p>
 
+      {handoff !== null ? (
+        <div className="panel mb-4 p-4">
+          <h2 className="text-sm font-semibold">Ask your CEO to hire this client's team</h2>
+          <p className="mt-1 text-sm text-ink-2">Send this in a new CEO chat. Each agent it hires waits for your approval.</p>
+          <p className="mt-3 rounded-md bg-sunken p-3 font-mono text-xs leading-relaxed text-ink">{handoff}</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => void navigator.clipboard?.writeText(handoff)}>Copy</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setHandoff(null)}>Done</button>
+          </div>
+        </div>
+      ) : null}
+
       {clients === null ? (
         <div className="absence">{error ? "The pipeline could not be read, so this is not the answer — retry once the error above is resolved." : "Loading the pipeline…"}</div>
       ) : clients.length === 0 && form === null ? (
@@ -166,16 +185,18 @@ export function Crm() {
                   <div className="space-y-2">
                     {rows.map((c) => (
                       <div key={c.id} className="panel p-3">
-                        <div className="flex items-center justify-between gap-2">
+                        {/* Name over domain: four columns leave a card too narrow to share a line. */}
+                        <div className="min-w-0">
                           {c.stage === "active" ? (
-                            <Link to={`/clients/${c.id}`} className="truncate font-medium underline-offset-2 hover:underline">{c.name}</Link>
+                            <Link to={`/clients/${c.id}`} className="block truncate font-medium underline-offset-2 hover:underline">{c.name}</Link>
                           ) : (
-                            <span className="truncate font-medium">{c.name}</span>
+                            <span className="block truncate font-medium">{c.name}</span>
                           )}
-                          <span className="font-mono text-xs text-ink-3">{c.domain}</span>
+                          <span className="block truncate font-mono text-xs text-ink-3">{c.domain}</span>
                         </div>
-                        <div className="mt-0.5 text-xs text-ink-2">
-                          {c.contact.name} · {c.contact.role} · <span className="font-mono">{c.contact.email}</span>
+                        <div className="mt-1 text-xs text-ink-2">
+                          {c.contact.name} · {c.contact.role}
+                          <span className="block truncate font-mono" title={c.contact.email}>{c.contact.email}</span>
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {sourceText(c, clients) ? <span className="chip chip-via">{sourceText(c, clients)}</span> : null}
@@ -185,7 +206,9 @@ export function Crm() {
                         </div>
                         {c.notes.length > 0 ? <p className="mt-2 text-xs text-ink-2">{c.notes[0]}</p> : null}
                         {c.nextAction ? <p className="mt-1 text-xs text-ink-3">Next: {c.nextAction}</p> : null}
-                        {nextStage(c.stage) !== null ? (
+                        {c.onboardingRequestedAt !== undefined && c.stage !== "active" ? (
+                          <p className="mt-2 text-xs text-ink-2">Team requested: waiting on your CEO's hires.</p>
+                        ) : nextStage(c.stage) !== null ? (
                           <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={() => void advance(c)}>
                             <ArrowRight size={14} strokeWidth={1.75} /> Move to {STAGE_LABEL[nextStage(c.stage)!].toLowerCase()}
                           </button>
