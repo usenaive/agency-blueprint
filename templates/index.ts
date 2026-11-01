@@ -112,7 +112,7 @@ const blank: TemplateVocabulary = {
     eyebrow: "Strategy · Content · Reporting",
     title: "An agency that shows you the work before it ships.",
     subtitle:
-      "We plan the quarter, produce the work and report what it moved — with every deliverable in an approval queue you hold the key to.",
+      "We plan the work, make it and report on it, and you approve every piece before it ships.",
     cta: "Request a proposal",
     services: [
       {
@@ -165,7 +165,7 @@ const seoGeo: TemplateVocabulary = {
     eyebrow: "SEO · GEO · Content",
     title: "Search is changing. Your visibility shouldn't.",
     subtitle:
-      "We make companies findable in classic search and in AI answers alike — technical SEO, generative-engine optimization and content that earns citations, not just clicks.",
+      "We make you findable in classic search and in AI answers, through technical SEO, answer-engine optimization and content.",
     cta: "Request a free audit",
     services: [
       {
@@ -220,7 +220,7 @@ const marketResearch: TemplateVocabulary = {
     eyebrow: "Sizing · Competitors · Customer insight",
     title: "Decisions deserve numbers you can trace.",
     subtitle:
-      "We size markets, tear down competitors and read what your buyers actually say — and every figure in every report links to where it came from.",
+      "We size markets, tear down competitors and read what buyers say, and every figure links to its source.",
     cta: "Scope a research question",
     services: [
       {
@@ -276,7 +276,7 @@ const advertising: TemplateVocabulary = {
     eyebrow: "Campaigns · Creative · Reporting",
     title: "Ads that start from a real brief.",
     subtitle:
-      "We audit your ad accounts, plan the campaigns, make the copy, statics and video spots to run in them, and report every week. You approve every piece and every change before it happens.",
+      "We plan your campaigns and make the ads for them, and you approve every piece before it runs.",
     cta: "Brief us on a campaign",
     services: [
       {
@@ -332,7 +332,7 @@ const security: TemplateVocabulary = {
     eyebrow: "Journeys · Edge cases · Retests",
     title: "We use your product like your next customer, then try to break it.",
     subtitle:
-      "Testers sign up, onboard and do the job your customer came for, on your live product, and then push on every edge. You get each gap with the steps to reproduce it. Test accounts only, nothing paid, no real user touched.",
+      "Testers use your live product like a new customer, then push on every edge, with test accounts only.",
     cta: "Book a test",
     services: [
       {
@@ -385,7 +385,7 @@ const recruiting: TemplateVocabulary = {
     eyebrow: "Sourcing · Screening · Outreach",
     title: "Hire from a shortlist you can check.",
     subtitle:
-      "We turn your open role into a brief, find the people who already do that work, score them the same way, and write to them for you — you approve every message.",
+      "We find the people who already do the work, score them the same way, and you approve every message.",
     cta: "Brief us on a role",
     services: [
       {
