@@ -122,7 +122,8 @@ export function Studio() {
             <article key={p.id} className="card p-4" data-post={p.id}>
               <header className="flex flex-wrap items-center gap-2">
                 <h2 className="text-sm font-medium">{p.title}</h2>
-                <StatusChip status={p.status} />
+                {/* Approving a studio deliverable posts nothing (server/routes.ts): it is done, not "pending publish". */}
+                <StatusChip status={p.status} label={p.status === "approved" ? "Approved" : undefined} />
                 <KindChip kind={p.kind} />
                 <span className="font-mono text-xs text-ink-3">{clientName(p.clientId)} · by {p.agent}</span>
               </header>

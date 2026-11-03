@@ -281,6 +281,9 @@ describe("mcp tools", () => {
     expect(post.channel).toBe("studio");
     expect(post.files).toEqual(["fil_glb1", "fil_png1"]);
     expect(store.read().posts.find((p) => p.id === post.id)?.files).toEqual(["fil_glb1", "fil_png1"]);
+    // Filed today whatever day the seat sent: a studio deliverable is never scheduled.
+    const guessed = (await handleMcp(call("create_draft_post", { ...base, scheduled_for: "2025-05-19" }), store, null)) as CallResult;
+    expect((JSON.parse(guessed.result.content[0]!.text) as { scheduledFor: string }).scheduledFor).toBe(new Date().toISOString().slice(0, 10));
     // No files is a row with no `files` at all, as every word-only row has always been.
     const plain = (await handleMcp(call("create_draft_post", { ...base, files: [] }), store, null)) as CallResult;
     expect(JSON.parse(plain.result.content[0]!.text)).not.toHaveProperty("files");

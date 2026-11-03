@@ -112,6 +112,8 @@ describe("the Studio screen", () => {
     expect(writes.map((c) => [c.init?.method, c.path, JSON.parse(String(c.init?.body))])).toEqual([["PATCH", "/api/posts/post_c1", { status: "approved" }]]);
     expect(screen.calls.some((c) => c.path.includes("post-now") || c.path.includes("/social/"))).toBe(false);
     expect(screen.text()).toContain("Approved");
+    // An approved studio file is done: nothing publishes it, so it never reads "pending publish".
+    expect(screen.text()).not.toContain("pending publish");
   });
 
   it("says a file could not be read rather than drawing a broken one", async () => {

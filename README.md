@@ -357,7 +357,7 @@ physical products. Its crew is four seats, not the seven:
 | `account-manager` | Studio lead | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, list_posts, schedule_post}`, mailbox reads, `send_to_agent`, `list_agents`; `email.send` at **ask** | `naive/product-design`, `naive/client-onboarding` | Mon 09:00 studio check-in | Writes the **STUDIO NOTE** from your four answers before anything is made, then hands one first brief to `designer`. |
 | `designer` | Concept meshes | `generate_3d_model`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `send_to_agent` | `naive/product-design`, `naive/3d-modeling` | — | Waits for a brief. |
 | `engineer` | Dimensioned parts | `build_3d`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`, `send_to_agent` | `naive/product-design`, `naive/cad-parts` | — | Waits for a brief. |
-| `visualizer` | Stills & video | `generate_image`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`; `generate_video` at **ask** | `naive/product-design`, `naive/product-video-3d` | — | Waits for a brief. |
+| `visualizer` | Stills & video | `build_3d` (Blender render of the GLB as the still), `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`; `generate_video` at **ask** | `naive/product-design`, `naive/product-video-3d` | — | Waits for a brief. |
 
 The engine also gives every template crew the file tools (`bash`, read/write/edit) and `apps`
 at ask; `build_3d` runs on the session's computer.

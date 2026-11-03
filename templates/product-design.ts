@@ -11,8 +11,9 @@
  *   * `designer` — one `generate_3d_model` per look (a textured GLB, no units). Never `build_3d`.
  *   * `engineer` — `build_3d` with `engine: "cad"`, only for a brief that names millimetres, and only
  *     a watertight solid within 0.5 mm of the brief is filed. Never `generate_3d_model`.
- *   * `visualizer` — one studio still per look, and the product video only when the brief asks
- *     (`generate_video` stays at `ask`).
+ *   * `visualizer` — one studio still per look, rendered from the GLB itself with `build_3d`
+ *     (`engine: "blender"`), so the still is the mesh being filed and never a text-to-image guess;
+ *     the product video only when the brief asks (`generate_video` stays at `ask`).
  *
  * Every file is filed as ONE pending deliverable on the `studio` channel with its `fil_` ids
  * (`create_draft_post`'s `files`), which the dashboard's Studio screen shows and the operator
@@ -44,7 +45,7 @@ const system = (role: string): string => `${PREAMBLE} ${gate} ${OWN_RECORD} ${ro
  * a guess.
  */
 const READ_NOTE =
-  `First read the note titled ${STUDIO_NOTE} on the agency's own record (list_clients, get_client). ` +
+  `First, every session, even when the message names a cli_ id: read the note titled ${STUDIO_NOTE} on the agency's own record (list_clients, get_client). ` +
   "If there is none yet, make nothing and stop.";
 
 /** How a seat files a file: one pending deliverable on the studio channel, carrying its `fil_` ids. */
@@ -100,7 +101,7 @@ const designer: AgentDecl = {
     `You are the designer: concept meshes for looks. ${READ_NOTE} ` +
       "The message names the client's cli_ id and the brief. Make ONE generate_3d_model per brief from the brief and the note, texture true, no logo or text. " +
       "It runs as a job: end the turn and wait for the GLB; never poll, never start a second. On failure retry once, then ask_operator. " +
-      "Then send_to_agent visualizer, wait false: the cli_ id, the GLB fil_ id, the brief and a still prompt. " +
+      "Then send_to_agent visualizer, wait false: the cli_ id, the GLB fil_ id and the brief: the visualizer renders the GLB itself. " +
       "A mesh has no units: never claim a size or that it can be manufactured. Never call build_3d, not even for the mesh clean-up naive/3d-modeling describes: file the GLB as it comes.",
   ),
   tools: tools(
@@ -122,7 +123,7 @@ const engineer: AgentDecl = {
     "Builds a part to the millimetres a brief names, checks it is a watertight solid of the right size, and files STEP and STL for your approval. Works only on briefs that give sizes.",
   system: system(
     `You are the engineer: dimensioned parts. ${READ_NOTE} ` +
-      "The message names the client's cli_ id and a brief in millimetres. Call build_3d with engine cad. " +
+      "The message names the client's cli_ id and a brief in millimetres. Call build_3d ONCE with engine cad and render iso: it already exports STEP and STL, so never call it again just to export. " +
       "Accept it only when watertight is true and every bbox_mm edge is within 0.5 mm of the brief; else one correction pass, then file nothing; add_client_note STOPPED with both sizes. " +
       `${FILE_IT} Kind part, files the STEP, the STL and the preview; the summary carries bbox_mm and volume_cm3. ` +
       "For a video, send_to_agent visualizer, wait false, with the cli_ id and preview fil_. Never call generate_3d_model.",
@@ -146,13 +147,14 @@ const visualizer: AgentDecl = {
     "Makes one studio still for each look and files the mesh and still together for your approval. Makes a product video only when the brief asks, and only after you approve the call.",
   system: system(
     `You are the visualizer: studio stills and product video. ${READ_NOTE} ` +
-      "The message names the client's cli_ id, the brief and the GLB or preview fil_ id. Make ONE studio still with generate_image: plain background, no text, no logo, no watermark; view_image it and retry once if it breaks that. " +
+      "The message names the client's cli_ id, the brief and the GLB or preview fil_ id. The still is a render of THAT mesh, never a picture drawn from the brief's words: " +
+      "fetch_file the GLB, then ONE build_3d call — engine blender, render false, publish false, timeout_s 300 — whose script imports it (bpy.ops.import_scene.gltf), frames it three-quarter under the skill's studio lights on light grey, and renders 1024x1024 to still.png in the GLB's folder (build_3d deletes its own); publish_file that still.png, view_image it, and a cut-off mesh gets one corrected render. " +
       `${FILE_IT} For a look: ONE pending deliverable, kind concept, files the GLB then the still. ` +
       "A product video only when the brief asks: generate_video from the still (it waits for approval), filed as kind product-video. " +
-      "Skip the skill's Blender and turntable steps.",
+      "Skip the skill's turntable step.",
   ),
   tools: tools(
-    [...CONTEXT, "generate_image", "view_image", "fetch_file", "publish_file", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "add_client_note")],
+    [...CONTEXT, "build_3d", "view_image", "fetch_file", "publish_file", ...crm("list_clients", "get_client", "list_posts", "create_draft_post", "add_client_note")],
     ["generate_video", ...OPERATOR],
   ),
   handoffs: false,

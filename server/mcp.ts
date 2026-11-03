@@ -101,7 +101,7 @@ export const TOOLS = [
     client: str("Client id"), title: str("Title"), summary: str("One-line summary"),
     body: str("The draft itself, in full — this is what the operator reads before approving it."),
     kind: str(ACTIVE.kinds.map((k) => k.id).join("|")), channel: str(POST_CHANNELS.join("|")),
-    scheduled_for: str("ISO day (YYYY-MM-DD)"),
+    scheduled_for: str("ISO day (YYYY-MM-DD); on channel studio the filing day is stamped instead"),
     files: {
       type: "array", maxItems: MAX_POST_FILES, items: { type: "string", pattern: FILE_ID.source },
       description: `Optional: the platform files this deliverable is (fil_… ids, at most ${MAX_POST_FILES}) — a mesh and its still, a part's STEP, STL and preview. Shown on the Studio screen for approval.`,
@@ -218,7 +218,9 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
         clientId: need(params, "client"), title: need(params, "title"), summary: need(params, "summary"),
         body: typeof params.body === "string" && params.body !== "" ? params.body : undefined,
         kind: need(params, "kind") as DraftPostInput["kind"], channel: channel as PostChannel,
-        scheduledFor: need(params, "scheduled_for"), agent: "mcp",
+        // A studio deliverable is filed, never scheduled: its day is the day it was filed. A seat is
+        // not told the date, and one guessed 2025-05-19 on a live run, so the server stamps it.
+        scheduledFor: channel === "studio" ? new Date().toISOString().slice(0, 10) : need(params, "scheduled_for"), agent: "mcp",
         ...(files.length > 0 ? { files } : {}),
       });
       if (!post) throw new ToolError("no such client");

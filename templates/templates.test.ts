@@ -391,7 +391,9 @@ describe("product-design", () => {
       expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
       expect([at, agent.description?.match(/[.!?](\s|$)/g)?.length]).toEqual([at, 2]);
       const n = words(agent.system ?? "");
-      expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
+      // 460, not 400: the live run's fixes (read the note even with a cli_ id in hand, one build_3d
+      // call, a still rendered from the GLB) each needed their own words on top of the shared gate.
+      expect([at, n >= 150 && n <= 460]).toEqual([at, true]);
       expect([at, agent.skills?.[0]]).toEqual([at, "naive/product-design"]);
       for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
       // Only the studio lead has a day one: every other seat waits for a brief, so nothing is made
@@ -420,6 +422,8 @@ describe("product-design", () => {
     for (const name of ["designer", "engineer", "visualizer"]) {
       expect([name, seat(name).system]).toEqual([name, expect.stringContaining(`read the note titled ${STUDIO_NOTE}`)]);
       expect([name, seat(name).system]).toEqual([name, expect.stringMatching(/If there is none yet, make nothing and stop/)]);
+      // Live run 2026-11-03: the engineer and visualizer skipped the note when the handoff named a cli_ id.
+      expect([name, seat(name).system]).toEqual([name, expect.stringMatching(/First, every session, even when the message names a cli_ id: read the note titled STUDIO NOTE on the agency's own record \(list_clients, get_client\)/)]);
     }
   });
 
@@ -441,19 +445,23 @@ describe("product-design", () => {
     expect(seat("engineer").system).toMatch(/engine cad/);
     expect(seat("engineer").system).toMatch(/watertight is true and every bbox_mm edge is within 0\.5 mm/);
     expect(seat("engineer").system).toMatch(/Never call generate_3d_model\./);
-    for (const name of ["account-manager", "visualizer"]) {
-      expect([name, permission(name, "build_3d"), permission(name, "generate_3d_model")]).toEqual([name, undefined, undefined]);
-    }
+    expect(seat("engineer").system).toMatch(/Call build_3d ONCE with engine cad and render iso: it already exports STEP and STL, so never call it again just to export/);
+    expect([permission("account-manager", "build_3d"), permission("account-manager", "generate_3d_model")]).toEqual([undefined, undefined]);
+    expect(permission("visualizer", "generate_3d_model")).toBeUndefined();
   });
 
   it("makes one still per look and holds product video for the operator", () => {
-    expect(permission("visualizer", "generate_image")).toBe("allow");
+    // Live run 2026-11-03: a text-to-image still showed a jug while the GLB was an hourglass carafe.
+    // The still is a Blender render of the GLB itself, so it can only show the mesh being filed.
+    expect(permission("visualizer", "build_3d")).toBe("allow");
+    expect(permission("visualizer", "generate_image")).toBeUndefined();
     expect(permission("visualizer", "generate_video")).toBe("ask");
-    expect(seat("visualizer").system).toMatch(/ONE studio still with generate_image.*no text, no logo, no watermark/);
+    expect(seat("visualizer").system).toMatch(/The still is a render of THAT mesh, never a picture drawn from the brief's words/);
+    expect(seat("visualizer").system).toMatch(/fetch_file the GLB, then ONE build_3d call — engine blender, render false, publish false.*bpy\.ops\.import_scene\.gltf.*to still\.png in the GLB's folder.*publish_file that still\.png/);
     expect(seat("visualizer").system).toMatch(/A product video only when the brief asks/);
-    // naive/product-video-3d renders with build_3d and a bash turntable; the visualizer holds neither.
-    expect(seat("visualizer").system).toMatch(/generate_video from the still.*Skip the skill's Blender and turntable steps/);
-    expect([permission("visualizer", "bash"), permission("visualizer", "build_3d")]).toEqual([undefined, undefined]);
+    // naive/product-video-3d's turntable runs from bash, which the visualizer does not hold.
+    expect(seat("visualizer").system).toMatch(/generate_video from the still.*Skip the skill's turntable step/);
+    expect(permission("visualizer", "bash")).toBeUndefined();
   });
 
   it("files every file as one pending studio deliverable carrying its fil_ ids", () => {
