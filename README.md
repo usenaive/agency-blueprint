@@ -340,12 +340,12 @@ The dashboard shows which template is active on **Settings**, and does not offer
 a template is data compiled into the app *and* its config, so switching is the edit above
 plus a re-apply, and a button could not honestly do it.
 
-**`product-design` needs `@usenaive-sdk/blueprints` 0.13.0.** The engine refuses a repo whose
+**`product-design` needs `@usenaive-sdk/blueprints` 0.16.0.** The engine refuses a repo whose
 template list is not exactly its own, so `naive.config.ts` carries only the templates the
 installed engine lists and warns about the rest (`agency: the installed
 @usenaive-sdk/blueprints does not list product-design; …`). On an older engine `blank` and
 `seo-geo` work as before; choosing `product-design` there fails with that version in the
-error, and `pnpm up @usenaive-sdk/blueprints@^0.13.0` is the fix.
+error, and `pnpm up @usenaive-sdk/blueprints@^0.16.0` is the fix.
 
 ## 🧪 The product design studio
 

@@ -186,10 +186,10 @@ describe("the agency persona", () => {
 });
 
 /**
- * `product-design` is carried ahead of the engine that lists it (`@usenaive-sdk/blueprints` 0.13.0):
+ * `product-design` is carried ahead of the engine that lists it (`@usenaive-sdk/blueprints` 0.16.0):
  * `defineProject` refuses a repo whose list is not exactly the engine's, so the config filters to the
  * installed engine's list and says what it left out. On the committed engine (0.11.4) it is skipped
- * with a warning and choosing it is a clear error; on 0.13.0 it is carried and installs its four.
+ * with a warning and choosing it is a clear error; on 0.16.0 it is carried and installs its four.
  */
 describe("the installed engine's template list", () => {
   const listed = BLUEPRINTS.agency?.templates ?? [];
