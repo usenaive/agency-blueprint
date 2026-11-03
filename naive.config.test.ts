@@ -222,7 +222,7 @@ describe("the installed engine's template list", () => {
       expect(config.questions.map((q) => q.key)).toEqual(["products", "audience", "manufacturable", "done"]);
       expect(config.crew_per_client ?? []).toEqual([]);
     } else {
-      await expect(load).rejects.toThrow(/product-design template needs @usenaive-sdk\/blueprints >= 0\.13\.0/);
+      await expect(load).rejects.toThrow(/product-design template needs @usenaive-sdk\/blueprints >= 0\.16\.0/);
     }
   }, 30_000);
 });
