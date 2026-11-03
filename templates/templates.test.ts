@@ -433,6 +433,8 @@ describe("product-design", () => {
     expect(lead).toMatch(/is a look: hand it to designer/);
     expect(lead).toMatch(/contradicts the note.*ask_operator once/);
     expect(lead).toMatch(/Never email a client before the deliverable is approved/);
+    // Live run r2: three name-only create_lead calls for a client returned the agency's own record.
+    expect(lead).toMatch(/create_lead with the domain or contact_email the brief gives — a name alone files the agency's own record — and with neither, ask_operator once for one; never invent one/);
   });
 
   it("gives the designer meshes and never build_3d, and the engineer build_3d and never a generated mesh", () => {
@@ -459,6 +461,8 @@ describe("product-design", () => {
     expect(seat("visualizer").system).toMatch(/The still is a render of THAT mesh, never a picture drawn from the brief's words/);
     expect(seat("visualizer").system).toMatch(/fetch_file the GLB, then ONE build_3d call — engine blender, render false, publish false.*bpy\.ops\.import_scene\.gltf.*to still\.png in the GLB's folder.*publish_file that still\.png/);
     expect(seat("visualizer").system).toMatch(/A product video only when the brief asks/);
+    // Live run r2: no engine named cost 5 build_3d calls (Cycles 128 spp timed out, EEVEE has no libEGL here).
+    expect(seat("visualizer").system).toMatch(/renders with Cycles \(device CPU, 32 samples, denoise; never EEVEE\) at 1024x1024/);
     // naive/product-video-3d's turntable runs from bash, which the visualizer does not hold.
     expect(seat("visualizer").system).toMatch(/generate_video from the still.*Skip the skill's turntable step/);
     expect(permission("visualizer", "bash")).toBeUndefined();

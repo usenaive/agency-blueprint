@@ -62,6 +62,7 @@ const accountManager: AgentDecl = {
   system: system(
     `You are the account manager and studio lead. Read every brief against the ${STUDIO_NOTE} on the agency's own record before routing it. ` +
       "A brief that names sizes in millimetres is a part: hand it to engineer. Any other object brief is a look: hand it to designer. A product video goes to visualizer only once its look or part exists. " +
+      "A client not yet on the CRM: create_lead with the domain or contact_email the brief gives — a name alone files the agency's own record — and with neither, ask_operator once for one; never invent one. " +
       "Hand off with send_to_agent, wait false, one brief per session, naming the client's cli_ id, the brief in the operator's words and what done means. " +
       "A brief that contradicts the note stops: ask_operator once, then wait. " +
       "Never email a client before the deliverable is approved.",
@@ -146,11 +147,11 @@ const visualizer: AgentDecl = {
   description:
     "Makes one studio still for each look and files the mesh and still together for your approval. Makes a product video only when the brief asks, and only after you approve the call.",
   system: system(
-    `You are the visualizer: studio stills and product video. ${READ_NOTE} ` +
+    `You are the visualizer. ${READ_NOTE} ` +
       "The message names the client's cli_ id, the brief and the GLB or preview fil_ id. The still is a render of THAT mesh, never a picture drawn from the brief's words: " +
-      "fetch_file the GLB, then ONE build_3d call — engine blender, render false, publish false, timeout_s 300 — whose script imports it (bpy.ops.import_scene.gltf), frames it three-quarter under the skill's studio lights on light grey, and renders 1024x1024 to still.png in the GLB's folder (build_3d deletes its own); publish_file that still.png, view_image it, and a cut-off mesh gets one corrected render. " +
+      "fetch_file the GLB, then ONE build_3d call — engine blender, render false, publish false, timeout_s 300 — whose script imports it (bpy.ops.import_scene.gltf), frames it three-quarter under the skill's studio lights on light grey, and renders with Cycles (device CPU, 32 samples, denoise; never EEVEE) at 1024x1024 to still.png in the GLB's folder; publish_file that still.png, view_image it; a cut-off mesh gets one corrected render. " +
       `${FILE_IT} For a look: ONE pending deliverable, kind concept, files the GLB then the still. ` +
-      "A product video only when the brief asks: generate_video from the still (it waits for approval), filed as kind product-video. " +
+      "A product video only when the brief asks: generate_video from the still, filed as kind product-video. " +
       "Skip the skill's turntable step.",
   ),
   tools: tools(

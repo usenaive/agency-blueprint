@@ -117,6 +117,20 @@ describe("mcp tools", () => {
     expect(store.read().clients.at(-1)?.id).toBe(lead.id);
   });
 
+  it("create_lead says when a name alone landed on the agency's own record under another name", async () => {
+    const store = freshStore();
+    const file = async (args: Record<string, unknown>) =>
+      JSON.parse(((await handleMcp(call("create_lead", args), store, null)) as CallResult).result.content[0]!.text) as Client & { notice?: string };
+    const own = await file({ name: "Sandline Studio" });
+    expect(own.notice).toBeUndefined();
+    const client = await file({ name: "Brightfold Home" });
+    expect(client.id).toBe(own.id);
+    expect(client.notice).toMatch(/agency's own record, so this is Sandline Studio \(cli_[0-9a-f]+\), not a new "Brightfold Home"/);
+    expect(store.read().clients.find((c) => c.id === own.id)).not.toHaveProperty("notice");
+    const real = await file({ name: "Brightfold Home", domain: "brightfold.example" });
+    expect([real.id === own.id, real.notice]).toEqual([false, undefined]);
+  });
+
   it("create_lead records where a lead came from: outreach by default, network when said, a referral only from a real client", async () => {
     const store = freshStore();
     const file = async (args: Record<string, unknown>) => (await handleMcp(call("create_lead", { contact_email: "a@x.example", ...args }), store, null)) as CallResult;

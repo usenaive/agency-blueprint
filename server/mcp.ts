@@ -79,7 +79,7 @@ const AGENT_SOURCES = ["outreach", "network", "referral"] as const satisfies rea
 export const TOOLS = [
   { name: "list_clients", description: "All CRM clients with their pipeline stage.", inputSchema: obj({}, []) },
   { name: "get_client", description: "One client by id.", inputSchema: obj({ id: str("Client id (cli_…)") }, ["id"]) },
-  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator. A name alone, filed a second time, returns the name-only record already on the pipeline instead of a second one.", inputSchema: obj({
+  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator. A name alone, with no domain and no contact_email, is always the agency's own record: if that record exists it is returned, whatever name you give. To file a client or prospect, give its domain or contact_email.", inputSchema: obj({
     name: str("Company name"), domain: str("Company domain, when known"),
     contact_name: str("Contact person, when known"), contact_email: str("Contact email, when known"), contact_role: str("Contact role, when known"),
     note: str("Optional first note"),
@@ -187,13 +187,20 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
         throw new ToolError("a referral needs referred_by: the id of the existing client (past the lead stage, not the agency itself) who introduced them (list_clients)");
       }
       if (referredBy && source !== "referral") throw new ToolError("referred_by is only for a referral");
-      return store.createLead({
-        name: need(params, "name"), domain: text(params, "domain"),
+      const name = need(params, "name");
+      const filed = store.createLead({
+        name, domain: text(params, "domain"),
         contact: { name: text(params, "contact_name"), email: text(params, "contact_email"), role: text(params, "contact_role") },
         note: typeof params.note === "string" ? params.note : undefined,
         source: source as LeadSource,
         ...(referredBy ? { referredBy } : {}),
       });
+      // A name-only filing lands on the agency's own record whatever the name (store.ts). Say so when
+      // the name differs, or a seat filing a client by name alone takes the agency's id for the client's.
+      if (filed.domain === "" && filed.contact.email === "" && filed.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+        return { ...filed, notice: `A name alone files the agency's own record, so this is ${filed.name} (${filed.id}), not a new "${name}". To file a client, call create_lead again with its domain or contact_email; never invent one.` };
+      }
+      return filed;
     }
     case "advance_pipeline": {
       const client = store.advanceClient(need(params, "id"));
