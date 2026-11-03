@@ -314,17 +314,16 @@ demo seed, the words the screens print.
 | `blank` | No specialism — the seven, generic | post, page, report, audit | none |
 | `seo-geo` | Search: audits, SERP work, answer-engine optimization | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
 
-This repo carries **both**, so switching is an edit and a re-apply — never a re-clone, and
-never a new app:
-
-```ts
-// templates/index.ts
-export const TEMPLATE: TemplateName = "seo-geo";   // was "blank", the default
-```
+This repo carries **both**, so switching is a re-build and a re-apply — never a re-clone, and
+never a new app. `templates/index.ts` reads the template from `NAIVE_TEMPLATE`; unset (or any
+other value) it is `blank`, the default. `naive.config.ts` reads the same value, so set it for
+both the build and the apply:
 
 ```sh
-pnpm build && naive up
+NAIVE_TEMPLATE=seo-geo pnpm build && NAIVE_TEMPLATE=seo-geo naive up
 ```
+
+Every later build and apply needs it too: a build with `NAIVE_TEMPLATE` unset goes back to `blank`.
 
 **Switching widens, and never narrows.** Agents the new template declares are created. Agents
 only the old one declared are *reported* and left standing — `naive up` lists them, and the
@@ -335,7 +334,7 @@ app, its URL and its MCP token all survive a switch, and a deliverable filed und
 template keeps its kind.
 
 The dashboard shows which template is active on **Settings**, and does not offer a switcher:
-a template is data compiled into the app *and* its config, so switching is the edit above
+a template is data compiled into the app *and* its config, so switching is the build above
 plus a re-apply, and a button could not honestly do it.
 
 ## 🖥 Operating the agency
@@ -391,7 +390,7 @@ plus a re-apply.
 
 | To change… | Edit | Then |
 |---|---|---|
-| which template runs | `TEMPLATE` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
+| which template runs | `NAIVE_TEMPLATE` (read in [`templates/index.ts`](templates/index.ts); unset is `blank`) | `NAIVE_TEMPLATE=seo-geo pnpm build && NAIVE_TEMPLATE=seo-geo naive up` |
 | an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) — both templates share the seven, `seo-geo` only appends focus, search skills and search work (`WORK`) to an intake or timer | `naive up` |
 | add an agent to the crew | the `roster` in [`templates/agents.ts`](templates/agents.ts) | `naive up` |
 | the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) / [`templates/seo-geo.ts`](templates/seo-geo.ts) — at most four | `naive up` |
