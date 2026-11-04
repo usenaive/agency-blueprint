@@ -10,6 +10,9 @@ import { TEMPLATE } from "./templates/index.ts";
 /** Loaded once: jiti compiles the config cold, and every test below reads the same apply. */
 const loaded = loadConfig(dirname(fileURLToPath(import.meta.url)));
 
+/** What only `seo-geo` adds to the applied config; `templates/templates.test.ts` covers it directly for both. */
+const SEO = TEMPLATE === "seo-geo";
+
 /** The tools a connected account contributes to a turn — `<connector>.<tool>`, and never the dashboard's own. */
 const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
   Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard."));
@@ -63,7 +66,8 @@ describe("naive.config.ts", () => {
     // of its own, so switching template is the only thing that changes this list.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
     expect(result.config.agents.map((a) => a.name)).toEqual([
-      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer", "paid-media-planner",
+      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer",
+      ...(SEO ? ["paid-media-planner"] : []),
     ]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
@@ -95,7 +99,7 @@ describe("naive.config.ts", () => {
             "google_search_console.inspect_url", "google_analytics.run_report",
           ],
         };
-        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, measurement[agent.name] ?? []]);
+        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO && measurement[agent.name]) || []]);
       }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
@@ -118,10 +122,10 @@ describe("naive.config.ts", () => {
     // and its one write is `ask`, so the change is live when the operator approves and not before.
     expect(byName["site-builder"]?.tools?.configs["dashboard.get_site"]).toEqual({ enabled: true, permission: "allow" });
     expect(byName["site-builder"]?.tools?.configs["dashboard.update_site"]).toEqual({ enabled: true, permission: "ask" });
-    // Both templates declare the same seven, so a switch narrows nothing here and `kept` is empty.
-    // The part that does differ — the per-client crew — is `server/proxy.ts`'s, because its names
-    // carry a client slug and cannot be declared statically.
-    expect(result.config.kept.agents).toEqual([]);
+    // Both templates declare the same seven; `seo-geo` adds the paid-media planner, which a switch to
+    // `blank` reports as `kept` and leaves standing. The per-client crew is `server/proxy.ts`'s,
+    // because its names carry a client slug and cannot be declared statically.
+    expect(result.config.kept.agents).toEqual(SEO ? [] : ["paid-media-planner"]);
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
   }, 30_000);
 });
@@ -148,7 +152,7 @@ describe("the agency persona", () => {
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
     expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual([
-      "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "paid-media-planner",
+      "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : []),
     ]);
   }, 30_000);
 
