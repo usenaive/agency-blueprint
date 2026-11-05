@@ -6,7 +6,7 @@ organization.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![engine: @usenaive-sdk/blueprints](https://img.shields.io/npm/v/@usenaive-sdk/blueprints?label=engine%3A%20%40usenaive-sdk%2Fblueprints&color=0a7ea4)](https://www.npmjs.com/package/@usenaive-sdk/blueprints)
-[![CLI: @usenaive-sdk/vetta-cli](https://img.shields.io/npm/v/@usenaive-sdk/vetta-cli?label=cli%3A%20naive&color=0a7ea4)](https://www.npmjs.com/package/@usenaive-sdk/vetta-cli)
+[![CLI: @usenaive-sdk/cli](https://img.shields.io/npm/v/@usenaive-sdk/cli?label=cli%3A%20naive&color=0a7ea4)](https://www.npmjs.com/package/@usenaive-sdk/cli)
 [![node](https://img.shields.io/node/v/@usenaive-sdk/blueprints?label=node)](https://nodejs.org)
 [![React](https://img.shields.io/badge/react-19-149eca.svg)](https://react.dev)
 
@@ -211,7 +211,7 @@ server through Node's own TypeScript stripping), [pnpm](https://pnpm.io), and a 
 key.
 
 ```sh
-npm install -g @usenaive-sdk/vetta-cli          # installs the `naive` command
+npm install -g @usenaive-sdk/cli          # installs the `naive` command
 git clone https://github.com/usenaive/agency-blueprint.git my-agency
 cd my-agency
 pnpm install
