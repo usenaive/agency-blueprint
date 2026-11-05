@@ -317,17 +317,16 @@ demo seed, the words the screens print.
 | `seo-geo` | Search: audits, SERP work, answer-engine optimization | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
 | `product-design` | A product studio: concept meshes, dimensioned parts, studio stills, product video on request — its own four seats, not the seven | concept mesh, studio still, dimensioned part, product video | none |
 
-This repo carries **all three**, so switching is an edit and a re-apply — never a re-clone, and
-never a new app:
-
-```ts
-// templates/index.ts
-export const TEMPLATE: TemplateName = "blank";   // was "seo-geo"
-```
+This repo carries **all three**, so switching is a re-build and a re-apply — never a re-clone, and
+never a new app. `templates/index.ts` reads the template from `NAIVE_TEMPLATE`; unset (or any
+other value) it is `blank`, the default. `naive.config.ts` reads the same value, so set it for
+both the build and the apply:
 
 ```sh
-pnpm build && naive up
+NAIVE_TEMPLATE=seo-geo pnpm build && NAIVE_TEMPLATE=seo-geo naive up
 ```
+
+Every later build and apply needs it too: a build with `NAIVE_TEMPLATE` unset goes back to `blank`.
 
 **Switching widens, and never narrows.** Agents the new template declares are created. Agents
 only the old one declared are *reported* and left standing — `naive up` lists them, and the
@@ -338,15 +337,15 @@ app, its URL and its MCP token all survive a switch, and a deliverable filed und
 template keeps its kind.
 
 The dashboard shows which template is active on **Settings**, and does not offer a switcher:
-a template is data compiled into the app *and* its config, so switching is the edit above
+a template is data compiled into the app *and* its config, so switching is the build above
 plus a re-apply, and a button could not honestly do it.
 
-**`product-design` needs `@usenaive-sdk/blueprints` 0.16.0.** The engine refuses a repo whose
+**`product-design` needs `@usenaive-sdk/blueprints` 0.17.0.** The engine refuses a repo whose
 template list is not exactly its own, so `naive.config.ts` carries only the templates the
 installed engine lists and warns about the rest (`agency: the installed
 @usenaive-sdk/blueprints does not list product-design; …`). On an older engine `blank` and
 `seo-geo` work as before; choosing `product-design` there fails with that version in the
-error, and `pnpm up @usenaive-sdk/blueprints@^0.16.0` is the fix.
+error, and `pnpm up @usenaive-sdk/blueprints@^0.17.0` is the fix.
 
 ## 🧪 The product design studio
 
@@ -436,7 +435,7 @@ plus a re-apply.
 
 | To change… | Edit | Then |
 |---|---|---|
-| which template runs | `TEMPLATE` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
+| which template runs | `NAIVE_TEMPLATE` (read in [`templates/index.ts`](templates/index.ts); unset is `blank`) | `NAIVE_TEMPLATE=seo-geo pnpm build && NAIVE_TEMPLATE=seo-geo naive up` |
 | an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) — both templates share the seven, `seo-geo` only appends focus, search skills and search work (`WORK`) to an intake or timer | `naive up` |
 | add an agent to the crew | the `roster` in [`templates/agents.ts`](templates/agents.ts) | `naive up` |
 | the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) / [`templates/seo-geo.ts`](templates/seo-geo.ts) — at most four | `naive up` |

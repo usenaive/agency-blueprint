@@ -10,6 +10,9 @@ import { TEMPLATE } from "./templates/index.ts";
 /** Loaded once: jiti compiles the config cold, and every test below reads the same apply. */
 const loaded = loadConfig(dirname(fileURLToPath(import.meta.url)));
 
+/** What only `seo-geo` adds to the applied config; `templates/templates.test.ts` covers it directly for both. */
+const SEO = TEMPLATE === "seo-geo";
+
 /** The tools a connected account contributes to a turn — `<connector>.<tool>`, and never the dashboard's own. */
 const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
   Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard."));
@@ -63,7 +66,8 @@ describe("naive.config.ts", () => {
     // of its own, so switching template is the only thing that changes this list.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
     expect(result.config.agents.map((a) => a.name)).toEqual([
-      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer", "paid-media-planner",
+      "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer",
+      ...(SEO ? ["paid-media-planner"] : []),
     ]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
@@ -95,7 +99,7 @@ describe("naive.config.ts", () => {
             "google_search_console.inspect_url", "google_analytics.run_report",
           ],
         };
-        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, measurement[agent.name] ?? []]);
+        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO && measurement[agent.name]) || []]);
       }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
@@ -129,7 +133,7 @@ describe("naive.config.ts", () => {
       .filter((t) => listed.includes(t.name) && t.name !== TEMPLATE)
       .flatMap((t) => t.agents.map((a) => a.name)))].filter((name) => !mine.has(name));
     expect(result.config.kept.agents).toEqual(siblingsOnly);
-    // Pinned only for the default template: blank keeps seo-geo's extra seat too, so its list differs.
+    // Pinned for seo-geo: blank also keeps seo-geo's paid-media planner, so its list differs.
     if (TEMPLATE === "seo-geo") {
       expect(siblingsOnly).toEqual(listed.includes("product-design") ? ["account-manager", "designer", "engineer", "visualizer"] : []);
     }
@@ -159,7 +163,7 @@ describe("the agency persona", () => {
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
     expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual([
-      "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "paid-media-planner",
+      "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : []),
     ]);
   }, 30_000);
 
@@ -186,10 +190,10 @@ describe("the agency persona", () => {
 });
 
 /**
- * `product-design` is carried ahead of the engine that lists it (`@usenaive-sdk/blueprints` 0.16.0):
+ * `product-design` is carried ahead of the engine that lists it (`@usenaive-sdk/blueprints` 0.17.0):
  * `defineProject` refuses a repo whose list is not exactly the engine's, so the config filters to the
  * installed engine's list and says what it left out. On the committed engine (0.11.4) it is skipped
- * with a warning and choosing it is a clear error; on 0.16.0 it is carried and installs its four.
+ * with a warning and choosing it is a clear error; on 0.17.0 it is carried and installs its four.
  */
 describe("the installed engine's template list", () => {
   const listed = BLUEPRINTS.agency?.templates ?? [];

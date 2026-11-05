@@ -32,7 +32,7 @@ import { PROJECT, TEMPLATE } from "./templates/index.ts";
 /**
  * Every template this repo carries that the installed engine admits. `defineProject` refuses a repo
  * whose template list is not exactly its blueprint's (`BLUEPRINTS.agency.templates`), so a template
- * added here ahead of the engine — `product-design` needs `@usenaive-sdk/blueprints` 0.16.0 — is left
+ * added here ahead of the engine — `product-design` needs `@usenaive-sdk/blueprints` 0.17.0 — is left
  * out with a warning rather than breaking every clone, test and publish on the older engine. The
  * same filter `media-blueprint`'s config has carried since its first sibling template.
  */
@@ -44,7 +44,7 @@ if (skipped.length > 0) {
   console.warn(`agency: the installed @usenaive-sdk/blueprints does not list ${skipped.join(", ")}; left out until an engine that lists them is installed.`);
 }
 if (!carried.has(TEMPLATE)) {
-  throw new Error(`agency: the ${TEMPLATE} template needs @usenaive-sdk/blueprints >= 0.16.0; the installed engine lists only ${[...carried].join(", ")}.`);
+  throw new Error(`agency: the ${TEMPLATE} template needs @usenaive-sdk/blueprints >= 0.17.0; the installed engine lists only ${[...carried].join(", ")}.`);
 }
 
 export default defineProject({
