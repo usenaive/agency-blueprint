@@ -15,6 +15,7 @@ import { SITE_SECTIONS } from "../site/site.config.ts";
 import { ACTIVE } from "../templates/index.ts";
 import type { DraftPostInput, Store } from "./store.ts";
 import type { LeadSource } from "../seed/clients.ts";
+import { FILE_ID, MAX_POST_FILES, POST_CHANNELS, type PostChannel } from "../seed/posts.ts";
 
 export const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
@@ -78,7 +79,7 @@ const AGENT_SOURCES = ["outreach", "network", "referral"] as const satisfies rea
 export const TOOLS = [
   { name: "list_clients", description: "All CRM clients with their pipeline stage.", inputSchema: obj({}, []) },
   { name: "get_client", description: "One client by id.", inputSchema: obj({ id: str("Client id (cli_…)") }, ["id"]) },
-  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator. A name alone, filed a second time, returns the name-only record already on the pipeline instead of a second one.", inputSchema: obj({
+  { name: "create_lead", description: "Add a new lead to the CRM pipeline. Only the name is required: file what you know and leave the rest for the operator. A name alone, with no domain and no contact_email, is always the agency's own record: if that record exists it is returned, whatever name you give. To file a client or prospect, give its domain or contact_email.", inputSchema: obj({
     name: str("Company name"), domain: str("Company domain, when known"),
     contact_name: str("Contact person, when known"), contact_email: str("Contact email, when known"), contact_role: str("Contact role, when known"),
     note: str("Optional first note"),
@@ -99,8 +100,12 @@ export const TOOLS = [
   { name: "create_draft_post", description: "Add a pending draft to a client's content queue.", inputSchema: obj({
     client: str("Client id"), title: str("Title"), summary: str("One-line summary"),
     body: str("The draft itself, in full — this is what the operator reads before approving it."),
-    kind: str(ACTIVE.kinds.map((k) => k.id).join("|")), channel: str("blog|linkedin|x"),
-    scheduled_for: str("ISO day (YYYY-MM-DD)"),
+    kind: str(ACTIVE.kinds.map((k) => k.id).join("|")), channel: str(POST_CHANNELS.join("|")),
+    scheduled_for: str("ISO day (YYYY-MM-DD); on channel studio the filing day is stamped instead"),
+    files: {
+      type: "array", maxItems: MAX_POST_FILES, items: { type: "string", pattern: FILE_ID.source },
+      description: `Optional: the platform files this deliverable is (fil_… ids, at most ${MAX_POST_FILES}) — a mesh and its still, a part's STEP, STL and preview. Shown on the Studio screen for approval.`,
+    },
   }, ["client", "title", "summary", "kind", "channel", "scheduled_for"]) },
   { name: "approve_post", description: "Approve a post for publishing.", inputSchema: obj({ id: str("Post id") }, ["id"]) },
   { name: "schedule_post", description: "Reslot a post on the calendar.", inputSchema: obj({
@@ -127,6 +132,20 @@ const need = (params: Record<string, unknown>, key: string): string => {
 };
 const text = (params: Record<string, unknown>, key: string): string =>
   typeof params[key] === "string" ? (params[key] as string) : "";
+
+/**
+ * `files` as an agent sent it: absent is none; anything else must be a list of at most
+ * `MAX_POST_FILES` platform file ids. Refused whole, never trimmed — a deliverable filed without the
+ * file the agent meant to attach is one the operator would approve blind.
+ */
+function fileIds(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new ToolError("files must be a list of fil_ ids");
+  if (value.length > MAX_POST_FILES) throw new ToolError(`files takes at most ${MAX_POST_FILES} ids`);
+  const bad = value.filter((id) => typeof id !== "string" || !FILE_ID.test(id));
+  if (bad.length > 0) throw new ToolError(`files must hold only platform file ids (fil_…); refused: ${bad.map((id) => JSON.stringify(id)).join(", ")}`);
+  return [...new Set(value as string[])];
+}
 
 /** The whole roster, cursor followed: a crew on page four is an agent this tool can still start. */
 async function platformAgents(config: ProxyConfig | null): Promise<AgentRow[]> {
@@ -168,13 +187,20 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
         throw new ToolError("a referral needs referred_by: the id of the existing client (past the lead stage, not the agency itself) who introduced them (list_clients)");
       }
       if (referredBy && source !== "referral") throw new ToolError("referred_by is only for a referral");
-      return store.createLead({
-        name: need(params, "name"), domain: text(params, "domain"),
+      const name = need(params, "name");
+      const filed = store.createLead({
+        name, domain: text(params, "domain"),
         contact: { name: text(params, "contact_name"), email: text(params, "contact_email"), role: text(params, "contact_role") },
         note: typeof params.note === "string" ? params.note : undefined,
         source: source as LeadSource,
         ...(referredBy ? { referredBy } : {}),
       });
+      // A name-only filing lands on the agency's own record whatever the name (store.ts). Say so when
+      // the name differs, or a seat filing a client by name alone takes the agency's id for the client's.
+      if (filed.domain === "" && filed.contact.email === "" && filed.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
+        return { ...filed, notice: `A name alone files the agency's own record, so this is ${filed.name} (${filed.id}), not a new "${name}". To file a client, call create_lead again with its domain or contact_email; never invent one.` };
+      }
+      return filed;
     }
     case "advance_pipeline": {
       const client = store.advanceClient(need(params, "id"));
@@ -192,11 +218,17 @@ async function callTool(name: string, params: Record<string, unknown>, store: St
       return store.read().posts.filter((p) => p.clientId === client && (params.state === undefined || p.status === params.state));
     }
     case "create_draft_post": {
+      const channel = need(params, "channel");
+      if (!(POST_CHANNELS as readonly string[]).includes(channel)) throw new ToolError(`channel must be one of ${POST_CHANNELS.join(", ")}`);
+      const files = fileIds(params.files);
       const post = store.createDraftPost({
         clientId: need(params, "client"), title: need(params, "title"), summary: need(params, "summary"),
         body: typeof params.body === "string" && params.body !== "" ? params.body : undefined,
-        kind: need(params, "kind") as DraftPostInput["kind"], channel: need(params, "channel") as DraftPostInput["channel"],
-        scheduledFor: need(params, "scheduled_for"), agent: "mcp",
+        kind: need(params, "kind") as DraftPostInput["kind"], channel: channel as PostChannel,
+        // A studio deliverable is filed, never scheduled: its day is the day it was filed. A seat is
+        // not told the date, and one guessed 2025-05-19 on a live run, so the server stamps it.
+        scheduledFor: channel === "studio" ? new Date().toISOString().slice(0, 10) : need(params, "scheduled_for"), agent: "mcp",
+        ...(files.length > 0 ? { files } : {}),
       });
       if (!post) throw new ToolError("no such client");
       return post;

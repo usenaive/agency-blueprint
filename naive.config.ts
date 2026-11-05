@@ -24,10 +24,28 @@
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
  * via the workspace protocol.
  */
-import { defineProject } from "@usenaive-sdk/blueprints";
+import { BLUEPRINTS, defineProject } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
+
+/**
+ * Every template this repo carries that the installed engine admits. `defineProject` refuses a repo
+ * whose template list is not exactly its blueprint's (`BLUEPRINTS.agency.templates`), so a template
+ * added here ahead of the engine — `product-design` needs `@usenaive-sdk/blueprints` 0.17.0 — is left
+ * out with a warning rather than breaking every clone, test and publish on the older engine. The
+ * same filter `media-blueprint`'s config has carried since its first sibling template.
+ */
+const carried = new Set<string>(BLUEPRINTS.agency?.templates ?? Object.keys(TEMPLATES));
+const templates = Object.values(TEMPLATES).filter((one) => carried.has(one.name));
+/** Said out loud, so a publish against an engine that predates a template never drops it silently. */
+const skipped = Object.keys(TEMPLATES).filter((name) => !carried.has(name));
+if (skipped.length > 0) {
+  console.warn(`agency: the installed @usenaive-sdk/blueprints does not list ${skipped.join(", ")}; left out until an engine that lists them is installed.`);
+}
+if (!carried.has(TEMPLATE)) {
+  throw new Error(`agency: the ${TEMPLATE} template needs @usenaive-sdk/blueprints >= 0.17.0; the installed engine lists only ${[...carried].join(", ")}.`);
+}
 
 export default defineProject({
   name: PROJECT,
@@ -38,8 +56,8 @@ export default defineProject({
   title: ACTIVE_TEMPLATE.title,
   description: ACTIVE_TEMPLATE.description,
   roadmap: ACTIVE_TEMPLATE.roadmap,
-  /** Every template this repo carries; the chosen one's agents become this project's crew. */
-  templates: Object.values(TEMPLATES),
+  /** Every template this repo carries that the engine lists; the chosen one's agents become this project's crew. */
+  templates,
   /**
    * The ≤4 questions the studio asks before provisioning (plan §4). The answers become the project
    * context every agent reads first (`project_context`, canonical-spec §31.8); no `{ from_env }`

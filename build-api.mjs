@@ -32,6 +32,11 @@ const index = join(dist, "index.html");
 const shell = join(dist, "site-shell.html");
 if (existsSync(index)) renameSync(index, shell);
 const publicShell = readFileSync(shell, "utf8");
+// The template the screens were built for: `vite build` resolves it through `templates/index.ts` and
+// writes it to `dist/.naive-template`, so the server half is compiled for the same one by
+// construction. Only an `api:build` run without that `vite build` falls back to the environment.
+const mark = join(dist, ".naive-template");
+const template = existsSync(mark) ? readFileSync(mark, "utf8").trim() : (process.env["NAIVE_TEMPLATE"] ?? "");
 
 await build({
   entryPoints: [join(root, "server", "api-entry.ts")],
@@ -48,9 +53,10 @@ await build({
   // deliverable kinds and the seed, and on the deployed host `NAIVE_TEMPLATE` is not in the
   // environment — so a runtime read there answers with this repository's default template while the
   // screens beside it show the built one. Substituted, the two halves of one deployment cannot
-  // disagree. Unset it is `""`, falsy, and `templates/index.ts` keeps the default it names.
+  // disagree. Unset (and no `dist/.naive-template`) it is `""`, falsy, and `templates/index.ts`
+  // keeps the default it names.
   define: {
-    "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? ""),
+    "process.env.NAIVE_TEMPLATE": JSON.stringify(template),
     PUBLIC_INDEX_HTML: JSON.stringify(publicShell),
   },
 });

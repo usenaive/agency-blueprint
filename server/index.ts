@@ -12,7 +12,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isOperatorPath, operatorRedirect } from "../site/routing.ts";
 import { configFromEnv } from "./proxy.ts";
-import { handleRequest, isLoopback, SSE_RETRY, type ApiContext } from "./routes.ts";
+import { handleRequest, isLoopback, SSE_RETRY, type ApiContext, type ApiReply } from "./routes.ts";
 import { openStore } from "./store.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -66,6 +66,16 @@ async function relay(res: ServerResponse, upstream: Response): Promise<void> {
   res.end();
 }
 
+/** A platform file's bytes (`GET /api/files/:id`), piped with the headers the route kept — not SSE. */
+async function sendFile(res: ServerResponse, status: number, upstream: Response, headers: ApiReply["headers"]): Promise<void> {
+  res.writeHead(status, headers ?? {});
+  if (upstream.body !== null) {
+    const reader = upstream.body.getReader();
+    for (let next = await reader.read(); !next.done; next = await reader.read()) res.write(next.value);
+  }
+  res.end();
+}
+
 async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
   const headers: Record<string, string | undefined> = {};
   for (const [name, value] of Object.entries(req.headers)) {
@@ -80,6 +90,7 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
   }, contextFor(req));
 
   if (reply.stream) return relay(res, reply.stream);
+  if (reply.file) return sendFile(res, reply.status, reply.file, reply.headers);
   if (reply.text !== undefined) return void res.writeHead(reply.status, reply.headers ?? {}).end(reply.text);
   // `/api/enter` answers with a cookie and a `location` and nothing else. An array value is several
   // headers of one name, which is how Node's `writeHead` takes it: `set-cookie` cannot be joined.

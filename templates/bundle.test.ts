@@ -44,13 +44,29 @@ afterAll(() => {
 describe("the built app", () => {
   let blank = "";
   let seoGeo = "";
+  let productDesign = "";
   let pages: string[] = [];
+  const marks: Record<string, string> = {};
+  const mark = (result: Rollup.RollupOutput) =>
+    String(result.output.find((asset): asset is Rollup.OutputAsset => asset.type === "asset" && asset.fileName === ".naive-template")?.source);
+  const chunks: Record<string, string[]> = {};
+  const chunkNames = (result: Rollup.RollupOutput) =>
+    result.output.filter((chunk) => chunk.type === "chunk").map((chunk) => chunk.fileName);
 
   beforeAll(async () => {
     const first = await bundle("blank");
     blank = code(first);
+    chunks["blank"] = chunkNames(first);
+    marks["blank"] = mark(first);
     pages = first.output.filter((asset) => asset.fileName.endsWith(".html")).map((asset) => asset.fileName).sort();
-    seoGeo = code(await bundle("seo-geo"));
+    const second = await bundle("seo-geo");
+    seoGeo = code(second);
+    chunks["seo-geo"] = chunkNames(second);
+    marks["seo-geo"] = mark(second);
+    const third = await bundle("product-design");
+    productDesign = code(third);
+    chunks["product-design"] = chunkNames(third);
+    marks["product-design"] = mark(third);
   }, 180_000);
 
   it("emits the public site at / and the operator dashboard under /app", () => {
@@ -61,6 +77,26 @@ describe("the built app", () => {
     // The whole bug in one line. Before the `define` in the Vite configs these two bundles were
     // byte-identical, and so were the two catalog rows built from them.
     expect(digest(blank)).not.toEqual(digest(seoGeo));
+    expect(new Set([digest(blank), digest(seoGeo), digest(productDesign)]).size).toBe(3);
+  });
+
+  it("ships the studio's words and its 3D viewer only in the product-design build", () => {
+    // The rail's Studio entry and the Home card's link are behind a template literal the bundler folds.
+    expect(productDesign).toContain("/studio");
+    expect(blank).not.toContain("/studio");
+    expect(seoGeo).not.toContain("/studio");
+    // `<model-viewer>` brings three.js (~1 MB). It is a lazy chunk of the product-design build and is
+    // not emitted at all for the other two, whose bundles carry only the Studio screen's few lines.
+    expect(chunks["product-design"]!.some((name) => name.includes("model-viewer"))).toBe(true);
+    for (const template of ["blank", "seo-geo"]) {
+      expect([template, chunks[template]!.some((name) => name.includes("model-viewer"))]).toEqual([template, false]);
+    }
+    expect(blank).not.toContain("WebGLRenderer");
+    expect(productDesign).toContain("WebGLRenderer");
+  });
+
+  it("names its template in dist/.naive-template, which the artifact publisher checks", () => {
+    expect(marks).toEqual({ blank: "blank\n", "seo-geo": "seo-geo\n", "product-design": "product-design\n" });
   });
 
   it("carries the choice as a literal, not as a read the browser cannot make", () => {
@@ -68,5 +104,7 @@ describe("the built app", () => {
     // precisely because nothing substituted it. Substituted, the name is gone and the value is in.
     expect(blank).not.toContain("NAIVE_TEMPLATE");
     expect(seoGeo).not.toContain("NAIVE_TEMPLATE");
+    expect(productDesign).not.toContain("NAIVE_TEMPLATE");
+    expect(productDesign).not.toContain("__AGENCY_STUDIO__");
   });
 });

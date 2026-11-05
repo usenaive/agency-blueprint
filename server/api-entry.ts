@@ -154,6 +154,20 @@ async function pipe(res: Reply, upstream: Response): Promise<void> {
   res.end();
 }
 
+/** A platform file's bytes (`GET /api/files/:id`): its headers are already set from the reply; piped, not buffered. */
+async function sendFile(res: Reply, status: number, upstream: Response): Promise<void> {
+  res.status(status);
+  try {
+    if (upstream.body !== null) {
+      const reader = upstream.body.getReader();
+      for (let next = await reader.read(); !next.done; next = await reader.read()) res.write(next.value);
+    }
+  } catch {
+    // The status and headers are gone already; a cut body is the browser's broken image, not a 5xx.
+  }
+  res.end();
+}
+
 export default async function handler(req: Request, res: Reply): Promise<void> {
   const open: { client: Client | null; state: StoreState | null; store: Store | null; dirty: boolean } = {
     client: null, state: null, store: null, dirty: false,
@@ -189,6 +203,7 @@ export default async function handler(req: Request, res: Reply): Promise<void> {
     }
     for (const [name, value] of Object.entries(reply.headers ?? {})) res.setHeader(name, value);
     if (reply.stream) return await pipe(res, reply.stream);
+    if (reply.file) return await sendFile(res, reply.status, reply.file);
     if (reply.text !== undefined) return res.status(reply.status).end(reply.text);
     if (reply.body === undefined) return res.status(reply.status).end();
     return res.status(reply.status).json(reply.body);

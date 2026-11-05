@@ -1,7 +1,7 @@
-import { Bot, Building2, ClipboardCheck, House, KanbanSquare, ListChecks, ShieldAlert, Settings2 } from "lucide-react";
+import { Bot, Box, Building2, ClipboardCheck, House, KanbanSquare, ListChecks, ShieldAlert, Settings2 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { useApi } from "./api";
-import { TEMPLATE, type Client } from "./data";
+import { TEMPLATE, TEMPLATE_NAME, type Client } from "./data";
 import { waitingOn, type PlatformSession } from "./platform";
 
 /** The rail follows the studio's own geometry: a 56px workspace head sharing
@@ -22,6 +22,8 @@ export function Shell() {
     { to: "/product-audit", label: "Product audit", Icon: ClipboardCheck, count: undefined as number | undefined },
     { to: "/crm", label: "CRM", Icon: KanbanSquare, count: prospects.length },
     { to: "/approvals", label: "Approvals", Icon: ShieldAlert, count: waitingOn(sessions?.data ?? [], new Map()).length },
+    // Only a product-design studio files deliverables that are files; no other template has a Studio.
+    ...(TEMPLATE_NAME === "product-design" ? [{ to: "/studio", label: "Studio", Icon: Box, count: undefined as number | undefined }] : []),
     // No count on Agents: the roster is the platform's, and the rail is not worth a call for it.
     { to: "/agents", label: "Agents", Icon: Bot, count: undefined as number | undefined },
     { to: "/clients", label: "Clients", Icon: Building2, count: active.length },

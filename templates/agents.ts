@@ -124,7 +124,7 @@ const own = (role: string): string => `${PREAMBLE} ${gate} ${OWN_RECORD} ${role}
  * `summary` is what a fire comes to in a few words an owner reads at a glance ("Client check-in") —
  * the launch card's line for that day (≤48). Printed, never provisioned; `input` is what the agent reads.
  */
-const timer = (
+export const timer = (
   cron: string,
   summary: string,
   input: string,
@@ -140,7 +140,7 @@ const timer = (
 });
 
 /** Day one: one session per agent, at the agent's own per-task ceiling. */
-const DAY_ONE = 20_000_000;
+export const DAY_ONE = 20_000_000;
 
 /**
  * The referral ask (plan P3), the one email the weekly check-in proposes. Who is ready is the

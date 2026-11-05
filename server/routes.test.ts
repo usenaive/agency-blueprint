@@ -959,3 +959,85 @@ describe("the platform routes", () => {
     expect(await call("GET", "/api/agents")).toEqual({ status: 502, body: { error: "upstream unavailable" } });
   });
 });
+
+/**
+ * `GET /api/files/:id` — the Studio screen's only way to a platform file. The browser never holds
+ * the org's key, so the dashboard proxies the read — but only for an id a stored deliverable names,
+ * behind the same gate as the queue itself.
+ */
+describe("the studio's file proxy", () => {
+  const config = { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" };
+  const studioPost = (store: Store, files: string[]) =>
+    store.createDraftPost({ clientId: store.createLead({ name: "Acme", domain: "", contact: { name: "", email: "", role: "" } }).id,
+      title: "Carafe", summary: "concept", kind: "concept", channel: "studio", scheduledFor: "2026-10-30", files })!;
+
+  it("is behind the operator's gate like the queue", async () => {
+    const { call, store } = fixture({ dashboardToken: "dash", local: false, config });
+    studioPost(store, ["fil_glb1"]);
+    expect(await call("GET", "/api/files/fil_glb1")).toMatchObject({ status: 401 });
+    expect(await call("GET", "/api/files/fil_glb1/meta")).toMatchObject({ status: 401 });
+  });
+
+  it("serves only an id a deliverable names, and says not configured without a key", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+    const { call, store } = fixture({ config });
+    studioPost(store, ["fil_glb1"]);
+    expect(await call("GET", "/api/files/fil_other")).toEqual({ status: 404, body: { error: "no such file on a deliverable" } });
+    expect(await call("GET", "/api/files/not-a-file")).toEqual({ status: 404, body: { error: "no such file on a deliverable" } });
+    expect((await call("POST", "/api/files/fil_glb1")).status).toBe(405);
+    expect(upstream).not.toHaveBeenCalled();
+
+    const keyless = fixture();
+    studioPost(keyless.store, ["fil_glb1"]);
+    expect(await keyless.call("GET", "/api/files/fil_glb1")).toEqual({ status: 503, body: { error: "not configured — set NAIVE_API_KEY" } });
+  });
+
+  it("streams the platform's bytes with its type, and reads the name and type for the screen", async () => {
+    const bytes = new Uint8Array([0x67, 0x6c, 0x54, 0x46]);
+    const upstream = vi.fn((url: string, _init?: RequestInit) => Promise.resolve(url.endsWith("?download=true")
+      ? new Response(bytes, { status: 200, headers: { "content-type": "model/gltf-binary", "content-length": "4", "content-disposition": 'attachment; filename="carafe.glb"', "set-cookie": "x=1" } })
+      : new Response(JSON.stringify({ id: "fil_glb1", object: "file", name: "carafe.glb", content_type: "model/gltf-binary", size_bytes: 4, session_id: "ses_1", sha256: "a".repeat(64) }), { status: 200 })));
+    vi.stubGlobal("fetch", upstream);
+    const { call, store } = fixture({ config });
+    studioPost(store, ["fil_glb1"]);
+
+    const reply = await call("GET", "/api/files/fil_glb1");
+    expect(reply.status).toBe(200);
+    expect(upstream.mock.calls[0]?.[0]).toBe("https://api.example/v1/files/fil_glb1?download=true");
+    expect((upstream.mock.calls[0]?.[1] as RequestInit).headers).toMatchObject({ authorization: "Bearer secret" });
+    expect(reply.headers).toEqual({
+      "cache-control": "private, max-age=3600", "content-type": "model/gltf-binary", "content-length": "4",
+      "content-disposition": 'attachment; filename="carafe.glb"',
+    });
+    expect(new Uint8Array(await reply.file!.arrayBuffer())).toEqual(bytes);
+    expect(reply.body).toBeUndefined();
+
+    expect(await call("GET", "/api/files/fil_glb1/meta")).toEqual({
+      status: 200, body: { id: "fil_glb1", name: "carafe.glb", content_type: "model/gltf-binary", size_bytes: 4 },
+    });
+    expect(upstream.mock.calls[1]?.[0]).toBe("https://api.example/v1/files/fil_glb1");
+  });
+
+  it("passes a missing platform file on as 404 and anything else as 502", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(new Response("{}", { status: 404 })).mockResolvedValueOnce(new Response("{}", { status: 500 })));
+    const { call, store } = fixture({ config });
+    studioPost(store, ["fil_glb1"]);
+    expect(await call("GET", "/api/files/fil_glb1")).toEqual({ status: 404, body: { error: "no such file" } });
+    expect(await call("GET", "/api/files/fil_glb1")).toEqual({ status: 502, body: { error: "upstream unavailable" } });
+  });
+
+  it("approves a studio deliverable without posting it anywhere, and refuses to post one", async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+    const { call, store } = fixture({ config });
+    const post = studioPost(store, ["fil_glb1", "fil_png1"]);
+    const approved = await call("PATCH", `/api/posts/${post.id}`, { status: "approved" });
+    expect(approved).toMatchObject({ status: 200, body: { id: post.id, status: "approved", files: ["fil_glb1", "fil_png1"] } });
+    const posted = await call("POST", `/api/posts/${post.id}/post-now`);
+    expect(posted.status).toBe(409);
+    expect(posted.body).toEqual({ error: expect.stringMatching(/studio deliverable is not posted anywhere/) });
+    expect(store.read().posts.find((p) => p.id === post.id)?.status).toBe("approved");
+    expect(upstream).not.toHaveBeenCalled();
+  });
+});

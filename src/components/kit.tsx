@@ -21,10 +21,11 @@ export const STATUS_LABEL: Record<PostStatus, string> = {
   rejected: "Rejected",
 };
 
-export function StatusChip({ status }: { status: PostStatus }) {
+/** `label` overrides the word where a status means something else — an approved studio file is never published. */
+export function StatusChip({ status, label }: { status: PostStatus; label?: string }) {
   const cls =
     status === "posted" ? "chip-credit" : status === "rejected" ? "chip-fail" : status === "pending" ? "chip-absent" : "chip-plain";
-  return <span className={`chip ${cls}`}>{STATUS_LABEL[status]}</span>;
+  return <span className={`chip ${cls}`}>{label ?? STATUS_LABEL[status]}</span>;
 }
 
 export const STAGE_LABEL: Record<PipelineStage, string> = {

@@ -93,6 +93,8 @@ export interface DraftPostInput {
   channel: Post["channel"];
   scheduledFor: string;
   agent?: string;
+  /** The platform files the deliverable is (`fil_…`); stored only when there is at least one. */
+  files?: string[];
 }
 
 export interface PostPatch {
@@ -247,6 +249,7 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
         status: "pending",
         agent: input.agent ?? "mcp",
         scheduledFor: input.scheduledFor,
+        ...(input.files === undefined || input.files.length === 0 ? {} : { files: [...input.files] }),
         hue: Math.floor(Math.random() * 360),
       };
       state.posts.push(post);

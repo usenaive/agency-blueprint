@@ -89,6 +89,19 @@ describe("build-api.mjs", () => {
     expect(blank).not.toContain("NAIVE_TEMPLATE");
   });
 
+  it("compiles the server half for the template the screens' build named in dist/.naive-template", () => {
+    const digest = (code: string) => createHash("sha256").update(code).digest("hex");
+    const studio = buildApi("product-design");
+    writeFileSync(join(dist, ".naive-template"), "product-design\n");
+    try {
+      // The environment disagrees and loses: the two halves of one dist cannot name two templates.
+      expect(digest(buildApi("blank"))).toEqual(digest(studio));
+    } finally {
+      rmSync(join(dist, ".naive-template"));
+      buildApi();
+    }
+  });
+
   it("bundles the whole route table, not just /mcp", () => {
     const bundle = readFileSync(join(dist, "api", "app.js"), "utf8");
     for (const path of ["/api/clients", "/api/posts", "/api/leads", "/api/mcp/tokens", "/mcp"]) {
