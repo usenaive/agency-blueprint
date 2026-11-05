@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && pnpm api:build",
+    "naive:build": "pnpm build",
     "serve": "node --experimental-strip-types server/index.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

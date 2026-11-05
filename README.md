@@ -255,6 +255,7 @@ as the mailbox, and it asks you for one through **Approvals** rather than guessi
 |---|---|
 | `pnpm install` | installs the toolchain, including the blueprint engine and the `naive` CLI |
 | `pnpm build` | builds the one app to `dist/`: the site at `index.html`, the dashboard at `app/index.html`, the server at `dist/api/app.js` |
+| `pnpm naive:build` | `pnpm build`, run by the platform's artifact publisher once per template with `NAIVE_TEMPLATE` set; `dist/.naive-template` names the template a build is for |
 | `pnpm test` | the whole vitest suite — routes, MCP, templates, screens, config, the built bundles |
 | `pnpm typecheck` | `tsc --noEmit` over the whole repo |
 | `pnpm dev` | hot-reloading UI — the site at `/`, the dashboard at `/app` |

@@ -46,6 +46,9 @@ describe("the built app", () => {
   let seoGeo = "";
   let productDesign = "";
   let pages: string[] = [];
+  const marks: Record<string, string> = {};
+  const mark = (result: Rollup.RollupOutput) =>
+    String(result.output.find((asset): asset is Rollup.OutputAsset => asset.type === "asset" && asset.fileName === ".naive-template")?.source);
   const chunks: Record<string, string[]> = {};
   const chunkNames = (result: Rollup.RollupOutput) =>
     result.output.filter((chunk) => chunk.type === "chunk").map((chunk) => chunk.fileName);
@@ -54,13 +57,16 @@ describe("the built app", () => {
     const first = await bundle("blank");
     blank = code(first);
     chunks["blank"] = chunkNames(first);
+    marks["blank"] = mark(first);
     pages = first.output.filter((asset) => asset.fileName.endsWith(".html")).map((asset) => asset.fileName).sort();
     const second = await bundle("seo-geo");
     seoGeo = code(second);
     chunks["seo-geo"] = chunkNames(second);
+    marks["seo-geo"] = mark(second);
     const third = await bundle("product-design");
     productDesign = code(third);
     chunks["product-design"] = chunkNames(third);
+    marks["product-design"] = mark(third);
   }, 180_000);
 
   it("emits the public site at / and the operator dashboard under /app", () => {
@@ -87,6 +93,10 @@ describe("the built app", () => {
     }
     expect(blank).not.toContain("WebGLRenderer");
     expect(productDesign).toContain("WebGLRenderer");
+  });
+
+  it("names its template in dist/.naive-template, which the artifact publisher checks", () => {
+    expect(marks).toEqual({ blank: "blank\n", "seo-geo": "seo-geo\n", "product-design": "product-design\n" });
   });
 
   it("carries the choice as a literal, not as a read the browser cannot make", () => {

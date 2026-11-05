@@ -25,6 +25,19 @@ const twoDoors = (): Plugin => ({
 
 const entry = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 
+/**
+ * `dist/.naive-template`: the template this build is, for the platform's artifact publisher. It
+ * builds every template of this repository (`naive:build`) and refuses a `dist/` that names another,
+ * so a stale or default build can never be published under the wrong template's row again.
+ */
+const templateMark = (): Plugin => ({
+  name: "agency:template-mark",
+  apply: "build",
+  generateBundle() {
+    this.emitFile({ type: "asset", fileName: ".naive-template", source: `${TEMPLATE}\n` });
+  },
+});
+
 const googleSiteVerification = (token: string): Plugin => ({
   name: "agency:google-site-verification",
   transformIndexHtml: {
@@ -43,7 +56,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const verification = process.env["GOOGLE_SITE_VERIFICATION"] ?? env["GOOGLE_SITE_VERIFICATION"] ?? "";
   return {
-  plugins: [react(), tailwindcss(), googleSiteVerification(verification), twoDoors()],
+  plugins: [react(), tailwindcss(), googleSiteVerification(verification), twoDoors(), templateMark()],
   /**
    * One build, two pages: `index.html` is the public site, served at `/`; `app/index.html` is the
    * operator dashboard, served for `/app` and everything under it. Same origin, so the site's
