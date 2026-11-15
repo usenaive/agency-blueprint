@@ -48,8 +48,8 @@ const sites = AGENCY_TYPES.flatMap((type) => {
   catch { return []; }
 });
 
-it("has the recruiting batch", () => {
-  expect(sites.filter((s) => s.type === "recruiting")).toHaveLength(5);
+it.each(["recruiting", "security-testing"])("has the %s batch", (type) => {
+  expect(sites.filter((s) => s.type === type)).toHaveLength(5);
 });
 
 describe.each(sites)("$type/$name", ({ type, name, dir }) => {

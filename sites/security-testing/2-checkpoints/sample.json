@@ -1,0 +1,71 @@
+{
+  "company_name": "Waypoint Testing",
+  "tagline": "We walk your product like your customers do and map where they stumble",
+  "intro": "Waypoint tests the everyday journeys in apps and websites: arriving, signing up, booking, paying. Our testers work through each route on real phones and laptops and hand you a map of every place someone got stuck.",
+  "audience": "Booking, travel and marketplace products across Australia and New Zealand, from founders before a first launch to product teams shipping every fortnight.",
+  "pricing_note": "A fixed price per journey map, quoted after a short call. Ongoing release testing runs on a monthly retainer you can pause between launches.",
+  "city": "Melbourne",
+  "contact_email": "hello@waypointtesting.com.au",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Journey maps",
+      "description": "We walk every key route through your product once, end to end, and give you a map marking each place a customer gets confused, stuck or lost."
+    },
+    {
+      "title": "Pre-launch walkthroughs",
+      "description": "In the fortnight before you launch, we test the new flows daily on the devices your customers own and file issues straight into your tracker."
+    },
+    {
+      "title": "Release check-ins",
+      "description": "Before each release we re-walk the journeys that matter most, so a change in one corner does not quietly break booking or payment in another."
+    },
+    {
+      "title": "Real-world conditions",
+      "description": "Slow trains, weak signal, a phone on low battery mode, a session that expires halfway through checkout. We test the journey where it actually happens."
+    }
+  ],
+  "specialties": [
+    "Booking and reservations",
+    "Search and listings",
+    "Sign-up and log-in",
+    "Payments and refunds",
+    "Messaging between users",
+    "Mobile web and apps"
+  ],
+  "process": [
+    {
+      "title": "Sketch the route",
+      "description": "A short call to learn what your product does, who uses it and which journeys matter most. We send back a route and a fixed quote."
+    },
+    {
+      "title": "Walk every checkpoint",
+      "description": "Our testers work through each journey on real devices and networks, writing up every stumble with steps, screenshots and the device used."
+    },
+    {
+      "title": "Hand over the map",
+      "description": "You get the journey map, a prioritised list of issues and a walkthrough call. After fixes, we re-walk the route and tick it off."
+    }
+  ],
+  "proof": [
+    {
+      "text": "The journey map showed us three places people quit booking that we had never noticed.",
+      "source": "Founder, a Melbourne holiday rental platform (sample)"
+    },
+    {
+      "text": "Clear, kind and very specific. Our developers fixed most issues the same week.",
+      "source": "Product manager, a New Zealand tour marketplace (sample)"
+    },
+    {
+      "text": "They tested on the old phones our customers actually carry."
+    }
+  ],
+  "logos": [
+    "Coastline Stays",
+    "Tramline Tickets",
+    "Kea Tours",
+    "Harbourside Dining",
+    "Outback Hire",
+    "Swell Surf School"
+  ]
+}

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | QA and journey testing</title>
+<meta name="description" content="Journey testing from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top__in">
+    <a class="brand" href="#top"><span class="dot" aria-hidden="true"></span><span class="brand__name">{{company_name}}</span></a>
+    <nav class="nav" aria-label="Primary">
+      <ul>
+        <li><a href="#scope">Scope</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#process">Process</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--solid top__cta" href="mailto:{{contact_email}}"><span>Book a test run</span></a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap hero__grid">
+      <div class="hero__text">
+        <p class="label"><span class="pill pill--pass">Passing</span> Journey testing from {{city}}</p>
+        <h1>{{tagline}}</h1>
+        <p class="lede">{{intro}}</p>
+        <div class="ctas">
+          <a class="btn btn--solid" href="mailto:{{contact_email}}"><span>Book a test run</span></a>
+          <a class="btn" href="#process"><span>How a run works</span><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v10M2 7l4 4 4-4"/></svg></a>
+        </div>
+      </div>
+
+      <figure class="run" aria-labelledby="run-cap">
+        <div class="run__head">
+          <span class="mono run__id">Run report</span>
+          <span class="run__state mono"><span class="pill pill--pass" data-summary>All journeys passing</span></span>
+        </div>
+        <ol class="suites">
+          <li class="suite" data-s="pass"><span class="suite__st mono" aria-hidden="true"></span><span class="suite__name">{{specialties[0]}}</span><span class="suite__t mono" aria-hidden="true">1.8s</span></li>
+          <li class="suite" data-s="pass"><span class="suite__st mono" aria-hidden="true"></span><span class="suite__name">{{specialties[1]}}</span><span class="suite__t mono" aria-hidden="true">3.2s</span></li>
+          <li class="suite" data-s="pass"><span class="suite__st mono" aria-hidden="true"></span><span class="suite__name">{{specialties[2]}}</span><span class="suite__t mono" aria-hidden="true">2.6s</span></li>
+          <li class="suite" data-s="pass"><span class="suite__st mono" aria-hidden="true"></span><span class="suite__name">{{specialties[3]}}</span><span class="suite__t mono" aria-hidden="true">4.1s</span></li>
+          <li class="suite" data-s="pass"><span class="suite__st mono" aria-hidden="true"></span><span class="suite__name">{{specialties[4]}}</span><span class="suite__t mono" aria-hidden="true">2.2s</span></li>
+          <li class="suite" data-s="pass"><span class="suite__st mono" aria-hidden="true"></span><span class="suite__name">{{specialties[5]}}</span><span class="suite__t mono" aria-hidden="true">1.4s</span></li>
+        </ol>
+        <p class="run__note mono" aria-hidden="true" data-note>Issue found, reported with steps to reproduce, rechecked after the fix.</p>
+        <div class="run__bar" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <figcaption id="run-cap" class="mono">The journeys we test, run before every release</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec scope" id="scope" aria-labelledby="scope-h">
+    <div class="wrap">
+      <h2 id="scope-h" class="sec__h">Scope</h2>
+      <div class="scope__grid">
+        <div class="scope__col">
+          <p class="mono scope__k"><span class="pill pill--pass">In scope</span></p>
+          <p class="scope__big">The journeys real people take through your product: signing up, paying, changing a setting, coming back tomorrow.</p>
+          <p>We click, type and tap through them on real devices, the way your users do, and tell you exactly where they break.</p>
+        </div>
+        <div class="scope__col scope__col--out">
+          <p class="mono scope__k"><span class="pill pill--skip">Out of scope</span></p>
+          <p class="scope__big">Penetration testing and red teaming.</p>
+          <p>We do not attack your systems. We check that your product works for the people using it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec services" id="services" aria-labelledby="services-h">
+    <div class="wrap">
+      <h2 id="services-h" class="sec__h">Services</h2>
+      <div class="tr tr--head mono" aria-hidden="true"><span>Case</span><span>Service</span><span>What you get</span></div>
+      <ul class="table">
+        <li class="tr"><span class="mono tr__id" aria-hidden="true">SV-01</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+        <li class="tr"><span class="mono tr__id" aria-hidden="true">SV-02</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+        <li class="tr"><span class="mono tr__id" aria-hidden="true">SV-03</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+        <li class="tr"><span class="mono tr__id" aria-hidden="true">SV-04</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec audience" aria-labelledby="audience-h">
+    <div class="wrap audience__grid">
+      <h2 id="audience-h" class="sec__h">Who we test for</h2>
+      <p class="statement">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="sec process" id="process" aria-labelledby="process-h">
+    <div class="wrap">
+      <h2 id="process-h" class="sec__h">How a run works</h2>
+      <ol class="stages">
+        <li class="stage"><span class="stage__bar" aria-hidden="true"></span><span class="mono stage__n">Stage 1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+        <li class="stage"><span class="stage__bar" aria-hidden="true"></span><span class="mono stage__n">Stage 2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+        <li class="stage"><span class="stage__bar" aria-hidden="true"></span><span class="mono stage__n">Stage 3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec fees" aria-labelledby="fees-h">
+    <div class="wrap fees__grid">
+      <h2 id="fees-h" class="sec__h">Fees</h2>
+      <div class="fees__box">
+        <p class="fees__text">{{pricing_note}}</p>
+        <p class="mono fees__aside">Scope and fees are agreed in writing before the first run.</p>
+      </div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec notes" aria-labelledby="notes-h">
+    <div class="wrap">
+      <h2 id="notes-h" class="sec__h">Report notes</h2>
+      <ul class="notes__list">
+        {{#if proof[0]}}<li class="note"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<p class="mono note__src">{{proof[0].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[1]}}<li class="note"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<p class="mono note__src">{{proof[1].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[2]}}<li class="note"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<p class="mono note__src">{{proof[2].source}}</p>{{/if}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec clients" aria-labelledby="clients-h">
+    <div class="wrap">
+      <h2 id="clients-h" class="sec__h">Products we have tested</h2>
+      <ul class="clients__list">
+        {{#if logos[0]}}<li><span class="pill pill--pass" aria-hidden="true">Tested</span>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li><span class="pill pill--pass" aria-hidden="true">Tested</span>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li><span class="pill pill--pass" aria-hidden="true">Tested</span>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li><span class="pill pill--pass" aria-hidden="true">Tested</span>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li><span class="pill pill--pass" aria-hidden="true">Tested</span>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li><span class="pill pill--pass" aria-hidden="true">Tested</span>{{logos[5]}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+
+  <section class="sec contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap contact__grid">
+      <h2 id="contact-h" class="sec__h">Contact</h2>
+      <div>
+        <a class="bigcta" href="mailto:{{contact_email}}"><span class="bigcta__t">Book a test run</span><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10M7 2l4 4-4 4"/></svg></a>
+        <p class="contact__lede">Send us your product, the journeys that matter most and your release date. We will reply with the runs we would set up.</p>
+        <dl class="meta">
+          <div><dt class="mono">Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+          <div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <a class="foot__top" href="#top"><span>Back to top</span><svg class="arr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 11V1M2 5l4-4 4 4"/></svg></a>
+  </div>
+</footer>
+</body>
+</html>

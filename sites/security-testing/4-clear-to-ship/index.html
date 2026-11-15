@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Release and journey testing</title>
+<meta name="description" content="Release and journey testing from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="theme-color" content="#0f3d3a">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top__in">
+    <a class="brand" href="#top"><svg class="brand__mark" viewBox="0 0 28 20" aria-hidden="true"><rect x="1" y="6" width="4" height="13" rx="1"/><rect class="brand__boom" x="3" y="6" width="24" height="3.5" rx="1.75"/></svg><span>{{company_name}}</span></a>
+    <nav class="nav" aria-label="Primary">
+      <ul>
+        <li><a href="#scope">What we test</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#approach">Approach</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--brass top__cta" href="mailto:{{contact_email}}"><span>Plan your next release</span></a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap hero__grid">
+      <div class="hero__text">
+        <p class="eyebrow">Release and journey testing, {{city}}</p>
+        <h1>{{tagline}}</h1>
+        <p class="lede">{{intro}}</p>
+        <div class="ctas">
+          <a class="btn btn--brass" href="mailto:{{contact_email}}"><span>Plan your next release</span></a>
+          <a class="btn btn--line" href="#approach"><span>Our approach</span></a>
+        </div>
+      </div>
+
+      <figure class="gate is-clear" aria-labelledby="gate-cap">
+        <div class="gate__scene" aria-hidden="true">
+          <span class="gate__track"></span>
+          <span class="gate__token">Release</span>
+          <span class="gate__post"><span class="gate__light"></span></span>
+          <span class="gate__boom"></span>
+        </div>
+        <p class="gate__status" aria-hidden="true"><span class="gate__hold">Holding for checks</span><span class="gate__go">Clear to ship</span></p>
+        <ul class="checks">
+          <li class="check"><span class="check__box" aria-hidden="true"></span><span>{{specialties[0]}}</span></li>
+          <li class="check"><span class="check__box" aria-hidden="true"></span><span>{{specialties[1]}}</span></li>
+          <li class="check"><span class="check__box" aria-hidden="true"></span><span>{{specialties[2]}}</span></li>
+          <li class="check"><span class="check__box" aria-hidden="true"></span><span>{{specialties[3]}}</span></li>
+          <li class="check"><span class="check__box" aria-hidden="true"></span><span>{{specialties[4]}}</span></li>
+          <li class="check"><span class="check__box" aria-hidden="true"></span><span>{{specialties[5]}}</span></li>
+        </ul>
+        <figcaption id="gate-cap">The journeys we check before a release goes out</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec scope" id="scope" aria-labelledby="scope-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <h2 id="scope-h">What we test</h2>
+        <p class="sec__intro">Quality assurance for the way your product is actually used. Nothing more theatrical than that.</p>
+      </div>
+      <div class="scope__grid">
+        <div class="scope__item">
+          <h3>We test</h3>
+          <p>The journeys your customers rely on: opening an account, buying, paying, changing details, getting help. Each one followed step by step, on the devices and browsers your customers use, before every release.</p>
+        </div>
+        <div class="scope__item scope__item--no">
+          <h3>We do not test</h3>
+          <p>Security. We do not offer penetration testing or red teaming, and we do not attack your systems. Our work is making sure your product behaves as your customers expect.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec services" id="services" aria-labelledby="services-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <h2 id="services-h">Services</h2>
+      </div>
+      <ul class="svc">
+        <li class="svc__item"><span class="svc__n" aria-hidden="true">01</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+        <li class="svc__item"><span class="svc__n" aria-hidden="true">02</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+        <li class="svc__item"><span class="svc__n" aria-hidden="true">03</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+        <li class="svc__item"><span class="svc__n" aria-hidden="true">04</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec audience" aria-labelledby="audience-h">
+    <div class="wrap audience__in">
+      <h2 id="audience-h" class="eyebrow eyebrow--dark">Who we work with</h2>
+      <p class="statement">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="sec approach" id="approach" aria-labelledby="approach-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <h2 id="approach-h">Our approach</h2>
+        <p class="sec__intro">Three steps, the same for every release, so you always know where things stand.</p>
+      </div>
+      <ol class="steps">
+        <li class="step"><span class="step__n" aria-hidden="true">1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+        <li class="step"><span class="step__n" aria-hidden="true">2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+        <li class="step"><span class="step__n" aria-hidden="true">3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec fees" aria-labelledby="fees-h">
+    <div class="wrap">
+      <div class="fees__panel">
+        <h2 id="fees-h" class="eyebrow">Fees</h2>
+        <p class="fees__text">{{pricing_note}}</p>
+        <p class="fees__aside">Every engagement starts with a written scope, so the fee is known before work begins.</p>
+      </div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec words" aria-labelledby="words-h">
+    <div class="wrap">
+      <div class="sec__head"><h2 id="words-h">In our clients' words</h2></div>
+      <ul class="words__list">
+        {{#if proof[0]}}<li class="word"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<p class="word__src">{{proof[0].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[1]}}<li class="word"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<p class="word__src">{{proof[1].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[2]}}<li class="word"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<p class="word__src">{{proof[2].source}}</p>{{/if}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec clients" aria-labelledby="clients-h">
+    <div class="wrap clients__in">
+      <h2 id="clients-h" class="eyebrow">Teams who release with us</h2>
+      <ul class="clients__list">
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+
+  <section class="sec contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap contact__grid">
+      <div>
+        <h2 id="contact-h">Talk to us before your next release</h2>
+        <p class="contact__lede">Tell us what you are shipping and when. We will reply within a working day with how we would test it.</p>
+      </div>
+      <div class="contact__card">
+        <a class="btn btn--brass btn--big" href="mailto:{{contact_email}}"><span>Plan your next release</span></a>
+        <dl class="meta">
+          <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+          <div><dt>Office</dt><dd>{{city}}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <a class="foot__top" href="#top"><span>Back to top</span></a>
+  </div>
+</footer>
+</body>
+</html>

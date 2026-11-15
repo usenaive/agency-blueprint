@@ -1,0 +1,71 @@
+{
+  "company_name": "Pocket QA",
+  "tagline": "We tap every button so your users never find the broken one",
+  "intro": "Pocket QA tests mobile apps and websites by hand, on real phones. We go through sign-up, onboarding, payments and every screen in between, and send you a friendly list of what broke and how to see it break.",
+  "audience": "Start-ups and small product studios across Portugal, Spain and the rest of Europe, from a first app in beta to apps with a few hundred thousand downloads.",
+  "pricing_note": "A flat price per test round, agreed after we have seen your app. Teams releasing every couple of weeks usually take a monthly plan with a round per release.",
+  "city": "Lisbon",
+  "contact_email": "ola@pocketqa.pt",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Test rounds",
+      "description": "Send us a build and a deadline. We tap through the whole app on a set of real phones and send back a list of issues with screenshots and steps."
+    },
+    {
+      "title": "Beta check-ups",
+      "description": "Before you open your beta, we play your first users: install, sign up, get lost, come back the next day. You hear about the rough edges first."
+    },
+    {
+      "title": "Store release checks",
+      "description": "The day before an app store release, we run the journeys that matter on the new build, so nothing obvious slips out with the update."
+    },
+    {
+      "title": "Phone and tablet coverage",
+      "description": "Small screens, big screens, old phones, dark mode, larger text sizes. We check that your app still makes sense on all of them."
+    }
+  ],
+  "specialties": [
+    "Sign-up and onboarding",
+    "In-app payments",
+    "Push notifications",
+    "Maps and location",
+    "Bookings and calendars",
+    "Dark mode and big text"
+  ],
+  "process": [
+    {
+      "title": "Send us your app",
+      "description": "Share a test build or a link, tell us what the app is for and which journeys you care about most. We reply with a plan and a price."
+    },
+    {
+      "title": "We tap through it",
+      "description": "Our testers work through every journey on real phones and tablets, writing up each issue with steps, screenshots and the device."
+    },
+    {
+      "title": "You fix, we recheck",
+      "description": "You get a friendly report and a short call. When the fixes are in, we tap through those journeys again and mark them passed."
+    }
+  ],
+  "proof": [
+    {
+      "text": "They found the onboarding bug on small Android phones the week before our launch.",
+      "source": "Co-founder, a Lisbon language-learning app (sample)"
+    },
+    {
+      "text": "The reports are clear enough that our designers read them too.",
+      "source": "Product designer, a Barcelona fitness studio app (sample)"
+    },
+    {
+      "text": "Quick, thorough and genuinely nice to work with."
+    }
+  ],
+  "logos": [
+    "Fala Languages",
+    "Mercadinho",
+    "Ondas Surf Club",
+    "Bairro Bikes",
+    "Tasca Tables",
+    "Sol Fitness"
+  ]
+}
