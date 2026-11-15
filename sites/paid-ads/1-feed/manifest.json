@@ -1,0 +1,82 @@
+{
+  "id": "paid-ads/1-feed",
+  "agencyType": "paid-ads",
+  "design": "Feed",
+  "style": "The agency's ads shown where they live, in a customer's feed: heavy Schibsted Grotesk on warm off-white or near black, Fragment Mono interface labels, six bright creative swatches, a hero feed of sponsored posts that scrolls itself and stops under the pointer.",
+  "theme": "both",
+  "fonts": [
+    "Schibsted Grotesk",
+    "Fragment Mono"
+  ],
+  "concept": {
+    "idea": "A paid-ads agency's work is judged in one place: the feed, between a friend's photo and a meme. The site is that feed: the specialties are sponsored posts, the services are ad formats with their aspect ratios, the process is a story's progress bars and proof arrives as comments.",
+    "signature": "A phone-width feed in the hero scrolls itself at reading pace, six sponsored posts in different formats; pointing at one stops the scroll like a thumb does and lifts the post, and a Pause button stops it for good. Still, full and readable without JS or with reduced motion.",
+    "motionVerb": "scroll, stop, tap",
+    "palette": {
+      "ground": "#f2f0eb",
+      "paper": "#ffffff",
+      "ink": "#111114",
+      "muted": "#55555c",
+      "blue": "#3a2cf5",
+      "lime": "#c8f04a",
+      "pink": "#ffb3dc",
+      "orange": "#ff6b2c",
+      "sky": "#a9dcff",
+      "darkGround": "#0d0d10"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 1,
+      "usability": 1,
+      "creativity": 1,
+      "content": 1,
+      "overall": 1
+    },
+    "estimate": 0,
+    "independent": false,
+    "date": "pending"
+  }
+}
