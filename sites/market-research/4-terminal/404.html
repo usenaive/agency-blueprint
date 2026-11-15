@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --ground: #071018; --panel: #0b1823; --panel2: #0e1e2b; --line: #1d3040; --ink: #d6e2ea; --muted: #8ea3b3; --cyan: #4fd6ff; --mag: #ff5ca8; --mono: "Martian Mono", ui-monospace, Menlo, monospace; --ease: cubic-bezier(0.2, 0.8, 0.2, 1); color-scheme: dark; }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--ground); color: var(--ink); font: 400 1rem/1.6 "Chivo", "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+h1, p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--mag); outline-offset: 2px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--cyan); color: var(--ground); }
+.skip:focus { top: 12px; }
+.bar { display: flex; align-items: center; min-height: 56px; padding: 0 clamp(14px, 2vw, 24px); background: var(--panel); border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; align-items: center; gap: 10px; padding-block: 6px; font: 700 0.9375rem/1.2 var(--mono); text-decoration: none; overflow-wrap: anywhere; }
+.brand i { flex: none; width: 9px; height: 16px; background: var(--mag); transition: width 0.3s var(--ease); }
+main { flex: 1; display: grid; place-items: center; padding: clamp(24px, 6vw, 80px) clamp(14px, 3vw, 40px); }
+.panel { width: min(100%, 880px); background: var(--panel); border: 1px solid var(--line); }
+.pt { display: flex; justify-content: space-between; gap: 16px; padding: 9px 22px; background: var(--panel2); border-bottom: 1px solid var(--line); font: 500 0.6875rem/1.4 var(--mono); color: var(--muted); }
+.pt b { color: var(--mag); font-weight: 700; }
+.body { padding: clamp(22px, 4vw, 48px); }
+.log { font: 400 0.8125rem/1.7 var(--mono); color: var(--muted); }
+.log p::before { content: "> "; color: var(--mag); }
+.log .err { color: var(--mag); }
+.log .err::before { content: ""; }
+h1 { margin-top: 28px; font-size: clamp(2.25rem, 1.2rem + 3.6vw, 4rem); font-weight: 800; line-height: 1.02; letter-spacing: -0.035em; }
+.lede { margin-top: 16px; color: var(--muted); font-size: 1.125rem; max-width: 32em; }
+.btn { display: inline-flex; align-items: center; gap: 14px; margin-top: 28px; padding: 12px 12px 12px 18px; background: var(--cyan); color: var(--ground); text-decoration: none; font: 700 0.875rem var(--mono); box-shadow: 0 4px 0 #1b7f9c; transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease); }
+.btn kbd { padding: 5px 8px; border: 1px solid rgb(7 16 24 / 0.4); font: 600 0.6875rem var(--mono); }
+footer { padding: 12px clamp(14px, 2vw, 24px); background: var(--panel); border-top: 1px solid var(--line); font: 400 0.75rem/1.5 var(--mono); }
+footer p { overflow-wrap: anywhere; }
+@media (hover: hover) { .btn:hover { transform: translateY(3px); box-shadow: 0 1px 0 #1b7f9c; } .brand:hover i { width: 16px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar"><a class="brand" href="/"><i aria-hidden="true"></i>{{company_name}}</a></header>
+<main id="main">
+  <div class="panel">
+    <p class="pt"><span>Query log</span><b>Not found</b></p>
+    <div class="body">
+      <div class="log" aria-hidden="true">
+        <p>open page --at this-address</p>
+        <p class="err">error 404: no record matches this query</p>
+      </div>
+      <h1>No record matches this address</h1>
+      <p class="lede">The page you asked for is not on our desk. The link may be out of date, or the page may have moved.</p>
+      <a class="btn" href="/"><span>Back to the desk</span><kbd aria-hidden="true">Enter</kbd></a>
+    </div>
+  </div>
+</main>
+<footer><p>&copy; {{year}} {{company_name}}</p></footer>
+</body>
+</html>
