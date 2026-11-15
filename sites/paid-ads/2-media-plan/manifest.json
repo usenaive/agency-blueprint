@@ -1,0 +1,82 @@
+{
+  "id": "paid-ads/2-media-plan",
+  "agencyType": "paid-ads",
+  "design": "Media Plan",
+  "style": "A media plan turned editorial: Fraunces display type on a faint spreadsheet grid, DM Mono cell references, sheet-tab navigation, the headline as a selected range, and a flighting chart whose bars are drawn in week by week while a cell cursor moves over them.",
+  "theme": "light",
+  "fonts": [
+    "Fraunces",
+    "DM Mono"
+  ],
+  "concept": {
+    "idea": "Paid ads are bought from a plan: a sheet with channels down the side and weeks across the top. The site is that sheet set as an editorial page: the specialties are the channel rows, the process titles are the plan's three phases, the services are line items and the fee is the double-ruled total.",
+    "signature": "The flighting chart: six channel rows across twelve weeks under the three phases; when it comes into view the bars are drawn in row by row, then a cell cursor keeps selecting one week at a time, and pointing at a row holds it there. Captioned illustrative; every bar drawn without JS or with reduced motion.",
+    "motionVerb": "select, fill, drag",
+    "palette": {
+      "paper": "#fbfaf4",
+      "ink": "#17201b",
+      "muted": "#536058",
+      "grid": "#e2e5d8",
+      "head": "#eef1e6",
+      "green": "#17784a",
+      "mint": "#8fcca6",
+      "amber": "#e3a51c",
+      "note": "#fff6c2"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 8,
+      "usability": 7.5,
+      "creativity": 8,
+      "content": 7.5,
+      "overall": 7.8
+    },
+    "estimate": 8.9,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with sample and long.json, no tap target under 24 px, every focus stop visible, skip link first, nothing moving under reduced motion). No blind critic was run for this batch. The most composed frames of the batch: the headline as a selected range on a real cell grid, sheet-tab navigation, a flighting chart captioned illustrative and a double-ruled fee total. Light only by design; the chart turns into a stacked channel list on a phone, which reads well but loses the week columns' width."
+  }
+}

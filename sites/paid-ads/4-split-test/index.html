@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Paid ads</title>
+<meta name="description" content="Paid ads, tested in {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top wrap">
+  <a class="brand" href="#top"><span class="brand__ab" aria-hidden="true"><i>A</i><i>B</i></span><span class="brand__name">{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#tests">What we test</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#contact">Propose a test</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="split" id="top" aria-labelledby="h1">
+    <div class="split__stage" style="--x: 50%">
+      <div class="variant va">
+        <div class="wrap variant__in">
+          <p class="variant__k"><b>Variant A</b> Paid ads, tested in {{city}}</p>
+          <h1 id="h1">{{tagline}}</h1>
+        </div>
+      </div>
+      <div class="variant vb" aria-hidden="true">
+        <div class="wrap variant__in">
+          <p class="variant__k"><b>Variant B</b> Paid ads, tested in {{city}}</p>
+          <p class="h1">{{tagline}}</p>
+        </div>
+      </div>
+      <div class="divider" aria-hidden="true"><span class="divider__knob"><i>A</i><i>B</i></span></div>
+      <label class="vh" for="split-range">Compare variant A and variant B of the headline</label>
+      <input class="split__range" id="split-range" type="range" min="0" max="100" value="50" hidden>
+    </div>
+    <div class="split__foot wrap">
+      <p class="split__cap">Same message, two treatments. Drag the line to compare: that is the whole job, every week.</p>
+      <p class="lede">{{intro}}</p>
+      <a class="btn" href="#contact"><span>Propose a test</span><i aria-hidden="true">→</i></a>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="tests" aria-labelledby="tests-h">
+    <div class="sec__head">
+      <p class="k">What we test</p>
+      <h2 id="tests-h">Four things we run for clients, <em>each one a test</em></h2>
+    </div>
+    <ol class="exps">
+      <li><p class="exps__n"><span>Test 01</span><span class="pill" aria-hidden="true"><i></i><i></i></span></p><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><p class="exps__n"><span>Test 02</span><span class="pill" aria-hidden="true"><i></i><i></i></span></p><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><p class="exps__n"><span>Test 03</span><span class="pill" aria-hidden="true"><i></i><i></i></span></p><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><p class="exps__n"><span>Test 04</span><span class="pill" aria-hidden="true"><i></i><i></i></span></p><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+    <div class="chans">
+      <h3 class="k">Channels under test</h3>
+      <ul>
+        <li>{{specialties[0]}}</li>
+        <li>{{specialties[1]}}</li>
+        <li>{{specialties[2]}}</li>
+        <li>{{specialties[3]}}</li>
+        <li>{{specialties[4]}}</li>
+        <li>{{specialties[5]}}</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sample" aria-labelledby="sample-h">
+    <div class="wrap sample__in">
+      <h2 id="sample-h" class="k">The test audience</h2>
+      <p class="sample__t">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="method" aria-labelledby="method-h">
+    <div class="sec__head">
+      <p class="k">Method</p>
+      <h2 id="method-h">One idea in, two variants out, <em>one winner kept</em></h2>
+    </div>
+    <div class="fork">
+      <svg class="fork__svg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+        <path class="fork__a" pathLength="1" d="M0 60 H330 C420 60 420 22 510 22 H690 C780 22 780 60 870 60 H1200"/>
+        <path class="fork__b" d="M330 60 C420 60 420 98 510 98 H690 C780 98 780 60 870 60"/>
+        <circle cx="330" cy="60" r="7"/><circle cx="870" cy="60" r="7"/>
+      </svg>
+      <ol class="steps">
+        <li><p class="k">Step 1</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+        <li><p class="k">Step 2</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+        <li><p class="k">Step 3</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+      </ol>
+    </div>
+    <div class="cost">
+      <h3 class="k">What the tests cost</h3>
+      <p>{{pricing_note}}</p>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec wrap" aria-labelledby="proof-h">
+    <div class="sec__head">
+      <p class="k">Reported back</p>
+      <h2 id="proof-h">What clients <em>concluded</em></h2>
+    </div>
+    <div class="quotes">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="sec sec--tight wrap" aria-labelledby="logos-h">
+    <h2 id="logos-h" class="k">Brands we have run tests for</h2>
+    <ul class="names">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap contact__in">
+      <p class="k">Propose a test</p>
+      <h2 id="contact-h">What do you want to <em>find out?</em></h2>
+      <p class="contact__lede">Send the product, the audience and the question you keep arguing about. We will reply with the first test we would run.</p>
+      <a class="btn btn--big" href="mailto:{{contact_email}}"><span>Propose a test</span><i aria-hidden="true">→</i></a>
+      <p class="contact__mail"><a href="mailto:{{contact_email}}">{{contact_email}}</a> <span>{{city}}</span></p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="up" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>
