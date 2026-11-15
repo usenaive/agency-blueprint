@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Agency — a company blueprint on the Vetta platform, in three templates (blank, seo-geo, product-design). Public site at /, operator dashboard under /app, CRM + per-client workspaces, and a thin server that proxies the platform API.",
+  "description": "Agency — a company blueprint on the Vetta platform, in three templates (blank, seo-geo, product-design), plus the data-only Client agency crews in crews/. Public site at /, operator dashboard under /app, CRM + per-client workspaces, and a thin server that proxies the platform API.",
   "scripts": {
     "dev": "vite",
     "build": "vite build && pnpm api:build",

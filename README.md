@@ -347,6 +347,28 @@ installed engine lists and warns about the rest (`agency: the installed
 `seo-geo` work as before; choosing `product-design` there fails with that version in the
 error, and `pnpm up @usenaive-sdk/blueprints@^0.17.0` is the fix.
 
+## 🗂 The Client agency crews
+
+`crews/` holds the Client agency and its specialisms: data-only crews with no app of their own.
+Their CRM, Calendar, Ads and SEO & GEO are the platform's built-in apps. Each is its own
+blueprint on the platform, always with the template `agency`, so the ids companies already hold
+are unchanged:
+
+| Directory | Installs as | What it is |
+| --- | --- | --- |
+| `crews/clients/` | `clients/agency` | Client agency: Sales, Client manager, Delivery, Marketing |
+| `crews/clients-blank/` | `clients-blank/agency` | The same apps with no crew |
+| `crews/clients-advertising/` | `clients-advertising/agency` | Advertising agency |
+| `crews/clients-recruiting/` | `clients-recruiting/agency` | Recruiting agency |
+| `crews/clients-research/` | `clients-research/agency` | Market research agency |
+| `crews/clients-security/` | `clients-security/agency` | Security testing agency |
+
+Each directory is a `naive.config.json` and its Operator's Manual (`manual.md`); `crews/crews.test.ts`
+loads every one through the engine's own loader. The SEO & GEO agency is not here: it is this
+repository's `seo-geo` template (`agency/seo-geo`). To run one yourself, copy its directory and run
+`naive up` in it. The platform publishes them from a tag of this repository, with the same `--tag`
+as the dashboard's templates.
+
 ## 🧪 The product design studio
 
 `product-design` runs the same machine — CRM, public site, approvals, `/mcp` — as a studio for
