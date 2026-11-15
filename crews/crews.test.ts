@@ -303,6 +303,8 @@ describe("the specialisms' own rules", () => {
     expect(permission(await seat("clients-advertising", "Video producer"), "generate_video")).toBe("ask");
     // Copy is an ad too: the Copywriter's copy sets wait in the Ads app's Review, and are still compiled for the client.
     expect((await seat("clients-advertising", "Copywriter")).system).toMatch(/Ads app's tags: ad, campaign:<.*>, stage:review.*never change its stage/);
+    // NEW-68: a headline change stalled for want of an in-place edit; a new version keyed to the old ad takes its place.
+    expect((await seat("clients-advertising", "Copywriter")).system).toContain("plus ad:<its ad: tag's key, else its fil_ id>; the Ads app shows that version in the old one's place, back in Review.");
     expect((await seat("clients-advertising", "Client manager")).system).toContain("Copy is a written piece: compile it, though it also waits in the Ads app.");
     // An ad's approval is the Ads app's Review: the Client manager compiles the written pieces and never asks about an ad again.
     expect((await seat("clients-advertising", "Client manager")).system).toContain("never ask about an ad again and never change its stage");
