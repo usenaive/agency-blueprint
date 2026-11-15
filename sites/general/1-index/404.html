@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --paper: #f4f0e8; --ink: #1d1b18; --muted: #5e5850; --rule: #cfc7b8; --rubric: #ad281b; --gut: clamp(16px, 4vw, 64px); --turn: cubic-bezier(0.22, 0.8, 0.24, 1); }
+@media (prefers-color-scheme: dark) { :root { --paper: #171513; --ink: #ede6d9; --muted: #aca395; --rule: #3b3631; --rubric: #ff7d62; } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 "Libre Caslon Text", Georgia, serif; overflow-x: hidden; }
+h1, p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--rubric); outline-offset: 4px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--ink); color: var(--paper); }
+.skip:focus { top: 12px; }
+.wrap { width: 100%; max-width: 1360px; margin-inline: auto; padding-inline: var(--gut); }
+header { padding-block: 22px 16px; border-bottom: 1px solid var(--ink); }
+.brand { display: inline-flex; gap: 10px; align-items: baseline; font-weight: 700; font-size: 1.125rem; text-decoration: none; overflow-wrap: anywhere; }
+.brand span { color: var(--rubric); font: 400 1.6rem/1 "Libre Caslon Display", serif; display: inline-block; transition: transform 0.5s var(--turn); }
+main { flex: 1; padding-block: clamp(48px, 9vw, 128px); }
+.k { color: var(--rubric); font-variant: small-caps; letter-spacing: 0.08em; text-transform: lowercase; }
+h1 { margin-top: 18px; max-width: 12em; font: 400 clamp(2.6rem, 1.2rem + 5.4vw, 6.6rem)/0.98 "Libre Caslon Display", serif; }
+.entry { display: flex; align-items: baseline; gap: 8px; max-width: 34em; margin-top: clamp(32px, 5vw, 56px); padding-top: 18px; border-top: 3px double var(--ink); font-size: 1.1875rem; }
+.entry i { flex: 1; height: 2px; align-self: flex-end; margin-bottom: 0.42em; background: radial-gradient(circle, var(--muted) 0.8px, transparent 1.2px) 0 50% / 6px 2px repeat-x; }
+.entry b { font-weight: 400; color: var(--rubric); }
+.lede { margin-top: 18px; max-width: 32em; color: var(--muted); font-style: italic; }
+.home { display: inline-block; margin-top: 32px; font: 400 clamp(1.6rem, 1rem + 2vw, 2.6rem)/1.1 "Libre Caslon Display", serif; text-decoration: none; background: linear-gradient(var(--rubric), var(--rubric)) 0 100% / 100% 2px no-repeat; transition: transform 0.45s var(--turn); }
+footer { padding-block: 28px 40px; border-top: 3px double var(--ink); font-variant: small-caps; letter-spacing: 0.05em; overflow-wrap: anywhere; }
+@media (hover: hover) { .home:hover { transform: translateX(8px); } .brand:hover span { transform: rotate(-12deg) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap"><a class="brand" href="/"><span aria-hidden="true">&sect;</span>{{company_name}}</a></header>
+<main id="main" class="wrap">
+  <p class="k">Error 404</p>
+  <h1>This page is not in the index</h1>
+  <p class="entry"><span>The page you asked for</span><i aria-hidden="true"></i><b>not found</b></p>
+  <p class="lede">The link may be old, or the page may have moved. Every entry we keep is listed on the first page.</p>
+  <a class="home" href="/">Back to the index</a>
+</main>
+<footer class="wrap"><p>&copy; {{year}} {{company_name}}</p></footer>
+</body>
+</html>
