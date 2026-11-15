@@ -96,6 +96,60 @@
           }
         }
       ]
+    },
+    {
+      "slug": "ads",
+      "name": "Ads",
+      "icon": "megaphone",
+      "pages": [
+        {
+          "slug": "ads",
+          "title": "Ads",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "ads"
+                ]
+              },
+              "ads": {
+                "type": "AdsLibrary",
+                "props": {}
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "seo-geo",
+      "name": "SEO & GEO",
+      "icon": "list",
+      "pages": [
+        {
+          "slug": "seo",
+          "title": "SEO & GEO",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "seo"
+                ]
+              },
+              "seo": {
+                "type": "SeoLibrary",
+                "props": {}
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "agents": [],
