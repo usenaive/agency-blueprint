@@ -106,3 +106,16 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     }
   });
 });
+
+/** The platform fills these four from the company; `defaults.json` carries every other required key. */
+const FROM_COMPANY = ["company_name", "city", "contact_email", "year"];
+const defaults: Record<string, Record<string, unknown>> = JSON.parse(readFileSync(join(ROOT, "defaults.json"), "utf8"));
+
+it.each(AGENCY_TYPES)("has defaults for %s: every required key but the company's, within limits, no proof", (type) => {
+  const values = flatten(defaults[type]!);
+  expect([...values.keys()].sort()).toEqual([...KEYS.keys()].filter((k) => !FROM_COMPANY.includes(k)).sort());
+  for (const [key, value] of values) {
+    expect(value.length, key).toBeLessThanOrEqual(KEYS.get(key)!);
+    expect(value, key).not.toMatch(/[–—]/);
+  }
+});
