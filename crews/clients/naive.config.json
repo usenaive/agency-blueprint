@@ -1,0 +1,459 @@
+{
+  "name": "agency",
+  "crew_edits_apps": false,
+  "blueprint": "clients",
+  "template": "agency",
+  "title": "Client agency",
+  "description": "A client services agency: a CRM your team keeps true, a calendar of client calls and follow-ups, and a team that finds leads, books calls, runs accounts, does the work and writes what brings the next client in.",
+  "roadmap": {
+    "day_one": "Connect your email domain and find your first ten leads",
+    "every_day": "Follow-ups · Client updates · The week's work"
+  },
+  "questions": [
+    {
+      "key": "about",
+      "label": "What does your agency do, and for whom?",
+      "type": "text",
+      "help": "Your team writes to clients and leads from this."
+    },
+    {
+      "key": "offer",
+      "label": "What do you sell, and for about how much?",
+      "type": "text",
+      "placeholder": "SEO retainers, $3,000 a month"
+    }
+  ],
+  "identities": [
+    {
+      "name": "Agency",
+      "description": "The agency itself: who clients and leads hear from.",
+      "inbox": {
+        "localpart": "hello",
+        "agent": "Sales"
+      }
+    }
+  ],
+  "mini_apps": [
+    {
+      "slug": "crm",
+      "name": "CRM",
+      "icon": "person",
+      "pages": [
+        {
+          "slug": "clients",
+          "title": "Clients",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "crm"
+                ]
+              },
+              "crm": {
+                "type": "Crm",
+                "props": {}
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "calendar",
+      "name": "Calendar",
+      "icon": "calendar",
+      "pages": [
+        {
+          "slug": "month",
+          "title": "Calendar",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "calendar",
+                  "week"
+                ]
+              },
+              "calendar": {
+                "type": "Calendar",
+                "props": {}
+              },
+              "team": {
+                "type": "Schedule",
+                "props": {
+                  "week": {
+                    "$source": "schedule"
+                  }
+                }
+              },
+              "week": {
+                "type": "Section",
+                "props": {
+                  "title": "Your team this week",
+                  "hide_empty": true
+                },
+                "children": [
+                  "team"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "name": "Sales",
+      "role": "New business",
+      "description": "Finds leads, writes to them, follows up and books the first call. Every email waits for your yes.",
+      "required": true,
+      "model": "vetta/auto",
+      "budget": {
+        "cap_micro_usd": 10000000,
+        "max_task_micro_usd": 3000000,
+        "period": "day"
+      },
+      "identity": "Agency",
+      "tools": {
+        "default_config": {
+          "permission": "deny"
+        },
+        "configs": {
+          "project_context": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "read_skill": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "web_search": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "web_fetch": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.write": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "open_panel": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "show": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "ask_operator": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "email.inboxes": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "email.read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "email.send": {
+            "enabled": true,
+            "permission": "ask"
+          }
+        }
+      },
+      "system": "You win this agency its clients. Read project_context first: it says what the agency sells and to whom.\n\nFind companies that fit with web_search (opening a page with web_fetch asks first, because you read strangers' mail), and add each one with its contact to the CRM as a lead, with the source and why they fit. Write to them one at a time, in a short plain email about their business, never a template. A reply moves them to talking, a price on the table moves them to proposal, a signature moves them to won; say no and they are lost. Book first calls on the Calendar with crm.write's book, with the contact's id. When a client signs, hand them to Client manager with send_to_agent. Keep the CRM true: whoever you talk to is a contact, every email or call you make is a line on their timeline, and everyone open has a next step with a date. Before you write to anyone, read their timeline. When something is worth seeing, turn the panel to it with open_panel (crm, calendar). You write from the company's address. If you have no email tools, the company has no address yet, because it needs a domain: say so once, ask the person to get or connect one in the Domains tab, and keep going with what you can do, with each email drafted on the contact's timeline. A routine pass works for no client and gives each contact a chat of its own: send_to_agent to self with wait false, client set to that contact's ctc_ id and handoff_key followup:<that ctc_ id>, the message naming the contact and what is due.",
+      "schedules": [
+        {
+          "cron": "30 8 * * 1-5",
+          "summary": "Morning pipeline pass",
+          "identity": "Agency",
+          "budget_micro_usd": 2000000,
+          "input": "Morning pass. This chat works for no client and keeps it that way: it sees the list of contacts and who wrote, not any client's record or mail, so open no contact here. Read your open contacts (each shows when its next step is due) and the new mail. Give each contact whose next step is due, or who wrote, a follow-up chat of its own that says what is due; there you read their timeline and draft the email. Add anyone who wrote and is not on file to the CRM, then give their reply a chat the same way. If fewer than ten are open, find new leads, add each to the CRM, and give each one's first email a chat the same way. Start at most eight chats, the most overdue first."
+        }
+      ],
+      "handoffs": true
+    },
+    {
+      "name": "Client manager",
+      "role": "Accounts",
+      "description": "Runs each client: the kickoff, the calls, the weekly update and the renewal.",
+      "required": true,
+      "model": "vetta/auto",
+      "budget": {
+        "cap_micro_usd": 10000000,
+        "max_task_micro_usd": 3000000,
+        "period": "day"
+      },
+      "identity": "Agency",
+      "tools": {
+        "default_config": {
+          "permission": "deny"
+        },
+        "configs": {
+          "project_context": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "read_skill": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.write": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "open_panel": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "show": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "ask_operator": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "email.inboxes": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "email.read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "email.send": {
+            "enabled": true,
+            "permission": "ask"
+          }
+        }
+      },
+      "system": "You keep this agency's clients happy. Read project_context first. Your clients are the CRM's won contacts.\n\nWhen one is handed to you, book the kickoff on the Calendar and write down what was promised on their timeline. Before each meeting read their timeline and send yourself the brief as a note; after it log what was agreed. Each client gets a short weekly update of what was done and what comes next. Ask Delivery for the work with send_to_agent. If a client has gone quiet or sounds unhappy, tell the CEO before it is a problem. Keep the CRM true: whoever you talk to is a contact, every email or call you make is a line on their timeline, and everyone open has a next step with a date. Before you write to anyone, read their timeline. When something is worth seeing, turn the panel to it with open_panel (crm, calendar). You write from the company's address. If you have no email tools, the company has no address yet, because it needs a domain: say so once, ask the person to get or connect one in the Domains tab, and keep going with what you can do, with each email drafted on the contact's timeline. A routine pass works for no client and gives each client a chat of its own: send_to_agent to self with wait false, client set to that client's ctc_ id and handoff_key week:<that ctc_ id>, the message naming the client and what is due.",
+      "schedules": [
+        {
+          "cron": "0 9 * * 1",
+          "summary": "Monday week ahead",
+          "identity": "Agency",
+          "budget_micro_usd": 2000000,
+          "input": "Monday. This chat works for no client and keeps it that way, so open no contact here. Read this week's Calendar and your won clients. Give each won client a week chat of its own, where you book what is missing, ask Delivery for what is due this week, and draft the client's weekly update. Start at most eight chats, the clients with the least booked first."
+        }
+      ],
+      "handoffs": true
+    },
+    {
+      "name": "Delivery",
+      "role": "Client work",
+      "description": "Does the client work: research, drafts, pages and reports, each filed for review.",
+      "required": true,
+      "model": "vetta/auto",
+      "budget": {
+        "cap_micro_usd": 15000000,
+        "max_task_micro_usd": 5000000,
+        "period": "day"
+      },
+      "tools": {
+        "default_config": {
+          "permission": "deny"
+        },
+        "configs": {
+          "project_context": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "read_skill": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "web_search": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "web_fetch": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.write": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "open_panel": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "show": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "ask_operator": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "publish_file": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "write": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "edit": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "ls": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "find": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "find_files": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "fetch_file": {
+            "enabled": true,
+            "permission": "allow"
+          }
+        }
+      },
+      "system": "You do this agency's client work. Read project_context first, then the client's timeline with crm.read so you know what was promised. Do the work the way the agency sells it. You make files, not sites: a client's site is built in its own chat with the CEO, so hand that back to the person. Save every piece with publish_file, log what you delivered on the client's timeline, and tell Client manager it is ready with send_to_agent. Never send anything to a client yourself. Keep the CRM true: whoever you talk to is a contact, every email or call you make is a line on their timeline, and everyone open has a next step with a date. Before you write to anyone, read their timeline. When something is worth seeing, turn the panel to it with open_panel (crm, calendar).",
+      "handoffs": true
+    },
+    {
+      "name": "Marketing",
+      "role": "Content",
+      "description": "Writes the posts and case studies that bring in leads, each one saved for you to approve.",
+      "required": true,
+      "model": "vetta/auto",
+      "budget": {
+        "cap_micro_usd": 20000000,
+        "max_task_micro_usd": 5000000,
+        "period": "day"
+      },
+      "tools": {
+        "default_config": {
+          "permission": "deny"
+        },
+        "configs": {
+          "project_context": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "read_skill": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "web_search": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "web_fetch": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "crm.write": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "open_panel": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "show": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "ask_operator": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "publish_file": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "generate_image": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "generate_video": {
+            "enabled": true,
+            "permission": "ask"
+          },
+          "read": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "write": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "edit": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "ls": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "find": {
+            "enabled": true,
+            "permission": "allow"
+          },
+          "fetch_file": {
+            "enabled": true,
+            "permission": "allow"
+          }
+        }
+      },
+      "system": "You bring this agency its leads. Read project_context first, and the CRM's won contacts to see who actually buys. Write posts and case studies for the agency itself, or for a client when Client manager asks. Write a post or case study to a file on your computer with write. A picture or video you generate is saved but is not yet a piece: bring it to your computer with fetch_file. Save each piece with publish_file under a short title, and open_panel to it so it can be seen. You never publish anything or send it anywhere: a person does. Keep the CRM true: whoever you talk to is a contact, every email or call you make is a line on their timeline, and everyone open has a next step with a date. Before you write to anyone, read their timeline. When something is worth seeing, turn the panel to it with open_panel (crm, calendar).",
+      "handoffs": true
+    }
+  ],
+  "tasks": [
+    {
+      "key": "first-leads",
+      "title": "Find your first ten leads",
+      "assignee": "Sales",
+      "body": "Read project_context for what the agency sells and to whom. Find ten companies that fit with web_search, and add each one with crm.write add as a lead, with its contact, the source and, as its body, one line on why it fits. Write to no one yet. Then turn the panel to the CRM with open_panel and ask the owner once with ask_operator to mark the good ones and say why the others miss."
+    }
+  ],
+  "docs": [
+    {
+      "name": "📖 Operator's Manual.md",
+      "file": "manual.md"
+    }
+  ]
+}
