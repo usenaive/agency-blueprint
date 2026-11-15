@@ -1,0 +1,28 @@
+{
+  "company_name": "Answerable",
+  "tagline": "Search and AI visibility for firms worth recommending",
+  "intro": "We help service firms become the answer when clients search for help or ask an AI assistant who to call. Clear pages, sound technical work and an honest account each month of where you are found.",
+  "audience": "Professional and specialist service firms in Toronto and across Ontario: clinics, consultancies, engineering and design studios, with one office or several.",
+  "pricing_note": "One flat monthly fee, agreed after a free review of your site and how AI assistants describe you today. Month to month after the first three; you can stop whenever you like.",
+  "city": "Toronto",
+  "contact_email": "ask@answerable.ca",
+  "year": "2026",
+  "services": [
+    { "title": "Answer pages", "description": "Pages that answer the questions your clients actually ask, in your voice, with the specifics an AI assistant needs to quote you accurately." },
+    { "title": "Technical health", "description": "Speed, crawling, indexing, structured data and site structure, checked and fixed so nothing stands between your pages and the people looking for them." },
+    { "title": "AI visibility checks", "description": "Every month we ask AI assistants the questions your clients ask and record whether you are named, quoted or missing, and why." },
+    { "title": "Local and directory presence", "description": "Your listings, profiles and the directories your field trusts, made accurate and consistent so every source tells the same story about you." }
+  ],
+  "specialties": ["Answer pages", "AI answer visibility", "Technical SEO", "Local search", "Structured data", "Professional services"],
+  "process": [
+    { "title": "Listen to the questions", "description": "We collect the questions your clients ask you, search for them and ask AI assistants, then show you who gets named and why." },
+    { "title": "Become the answer", "description": "We fix what blocks you and write the pages that answer those questions best, each one approved by you before it goes live." },
+    { "title": "Ask again", "description": "We put the same questions to search and AI assistants again and send you a short, honest note on what changed." }
+  ],
+  "proof": [
+    { "text": "They turned the questions we answer on the phone every day into pages people actually find.", "source": "Clinic director, a Toronto physiotherapy practice (sample)" },
+    { "text": "The first agency that told us plainly what they would do and then did exactly that.", "source": "Partner, an engineering consultancy (sample)" },
+    { "text": "Short monthly notes, no jargon, and they always say what comes next.", "source": "Founder, a design studio (sample)" }
+  ],
+  "logos": ["Harbourfront Physio", "Kestrel Engineering", "Annex Design Studio", "Lakeshore Dental", "Moss and Pine Landscapes", "Queen West Legal"]
+}
