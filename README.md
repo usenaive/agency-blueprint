@@ -62,8 +62,8 @@ platform's default and 08:00 UTC is nobody's Monday morning.
 
 A template may also declare a **per-client crew**, provisioned by the dashboard server when
 you onboard a client — their names carry the client's slug, so they are per-client resources
-and cannot be declared in `naive.config.ts`. `seo-geo` declares three (`seo-writer--<slug>`,
-`geo-optimizer--<slug>`, `audit-runner--<slug>`), published to the studio as `crew_per_client`;
+and cannot be declared in `naive.config.ts`. `seo-geo` declares four (`seo-writer--<slug>`,
+`geo-optimizer--<slug>`, `audit-runner--<slug>`, `client-lead--<slug>`), published to the studio as `crew_per_client`;
 `blank` declares none and runs every client through the agency's own seven.
 
 ## 👥 The crew
@@ -148,8 +148,9 @@ granted the two platform tools, `send_to_agent` and `list_agents`:
 |---|---|---|---|
 | `gap-researcher` | `["content-writer"]` | once the gap report is filed (day one, then every Friday) | the agency record's `cli_` id and the ten gaps |
 | `sales` | `["proposal-writer"]` | when a lead is advanced to `proposal` | that lead's `cli_` id, as `handoff_key` too, so a lead is handed once |
-| `audit-runner--<slug>` | `["seo-writer"]` | once a client audit is filed (`seo-geo`) | the audit's `post_` id and the pages it found missing |
-| `seo-writer--<slug>` | `["geo-optimizer"]` | once the pages are drafted (`seo-geo`) | the new drafts' `post_` ids |
+| `audit-runner--<slug>` | `["seo-writer", "client-lead"]` | once a client audit is filed, to the writer only if pages were asked for (`seo-geo`) | the audit's `post_` id, the pages it found missing, what the request asked for |
+| `seo-writer--<slug>` | `["geo-optimizer", "client-lead"]` | once the pages are drafted, to the optimizer only if answer-engine work was asked for (`seo-geo`) | the new drafts' `post_` ids and what the request asked for |
+| `geo-optimizer--<slug>` | `["client-lead"]` | once its drafts are filed (`seo-geo`) | the drafts' `post_` ids and what the request asked for |
 
 Every other seat declares `handoffs: false` and holds neither tool. A handoff is
 `send_to_agent` with `wait: false`: it opens an ordinary session on the receiver, at the
@@ -160,7 +161,9 @@ handoff wrote, and files nothing while no calendar exists yet.
 
 The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
 entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
-`seo-writer--acme` and no other client's writer. Provisioning a client whose crew already exists
+`seo-writer--acme` and no other client's writer. A crew whose list names a seat outside the crew is
+refused before anything is written: a seat every client shares would know the client only from the
+message. The `client-lead--<slug>` compiles each finished job into one file and asks the operator once. Provisioning a client whose crew already exists
 patches the declaration onto each seat (the platform mints a version only where something
 differs), so a crew provisioned before this field existed gains the chain. A seat the active
 template no longer declares is kept as it stands (widen, never narrow).

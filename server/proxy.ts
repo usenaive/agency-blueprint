@@ -418,9 +418,9 @@ async function agentOf(res: Response): Promise<{ id: string; current_version?: n
  * as a success is how the blueprint hid this in the first place.
  *
  * A `handoffs` list is slugged like the name: the template's `["seo-writer"]` becomes this client's
- * `seo-writer--<slug>` and no other client's. A target that is not a crew seat is one of the agency's
- * own agents (`client-manager`, which compiles each client job) and keeps its name. `true`, `false`
- * and `"team"` pass through.
+ * `seo-writer--<slug>` and no other client's. `true`, `false` and `"team"` pass through. A list that
+ * names a seat outside the crew is refused before anything is written: that would be a seat shared by
+ * every client, which knows the client only from what the message says.
  *
  * Answers null when the roster itself cannot be read.
  */
@@ -433,6 +433,11 @@ export async function provisionClientAgents(
 ): Promise<ProvisionReport[] | null> {
   // The whole roster, not page one: a crew beyond the first page reads as missing and is created
   // again under the same name on every onboard.
+  const seats = new Set(crew.map((member) => member.name));
+  for (const member of crew) {
+    const outside = (Array.isArray(member.handoffs) ? member.handoffs : []).find((target) => !seats.has(target));
+    if (outside !== undefined) throw new Error(`crew seat ${member.name} hands off to ${outside}, which is not a seat of this client's crew`);
+  }
   const roster = await listAgents(config, fetchImpl);
   if (roster === null) return null;
   const existing = new Map(roster.map((a) => [a.name, a]));
@@ -445,9 +450,7 @@ export async function provisionClientAgents(
     // `identity` is not a field of `POST /v1/agents`, and the route strips what it does not
     // declare: sending it would read as a grant and be none. It is the call below.
     const { identity: _persona, name: _seat, ...decl } = member;
-    const handoffs = Array.isArray(decl.handoffs)
-      ? decl.handoffs.map((target) => (crew.some((seat) => seat.name === target) ? `${target}--${slug}` : target))
-      : decl.handoffs;
+    const handoffs = Array.isArray(decl.handoffs) ? decl.handoffs.map((target) => `${target}--${slug}`) : decl.handoffs;
     const res = present
       ? await proxyFetch(config, { method: "PATCH", path: `/v1/agents/${present.id}` }, JSON.stringify({ ...decl, handoffs }), fetchImpl)
       : await proxyFetch(config, { method: "POST", path: "/v1/agents" }, JSON.stringify({ ...decl, name, handoffs }), fetchImpl);

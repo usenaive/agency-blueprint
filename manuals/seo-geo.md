@@ -32,10 +32,10 @@ On day one:
 
 ## 🤝 Agent team configuration
 
-Seven agents run the agency, a paid-media planner proposes ads, and each client gets a team of three when you move it to active.
+Seven agents run the agency, a paid-media planner proposes ads, and each client gets a team of four when you move it to active.
 
 - **Sales** finds leads that fit your answer. Before each first email it audits the lead's public site: what it ranks for and whether AI answers cite it. It writes the opener from one finding, keeps a dated next step on every lead and follows up. Tell it which sites to skip.
-- **Client manager** runs each client: the kickoff, the weekly check-in and the referral ask. It compiles each client job into one file for your review.
+- **Client manager** runs each client: the kickoff, the weekly check-in and the referral ask.
 - **Site builder** keeps your public site true to your answers. Every change waits for you.
 - **Content writer** and **content reviser** write and sharpen your own blog, one search query a post.
 - **Gap researcher** compares your site with the three competitors you named, every Friday.
@@ -47,6 +47,7 @@ Each client's team:
 - **Audit runner** audits the client's site and rankings, worst issue first. Ask it "what are the three worst issues for this client?"
 - **SEO writer** writes briefs, articles and landing pages, one search query each, from the audit and the client's own facts.
 - **GEO optimizer** tunes pages to be cited by AI answers: short answer blocks, clear entities, schema and an llms.txt file.
+- **Client lead** compiles each finished job for that client into one file and asks you once to approve it.
 
 ## 🗓️ Scheduling & automation
 
@@ -65,7 +66,7 @@ Client work runs when you ask a client's team for it. For a new client, usually:
 
 The team does only what you asked. Ask for an audit alone and no pages are written.
 
-Each member tells the client manager what it filed. Once every piece you asked for is in, the client manager compiles them into one file and asks you once to approve it. A piece that comes later goes into the same file, with no second ask. Each draft still waits for its own approval in the queue, and nothing reaches the client until you approve it.
+Each member tells the client's lead what it filed. Once every piece you asked for is in, the client lead compiles them into one file and asks you once to approve it. A piece that comes later goes into the same file, with no second ask. Each draft still waits for its own approval in the queue, and nothing reaches the client until you approve it.
 
 To audit every client each month, ask the CEO to add a monthly timer for the audit runner. Each timer has a cap per run.
 

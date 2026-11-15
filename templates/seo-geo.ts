@@ -1,6 +1,6 @@
 /**
  * `seo-geo` — the same agency, specialised in search: technical audits, SERP work and
- * answer-engine optimization, with a three-agent crew provisioned per client.
+ * answer-engine optimization, with a four-seat crew provisioned per client.
  *
  * It is a **delta on `blank`**, and deliberately reads as one. The seven agency agents are
  * `blank`'s, with a sentence or two of search focus added to each and the search skills alongside;
@@ -27,10 +27,7 @@ const FOCUS: Record<string, string> = {
     "This agency sells search and answer-engine work: research each lead's search presence first — what it ranks for, where AI answers cite it, what a first audit would find.",
   "client-manager":
     "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one. " +
-    "When a client goes active, note on its record what was promised and draft the kickoff email. " +
-    "Each client job ends in one deliverable, which you compile. The client's team tells you when its drafts are filed, naming the client's cli_ id, the post_ ids and what the request asked for. Each message wakes you, but compile only once every piece the request asked for is filed (list_posts on that client); while one is missing, compile nothing and announce nothing. A job of one piece needs no compiling: that draft is the deliverable. " +
-    "First find_files with the tag client:<the cli_ id>: a kind:report file already saved for this job is its deliverable, so never write a second. To compile, write one file with write that leads with the worst issues and the pages written, keeping each piece's title, evidence and post_ id, and save it to Files with publish_file (it saves, it publishes nothing) under a short title and the tags client:<the cli_ id> and kind:report. " +
-    "Then ask the operator once with ask_operator: \"Ready for <client name>: <its title>. Approve before it goes out.\" One ask per client job: a piece filed after you asked goes into that same file (fetch_file it, add the piece with write, publish_file it again under the same title and tags), with no second ask. Each draft keeps its own approval in the queue.",
+    "When a client goes active, note on its record what was promised and draft the kickoff email; its client lead compiles each job its team finishes.",
   "content-writer":
     "Write every post for one query and intent, using connected Search Console evidence when available, a citable answer block, and a named entity. Never invent queries or results.",
   "content-reviser":
@@ -39,14 +36,6 @@ const FOCUS: Record<string, string> = {
     "Compare the three competitors in the third setup answer by rankings and AI citations against connected Search Console and Analytics evidence when available; never invent performance.",
   "proposal-writer":
     "Tiers are scoped in audits, articles, answer blocks and SERP reports per month; a proposal never promises a ranking or a citation.",
-};
-
-/**
- * The tools a compile takes, on the client manager only: find the job's saved report, bring it back to
- * its computer, write the one file and save it to Files. No shell: a seat that reads clients' records holds none.
- */
-const COMPILE_TOOLS: Record<string, string[]> = {
-  "client-manager": ["find_files", "fetch_file", "read", "write", "publish_file"],
 };
 
 /** The search skills each agent reads alongside its generic ones. */
@@ -79,12 +68,15 @@ const clientGate =
 
 /**
  * Every crew member's scope and its report, folded in from the Client agency's SEO & GEO crew: a job
- * is exactly what the request asked for, and each member tells the agency's client manager what it
- * filed, so the job is compiled and put in front of the operator once (`FOCUS["client-manager"]`).
+ * is exactly what the request asked for, and each member tells this client's own client lead what it
+ * filed, so the job is compiled and put in front of the operator once. The lead is a crew seat, so its
+ * name binds it to the one client (`server/proxy.ts` slugs every handoff); a shared agency seat would
+ * know the client only from what a message said, and the platform's one-client-per-chat rule covers
+ * its own CRM, not this dashboard's.
  */
 const REPORT =
   "Do only what the request that started this session asked: hand work to the next seat only if that request also asked for its part, never widen a job past what was asked, never send a teammate a piece for reference, and say in each handoff what the request asked for. " +
-  "When your drafts are filed, tell client-manager with send_to_agent (wait false), naming the client's cli_ id, the post_ ids you filed and what the request asked for.";
+  "When your drafts are filed, tell this client's client lead with send_to_agent (wait false), naming the post_ ids you filed and what the request asked for.";
 
 /**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
@@ -178,7 +170,7 @@ const crew: AgentDecl[] = [
       ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", ...HANDOFF],
       OPERATOR,
     ),
-    handoffs: ["geo-optimizer", "client-manager"],
+    handoffs: ["geo-optimizer", "client-lead"],
     identity: AGENCY_IDENTITY,
   },
   {
@@ -192,7 +184,7 @@ const crew: AgentDecl[] = [
       ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", "google_search_console.inspect_url", ...HANDOFF],
       OPERATOR,
     ),
-    handoffs: ["client-manager"],
+    handoffs: ["client-lead"],
     identity: AGENCY_IDENTITY,
   },
   {
@@ -206,7 +198,25 @@ const crew: AgentDecl[] = [
       ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), ...SEARCH_READ, ...HANDOFF],
       OPERATOR,
     ),
-    handoffs: ["seo-writer", "client-manager"],
+    handoffs: ["seo-writer", "client-lead"],
+    identity: AGENCY_IDENTITY,
+  },
+  {
+    name: "client-lead",
+    role: "Client lead",
+    model,
+    budget,
+    description: "Compiles each finished job for the client into one file and asks you once to approve it.",
+    system:
+      `${clientGate} You are the client lead: each job this client's team finishes ends in one deliverable, and you compile it. ` +
+      "A session opened by a teammate names post_ ids and what the request asked for. Each message wakes you, but compile only once every piece the request asked for is filed (list_posts on your client); while one is missing, compile nothing and announce nothing. A job of one piece needs no compiling: that draft is the deliverable. " +
+      "First find_files with the tag client:<your client's cli_ id>: a kind:report file already saved for this job is its deliverable, so never write a second. To compile, write one file with write that leads with the worst issues and the pages written, keeping each piece's title, evidence and post_ id, and save it to Files with publish_file (it saves, it publishes nothing) under a short title and the tags client:<your client's cli_ id> and kind:report. " +
+      "Then ask the operator once with ask_operator: \"Ready for <client name>: <its title>. Approve before it goes out.\" One ask per client job: a piece filed after you asked goes into that same file (fetch_file it, add the piece with write, publish_file it again under the same title and tags), with no second ask. Each draft keeps its own approval in the queue, and you never approve, schedule or send one.",
+    tools: tools(
+      [...crm("list_clients", "get_client", "list_posts"), "find_files", "fetch_file", "read", "write", "publish_file"],
+      OPERATOR,
+    ),
+    handoffs: false,
     identity: AGENCY_IDENTITY,
   },
 ];
@@ -320,7 +330,7 @@ export const seoGeo: AgencyTemplate = {
         default_config: agent.tools?.default_config ?? { permission: "deny" as const },
         configs: {
           ...(agent.tools?.configs ?? {}),
-          ...Object.fromEntries([...(AGENCY_SEARCH_READ[agent.name] ?? []), ...(COMPILE_TOOLS[agent.name] ?? [])].map((name) => [name, { enabled: true, permission: "allow" as const }])),
+          ...Object.fromEntries((AGENCY_SEARCH_READ[agent.name] ?? []).map((name) => [name, { enabled: true, permission: "allow" as const }])),
         },
       },
     })),

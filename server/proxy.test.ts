@@ -154,14 +154,15 @@ describe("provisionClientAgents", () => {
       { name: "seo-writer--acme", action: "unchanged" },
       { name: "geo-optimizer--acme", action: "created" },
       { name: "audit-runner--acme", action: "created" },
+      { name: "client-lead--acme", action: "created" },
     ]);
-    // Two creates only — the existing agent is patched, not re-posted. (The persona grants below
+    // Three creates only — the existing agent is patched, not re-posted. (The persona grants below
     // are POSTs too, and are counted separately.)
     const posts = creates(fetchImpl);
-    expect(posts).toHaveLength(2);
+    expect(posts).toHaveLength(3);
     expect(patches(fetchImpl).map(([url]) => String(url))).toEqual(["https://x.test/v1/agents/agt_1"]);
     const bodies = posts.map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
-    expect(bodies.map((b) => b.name)).toEqual(["geo-optimizer--acme", "audit-runner--acme"]);
+    expect(bodies.map((b) => b.name)).toEqual(["geo-optimizer--acme", "audit-runner--acme", "client-lead--acme"]);
     // POST /v1/agents requires model and budget, and every one of these fields is the template's:
     // the server holds no crew, no prompt and no model of its own any more.
     for (const body of bodies) {
@@ -192,12 +193,13 @@ describe("provisionClientAgents", () => {
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
       init?.method === "GET" ? json({ data: [{ id: "agt_1", name: "seo-writer--acme" }] }) : json({ id: "agt_new" }));
     const reports = await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
-    expect(reports?.map((r) => r.action)).toEqual(["unchanged", "created", "created"]);
+    expect(reports?.map((r) => r.action)).toEqual(["unchanged", "created", "created", "created"]);
     // One per member: the one that already existed, by its roster id, and the two just created, by
     // the id the create answered with. The grant is idempotent, so re-asserting it on the existing
     // member is how a crew provisioned before this persona existed stops running as nobody.
     expect(grants(fetchImpl).map(([url]) => String(url))).toEqual([
       "https://x.test/v1/agents/agt_1/identities",
+      "https://x.test/v1/agents/agt_new/identities",
       "https://x.test/v1/agents/agt_new/identities",
       "https://x.test/v1/agents/agt_new/identities",
     ]);
@@ -211,16 +213,24 @@ describe("provisionClientAgents", () => {
   it("slugs a member's `handoffs` list like its name, so the chain stays inside one client's crew", async () => {
     // The template writes `audit-runner → seo-writer → geo-optimizer`; the platform resolves a
     // handoff target by agent name, and this client's writer is `seo-writer--acme`, not the seat.
-    // Every member also reports to the agency's own `client-manager`, which is no crew seat and keeps its name.
+    // Every member reports to this client's own `client-lead`, never to a seat every client shares.
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
       init?.method === "GET" ? json({ data: [] }) : json({ id: "agt_new" }));
     await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
     const bodies = creates(fetchImpl).map(([, init]) => JSON.parse(String(init?.body)) as { name: string; handoffs: unknown });
     expect(bodies.map((b) => [b.name, b.handoffs])).toEqual([
-      ["seo-writer--acme", ["geo-optimizer--acme", "client-manager"]],
-      ["geo-optimizer--acme", ["client-manager"]],
-      ["audit-runner--acme", ["seo-writer--acme", "client-manager"]],
+      ["seo-writer--acme", ["geo-optimizer--acme", "client-lead--acme"]],
+      ["geo-optimizer--acme", ["client-lead--acme"]],
+      ["audit-runner--acme", ["seo-writer--acme", "client-lead--acme"]],
+      ["client-lead--acme", false],
     ]);
+  });
+
+  it("refuses a crew whose handoff names a seat outside it, before writing anything", async () => {
+    const fetchImpl = vi.fn(async () => json({ data: [] }));
+    const leaky = [{ ...crew[0]!, handoffs: ["client-manager"] }];
+    await expect(provisionClientAgents(config, "acme", fetchImpl as typeof fetch, leaky)).rejects.toThrow(/client-manager, which is not a seat of this client's crew/);
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("re-asserts the declaration on a crew that already exists, so an old crew gains the chain", async () => {
@@ -240,14 +250,16 @@ describe("provisionClientAgents", () => {
       { name: "seo-writer--acme", action: "updated" },
       { name: "geo-optimizer--acme", action: "unchanged" },
       { name: "audit-runner--acme", action: "unchanged" },
+      { name: "client-lead--acme", action: "unchanged" },
     ]);
     expect(creates(fetchImpl)).toHaveLength(0);
     const bodies = patches(fetchImpl).map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
     // The whole declaration, slugged like a create — and without the name: a patch renames nothing.
     expect(bodies.map((b) => [b.handoffs, b.name])).toEqual([
-      [["geo-optimizer--acme", "client-manager"], undefined],
-      [["client-manager"], undefined],
-      [["seo-writer--acme", "client-manager"], undefined],
+      [["geo-optimizer--acme", "client-lead--acme"], undefined],
+      [["client-lead--acme"], undefined],
+      [["seo-writer--acme", "client-lead--acme"], undefined],
+      [false, undefined],
     ]);
     for (const [i, body] of bodies.entries()) {
       expect(body.system).toBe(crew[i]?.system);
