@@ -1,0 +1,79 @@
+{
+  "id": "general/2-module",
+  "agencyType": "general",
+  "design": "Module",
+  "style": "A calm Swiss consultancy page: warm stone (or near black), one grotesk in Hanken Grotesk set tight and large, a strict 12-column field with hairline rules, six square discipline modules and a single green point of contact.",
+  "theme": "both",
+  "fonts": [
+    "Hanken Grotesk"
+  ],
+  "concept": {
+    "idea": "A client-services agency sells order: one lead who brings the right specialists in at the right time. The page is a modular grid, the disciplines are square modules, and one green dot, the client's point of contact, settles on each in turn. The visitor can switch on the twelve columns everything is aligned to.",
+    "signature": "The green point of contact glides from module to module every few seconds and the module it lands on turns ink; pointing at a module brings it there, and Pause stops it. 'Show the grid' draws the twelve columns down the page. Without JS or with reduced motion the dot rests on the first module and every module is listed.",
+    "motionVerb": "settle, align",
+    "palette": {
+      "stone": "#e7e5df",
+      "ink": "#161616",
+      "muted": "#55534e",
+      "line": "#c4c1b8",
+      "green": "#0b7556",
+      "darkStone": "#121312",
+      "darkInk": "#e8e7e2",
+      "darkGreen": "#3fcf9e"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 1,
+      "usability": 1,
+      "creativity": 1,
+      "content": 1,
+      "overall": 1
+    },
+    "estimate": 0,
+    "independent": false,
+    "date": "pending"
+  }
+}

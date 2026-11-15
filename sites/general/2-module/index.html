@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Client services</title>
+<meta name="description" content="{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="cols-overlay" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+
+<header class="head grid" id="top">
+  <a class="brand" href="#top"><span class="brand__dot" aria-hidden="true"></span><span>{{company_name}}</span></a>
+  <nav class="nav" aria-label="Primary">
+    <ul>
+      <li><a href="#services"><span>Services</span></a></li>
+      <li><a href="#method"><span>Method</span></a></li>
+      <li><a href="#terms"><span>Terms</span></a></li>
+      <li><a href="#contact"><span>Contact</span></a></li>
+    </ul>
+  </nav>
+  <button class="gridbtn" type="button" aria-pressed="false" hidden><span class="gridbtn__ic" aria-hidden="true"></span><span>Show the grid</span></button>
+</header>
+
+<main id="main">
+  <section class="hero grid" aria-labelledby="h1">
+    <p class="kicker"><span>Client services</span><span>{{city}}</span></p>
+    <h1 id="h1">{{tagline}}</h1>
+    <p class="hero__intro">{{intro}}</p>
+    <a class="cta hero__cta" href="#contact"><span>Start a conversation</span><i aria-hidden="true"></i></a>
+    <div class="field" aria-labelledby="field-h">
+      <h2 id="field-h" class="field__h">Disciplines</h2>
+      <div class="field__board">
+      <ul class="field__mods">
+        <li class="mod"><span class="mod__n">a</span><span class="mod__t">{{specialties[0]}}</span></li>
+        <li class="mod"><span class="mod__n">b</span><span class="mod__t">{{specialties[1]}}</span></li>
+        <li class="mod"><span class="mod__n">c</span><span class="mod__t">{{specialties[2]}}</span></li>
+        <li class="mod"><span class="mod__n">d</span><span class="mod__t">{{specialties[3]}}</span></li>
+        <li class="mod"><span class="mod__n">e</span><span class="mod__t">{{specialties[4]}}</span></li>
+        <li class="mod"><span class="mod__n">f</span><span class="mod__t">{{specialties[5]}}</span></li>
+      </ul>
+      <span class="contact-dot" aria-hidden="true"></span>
+      </div>
+      <p class="field__note">One point of contact moves between every discipline. <button class="pause" type="button" hidden>Pause</button></p>
+    </div>
+  </section>
+
+  <section class="sec grid" id="services" aria-labelledby="svc-h">
+    <h2 id="svc-h" class="label"><span class="label__n">01</span>Services</h2>
+    <ol class="rows">
+      <li><span class="rows__n">1.1</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><span class="rows__n">1.2</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><span class="rows__n">1.3</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><span class="rows__n">1.4</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec grid" id="method" aria-labelledby="met-h">
+    <h2 id="met-h" class="label"><span class="label__n">02</span>Method</h2>
+    <ol class="steps">
+      <li><span class="steps__n" aria-hidden="true">1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><span class="steps__n" aria-hidden="true">2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><span class="steps__n" aria-hidden="true">3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec grid" id="terms" aria-labelledby="ter-h">
+    <h2 id="ter-h" class="label"><span class="label__n">03</span>Terms</h2>
+    <div class="terms__for"><h3 class="mini">Who we work for</h3><p>{{audience}}</p></div>
+    <div class="terms__fee"><h3 class="mini">How we charge</h3><p>{{pricing_note}}</p></div>
+  </section>
+
+  {{#if proof}}<section class="sec grid" aria-labelledby="proof-h">
+    <h2 id="proof-h" class="label"><span class="label__n">04</span>In clients&#39; words</h2>
+    <div class="quotes">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="sec sec--tight grid" aria-labelledby="logos-h">
+    <h2 id="logos-h" class="label"><span class="label__n">05</span>Clients</h2>
+    <ul class="names">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="sec contact grid" id="contact" aria-labelledby="con-h">
+    <h2 id="con-h" class="label"><span class="label__n">&rarr;</span>Contact</h2>
+    <div class="contact__body">
+      <p class="contact__lede">Tell us what you need done and by when. We will reply with a plain proposal: the scope, the price and who will run it.</p>
+      <a class="mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span></a>
+      <a class="cta" href="mailto:{{contact_email}}"><span>Start a conversation</span><i aria-hidden="true"></i></a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot grid">
+  <p class="foot__name">&copy; {{year}} {{company_name}}</p>
+  <p class="foot__city">{{city}}</p>
+  <a class="foot__up" href="#top"><span>Back to top</span></a>
+</footer>
+</body>
+</html>
