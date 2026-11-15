@@ -115,8 +115,8 @@ export function AgencyAgents() {
       <div className="panel p-3">
         {turns.length === 0 ? (
           <p className="text-sm text-ink-2">
-            Ask <span className="font-mono">client-manager</span> for anything about the agency — it works the same CRM you see
-            here, through the dashboard's own tools.
+            Ask <span className="font-mono">client-manager</span> for anything about the agency — it works the same clients you see
+            here, through the dashboard's own tools, and the pipeline in the CRM.
           </p>
         ) : (
           <div className="space-y-2">

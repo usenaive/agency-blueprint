@@ -20,7 +20,7 @@ import { VOCABULARY, type TemplateKind } from "./index.ts";
 
 export {
   AGENCY_IDENTITY, AGENCY_TIMEZONE, ASK_OPERATOR, budget, CONTEXT, crm, DAY_ONE, gate, HANDOFF, mailbox, MAILBOX_READ, MAILBOX_SEND,
-  model, OPERATOR, OWN_RECORD, PREAMBLE, REQUEST_TOOLS, roster, timer, tools,
+  model, OPERATOR, OWN_RECORD, PLATFORM_CRM, PREAMBLE, REQUEST_TOOLS, roster, timer, tools,
 } from "./agents.ts";
 
 /**
@@ -107,20 +107,6 @@ const clients: Client[] = [
     contact: { name: "Sample Contact", email: "contact@demo-clinic.example", role: "Practice manager" },
     notes: ["Demo row — replace it with a client of your own."],
     nextAction: "Review last month's report together",
-  },
-  {
-    id: "cli_dm03", slug: "demo-studio", name: "Demo Studio", domain: "demo-studio.example", stage: "proposal",
-    services: ["Strategy"],
-    contact: { name: "Sample Contact", email: "contact@demo-studio.example", role: "Founder" },
-    notes: ["Demo row — proposal sent, waiting on a reply."],
-    nextAction: "Follow up on the proposal",
-  },
-  {
-    id: "cli_dm04", slug: "demo-outfitters", name: "Demo Outfitters", domain: "demo-outfitters.example", stage: "lead",
-    services: [],
-    contact: { name: "Sample Contact", email: "contact@demo-outfitters.example", role: "Marketing lead" },
-    notes: ["Demo row — inbound from the site's contact form."],
-    nextAction: "Book a discovery call",
   },
   {
     id: "cli_dm05", slug: "demo-realty", name: "Demo Realty", domain: "demo-realty.example", stage: "churned",

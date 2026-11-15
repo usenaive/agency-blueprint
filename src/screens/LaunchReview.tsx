@@ -1,10 +1,10 @@
-import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink, FileText, ShieldAlert, Users, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink, FileText, ShieldAlert, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { apiMessage, apiSend, useApi } from "../api";
-import { KindChip, PageHeader, StageChip, StatusChip } from "../components/kit";
-import type { Client, Post, PostStatus } from "../data";
+import { KindChip, PageHeader, StatusChip } from "../components/kit";
+import type { Post, PostStatus } from "../data";
 import { argRows, waitingOn, type PlatformSession } from "../platform";
 import { dayOneLabel, type ContextReply } from "./Home";
 import type { AuditSnapshot } from "./ProductAudit";
@@ -35,7 +35,6 @@ const CheckRow = ({ done, children }: { done: boolean; children: ReactNode }) =>
 export function LaunchReview() {
   const audit = useApi<AuditSnapshot>("/product-audit");
   const context = useApi<ContextReply>("/context");
-  const clientsApi = useApi<Client[]>("/clients");
   const postsApi = useApi<Post[]>("/posts");
   const sessionsApi = useApi<{ data?: PlatformSession[] }>("/sessions?status=idle");
   const [crawl, setCrawl] = useState<CrawlCheck[] | null>(null);
@@ -44,7 +43,6 @@ export function LaunchReview() {
   const [reasons, setReasons] = useState<Record<string, string>>({});
 
   useEffect(() => { void readCrawlChecks().then(setCrawl).catch(() => setCrawl([])); }, []);
-  const prospects = (clientsApi.data ?? []).filter((client) => client.stage === "lead" || client.stage === "proposal");
   const drafts = (postsApi.data ?? []).filter((post) => post.status === "pending" || post.status === "ready");
   const names = useMemo(() => new Map((context.data?.team ?? []).map((agent) => [agent.id, agent.name])), [context.data]);
   const approvals = waitingOn(sessionsApi.data?.data ?? [], names);
@@ -61,20 +59,12 @@ export function LaunchReview() {
     } catch (err: unknown) { setError(apiMessage(err)); } finally { setBusy(null); }
   };
 
-  const qualify = async (client: Client) => {
-    setBusy(client.id); setError(null);
-    try {
-      const updated = await apiSend<Client>("POST", `/clients/${client.id}/advance`);
-      clientsApi.setData((clientsApi.data ?? []).map((row) => row.id === client.id ? updated : row));
-    } catch (err: unknown) { setError(apiMessage(err)); } finally { setBusy(null); }
-  };
-
   const connections = audit.data?.identity?.connections ?? [];
   const hasSearchConsole = connections.some((row) => /search.?console/i.test(row.connector) && row.status === "connected");
   const hasAnalytics = connections.some((row) => /analytics/i.test(row.connector) && row.status === "connected");
   const deploymentReady = audit.data !== null && audit.data.agents.length === audit.data.expected_agents && audit.data.deployments.length >= 5;
   const crawlReady = crawl !== null && crawl.length === 3 && crawl.every((row) => row.ok);
-  const manualCount = prospects.length + drafts.length + approvals.length + Number(!hasSearchConsole) + Number(!hasAnalytics) + Number(!crawlReady);
+  const manualCount = drafts.length + approvals.length + Number(!hasSearchConsole) + Number(!hasAnalytics) + Number(!crawlReady);
 
   return (
     <div className="pane-in">
@@ -103,20 +93,6 @@ export function LaunchReview() {
           )}
           <Link to="/agents" className="btn btn-ghost btn-sm mt-3">Inspect agents and schedules</Link>
         </Card>
-      </section>
-
-      <section className="panel mt-4 overflow-hidden">
-        <header className="flex items-start justify-between gap-3 border-b border-line p-4">
-          <div><div className="flex items-center gap-2"><Users size={17} /><h2 className="text-sm font-semibold">Prospects and outreach drafts</h2></div><p className="mt-1 text-xs text-ink-2">This is the first prospect list. Every note is shown because agents file outreach copy and why-now evidence on the company record.</p></div>
-          <Link to="/crm" className="btn btn-ghost btn-sm shrink-0">Open CRM</Link>
-        </header>
-        {clientsApi.data === null ? <p className="absence m-4">{clientsApi.error ?? "Reading the CRM…"}</p> : prospects.length === 0 ? <p className="absence m-4">No prospects were filed. Check the sales intake status above before rerunning it.</p> : prospects.map((client) => (
-          <article className="border-b border-line p-4 last:border-b-0" key={client.id}>
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><h3 className="font-medium">{client.name}</h3><StageChip stage={client.stage} /></div><p className="mt-1 text-xs text-ink-2">{client.domain} · {client.contact.name} · {client.contact.role} · <a className="underline" href={`mailto:${client.contact.email}`}>{client.contact.email}</a></p></div>{client.stage === "lead" ? <button disabled={busy !== null} className="btn btn-primary btn-sm" onClick={() => void qualify(client)}><Check size={14} /> Qualify for proposal</button> : null}</div>
-            {client.notes.length === 0 ? <p className="absence mt-3">No why-now evidence or outreach draft was filed. Do not approve this prospect yet.</p> : <div className="mt-3 space-y-2">{client.notes.map((note, index) => <div className="whitespace-pre-wrap rounded-lg border border-line bg-ground p-3 text-sm" key={`${client.id}-${index}`}><span className="mb-1 block font-mono text-[11px] text-ink-3">NOTE {index + 1}</span>{note}</div>)}</div>}
-            {client.nextAction ? <p className="mt-2 text-xs text-ink-2">Next action: {client.nextAction}</p> : null}
-          </article>
-        ))}
       </section>
 
       <section className="panel mt-4 overflow-hidden">

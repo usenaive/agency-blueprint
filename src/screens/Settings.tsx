@@ -85,8 +85,8 @@ export function Settings() {
           <p className="mt-0.5 text-xs text-ink-2">
             The deployment reads <span className="font-mono">NAIVE_API_KEY</span> from the app's environment, declared in
             <span className="font-mono"> naive.config.ts</span>; locally, set it before <span className="font-mono">pnpm serve</span>.
-            The key never reaches the browser — screens go through <span className="font-mono">/api/*</span>. Without it the CRM
-            and the content queue still work, and anything that needs the platform says so where you asked for it.
+            The key never reaches the browser — screens go through <span className="font-mono">/api/*</span>. Without it your clients
+            and the content queue still work, the contact form cannot reach the CRM, and anything that needs the platform says so where you asked for it.
           </p>
         </div>
         <div className="px-3 py-2.5">

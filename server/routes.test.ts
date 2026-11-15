@@ -5,7 +5,7 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hashToken } from "./mcp.ts";
-import { handleRequest, isLoopback, OPEN_LEADS_CAP, type ApiContext, type ApiRequest } from "./routes.ts";
+import { handleRequest, isLoopback, type ApiContext, type ApiRequest } from "./routes.ts";
 import { LEAD_WINDOW_MS, LEADS_PER_WINDOW } from "./store.ts";
 import { emptyState, openStoreOver, type Store, type StoreState } from "./store.ts";
 
@@ -49,6 +49,15 @@ function fixture(overrides: Partial<ApiContext> = {}) {
   return { call, state, store, writes: () => writes };
 }
 
+const CONFIG = { baseUrl: "https://api.example", apiKey: "secret", identityId: null, project: "agency" };
+
+/** A server with a key, whose platform answers every inquiry `202`. */
+function withCrm() {
+  const upstream = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ object: "crm_inquiry", received: true }), { status: 202 }));
+  vi.stubGlobal("fetch", upstream);
+  return { ...fixture({ config: CONFIG }), upstream };
+}
+
 const rpc = (method: string, params?: unknown) => JSON.stringify({ jsonrpc: "2.0", id: 1, method, params });
 
 describe("the store routes", () => {
@@ -58,168 +67,112 @@ describe("the store routes", () => {
     expect(await call("GET", "/api/posts")).toEqual({ status: 200, body: [] });
   });
 
-  it("files a lead, persists it, and refuses one that is missing its contact", async () => {
-    const { call, writes } = fixture();
-    const created = await call("POST", "/api/leads", lead);
-    expect(created.status).toBe(201);
-    // Two: the rate window's count and the row itself. Both are the same document, so the deployed
-    // entry still writes it back once — `save()` there only marks the request dirty.
-    expect(writes()).toBe(2);
-    expect((await call("GET", "/api/clients")).body).toHaveLength(1);
+  it("files the contact form in the platform CRM as a talking contact, and keeps no row of its own", async () => {
+    const { call, state, upstream } = withCrm();
+    const sent = await call("POST", "/api/leads", { ...lead, services: ["SEO"], note: "We need a site audit." });
+    expect(sent).toEqual({ status: 201, body: { received: true } });
+    expect(state.clients).toEqual([]);
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(upstream.mock.calls[0]?.[0]).toBe("https://api.example/v1/crm/inquiries");
+    const init = upstream.mock.calls[0]?.[1] as RequestInit;
+    expect(init).toMatchObject({ method: "POST", headers: { authorization: "Bearer secret" } });
+    expect(JSON.parse(String(init.body))).toEqual({
+      name: "Jordan Lee", email: "jordan@summitoutdoor.example", company: "Summit Outdoor Co", source: "site",
+      note: "Website inquiry from Summit Outdoor Co (summitoutdoor.example).\nServices: SEO.\nWe need a site audit.",
+    });
+  });
 
+  it("refuses a form missing its contact, a field too long, and says so when there is no CRM to file into", async () => {
+    const { call, upstream } = withCrm();
     expect(await call("POST", "/api/leads", { name: "x" })).toEqual({
       status: 400,
       body: { error: "name, domain and contact {name, email} are required" },
     });
     // A body that is not JSON at all is a validation error, never a 502.
     expect((await call("POST", "/api/leads", "{oops")).status).toBe(400);
+    expect((await call("POST", "/api/leads", { ...lead, note: "x".repeat(2001) })).status).toBe(400);
+    expect((await call("POST", "/api/leads", { ...lead, services: Array.from({ length: 11 }, () => "seo") })).status).toBe(400);
+    expect(upstream).not.toHaveBeenCalled();
+    expect((await fixture().call("POST", "/api/leads", lead)).status).toBe(503);
   });
 
-  it("says a lead came from the site, whatever the body claims; only a signed-in operator's form says manual", async () => {
-    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
-    const claimed = { ...lead, source: "referral", referredBy: "cli_victim" };
-    await call("POST", "/api/leads", claimed);
-    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
-    expect(state.clients.at(-1)?.referredBy).toBeUndefined();
-
-    // An anonymous `manual` is a visitor's claim too.
-    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "b@summitoutdoor.example" }, source: "manual" });
-    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
-
-    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "c@summitoutdoor.example" }, source: "manual" }, { authorization: "Bearer dash-secret" });
-    expect(state.clients.at(-1)).toMatchObject({ source: "manual" });
+  it("answers the CRM's refusal: a bad address is the visitor's to fix, anything else is a 502", async () => {
+    const { call, upstream } = withCrm();
+    upstream.mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: "validation_failed" } }), { status: 400 }));
+    expect(await call("POST", "/api/leads", lead)).toEqual({ status: 400, body: { error: "check the email address" } });
+    upstream.mockResolvedValueOnce(new Response("{}", { status: 500 }));
+    expect((await call("POST", "/api/leads", lead)).status).toBe(502);
+    upstream.mockRejectedValueOnce(new Error("offline"));
+    expect((await call("POST", "/api/leads", lead)).status).toBe(502);
   });
 
-  it("files a lead that came through a client's referral link as that client's referral, and a wrong code as a site lead", async () => {
-    // A deployed app, so the caller is a visitor and not the open local gate.
-    const { call, state, store } = fixture({ dashboardToken: "dash-secret", local: false });
-    const referrer = store.createLead({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
-    store.onboardClient(referrer.id);
+  it("files a referral link's inquiry as that client's referral, with a note naming the client, and a wrong code as a site inquiry", async () => {
+    const { call, store, upstream } = withCrm();
+    const referrer = store.createClient({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
     const code = store.referralCode(referrer.id)!;
+    const body = (n: number) => JSON.parse(String((upstream.mock.calls[n]?.[1] as RequestInit).body)) as { source: string; note: string };
 
-    // A visitor's reply is the id alone either way, so it does not tell a good code from a bad one.
-    const sent = await call("POST", "/api/leads", { ...lead, ref: code });
-    expect(state.clients.at(-1)).toMatchObject({ source: "referral", referredBy: referrer.id });
-    expect(sent.body).toEqual({ id: state.clients.at(-1)!.id });
-    expect(state.clients.at(-1)).not.toHaveProperty("ref");
+    // The reply is the same either way, so it does not tell a good code from a bad one.
+    expect((await call("POST", "/api/leads", { ...lead, ref: code })).body).toEqual({ received: true });
+    expect(body(0).source).toBe("referral");
+    expect(body(0).note).toContain(`Referred by Acme Dental (${referrer.id}).`);
 
-    await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "x@summitoutdoor.example" }, ref: "not-a-code" });
-    expect(state.clients.at(-1)).toMatchObject({ source: "site" });
-    expect(state.clients.at(-1)?.referredBy).toBeUndefined();
+    // The source is the server's to say: a body claiming one is a site inquiry.
+    expect((await call("POST", "/api/leads", { ...lead, ref: "not-a-code", source: "referral" })).body).toEqual({ received: true });
+    expect(body(1)).toMatchObject({ source: "site" });
+    expect(body(1).note).not.toContain("Referred by");
+    expect(body(1)).not.toHaveProperty("ref");
   });
 
-  it("puts a referral-link lead through the same rate limit as every other public lead", async () => {
-    const { call, store } = fixture();
-    const referrer = store.createLead({ ...lead, name: "Acme Dental", domain: "acmedental.example", contact: { ...lead.contact, email: "o@acmedental.example" } });
-    store.onboardClient(referrer.id);
-    const ref = store.referralCode(referrer.id)!;
-    for (let i = 0; i < LEADS_PER_WINDOW; i += 1) {
-      await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: `r${i}@summitoutdoor.example` }, ref });
+  /**
+   * No agent turn fires on an inquiry, but each one is a contact in the CRM: a script must not be
+   * able to fill it. The window lives in the document because a cold start forgets a counter.
+   */
+  it("rate-limits the anonymous form, referral links included, and reopens on the next window", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(0);
+      const { call, store, upstream } = withCrm();
+      const ref = store.referralCode(store.createClient({ ...lead, name: "Acme Dental", domain: "acmedental.example" }).id)!;
+      for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect((await call("POST", "/api/leads", { ...lead, ref })).status).toBe(201);
+
+      const limited = await call("POST", "/api/leads", lead);
+      expect(limited.status).toBe(429);
+      expect(limited.headers?.["retry-after"]).toBe(String(LEAD_WINDOW_MS / 1000));
+      expect(upstream).toHaveBeenCalledTimes(LEADS_PER_WINDOW);
+
+      vi.setSystemTime(LEAD_WINDOW_MS);
+      expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    } finally {
+      vi.useRealTimers();
     }
-    expect((await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "late@summitoutdoor.example" }, ref })).status).toBe(429);
   });
 
-  it("stores only the form's fields, and gives a visitor the lead's id rather than the CRM row", async () => {
-    const { call, state } = fixture({ dashboardToken: "dash-secret", local: false });
-    const posted = await call("POST", "/api/leads", { ...lead, extra: "x", contact: { ...lead.contact, blob: "y".repeat(5000) } });
-    expect(posted.status).toBe(201);
-    const row = state.clients.at(-1)!;
-    expect(posted.body).toEqual({ id: row.id });
-    expect(row.contact).toEqual(lead.contact);
-    expect(row).not.toHaveProperty("extra");
-    // The dedupe reply is the id too: it never shows a visitor the agency's notes on that lead.
-    row.notes.push("internal: budget is tight");
-    expect(await call("POST", "/api/leads", lead)).toEqual({ status: 200, body: { id: row.id } });
-    // The signed-in operator's form still gets the full row.
-    expect((await call("POST", "/api/leads", lead, { authorization: "Bearer dash-secret" })).body).toMatchObject({ id: row.id, notes: ["internal: budget is tight"] });
-  });
-
-  it("also notifies the agency inbox after a public lead is safely in the CRM", async () => {
+  it("also notifies the agency inbox once the inquiry is in the CRM", async () => {
     const upstream = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ object: "crm_inquiry", received: true }), { status: 202 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [
         { id: "eml_1", address: "hello@founderframehq.com" },
         { id: "eml_2", address: "leads@founderframehq.com" },
       ] }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ accepted: true }), { status: 202 }));
     vi.stubGlobal("fetch", upstream);
-    const { call, store } = fixture({
-      config: { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" },
-    });
+    const { call, store } = fixture({ config: { ...CONFIG, identityId: "idn_1" } });
     store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
 
     expect((await call("POST", "/api/leads", lead)).status).toBe(201);
-    expect(store.read().clients).toHaveLength(1);
-    expect(upstream).toHaveBeenCalledTimes(2);
-    expect(upstream.mock.calls[0]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails?limit=100");
-    expect(upstream.mock.calls[1]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails/eml_1/send");
-    const init = upstream.mock.calls[1]?.[1] as RequestInit;
-    expect(init.headers).toMatchObject({ authorization: "Bearer secret" });
-    expect(JSON.parse(String(init.body))).toMatchObject({
+    expect(upstream).toHaveBeenCalledTimes(3);
+    expect(upstream.mock.calls[1]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails?limit=100");
+    expect(upstream.mock.calls[2]?.[0]).toBe("https://api.example/v1/identities/idn_1/emails/eml_1/send");
+    expect(JSON.parse(String((upstream.mock.calls[2]?.[1] as RequestInit).body))).toMatchObject({
       to: ["leads@founderframehq.com"],
       subject: "New Founder Frame inquiry: Summit Outdoor Co",
     });
-
-    // A repeated form post returns the existing lead and does not send another notification.
-    expect((await call("POST", "/api/leads", lead)).status).toBe(200);
-    expect(upstream).toHaveBeenCalledTimes(2);
   });
 
-  it("bounds what the anonymous form may write: one open row per contact, a cap on open leads, a size on fields", async () => {
-    const { call, writes, store } = fixture();
-    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
-    // The same contact again, however it is cased, is the row already filed — not a second write.
-    const again = await call("POST", "/api/leads", { ...lead, contact: { ...lead.contact, email: "Jordan@SummitOutdoor.example " } });
-    expect(again.status).toBe(200);
-    // Still the two the first lead cost: a repeat is neither a row nor a count against the window.
-    expect(writes()).toBe(2);
-    // Once the contact is worked past "lead" the address may file a new one.
-    store.advanceClient((again.body as { id: string }).id);
-    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
-
-    expect((await call("POST", "/api/leads", { ...lead, note: "x".repeat(2001) })).status).toBe(400);
-    expect((await call("POST", "/api/leads", { ...lead, services: Array.from({ length: 11 }, () => "seo") })).status).toBe(400);
-
-    for (let i = store.read().clients.filter((c) => c.stage === "lead").length; i < OPEN_LEADS_CAP; i += 1) {
-      store.createLead({ ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
-    }
-    const full = await call("POST", "/api/leads", { ...lead, domain: "late.example", contact: { ...lead.contact, email: "late@late.example" } });
-    expect(full.status).toBe(429);
-    expect(full.headers?.["retry-after"]).toBe("86400");
-    expect(store.read().clients).toHaveLength(OPEN_LEADS_CAP + 1);
-  });
-
-  /**
-   * The cap alone bounds spend, not availability: 200 scripted pairs used to fill the inbox in one
-   * burst and every real lead for the next twenty-four hours was answered `429`. No agent turn
-   * fires on a lead, so what that costs is business, not money — which is why the answer is a rate
-   * and its `retry-after` is an hour, not the inbox-full day.
-   */
-  it("rate-limits the anonymous form, so a burst cannot hold the inbox shut for a day", async () => {
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(0);
-      const { call, store } = fixture();
-      const file = (i: number) =>
-        call("POST", "/api/leads", { ...lead, domain: `d${i}.example`, contact: { ...lead.contact, email: `p${i}@d${i}.example` } });
-      for (let i = 0; i < LEADS_PER_WINDOW; i += 1) expect((await file(i)).status).toBe(201);
-
-      const limited = await file(LEADS_PER_WINDOW);
-      expect(limited.status).toBe(429);
-      expect(limited.headers?.["retry-after"]).toBe(String(LEAD_WINDOW_MS / 1000));
-      expect(store.read().clients).toHaveLength(LEADS_PER_WINDOW);
-
-      // The next window admits again — the form is shut for an hour, never for the day.
-      vi.setSystemTime(LEAD_WINDOW_MS);
-      expect((await file(LEADS_PER_WINDOW)).status).toBe(201);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("advances, onboards, and refuses to onboard a churned client", async () => {
+  it("onboards a client again, and refuses to onboard a churned client", async () => {
     const { call, store } = fixture();
-    const client = store.createLead(lead);
-    expect(((await call("POST", `/api/clients/${client.id}/advance`)).body as { stage: string }).stage).toBe("proposal");
+    const client = store.createClient(lead);
     const onboarded = await call("POST", `/api/clients/${client.id}/onboard`);
     expect(onboarded.status).toBe(200);
     // No key on this server, so no crew is provisioned and the report says so rather than lying.
@@ -230,15 +183,17 @@ describe("the store routes", () => {
       status: 409,
       body: { error: "a churned client cannot be onboarded" },
     });
-    expect(await call("POST", "/api/clients/cli_missing/advance")).toEqual({
+    expect(await call("POST", "/api/clients/cli_missing/onboard")).toEqual({
       status: 404,
       body: { error: "no such client" },
     });
+    // The pipeline moved to the platform CRM: there is no stage to advance here.
+    expect((await call("POST", `/api/clients/${client.id}/advance`)).status).toBe(404);
   });
 
   it("patches a post, and says which of the two things it needed", async () => {
     const { call, store } = fixture();
-    const client = store.createLead(lead);
+    const client = store.createClient(lead);
     const post = store.createDraftPost({
       clientId: client.id, title: "t", summary: "s", body: "A complete, reviewed article.", kind: "article", channel: "blog", scheduledFor: "2026-01-05",
     })!;
@@ -261,7 +216,7 @@ describe("the store routes", () => {
     const { call, store } = fixture({
       config: { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" },
     });
-    const client = store.createLead(lead);
+    const client = store.createClient(lead);
     const draft = store.createDraftPost({
       clientId: client.id, title: "GEO basics", summary: "A practical definition", body: "Full article",
       kind: "article", channel: "blog", scheduledFor: "2026-09-26",
@@ -300,7 +255,7 @@ describe("public discovery documents", () => {
     const shell = '<!doctype html><html><head><title>Agency services</title><meta name="description" content="generic" /></head><body><div id="root"></div><script type="module" src="/assets/site.js"></script></body></html>';
     const { call, store } = fixture({ publicShell: () => Promise.resolve(shell) });
     store.updateSite({ company: "Founder Frame", contact: { ...store.site().contact, email: "hello@founderframehq.com" } });
-    const company = store.createLead({ name: "Founder Frame", domain: "", contact: { name: "", email: "", role: "" } });
+    const company = store.createClient({ name: "Founder Frame", domain: "", contact: { name: "", email: "", role: "" } });
     const live = store.createDraftPost({ clientId: company.id, title: "A safer <title>", summary: "Useful & specific", body: "## Answer\n\nA **clear** answer.\n\n- First", kind: "article", channel: "blog", scheduledFor: "2026-10-04" })!;
     store.updatePost(live.id, { status: "posted" });
     const future = store.createDraftPost({ clientId: company.id, title: "Future draft", summary: "Not public", body: "Wait", kind: "article", channel: "blog", scheduledFor: "2026-10-06" })!;
@@ -347,7 +302,7 @@ describe("/mcp", () => {
   it("is the same document as /api/clients — an agent's write is what the UI reads", async () => {
     const { call } = fixture();
     const created = await call("POST", "/mcp", rpc("tools/call", {
-      name: "create_lead",
+      name: "create_client",
       arguments: { name: "Bluefin", domain: "bluefin.example", contact_name: "Sam", contact_email: "sam@bluefin.example", contact_role: "VP" },
     }), { authorization: "Bearer platform-token" });
     expect(created.status).toBe(200);
@@ -415,7 +370,7 @@ describe("the /api/* gate", () => {
 
   it("refuses an anonymous read of the CRM, and a wrong token, and admits the right one", async () => {
     const { call, store } = fixture(deployed);
-    store.createLead(lead);
+    store.createClient(lead);
     const unauthenticated = await call("GET", "/api/clients");
     expect(unauthenticated).toEqual({ status: 401, body: { error: "missing or invalid access token" } });
     // Not one row of it, and not the contact's email address, leaves the server.
@@ -448,18 +403,17 @@ describe("the /api/* gate", () => {
     expect(await call("PATCH", "/api/site", {})).toMatchObject({ status: 405 });
     expect(await call("GET", "/api/blog")).toMatchObject({ status: 200, body: [] });
 
-    expect((await call("POST", "/api/leads", lead)).status).toBe(201);
+    // Open to a visitor: past the gate to the route itself, which needs the key to reach the CRM.
+    expect((await call("POST", "/api/leads", lead)).status).toBe(503);
     expect(await call("GET", "/api/leads")).toMatchObject({ status: 405 });
-    // The row it made is still behind the gate.
     expect(await call("GET", "/api/clients")).toMatchObject({ status: 401 });
   });
 
-  it("gates the writes too — the queue, the pipeline and a billable session alike", async () => {
+  it("gates the writes too — the queue, onboarding and a billable session alike", async () => {
     const { call, store, writes } = fixture(deployed);
-    const client = store.createLead(lead);
+    const client = store.createClient(lead);
     const before = writes();
     for (const [method, path] of [
-      ["POST", `/api/clients/${client.id}/advance`],
       ["POST", `/api/clients/${client.id}/onboard`], ["PATCH", "/api/posts/post_1"],
       ["POST", "/api/posts/post_1/post-now"], ["POST", "/api/chat"], ["GET", "/api/chat/ses_1/stream"],
       ["GET", "/api/agents"], ["GET", "/api/social/accounts"],
@@ -550,9 +504,9 @@ describe("the /api/* gate", () => {
         expect((await call("GET", "/api/clients", "", { cookie: "dashboard_session=dash; dashboard_session=stale" })).status).toBe(200);
         expect((await call("GET", "/api/session", "", { cookie: both })).body).toMatchObject({ authenticated: true });
         // The guard still applies to what the live value authenticates.
-        const client = store.createLead(lead);
-        expect((await call("POST", `/api/clients/${client.id}/advance`, "", { cookie: both, "sec-fetch-site": "same-origin" })).status).toBe(200);
-        expect((await call("POST", `/api/clients/${client.id}/advance`, "", { cookie: both, "sec-fetch-site": "cross-site" })).status).toBe(403);
+        const client = store.createClient(lead);
+        expect((await call("POST", `/api/clients/${client.id}/onboard`, "", { cookie: both, "sec-fetch-site": "same-origin" })).status).toBe(200);
+        expect((await call("POST", `/api/clients/${client.id}/onboard`, "", { cookie: both, "sec-fetch-site": "cross-site" })).status).toBe(403);
       });
 
       it("answers 401 and expires the legacy cookie when no value is the token", async () => {
@@ -620,12 +574,13 @@ describe("the /api/* gate", () => {
      */
     describe("a cookie-authenticated write must be the dashboard's own", () => {
       const cookie = { cookie: "dashboard_session=dash" };
-      /** A gated write: advancing a lead. Answers 200 with the advanced row, or is refused. */
+      /** A gated write: approving a draft. Answers 200 with the approved row, or is refused. */
       const advance = async (headers: Record<string, string>) => {
         const { call, store } = fixture(deployed);
-        const client = store.createLead(lead);
-        const reply = await call("POST", `/api/clients/${client.id}/advance`, "", headers);
-        return { reply, stage: store.read().clients[0]?.stage };
+        const client = store.createClient(lead);
+        const post = store.createDraftPost({ clientId: client.id, title: "t", summary: "s", kind: "article", channel: "blog", scheduledFor: "2026-01-05" })!;
+        const reply = await call("PATCH", `/api/posts/${post.id}`, { status: "approved" }, headers);
+        return { reply, stage: store.read().posts[0]?.status };
       };
 
       it("passes the framed dashboard's own fetch, and the address bar", async () => {
@@ -646,7 +601,7 @@ describe("the /api/* gate", () => {
         ]) {
           const { reply, stage } = await advance(headers);
           expect(reply, JSON.stringify(headers)).toEqual({ status: 403, body: { error: "cross-site request refused" } });
-          expect(stage, JSON.stringify(headers)).toBe("lead");
+          expect(stage, JSON.stringify(headers)).toBe("pending");
         }
         const { call } = fixture(deployed);
         for (const method of ["PUT", "PATCH", "DELETE"]) {
@@ -676,8 +631,8 @@ describe("the /api/* gate", () => {
           ...cookie, "content-type": "application/x-www-form-urlencoded", "sec-fetch-site": "cross-site",
         });
         expect(handoff.status).toBe(303);
-        // The public site's contact form is not gated, so it is not this guard's either.
-        expect((await call("POST", "/api/leads", lead, { ...cookie, "sec-fetch-site": "cross-site" })).status).toBe(201);
+        // The public site's contact form is not gated, so it is not this guard's either (no key here: 503, not 403).
+        expect((await call("POST", "/api/leads", lead, { ...cookie, "sec-fetch-site": "cross-site" })).status).toBe(503);
         // The wrong cookie is still the wrong cookie, before any question of origin.
         expect((await advance({ cookie: "dashboard_session=nope", "sec-fetch-site": "same-origin" })).reply.status).toBe(401);
       });
@@ -968,7 +923,7 @@ describe("the platform routes", () => {
 describe("the studio's file proxy", () => {
   const config = { baseUrl: "https://api.example", apiKey: "secret", identityId: "idn_1", project: "agency" };
   const studioPost = (store: Store, files: string[]) =>
-    store.createDraftPost({ clientId: store.createLead({ name: "Acme", domain: "", contact: { name: "", email: "", role: "" } }).id,
+    store.createDraftPost({ clientId: store.createClient({ name: "Acme", domain: "", contact: { name: "", email: "", role: "" } }).id,
       title: "Carafe", summary: "concept", kind: "concept", channel: "studio", scheduledFor: "2026-10-30", files })!;
 
   it("is behind the operator's gate like the queue", async () => {

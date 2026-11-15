@@ -174,19 +174,21 @@ describe("the function itself", () => {
 
   /**
    * The document is one jsonb row read-modify-written per request. Without the transaction that is
-   * last-write-wins: eight parallel `create_lead` calls each answered 201 with a distinct client
+   * last-write-wins: eight parallel `create_client` calls each answered with a distinct client
    * and six survived — an agent's write vanishing with no error anywhere.
    */
   it("keeps every one of eight concurrent writes", async () => {
     process.env["DATABASE_URL"] = "postgresql://u:p@db.test:5432/postgres";
+    process.env["VETTA_MCP_TOKEN"] = "dash";
     const names = ["Alta", "Bluefin", "Cedar", "Dunbar", "Elmore", "Foxglove", "Granby", "Halvard"];
 
     const created = await Promise.all(names.map((name) =>
-      send("POST", "/api/leads", {
-        name, domain: `${name.toLowerCase()}.test`,
-        contact: { name: "Jordan Lee", email: `jordan@${name.toLowerCase()}.test`, role: "Founder" },
+      send("POST", "/mcp", {
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: { name: "create_client", arguments: { name, domain: `${name.toLowerCase()}.test`, contact_email: `jordan@${name.toLowerCase()}.test` } },
       })));
-    expect(created.map((r) => r.status)).toEqual(names.map(() => 201));
+    delete process.env["VETTA_MCP_TOKEN"];
+    expect(created.map((r) => r.status)).toEqual(names.map(() => 200));
 
     const listed = await send("GET", "/api/clients");
     expect((listed.body as { name: string }[]).map((c) => c.name).sort()).toEqual([...names].sort());

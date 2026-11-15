@@ -27,7 +27,7 @@ const FOCUS: Record<string, string> = {
     "This agency sells search and answer-engine work: research each lead's search presence first — what it ranks for, where AI answers cite it, what a first audit would find.",
   "client-manager":
     "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one. " +
-    "When a client goes active, note on its record what was promised and draft the kickoff email; its client lead compiles each job its team finishes.",
+    "When a client is signed, log on its CRM timeline what was promised and draft the kickoff email; its client lead compiles each job its team finishes.",
   "content-writer":
     "Write every post for one query and intent, using connected Search Console evidence when available, a citable answer block, and a named entity. Never invent queries or results.",
   "content-reviser":
@@ -52,9 +52,9 @@ const SKILLS: Record<string, string[]> = {
 const WORK: Record<string, string> = {
   sales:
     "In this agency every cold opener (not the personal notes to people the operator knows) starts from a short public audit of the prospect: web_fetch its home page and one service page, and web_search the service it sells with its city or niche to see who ranks and whether an AI answer cites it. " +
-    "File the audit as a note on the lead with add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
+    "Log the audit on the contact's CRM timeline with crm.write log: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
     "Public pages only, and no ranking, citation or traffic figure you did not see yourself. " +
-    "Keep the CRM true: before you write to a lead, read its notes with get_client so no touch repeats or contradicts the last, and leave every lead you touch with a next_action that has a date.",
+    "Keep the CRM true: before you write to a lead, read its timeline with crm.read so no touch repeats or contradicts the last, and leave every lead you touch with a next step that has a date.",
   "client-manager":
     "In this agency a referral ask leads with the gain the client's latest posted serp-report shows, quoted from that report (list_posts); with no gain in it, thank them for the work instead, and never state a gain the report does not show.",
 };
@@ -63,7 +63,7 @@ const withWork = (name: string, text: string): string => (WORK[name] ? `${text} 
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
 const clientGate =
   `You work for an SEO/GEO agency on one client's account. ${gate} ` +
-  "The client is the CRM row your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
+  "The client is the dashboard client your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
   "The client's own Search Console and Analytics reach you only once the operator has connected them; if none of the search tools you were granted is offered this turn, say which account is missing and ask the operator to connect it with ask_operator rather than estimating a number.";
 
 /**
@@ -242,20 +242,6 @@ const clients: Client[] = [
     contact: { name: "Sample Contact", email: "contact@verdant.example", role: "Head of growth" },
     notes: ["Demo row — wants AI-engine citations for 'retinol alternatives'.", "llms.txt shipped last sprint."],
     nextAction: "Share the first citation report",
-  },
-  {
-    id: "cli_ha04", slug: "harbor", name: "Harbor Fintech", domain: "harbor.example", stage: "proposal",
-    services: ["SEO", "GEO"],
-    contact: { name: "Sample Contact", email: "contact@harbor.example", role: "CMO" },
-    notes: ["Demo row — proposal sent: 12 articles a month plus audits."],
-    nextAction: "Follow up on the proposal (no reply in 5 days)",
-  },
-  {
-    id: "cli_su05", slug: "summit", name: "Summit Outdoor Co", domain: "summitoutdoor.example", stage: "lead",
-    services: ["SEO"],
-    contact: { name: "Sample Contact", email: "contact@summitoutdoor.example", role: "Founder" },
-    notes: ["Demo row — inbound from the site's contact form; wants a technical audit first."],
-    nextAction: "Book discovery call",
   },
   {
     id: "cli_or07", slug: "orchard", name: "Orchard Realty", domain: "orchardrealty.example", stage: "churned",

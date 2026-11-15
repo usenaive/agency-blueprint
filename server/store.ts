@@ -1,12 +1,12 @@
 /**
- * The dashboard's local file store: CRM clients and the content queue persist
+ * The dashboard's local file store: signed clients and the content queue persist
  * as one JSON file under `data/`. Deliberately the least storage that works —
  * the upgrade path is the platform app database, noted in the README.
  */
 import { randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { REFERRAL_READY, STAGE_ORDER, type Client, type LeadSource, type PipelineStage } from "../seed/clients.ts";
+import { REFERRAL_READY, type Client } from "../seed/clients.ts";
 import type { Post, PostStatus } from "../seed/posts.ts";
 import { sameShape, site, SITE_SECTIONS, withinBounds, type SiteProfile } from "../site/site.config.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
@@ -27,19 +27,18 @@ export interface StoreState {
   site_profile?: SiteProfile;
   /** The public lead form's fixed window. Absent until the first lead of the first window lands. */
   lead_window?: { startedAt: number; count: number };
+  /**
+   * Leads and proposals a document held before the pipeline moved to the platform CRM. Set aside
+   * once, on open, rather than deleted, so nothing an operator filed is lost; nothing reads them.
+   */
+  legacy_leads?: unknown[];
 }
 
 /**
- * The rate the public contact form may file leads at, and why it is in the document rather than in
- * a variable. `OPEN_LEADS_CAP` bounds how many leads may be *open* — a spend and clutter bound —
- * but it bounds nothing about how fast they arrive, so a script filed the cap's worth in one burst
- * and every genuine lead for the next day was answered `429`. A rate is the missing bound. It
- * lives in the document because the deployed entry is a function: a per-process counter resets on
- * every cold start, which is to say it does not count.
- *
- * Ten an hour is far above what an agency's own site sees and far below what a script does, and it
- * puts the better part of a day between an empty inbox and a full one — long enough that the sales
- * agent's own morning pass (`advance_pipeline`) keeps ahead of it.
+ * The rate the public contact form may file inquiries into the platform CRM at, and why it is in
+ * the document rather than in a variable: the deployed entry is a function, and a per-process
+ * counter resets on every cold start, which is to say it does not count. Ten an hour is far above
+ * what an agency's own site sees and far below what a script does.
  */
 export const LEAD_WINDOW_MS = 60 * 60 * 1000;
 export const LEADS_PER_WINDOW = 10;
@@ -57,6 +56,7 @@ export function referralRefusal(client: Client, posts: readonly Post[], now: Dat
   const { activeDays, recentDays, minApproved, cooldownDays } = REFERRAL_READY;
   const ago = (iso: string) => (now.getTime() - new Date(iso).getTime()) / DAY_MS;
   if (client.stage !== "active") return "only an active client is asked for a referral";
+  if (nameOnly(client)) return "the agency's own record is not a client";
   if (client.onboardedAt === undefined || ago(client.onboardedAt) < activeDays) return `a client is asked only after ${activeDays} days with the agency`;
   if (client.referralAskedAt !== undefined && ago(client.referralAskedAt) < cooldownDays) return `this client was asked less than ${cooldownDays} days ago`;
   const recent = posts.filter((p) => p.clientId === client.id && ago(p.scheduledFor) >= 0 && ago(p.scheduledFor) <= recentDays);
@@ -73,15 +73,19 @@ export function referralRefusal(client: Client, posts: readonly Post[], now: Dat
 /** Whole sections of the site, each replacing the current one; a key outside `SITE_SECTIONS` is refused. */
 export type SitePatch = Partial<SiteProfile>;
 
-export interface LeadInput {
+export interface ClientInput {
   name: string;
   domain: string;
   contact: { name: string; email: string; role: string };
   services?: string[];
   note?: string;
-  source?: LeadSource;
-  referredBy?: string;
+  /** The platform CRM contact (`ctc_…`) the client was won as. */
+  crmContact?: string;
 }
+
+/** A name with no domain, no email and no CRM contact: the agency's own record, never a client. */
+export const nameOnly = (row: { domain: string; contact: { email: string }; crmContact?: string }) =>
+  row.domain === "" && row.contact.email === "" && row.crmContact === undefined;
 
 export interface DraftPostInput {
   clientId: string;
@@ -106,12 +110,15 @@ export interface PostPatch {
 
 export interface Store {
   read(): StoreState;
-  createLead(input: LeadInput): Client;
+  /**
+   * Files a signed client, active and onboarded, or answers the one already on file for the same CRM
+   * contact, email or domain. A name alone is the agency's own record, filed once.
+   */
+  createClient(input: ClientInput): Client;
   createDraftPost(input: DraftPostInput): Post | null;
   mcpTokens(): McpToken[];
   addMcpToken(name: string, hash: string): McpToken;
   removeMcpToken(id: string): boolean;
-  advanceClient(id: string): Client | null;
   /** Appends a working note to the client and, when given, replaces what it is waiting on. */
   addClientNote(id: string, note: string, nextAction?: string): Client | null;
   /** Graduates the client to active and stamps the onboarding time; idempotent. */
@@ -157,12 +164,6 @@ export const seedState = (): StoreState => ({
  */
 export const emptyState = (): StoreState => ({ clients: [], posts: [], site_profile: structuredClone(site) });
 
-/** The stage after `stage` on the happy path; churned only ever by hand. */
-const next = (stage: PipelineStage): PipelineStage | null => {
-  const candidate = STAGE_ORDER[STAGE_ORDER.indexOf(stage) + 1];
-  return candidate === undefined || candidate === "churned" ? null : candidate;
-};
-
 /** Opens (and on first run seeds) the JSON store at `file`. */
 export function openStore(file: string): Store {
   let state: StoreState;
@@ -186,7 +187,16 @@ export function openStore(file: string): Store {
  */
 export function openStoreOver(state: StoreState, persist: (state: StoreState) => void): Store {
   const save = () => persist(state);
-  const nameOnly = (row: { domain: string; contact: { email: string } }) => row.domain === "" && row.contact.email === "";
+
+  // The pipeline moved to the platform CRM: a lead or proposal row is set aside, and the agency's
+  // own record, which used to be filed as a lead, is simply the agency's.
+  const stale = state.clients.filter((row) => row.stage !== "active" && row.stage !== "churned");
+  if (stale.length > 0) {
+    for (const row of stale) if (nameOnly(row)) row.stage = "active";
+    state.legacy_leads = [...(state.legacy_leads ?? []), ...stale.filter((row) => !nameOnly(row))];
+    state.clients = state.clients.filter((row) => row.stage === "active" || row.stage === "churned");
+    save();
+  }
 
   // Older installs allowed each intake to choose a different label for the agency itself. The CRM
   // has clients; it has exactly one internal workspace. Consolidate those legacy rows under the
@@ -205,32 +215,33 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
 
   return {
     read: () => state,
-    createLead(input) {
-      const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "client";
-      // A name alone files the agency's own record; a second filing lands on the first. Only a row
-      // filed the same way is the first: a prospect with a domain or a contact is never it.
-      // Name is not identity here: independent agents may call the same workspace "agency",
-      // project name, or public brand. A name-only row is always the one internal workspace.
-      const twin = nameOnly(input) ? state.clients.find(nameOnly) : undefined;
+    createClient(input) {
+      const same = (a: string, b: string) => a !== "" && a.trim().toLowerCase() === b.trim().toLowerCase();
+      // A name alone files the agency's own record; a second filing lands on the first, whatever the
+      // name — independent agents call the same workspace "agency", the project name or the brand.
+      // A client is the one won as the same CRM contact, or with the same email or domain.
+      const twin = nameOnly(input)
+        ? state.clients.find(nameOnly)
+        : state.clients.find((c) => (input.crmContact !== undefined && c.crmContact === input.crmContact) ||
+          same(input.contact.email, c.contact.email) || same(input.domain, c.domain));
       if (twin) {
-        if (input.note !== undefined) {
-          twin.notes.push(input.note);
-          save();
-        }
+        if (input.note !== undefined) twin.notes.push(input.note);
+        if (input.crmContact !== undefined) twin.crmContact ??= input.crmContact;
+        save();
         return twin;
       }
       const client: Client = {
         id: `cli_${randomBytes(4).toString("hex")}`,
-        slug,
+        slug: input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "client",
         name: input.name,
         domain: input.domain,
-        stage: "lead",
+        stage: "active",
         services: input.services ?? [],
         contact: input.contact,
         notes: input.note === undefined ? [] : [input.note],
-        // The agency's own name-only record is not a lead, so it has no source.
-        ...(input.source && !nameOnly(input) ? { source: input.source } : {}),
-        ...(input.referredBy && !nameOnly(input) ? { referredBy: input.referredBy } : {}),
+        // Signed, so onboarded now: the referral rule's 30 days count from this stamp.
+        ...(nameOnly(input) ? {} : { onboardedAt: new Date().toISOString(), referralCode: newReferralCode() }),
+        ...(input.crmContact === undefined ? {} : { crmContact: input.crmContact }),
       };
       state.clients.push(client);
       save();
@@ -269,17 +280,6 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
       save();
       return state.mcpTokens.length < before;
     },
-    advanceClient(id) {
-      const client = state.clients.find((c) => c.id === id);
-      if (!client) return null;
-      const to = next(client.stage);
-      if (to === null) return client;
-      client.stage = to;
-      // Active by the pipeline is onboarded too: the referral rule's 30 days count from this stamp.
-      if (to === "active") client.onboardedAt ??= new Date().toISOString();
-      save();
-      return client;
-    },
     addClientNote(id, note, nextAction) {
       const client = state.clients.find((c) => c.id === id);
       if (!client) return null;
@@ -299,7 +299,7 @@ export function openStoreOver(state: StoreState, persist: (state: StoreState) =>
     },
     referralCode(id) {
       const client = state.clients.find((c) => c.id === id);
-      if (!client || client.stage !== "active") return null;
+      if (!client || client.stage !== "active" || nameOnly(client)) return null;
       if (client.referralCode === undefined) {
         client.referralCode = newReferralCode();
         save();

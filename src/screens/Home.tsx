@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { useApi } from "../api";
-import { PageHeader, STAGE_LABEL } from "../components/kit";
-import { kindLabel, STAGE_ORDER, TEMPLATE, TEMPLATE_NAME, type Agent, type Client, type Post } from "../data";
+import { PageHeader } from "../components/kit";
+import { kindLabel, TEMPLATE, TEMPLATE_NAME, type Agent, type Post } from "../data";
 import { STOP_REASON, waitingOn, type PlatformSession } from "../platform";
 
 /** `GET /api/context`: the project context (canonical-spec §31.8) plus the install's team and intake report. */
@@ -101,8 +101,8 @@ function StudioCard() {
  * Every figure is the platform's or the store's own, every read is held on its own, and every
  * platform figure is cut to the install's team: a read that fails leaves its card saying why rather
  * than an empty list, and another project's agents, timers and parked sessions in the same org are
- * not counted here. Without `NAIVE_API_KEY` the platform-backed cards say so and the pipeline card
- * still counts the CRM; with the key but no applied install yet, the context card says that instead
+ * not counted here. Without `NAIVE_API_KEY` the platform-backed cards say so; with the key but no
+ * applied install yet, the context card says that instead
  * of showing a blank form as if answers had been given.
  */
 export function Home() {
@@ -111,7 +111,6 @@ export function Home() {
   const questions = useApi<Listed<PlatformSession>>("/sessions?stop_reason=awaiting_answer");
   const { data: roster, error: rosterError } = useApi<Listed<Agent>>("/agents");
   const { data: timers, error: timerError } = useApi<Listed<Deployment>>("/deployments");
-  const { data: clients, error: clientError } = useApi<Client[]>("/clients");
 
   const ids = new Set((ctx?.team ?? []).map((a) => a.id));
   const names = new Map((ctx?.team ?? []).map((a) => [a.id, a.name]));
@@ -215,21 +214,6 @@ export function Home() {
         </Card>
 
         {TEMPLATE_NAME === "product-design" ? <StudioCard /> : null}
-
-        <Card title="Pipeline" to="/crm">
-          {clients === null ? (
-            <Absent>{clientError ?? "Reading the CRM…"}</Absent>
-          ) : (
-            <dl className="grid grid-cols-4 gap-2 text-center">
-              {STAGE_ORDER.map((stage) => (
-                <div key={stage}>
-                  <dd className="text-xl font-semibold">{clients.filter((c) => c.stage === stage).length}</dd>
-                  <dt className="text-xs text-ink-2">{STAGE_LABEL[stage]}</dt>
-                </div>
-              ))}
-            </dl>
-          )}
-        </Card>
       </div>
     </div>
   );

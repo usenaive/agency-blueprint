@@ -139,7 +139,7 @@ function Frame({ children }: { children?: ReactNode }) {
         <section className="panel w-full max-w-sm space-y-4 p-6">
           <div>
             <h1 className="page-title">Sign in to your dashboard</h1>
-            <p className="mt-1 text-sm text-ink-2">The CRM, the queue and the crew are behind this door.</p>
+            <p className="mt-1 text-sm text-ink-2">Your clients, the queue and the crew are behind this door.</p>
           </div>
           {children}
         </section>

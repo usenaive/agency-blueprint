@@ -43,9 +43,6 @@ export const PROJECT = "agency";
 export interface TemplateWords {
   /** The demo agency's name in the rail — rename it to yours. */
   brand: string;
-  crmSubtitle: string;
-  /** What graduating a client to active actually does under this template. */
-  onboarding: string;
   clientsSubtitle: string;
   noActiveClients: string;
   agentsSubtitle: string;
@@ -76,7 +73,7 @@ export interface TemplateVocabulary {
 }
 
 const blank: TemplateVocabulary = {
-  description: "A working agency with no specialism: seven agents — site, pipeline, delivery, content, revisions, research, proposals — and generic deliverables.",
+  description: "A working agency with no specialism: seven agents — site, sales, delivery, content, revisions, research, proposals — and generic deliverables.",
   kinds: [
     { id: "post", label: "Post", description: "A published piece — blog, newsletter or social." },
     { id: "page", label: "Page", description: "A page on the client's own site — landing, service or product." },
@@ -85,11 +82,8 @@ const blank: TemplateVocabulary = {
   ],
   words: {
     brand: "Northwind Agency",
-    crmSubtitle: "Every prospect and client, by pipeline stage — the sales agent works this board.",
-    onboarding:
-      "Moving a client to active onboards them: the client manager picks up their calendar and queue, the proposal writer its proposal, and every deliverable they file waits here for you.",
     clientsSubtitle: "Every active engagement — open one to see its connections, calendar, agents and deliverables.",
-    noActiveClients: "No active clients yet — advance one on the CRM.",
+    noActiveClients: "No clients yet — a deal marked won on the CRM becomes one, onboarded with its workspace and team.",
     agentsSubtitle: "Every agent working for this agency.",
     noCrew:
       "No agents of this client's own. This template runs every client through the agency's own seven; a template with a per-client team provisions one at onboarding.",
@@ -138,11 +132,8 @@ const seoGeo: TemplateVocabulary = {
   ],
   words: {
     brand: "Meridian Search",
-    crmSubtitle: "Every prospect and client, by pipeline stage — the sales agent works this board, search presence first.",
-    onboarding:
-      "Moving a client to active onboards them and provisions their team — an SEO writer, a GEO optimizer, an audit runner and a client lead who compiles each job, each named for the client.",
     clientsSubtitle: "Every active engagement — open one to see its connections, calendar, team and deliverables.",
-    noActiveClients: "No active clients yet — advance one on the CRM.",
+    noActiveClients: "No clients yet — a deal marked won on the CRM becomes one, onboarded with its workspace and team.",
     agentsSubtitle: "Every agent working for this agency — the seven that run it, and each client's team.",
     noCrew: "No agents for this client yet — onboarding a client provisions its team.",
   },
@@ -197,11 +188,8 @@ const productDesign: TemplateVocabulary = {
   ],
   words: {
     brand: "Lumen Product Studio",
-    crmSubtitle: "Every brand that briefs the studio, by pipeline stage — the account manager reads each brief against the studio note.",
-    onboarding:
-      "Moving a client to active starts their briefs: the account manager routes each one to the designer, the engineer or the visualizer, and every file they make waits on Studio for you.",
     clientsSubtitle: "Every active client — open one to see its briefs, calendar and deliverables.",
-    noActiveClients: "No active clients yet — advance one on the CRM.",
+    noActiveClients: "No clients yet — a deal marked won on the CRM becomes one, onboarded with its workspace and team.",
     agentsSubtitle: "The studio's four: account manager, designer, engineer and visualizer.",
     noCrew: "This studio runs every brief through its four designers.",
   },

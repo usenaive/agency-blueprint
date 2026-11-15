@@ -29,9 +29,9 @@ const SAID: Record<CrewReport["action"], string> = {
  * THE ONE PLACE A STANDING CREW CAN BE BROUGHT UP TO THE TEMPLATE, AND WHY IT IS A BUTTON HERE.
  *
  * `provisionClientAgents` is an upsert: it creates the seats that are missing and patches the
- * declaration onto the ones that are already there. Its only caller was the lead→active move on the
- * CRM board — and that move is offered only while a client is *not yet* active, so once a client is
- * active nothing in this dashboard could reach the upsert again. Every crew provisioned before the
+ * declaration onto the ones that are already there. Its other caller is the client's creation
+ * (`create_client`, when the CRM marks a deal won), which runs once, so once a client exists nothing
+ * else in this dashboard reaches the upsert again. Every crew provisioned before the
  * template gained a seat, a tool or a `handoffs` chain therefore stayed exactly as it was, and the
  * operator's only route to it was to POST `/api/clients/<id>/onboard` by hand — which is to say, to
  * read a release note first.
@@ -40,8 +40,7 @@ const SAID: Record<CrewReport["action"], string> = {
  * dead-end. The onboard route is already idempotent for an active client (the store keeps the stage
  * and the original `onboardedAt`, and the provision runs again), so this needs no second route and
  * no second code path: it is that route, run again, printing what it found. The control is shown
- * only for an active client, because for a lead the same route is the graduation, and
- * "re-provision" must never be how a prospect silently becomes a customer.
+ * only for an active client: a churned one has no crew to bring up.
  */
 export function ClientAgents() {
   const client = useClient();
