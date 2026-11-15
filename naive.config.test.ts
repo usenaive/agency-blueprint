@@ -1,4 +1,5 @@
 /** The committed config must load and validate through the real `naive up` loader. */
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -138,6 +139,15 @@ describe("naive.config.ts", () => {
       expect(siblingsOnly).toEqual(listed.includes("product-design") ? ["account-manager", "designer", "engineer", "visualizer"] : []);
     }
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
+  }, 30_000);
+
+  it("carries the chosen template's Operator's Manual, and every template has one", async () => {
+    const result = await loaded;
+    if (!result.ok) throw new Error(result.message);
+    expect(result.config.docs).toEqual([{ name: "📖 Operator's Manual.md", file: `manuals/${TEMPLATE}.md` }]);
+    for (const name of Object.keys(TEMPLATES)) {
+      expect(readFileSync(new URL(`./manuals/${name}.md`, import.meta.url), "utf8")).toMatch(/^# 📖 .+: Operator's Manual\n/);
+    }
   }, 30_000);
 });
 
