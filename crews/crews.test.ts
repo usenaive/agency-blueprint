@@ -164,6 +164,12 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     const manager = await seat(blueprint, "Client manager");
     expect(manager.system).toMatch(/call ask_operator once.*Approve before it goes out.*One ask per client job/s);
     expect(manager.system).toMatch(/tell the CEO with send_to_agent, wait false, in a message whose first line is "Your <what it is> for <client name> is ready"/);
+    // NEW-19: the line the CEO reads is an instruction to it, on a line of its own, and one sentence that
+    // opens "Tell the person" so the chat's handoff filter (monorepo #1775) drops all of it.
+    const toCeo = [...manager.system!.matchAll(/your instruction to the CEO: "(Tell the person[^"]*)"/g)].map((one) => one[1]!);
+    expect(toCeo.length).toBe(blueprint === "clients-advertising" ? 2 : 1);
+    for (const line of toCeo) expect(line).toMatch(/^Tell the person [^.!?\n]*; this is to you, CEO, not words for the chat\.$/);
+    expect(manager.system).not.toMatch(/[^:] "?Tell the person/);
     // NEW-14: every teammate's "tell Client manager" wakes it, and each wake compiled or asked again.
     expect(manager.system).toMatch(/once per client job\. A teammate's message wakes you each time, but (compile|ask) only when every piece the request asked for is done/);
     expect(manager.system).toMatch(/while any piece's card is not done, (compile|show) nothing and announce nothing\. If a piece's card is blocked, tell the CEO/);
