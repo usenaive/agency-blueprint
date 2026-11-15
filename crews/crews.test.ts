@@ -176,6 +176,12 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect(manager.system).toContain("A piece that arrives after you asked");
     expect(manager.system).toContain('with no second ask_operator and no second "is ready" to the CEO');
     expect(manager.system).toContain("goes into that same file: add it with write, save it again with publish_file under the same title and tags");
+    // NEW-49: after "is ready" the security manager reviewed its own report, looked for an edit tool and sent the
+    // CEO a "Correction" hand-off, which the CEO published as its own v2. The ask follows at once, then it stops.
+    expect(manager.system).toMatch(/is ready.*Right after it, with nothing between, call ask_operator once/s);
+    expect(manager.system).toContain("One ask per client job, and then you stop: no review of your own work, no edit, no search for a tool, no other message to the CEO.");
+    expect(manager.system).toContain('A correction you notice later is a note on that same review, never a new hand-off: log it on the client\'s timeline under the review line');
+    expect(manager.system).toContain("change the file only when the person answers Changes needed");
   });
 
   it("widens no job", async () => {
