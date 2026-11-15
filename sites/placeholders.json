@@ -1,0 +1,88 @@
+{
+  "$comment": "The one fill vocabulary every pre-made agency site uses. A company's values object has these keys, so it fills any of the 30 designs. Lists have a fixed length, except the optional ones, which hold up to `maxItems` and may be empty or absent.",
+  "fields": {
+    "company_name": {
+      "maxLength": 40,
+      "description": "The agency's public name."
+    },
+    "tagline": {
+      "maxLength": 70,
+      "description": "One short positioning line for the hero."
+    },
+    "intro": {
+      "maxLength": 240,
+      "description": "One or two sentences: what the agency does and for whom (setup answer `about`)."
+    },
+    "audience": {
+      "maxLength": 180,
+      "description": "Who and where it serves: locations, levels, industries (setup answer `markets`)."
+    },
+    "pricing_note": {
+      "maxLength": 180,
+      "description": "How it charges, in the owner's words (setup answer `offer`). No invented figures."
+    },
+    "city": {
+      "maxLength": 40,
+      "description": "Home city, shown in the footer and contact block."
+    },
+    "contact_email": {
+      "maxLength": 80,
+      "description": "The verified public inbox."
+    },
+    "year": {
+      "maxLength": 4,
+      "description": "Copyright year, four digits."
+    }
+  },
+  "lists": {
+    "services": {
+      "length": 4,
+      "item": {
+        "title": {
+          "maxLength": 40
+        },
+        "description": {
+          "maxLength": 180
+        }
+      },
+      "description": "What the agency sells, as four offers."
+    },
+    "specialties": {
+      "length": 6,
+      "maxLength": 32,
+      "description": "Six short labels: the roles, channels or disciplines it covers."
+    },
+    "process": {
+      "length": 3,
+      "item": {
+        "title": {
+          "maxLength": 40
+        },
+        "description": {
+          "maxLength": 180
+        }
+      },
+      "description": "How an engagement runs, in three steps."
+    }
+  },
+  "optional": {
+    "proof": {
+      "maxItems": 3,
+      "item": {
+        "text": {
+          "maxLength": 220
+        },
+        "source": {
+          "maxLength": 80,
+          "optional": true
+        }
+      },
+      "description": "Company-supplied proof: a result, a quote or a fact, with an optional source. Never invented. Every use sits inside {{#if proof[i]}} (and {{#if proof[i].source}})."
+    },
+    "logos": {
+      "maxItems": 6,
+      "maxLength": 40,
+      "description": "Company-supplied client names, set as text. Every use sits inside {{#if logos[i]}}."
+    }
+  }
+}
