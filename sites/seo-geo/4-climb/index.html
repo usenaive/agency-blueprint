@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Search and AI visibility</title>
+<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top" id="top">
+  <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i></span><span>{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#services"><span>Services</span></a></li>
+      <li><a href="#process"><span>The climb</span></a></li>
+      <li><a href="#contact" class="nav__cta"><span>Start</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="h1">
+    <div class="hero__text">
+      <p class="eyebrow">Search and AI visibility · {{city}}</p>
+      <h1 id="h1">{{tagline}}</h1>
+      <p class="hero__lede">{{intro}}</p>
+      <a class="btn" href="#contact"><span>Start the climb</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></a>
+    </div>
+    <figure class="ladder" aria-labelledby="ladder-cap">
+      <div class="ladder__frame">
+        <p class="ladder__top"><span>Found, and quoted</span></p>
+        <ol class="ladder__rungs" reversed>
+          <li><span>{{specialties[5]}}</span></li>
+          <li><span>{{specialties[4]}}</span></li>
+          <li><span>{{specialties[3]}}</span></li>
+          <li><span>{{specialties[2]}}</span></li>
+          <li><span>{{specialties[1]}}</span></li>
+          <li><span>{{specialties[0]}}</span></li>
+        </ol>
+        <span class="ladder__you" aria-hidden="true">Your site</span>
+      </div>
+      <figcaption id="ladder-cap">Illustrative: the rungs are the work that lifts a site. Rankings are earned, never promised.</figcaption>
+    </figure>
+  </section>
+
+  <section class="sec" id="services" aria-labelledby="services-h">
+    <h2 id="services-h" class="sec__h">What lifts you</h2>
+    <ol class="stairs">
+      <li><span class="stairs__n" aria-hidden="true">01</span><div><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></div></li>
+      <li><span class="stairs__n" aria-hidden="true">02</span><div><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></div></li>
+      <li><span class="stairs__n" aria-hidden="true">03</span><div><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></div></li>
+      <li><span class="stairs__n" aria-hidden="true">04</span><div><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></div></li>
+    </ol>
+  </section>
+
+  <section class="sec sec--climb" id="process" aria-labelledby="process-h">
+    <h2 id="process-h" class="sec__h">How the climb goes</h2>
+    <ol class="steps">
+      <li><p class="steps__k">Step one</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><p class="steps__k">Step two</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><p class="steps__k">Step three</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec sec--split" aria-labelledby="who-h">
+    <div>
+      <h2 id="who-h" class="label">Who we climb with</h2>
+      <p class="big">{{audience}}</p>
+    </div>
+    <div>
+      <h2 class="label">What it costs</h2>
+      <p class="big">{{pricing_note}}</p>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec" aria-labelledby="proof-h">
+    <h2 id="proof-h" class="sec__h">Word from the top</h2>
+    <div class="quotes">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec sec--names" aria-labelledby="logos-h">
+    <h2 id="logos-h" class="label">Climbing with us</h2>
+    <ul class="names">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <h2 id="contact-h" class="contact__h">Start the climb</h2>
+    <p class="contact__lede">Tell us your site and the searches you want to be found for. We will tell you which rung you are on and what lifts you next.</p>
+    <a class="contact__mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></a>
+    <p class="contact__city">Based in {{city}}</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="link" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>

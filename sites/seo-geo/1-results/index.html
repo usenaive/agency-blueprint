@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Search and AI visibility</title>
+<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to results</a>
+
+<header class="top" id="top">
+  <div class="top__in">
+    <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">{{company_name}}</span></a>
+    <nav aria-label="Primary">
+      <ul class="tabs">
+        <li><a href="#main" aria-current="page"><span>All</span></a></li>
+        <li><a href="#services"><span>Services</span></a></li>
+        <li><a href="#asked"><span>Process</span></a></li>
+        <li><a href="#contact"><span>Contact</span></a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="query">
+    <div class="query__in">
+      <p class="query__label" id="q-label">Someone near you is searching for</p>
+      <div class="box" role="img" aria-labelledby="q-label q-text">
+        <svg class="box__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+        <span class="box__text" id="q-text" data-type>{{specialties[0]}} in {{city}}</span><span class="box__caret" aria-hidden="true"></span>
+      </div>
+      <p class="query__note">An illustration of a results page, not a real ranking. The work is making the real one look like this.</p>
+    </div>
+  </div>
+
+  <div class="serp">
+    <div class="serp__main">
+      <article class="result result--lead" aria-labelledby="h1">
+        <p class="crumb"><span class="crumb__fav" aria-hidden="true"></span><span class="crumb__name">{{company_name}}</span><span class="crumb__path" aria-hidden="true">› home</span></p>
+        <h1 id="h1"><a class="title" href="#contact">{{tagline}}</a></h1>
+        <p class="snippet">{{intro}}</p>
+
+        <section id="services" class="sitelinks" aria-labelledby="services-h">
+          <h2 id="services-h" class="vh">Services</h2>
+          <ul>
+            <li><h3><a class="title" href="#contact">{{services[0].title}}</a></h3><p>{{services[0].description}}</p></li>
+            <li><h3><a class="title" href="#contact">{{services[1].title}}</a></h3><p>{{services[1].description}}</p></li>
+            <li><h3><a class="title" href="#contact">{{services[2].title}}</a></h3><p>{{services[2].description}}</p></li>
+            <li><h3><a class="title" href="#contact">{{services[3].title}}</a></h3><p>{{services[3].description}}</p></li>
+          </ul>
+        </section>
+      </article>
+
+      <section class="block" id="asked" aria-labelledby="asked-h">
+        <h2 id="asked-h" class="block__h">People also ask</h2>
+        <ol class="asked">
+          <li>
+            <p class="asked__q"><span>What happens first?</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></p>
+            <div class="asked__a"><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></div>
+          </li>
+          <li>
+            <p class="asked__q"><span>What do you actually do?</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></p>
+            <div class="asked__a"><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></div>
+          </li>
+          <li>
+            <p class="asked__q"><span>How will we know it is working?</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></p>
+            <div class="asked__a"><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></div>
+          </li>
+        </ol>
+      </section>
+
+      {{#if proof}}<section class="block" aria-labelledby="proof-h">
+        <h2 id="proof-h" class="block__h">Reviews</h2>
+        <div class="reviews">
+          {{#if proof[0]}}<figure class="review"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+          {{#if proof[1]}}<figure class="review"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+          {{#if proof[2]}}<figure class="review"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+        </div>
+      </section>{{/if}}
+
+      <section class="block" aria-labelledby="related-h">
+        <h2 id="related-h" class="block__h">Related searches</h2>
+        <ul class="related">
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>{{specialties[0]}}</span></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>{{specialties[1]}}</span></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>{{specialties[2]}}</span></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>{{specialties[3]}}</span></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>{{specialties[4]}}</span></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>{{specialties[5]}}</span></li>
+        </ul>
+      </section>
+    </div>
+
+    <aside class="panel" id="contact" aria-labelledby="contact-h">
+      <div class="panel__head">
+        <span class="panel__mark" aria-hidden="true"></span>
+        <div>
+          <h2 id="contact-h" class="panel__name">{{company_name}}</h2>
+          <p class="panel__kind">Search and AI visibility in {{city}}</p>
+        </div>
+      </div>
+      <a class="cta" href="mailto:{{contact_email}}"><span>Email us about your site</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <dl class="facts">
+        <div><dt>Works with</dt><dd>{{audience}}</dd></div>
+        <div><dt>Fees</dt><dd>{{pricing_note}}</dd></div>
+        <div><dt>Based in</dt><dd>{{city}}</dd></div>
+        <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+      </dl>
+      {{#if logos}}<div class="worked">
+        <h3 class="worked__h">Has worked with</h3>
+        <ul>
+          {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+          {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+          {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+          {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+          {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+          {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+        </ul>
+      </div>{{/if}}
+    </aside>
+  </div>
+</main>
+
+<footer class="foot">
+  <nav class="pager" aria-label="Pages">
+    <span class="pager__word" aria-hidden="true">Results</span>
+    <a href="#main" aria-current="page">1</a><a href="#asked">2</a><a href="#contact">3</a>
+    <a class="pager__next" href="#top"><span>Back to the top</span></a>
+  </nav>
+  <p class="foot__copy">&copy; {{year}} {{company_name}} · {{city}}</p>
+</footer>
+</body>
+</html>

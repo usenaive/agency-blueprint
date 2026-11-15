@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Search and AI visibility</title>
+<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top" id="top">
+  <a class="brand" href="#top"><svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="7" r="5"/><circle cx="7" cy="25" r="5"/><circle cx="25" cy="25" r="5"/><path d="M16 12v4M16 16 9 21M16 16l7 5"/></svg><span>{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#services"><span>/services</span></a></li>
+      <li><a href="#process"><span>/process</span></a></li>
+      <li><a href="#contact"><span>/contact</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="h1">
+    <div class="hero__text">
+      <p class="req"><span class="req__m">GET</span> / <span class="ok">200</span></p>
+      <h1 id="h1">{{tagline}}</h1>
+      <p class="hero__lede">{{intro}}</p>
+      <a class="btn" href="#contact"><span>Request a crawl of your site</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+    <figure class="map">
+      <svg class="map__svg" viewBox="0 0 560 470" role="img" aria-labelledby="map-cap">
+        <g class="edges">
+          <path d="M280 70 120 200M280 70v130M280 70l160 130"/>
+          <path d="M120 200 50 330M120 200 100 370M120 200l40 170M120 200l70 130"/>
+          <path d="M280 200 250 350M280 200v170M280 200l30 150"/>
+          <path d="M440 200 400 340M440 200l60 140"/>
+        </g>
+        <g class="nodes">
+          <g class="node node--root" data-n="0" transform="translate(280 70)"><circle r="30"/><text y="5">/</text></g>
+          <g class="node node--l1" data-n="1" transform="translate(120 200)"><circle r="20"/><text x="-30" y="6" text-anchor="end">/services</text></g>
+          <g class="node" data-n="2" transform="translate(50 330)"><circle r="11"/></g>
+          <g class="node" data-n="3" transform="translate(100 370)"><circle r="11"/></g>
+          <g class="node" data-n="4" transform="translate(160 370)"><circle r="11"/></g>
+          <g class="node" data-n="5" transform="translate(190 330)"><circle r="11"/></g>
+          <g class="node node--l1" data-n="6" transform="translate(280 200)"><circle r="20"/><text x="30" y="-24">/process</text></g>
+          <g class="node" data-n="7" transform="translate(250 350)"><circle r="11"/></g>
+          <g class="node" data-n="8" transform="translate(280 370)"><circle r="11"/></g>
+          <g class="node" data-n="9" transform="translate(310 350)"><circle r="11"/></g>
+          <g class="node node--l1" data-n="10" transform="translate(440 200)"><circle r="20"/><text x="28" y="-24">/contact</text></g>
+          <g class="node" data-n="11" transform="translate(400 340)"><circle r="11"/></g>
+          <g class="node" data-n="12" transform="translate(500 340)"><circle r="11"/></g>
+        </g>
+        <circle class="bot" r="9" cx="0" cy="0" transform="translate(280 70)"/>
+      </svg>
+      <figcaption id="map-cap"><span class="map__dot" aria-hidden="true"></span>How a crawler walks a site, page by page. A diagram, not data.</figcaption>
+    </figure>
+  </section>
+
+  <section class="page" id="services" aria-labelledby="services-h">
+    <p class="req"><span class="req__m">GET</span> /services <span class="ok">200</span></p>
+    <h2 id="services-h" class="page__h">What we fix and write</h2>
+    <ol class="tree">
+      <li><span class="tree__path">/services/1</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><span class="tree__path">/services/2</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><span class="tree__path">/services/3</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><span class="tree__path">/services/4</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="page page--links" aria-labelledby="links-h">
+    <p class="req"><span class="req__m">GET</span> /specialties <span class="ok">200</span></p>
+    <h2 id="links-h" class="page__h">Internal links worth following</h2>
+    <ul class="links">
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>{{specialties[0]}}</li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>{{specialties[1]}}</li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>{{specialties[2]}}</li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>{{specialties[3]}}</li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>{{specialties[4]}}</li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>{{specialties[5]}}</li>
+    </ul>
+  </section>
+
+  <section class="page" id="process" aria-labelledby="process-h">
+    <p class="req"><span class="req__m">GET</span> /process <span class="ok">200</span></p>
+    <h2 id="process-h" class="page__h">Three levels deep</h2>
+    <ol class="depth">
+      <li><span class="depth__k">Depth 1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><span class="depth__k">Depth 2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><span class="depth__k">Depth 3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="page page--meta" aria-labelledby="meta-h">
+    <p class="req"><span class="req__m">GET</span> /about <span class="ok">200</span></p>
+    <h2 id="meta-h" class="page__h">The details a crawler would want</h2>
+    <dl class="meta">
+      <div><dt>who-we-work-with</dt><dd>{{audience}}</dd></div>
+      <div><dt>how-we-charge</dt><dd>{{pricing_note}}</dd></div>
+      <div><dt>based-in</dt><dd>{{city}}</dd></div>
+    </dl>
+  </section>
+
+  {{#if proof}}<section class="page" aria-labelledby="proof-h">
+    <p class="req"><span class="req__m">GET</span> /reviews <span class="ok">200</span></p>
+    <h2 id="proof-h" class="page__h">Indexed in clients' words</h2>
+    <div class="quotes">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="page" aria-labelledby="logos-h">
+    <p class="req"><span class="req__m">GET</span> /clients <span class="ok">200</span></p>
+    <h2 id="logos-h" class="page__h">Sites we have walked</h2>
+    <ul class="clients">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="submit" id="contact" aria-labelledby="contact-h">
+    <p class="req"><span class="req__m">POST</span> /contact <span class="ok">202</span></p>
+    <h2 id="contact-h" class="submit__h">Send us your site. We will walk it the way a crawler does.</h2>
+    <a class="submit__box" href="mailto:{{contact_email}}">
+      <span class="submit__url">https://your-site</span>
+      <span class="btn btn--pink"><span>Request a crawl</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+    <p class="submit__alt">Or write to <a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>&copy; {{year}} {{company_name}} · {{city}}</p>
+  <a class="link" href="#top">Back to /</a>
+</footer>
+</body>
+</html>

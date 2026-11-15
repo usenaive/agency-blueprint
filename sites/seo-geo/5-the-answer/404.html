@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --ground: #e8ebe3; --ink: #121412; --muted: #5a5f57; --line: #c6ccc0; --red: #d4301c; --ease: cubic-bezier(.65,0,.25,1); color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { --ground: #0f110f; --ink: #edefe8; --muted: #9ba196; --line: #2b2f2a; --red: #ff5a43; } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--ground); color: var(--ink); font: 400 19px/1.55 "Hanken Grotesk", Arial, sans-serif; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+.skip { position: absolute; left: 16px; top: -60px; padding: 10px 16px; background: var(--ink); color: var(--ground); text-decoration: none; }
+.skip:focus { top: 12px; }
+header { padding: 22px 48px; }
+header a { font-weight: 600; font-size: 18px; text-decoration: none; color: inherit; }
+main { flex: 1; padding: 48px 48px 96px; }
+h1 { margin: 0; font: 400 clamp(56px, 9.4vw, 156px)/.94 "Libre Caslon Display", Georgia, serif; letter-spacing: -.025em; }
+del { display: block; color: var(--muted); text-decoration: line-through; text-decoration-thickness: .04em; background: linear-gradient(var(--red), var(--red)) 0 58% / 100% .075em no-repeat; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+ins { display: block; text-decoration: none; }
+p { margin: 40px 0 32px; max-width: 50ch; }
+.btn { display: inline-flex; align-items: center; min-height: 56px; padding: 14px 26px; background: var(--ink); color: var(--ground); font-weight: 600; text-decoration: none; transition: transform .4s var(--ease), background-color .3s; }
+.btn:hover { transform: translateX(6px); background: var(--red); }
+footer { padding: 24px 48px; border-top: 2px solid var(--ink); font-size: 15px; color: var(--muted); }
+@media (max-width: 620px) { header, footer { padding: 14px 16px; } main { padding: 32px 16px 64px; } h1 { font-size: 52px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><a href="/">{{company_name}}</a></header>
+<main id="main">
+  <h1><del>This page.</del> <ins>Not here.</ins></h1>
+  <p>There is no page at this address. It may have moved, or the link may have a typo. The answer is on the home page.</p>
+  <a class="btn" href="/">Go to the home page</a>
+</main>
+<footer>&copy; {{year}} {{company_name}}</footer>
+</body>
+</html>
