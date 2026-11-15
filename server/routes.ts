@@ -4,14 +4,14 @@
  * `server/index.ts` (node `http`, `pnpm serve`) and `server/api-entry.ts` (the deployed function)
  * are thin adapters: each builds an `ApiRequest`, calls `handleRequest`, and writes the `ApiReply`.
  * Neither holds a route, so `/mcp` and `/api/*` are the same rows of the same document by
- * construction — an agent's CRM write is what the UI reads back.
+ * construction — an agent's write is what the UI reads back.
  *
  * Nothing here touches a socket, a file or a database: the store arrives through `ctx.store()`,
  * which the entry opens lazily, so the platform-only routes cost no connection at all.
  */
 import { authorized, bearerOf, handleMcp, mintToken, sameSecret, ticketMatches } from "./mcp.ts";
 import { collect, latestContext, listAgents, notifyLead, productAuditPlatform, provisionClientAgents, proxyFetch, upstreamFor, type ProxyConfig } from "./proxy.ts";
-import { LEAD_WINDOW_MS, type LeadInput, type PostPatch, type Store } from "./store.ts";
+import { LEAD_WINDOW_MS, nameOnly, type ClientInput, type PostPatch, type Store } from "./store.ts";
 import { ACTIVE_TEMPLATE } from "../templates/active.ts";
 import { FILE_ID } from "../seed/posts.ts";
 import { launchSafeSite, site as holdingSite } from "../site/site.config.ts";
@@ -276,15 +276,12 @@ async function tokenRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     : { status: 404, body: { error: "no such token" } };
 }
 
-/**
- * What an anonymous form may put in the CRM: a bounded number of *open* leads (the store is the one
- * durable thing the deployed entry has — a per-process counter would reset on every cold start), one
- * row per contact-and-domain while it is still a lead, and fields no longer than the form's own.
- * The sales agent working the pipeline (`advance_pipeline`) is what frees the inbox again.
- */
-export const OPEN_LEADS_CAP = 200;
+/** What the contact form posts: a company, its contact, and the referral code the visitor arrived with. */
+type LeadForm = Omit<ClientInput, "crmContact"> & { ref?: unknown };
+
+/** Fields no longer than the form's own: an anonymous body is bounded before it reaches the CRM. */
 const LEAD_FIELD_MAX = 200;
-const withinLeadSize = (lead: Partial<LeadInput>): boolean =>
+const withinLeadSize = (lead: Partial<LeadForm>): boolean =>
   [lead.name, lead.domain, lead.contact?.name, lead.contact?.email, lead.contact?.role]
     .every((v) => v === undefined || (typeof v === "string" && v.length <= LEAD_FIELD_MAX)) &&
   (lead.note === undefined || (typeof lead.note === "string" && lead.note.length <= 2000)) &&
@@ -295,7 +292,8 @@ const withinLeadSize = (lead: Partial<LeadInput>): boolean =>
  * The public site's two routes, and the only `/api/*` routes besides `/api/enter` that run before
  * the gate: a visitor holds no bearer. `GET /api/site` is the page's copy — public by definition,
  * cacheable for a minute so a burst of visitors is one read — and `POST /api/leads` is its contact
- * form, which lands as a CRM lead. Neither reads a row a visitor could not already see on the page.
+ * form, which lands in the platform CRM as a `talking` contact. Neither reads a row a visitor could
+ * not already see on the page.
  */
 /** The origin a visitor reached this app at, as the public pages print it in canonical links. */
 function originOf(req: ApiRequest): string {
@@ -384,27 +382,14 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
   }
   if (path === "/api/leads") {
     if (method !== "POST") return NOT_ALLOWED;
-    const body = parse(req.body) as Partial<LeadInput>;
+    const body = parse(req.body) as Partial<LeadForm>;
     if (!body.name || !body.domain || !body.contact?.name || !body.contact.email) {
       return { status: 400, body: { error: "name, domain and contact {name, email} are required" } };
     }
     if (!withinLeadSize(body)) return { status: 400, body: { error: "a field is longer than the form allows" } };
+    // The pipeline is the platform CRM's; without the key there is nowhere to file the inquiry.
+    if (ctx.config === null) return NOT_CONFIGURED;
     const store = await ctx.store();
-    const open = store.read().clients.filter((c) => c.stage === "lead");
-    const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-    const seen = open.find((c) => same(c.contact.email, body.contact!.email) && same(c.domain, body.domain!));
-    // Only the signed-in operator's own form gets the CRM row back. A visitor gets the id alone: the
-    // row carries the agency's notes and next action, and later its source and referrer.
-    const signedIn = apiGate(req, ctx) === null;
-    const reply = (row: { id: string }) => (signedIn ? row : { id: row.id });
-    if (seen !== undefined) return { status: 200, body: reply(seen) };
-    if (open.length >= OPEN_LEADS_CAP) {
-      return { status: 429, body: { error: "the lead inbox is full — email the agency directly" }, headers: { "retry-after": "86400" } };
-    }
-    // The cap above bounds how many leads may be open; this bounds how fast the inbox fills. Without
-    // it, `OPEN_LEADS_CAP` scripted contact-and-domain pairs shut the form for a day in one burst —
-    // no agent turn fires on a lead, so what that costs is business rather than money. An hour's
-    // `retry-after`, because unlike a full inbox this clears without anyone doing anything.
     if (!store.admitLead(Date.now())) {
       return {
         status: 429,
@@ -412,30 +397,37 @@ async function publicRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply 
         headers: { "retry-after": String(LEAD_WINDOW_MS / 1000) },
       };
     }
-    // The source is the server's to say, never the body's: a visitor who could post `referral` would
-    // credit any client with an introduction. Only a signed-in operator's own form may say `manual`.
-    // Fields are picked one by one, the contact's too: anything else the body carries is dropped.
-    const operator = (body as { source?: unknown }).source === "manual" && signedIn;
-    // A referral link's code names the client who sent this visitor. The code is the only proof:
-    // an unknown or mistyped one files an ordinary site lead and says nothing about why.
-    const ref = (body as { ref?: unknown }).ref;
+    // A referral link's code names the client who sent this visitor. The code is the only proof: an
+    // unknown or mistyped one files an ordinary site inquiry and says nothing about why. The source is
+    // the server's to say, never the body's, or a visitor could credit any client with an introduction.
+    const { ref, name, domain, contact, services, note } = body as LeadForm;
     const referrer = typeof ref === "string" && ref !== "" && ref.length <= 64 ? store.read().clients.find((c) => c.referralCode === ref) : undefined;
-    const { name, domain, contact, services, note } = body as LeadInput;
-    const created = store.createLead({
-      name, domain, services, note,
-      contact: { name: contact.name, email: contact.email, role: typeof contact.role === "string" ? contact.role : "" },
-      ...(operator ? { source: "manual" } : referrer ? { source: "referral", referredBy: referrer.id } : { source: "site" }),
-    });
-    if (ctx.config !== null) {
-      const address = store.site().contact.email;
-      await notifyLead(ctx.config, created, address).catch(() => false);
+    const lines = [
+      `Website inquiry from ${name} (${domain}).`,
+      ...(services && services.length > 0 ? [`Services: ${services.join(", ")}.`] : []),
+      ...(note ? [note] : []),
+      ...(referrer ? [`Referred by ${referrer.name} (${referrer.id}).`] : []),
+    ];
+    let filed: Response;
+    try {
+      filed = await proxyFetch(ctx.config, { method: "POST", path: "/v1/crm/inquiries" }, JSON.stringify({
+        name: contact.name, email: contact.email, company: name, source: referrer ? "referral" : "site", note: lines.join("\n"),
+      }));
+    } catch {
+      return { status: 502, body: { error: "the inquiry did not reach the CRM — email the agency directly" } };
     }
-    return { status: 201, body: reply(created) };
+    if (!filed.ok) {
+      return filed.status === 400
+        ? { status: 400, body: { error: "check the email address" } }
+        : { status: 502, body: { error: "the inquiry did not reach the CRM — email the agency directly" } };
+    }
+    await notifyLead(ctx.config, { name, domain, contact, services: services ?? [], notes: lines }, store.site().contact.email).catch(() => false);
+    return { status: 201, body: { received: true } };
   }
   return null;
 }
 
-/** The store-backed routes: the CRM pipeline and the content queue. */
+/** The store-backed routes: the signed clients and the content queue. */
 async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply | null> {
   const { method, path } = req;
 
@@ -446,13 +438,6 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     return method === "GET" ? { status: 200, body: (await ctx.store()).read().posts } : NOT_ALLOWED;
   }
 
-  const advance = /^\/api\/clients\/([\w-]+)\/advance$/.exec(path);
-  if (advance) {
-    if (method !== "POST") return NOT_ALLOWED;
-    const client = (await ctx.store()).advanceClient(advance[1]!);
-    return client ? { status: 200, body: client } : { status: 404, body: { error: "no such client" } };
-  }
-
   const onboard = /^\/api\/clients\/([\w-]+)\/onboard$/.exec(path);
   if (onboard) {
     if (method !== "POST") return NOT_ALLOWED;
@@ -460,7 +445,7 @@ async function storeRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiReply |
     if (!client) return { status: 404, body: { error: "no such client" } };
     if (client.stage !== "active") return { status: 409, body: { error: "a churned client cannot be onboarded" } };
     // With a key present, fan out the client's crew on the platform; without one the store move
-    // still lands, so the pipeline works before the key does.
+    // still lands, so the workspace works before the key does.
     const agents = ctx.config === null ? null : await provisionClientAgents(ctx.config, client.slug);
     return { status: 200, body: { client, agents } };
   }
@@ -626,17 +611,12 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
       const site = store.site();
       const state = store.read();
       const posts = state.posts;
-      const externalProspects = state.clients.filter((client) =>
-        (client.domain.trim() !== "" || client.contact.email.trim() !== "") &&
-        (client.stage === "lead" || client.stage === "proposal"));
-      const internalRecords = state.clients.filter((client) => client.domain.trim() === "" && client.contact.email.trim() === "");
+      const internalRecords = state.clients.filter(nameOnly);
       const answers = (() => {
         const value = platform.context.context as { answers?: { key?: string; value?: unknown }[] } | null;
         return value?.answers ?? [];
       })();
       const hasPricingAnswer = answers.some((answer) => ["pricing", "public_identity"].includes(answer.key ?? "") && String(answer.value ?? "").trim() !== "");
-      const namedContacts = externalProspects.filter((client) => client.contact.name.trim() !== "").length;
-      const addressedContacts = externalProspects.filter((client) => client.contact.email.trim() !== "").length;
       return {
         status: 200,
         body: {
@@ -659,11 +639,7 @@ async function platformRoutes(req: ApiRequest, ctx: ApiContext): Promise<ApiRepl
           },
           crm: {
             records: state.clients.length,
-            prospects: externalProspects.length,
-            working_notes: externalProspects.reduce((sum, client) => sum + client.notes.length, 0),
             internal_records: internalRecords.length,
-            named_contacts: namedContacts,
-            addressed_contacts: addressedContacts,
           },
           setup_has_paste_artifacts: answers.some((answer) => /^\s*>/m.test(String(answer.value ?? ""))),
         },

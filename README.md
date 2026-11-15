@@ -11,8 +11,8 @@ organization.**
 [![React](https://img.shields.io/badge/react-19-149eca.svg)](https://react.dev)
 
 It ships one app with two doors: the agency's public site at `/`, whose copy is data the crew
-edits through approvals, and the operator dashboard under `/app` (home, CRM pipeline,
-approvals, agents, per-client workspaces) — plus an MCP server that lets any agent operate
+edits through approvals, and the operator dashboard under `/app` (home, approvals, agents,
+signed clients' workspaces) — plus an MCP server that lets any agent operate
 the agency, and a crew of seven agents that read the three answers you give at install and
 start work the same day.
 
@@ -43,8 +43,9 @@ flowchart LR
   app's own store, read by the page over the public, cacheable `GET /api/site` and rewritten
   by the `site-builder` through `dashboard.update_site` — which is held at `ask`, so every
   edit lands on **Approvals** first. The contact form posts to `POST /api/leads`, the one
-  other public route, and lands as a CRM lead — one open row per contact and domain, ten new
-  leads an hour and at most 200 open ones before the form answers `429`, and the page takes a
+  other public route, which files it in the platform CRM as a `talking` contact (`POST
+  /v1/crm/inquiries`, the one CRM write the app's own read key may make) — ten an hour before the
+  form answers `429`, and nothing kept in the app's own store. The page takes a
   served section only in the seed's shape, within its lengths. The old operator paths (`/crm`, `/approvals`,
   …) redirect to `/app/*`.
 - **Seven agents** — the active template's crew, each with a role, a private system prompt,
@@ -79,12 +80,12 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 | Agent | Role | Tools | Skills | Timer (`America/New_York`) | First message (day one) |
 |---|---|---|---|---|---|
 | `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
-| `sales` | Pipeline | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, advance_pipeline}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, filed as leads with a why-now; openers drafted (not sent) for the best three. |
-| `client-manager` | Delivery | `dashboard.{list_clients, get_client, create_lead, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.inboxes`, `email.read`, `email.send*` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
-| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_lead, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
-| `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_lead, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
-| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_lead, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
-| `proposal-writer` | Proposals | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
+| `sales` | Pipeline | `web_search`, `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, added to the CRM as leads with a why-now; openers drafted (not sent) for the best three. |
+| `client-manager` | Delivery | `crm.read`, `crm.write`, `dashboard.{list_clients, get_client, create_client, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
+| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_client, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
+| `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_client, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
+| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_client, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
+| `proposal-writer` | Proposals | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
 | `paid-media-planner` (`seo-geo`) | Paid media | `web_search`, `web_fetch`, dashboard reads/writes, read-only Google/Meta Ads tools | `naive/proposal-writing` | — | A zero-baseline plan with operator-selectable budget scenarios, integration-aware channels, measurement and stop rules. It cannot mutate campaigns or spend. |
 
 Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
@@ -106,13 +107,13 @@ what the dashboard's home screen shows.
 | `network` (optional) | Who do you already know who might need this, or know someone who does? | — (four is the limit: `sales` asks this in its first session with `ask_operator`) |
 
 The network answer is for the first client, when there's nobody yet to ask for a referral. On
-day one `sales` files each person named as a `network` lead and drafts a short personal note to
-each for approval. An empty answer skips it, and no contact is ever invented.
+day one `sales` adds each person named to the CRM as a `network` contact and drafts a short
+personal note on their timeline for approval. An empty answer skips it, and no contact is ever invented.
 
 Cold openers show the work. In both templates `sales` reads the prospect's own site first and
 names one specific thing it read there. In `seo-geo` it runs a short public audit before each
 opener: what the prospect ranks for, whether AI answers cite it, and two or three concrete
-fixes, filed as a note on the lead, with the opener quoting one finding. It reports no ranking,
+fixes, logged on the contact's CRM timeline, with the opener quoting one finding. It reports no ranking,
 citation or traffic figure it didn't see.
 
 Edit an answer later through the platform (`PATCH /v1/blueprints/installs/{id}`); the crew
@@ -141,7 +142,7 @@ what it is waiting on.
 
 The seven intakes open in the same minute, and two of them depend on another's output: the
 content writer's calendar is written from the gap researcher's report, and a proposal is written
-for a lead sales has advanced. Where one seat's work is another's input, the first **hands off**
+for a contact sales has moved to `proposal`. Where one seat's work is another's input, the first **hands off**
 to the second instead of both reading an empty record at once. Each `AgentDecl` declares the
 platform's `handoffs` field — the names it may open a session on — and only those seats are
 granted the two platform tools, `send_to_agent` and `list_agents`:
@@ -149,7 +150,8 @@ granted the two platform tools, `send_to_agent` and `list_agents`:
 | Sender | `handoffs` | Hands on | The message names |
 |---|---|---|---|
 | `gap-researcher` | `["content-writer"]` | once the gap report is filed (day one, then every Friday) | the agency record's `cli_` id and the ten gaps |
-| `sales` | `["proposal-writer"]` | when a lead is advanced to `proposal` | that lead's `cli_` id, as `handoff_key` too, so a lead is handed once |
+| `sales` | `["proposal-writer"]` | when a contact is moved to `proposal` | that contact's `ctc_` id, as `handoff_key` too, so a contact is handed once |
+| `client-manager` | `["sales"]` | an upsell; the list is what offers it `send_to_agent` for its Monday fan-out | the client's `ctc_` id |
 | `audit-runner--<slug>` | `["seo-writer", "client-lead"]` | once a client audit is filed, to the writer only if pages were asked for (`seo-geo`) | the audit's `post_` id, the pages it found missing, what the request asked for |
 | `seo-writer--<slug>` | `["geo-optimizer", "client-lead"]` | once the pages are drafted, to the optimizer only if answer-engine work was asked for (`seo-geo`) | the new drafts' `post_` ids and what the request asked for |
 | `geo-optimizer--<slug>` | `["client-lead"]` | once its drafts are filed (`seo-geo`) | the drafts' `post_` ids and what the request asked for |
@@ -157,7 +159,12 @@ granted the two platform tools, `send_to_agent` and `list_agents`:
 Every other seat declares `handoffs: false` and holds neither tool. A handoff is
 `send_to_agent` with `wait: false`: it opens an ordinary session on the receiver, at the
 receiver's own budget, and the sender carries on; the receiver reads the durable row the
-message names (`get_client`, `list_posts`) before writing a line. The timers stay as the
+message names (`crm.read`, `get_client`, `list_posts`) before writing a line.
+
+**One chat, one client.** The platform keeps a chat that opens a CRM contact to that contact. So
+`sales`' weekday pass and `client-manager`'s Monday stay unscoped, read the CRM's directory, and
+start one chat of their own seat per contact that needs work (`send_to_agent` to `self`, `client`
+its `ctc_` id, `handoff_key` `followup:<ctc_>` or `week:<ctc_>`). The timers stay as the
 fallback — the content writer's Tuesday/Thursday run takes the next title from the calendar the
 handoff wrote, and files nothing while no calendar exists yet.
 
@@ -170,30 +177,33 @@ patches the declaration onto each seat (the platform mints a version only where 
 differs), so a crew provisioned before this field existed gains the chain. A seat the active
 template no longer declares is kept as it stands (widen, never narrow).
 
-A client is provisioned once by the lead→active move on the CRM board, and after that from
-**Re-provision crew** on the client's own Agents tab — which is the same route (`POST
-/api/clients/<id>/onboard`, idempotent for an active client), run again, printing what it did to
-each seat. That button is how a standing crew gains a seat, a tool or a handoff the template has
-since declared; without it nothing in the dashboard could reach the upsert again, because the
-board offers the lead→active move only while the client is not yet active.
+### The pipeline is the platform CRM; a won deal is a client
 
-Agents file the agency's own record with `create_lead` from the project name alone; a second
-name-only filing of a name already on the pipeline returns that record, so five intakes filing
-it in the same minute share one row. A prospect filed with a domain or a contact is never that
-record, whatever its name.
+Leads, talks, proposals and their notes live in the platform CRM (`crm.read`, `crm.write`; the
+`crm` mini app every template carries) and nowhere else. The dashboard keeps **signed clients**
+only — their workspaces, crews, content queue, approvals and Studio.
 
-Every lead records where it came from, shown as a chip on its CRM row. The contact form's are
-`site` and the operator's own add-a-lead form's are `manual`; the server decides both, so a
-visitor's request can't claim another source. An agent's `create_lead` is `outreach` unless it
-says `network` (someone the operator knows) or gives `referred_by` (the `cli_` id of the client
-who introduced them, which must exist), which makes it a `referral`. Rows filed before sources
-existed have none. The agency's own name-only record isn't a lead and has no source.
+Won becomes a client with no click: the agent that moves a contact to `won` calls the dashboard's
+`create_client` in the same step, with the contact's `ctc_` id as `crm_contact`. That files the
+client active and onboarded (its referral code stamped, its crew provisioned on the platform,
+exactly as `POST /api/clients/<id>/onboard` does). It is idempotent — a second call for the same
+contact, email or domain answers the client on file — so `client-manager`'s Monday pass safely
+makes a client of any `won` contact no client names yet. A client is re-provisioned from
+**Re-provision crew** on its Agents tab (the same onboard route, run again, printing what it did to
+each seat): that is how a standing crew gains a seat, a tool or a handoff the template has since
+declared.
+
+Agents file the agency's own record with `create_client` from the project name alone; a second
+name-only filing returns that record, so five intakes filing it in the same minute share one row.
+A filing with a domain, an email or a CRM contact is a client, never that record, whatever its name.
 
 Each active client has a private referral link, `/?ref=<code>#contact`, from
 `get_referral_link`. The code is random (never the client's slug, so a link can't be made from
-a name) and is stamped when the client goes active. The site remembers it for the visit, and a
-lead filed through it lands as a `referral` from that client; an unknown code files an ordinary
-`site` lead. It goes through the same rate limit and open-lead cap as the rest of the form.
+a name) and is stamped when the client is created. The site remembers it for the visit, and an
+inquiry filed through it lands in the CRM with source `referral` and the note "Referred by
+<client> (<cli_ id>)"; an unknown code files an ordinary `site` inquiry. It goes through the same
+rate limit as the rest of the form. A referral that arrives by email is added by `sales` the same
+way.
 
 The Monday check-in asks ready clients for an introduction. `list_referral_ready` decides who
 is ready, in code rather than in the agent's judgment: active for 30 days, at least two pieces
@@ -376,12 +386,12 @@ as the dashboard's templates.
 
 ## 🧪 The product design studio
 
-`product-design` runs the same machine — CRM, public site, approvals, `/mcp` — as a studio for
+`product-design` runs the same machine — clients, public site, approvals, `/mcp` — as a studio for
 physical products. Its crew is four seats, not the seven:
 
 | Agent | Role | What it holds (besides `project_context`, `read_skill`, `ask_operator`, `request_tools`) | Skills | Timer | Day one |
 |---|---|---|---|---|---|
-| `account-manager` | Studio lead | `web_fetch`, `dashboard.{list_clients, get_client, create_lead, add_client_note, list_posts, schedule_post}`, mailbox reads, `send_to_agent`, `list_agents`; `email.send` at **ask** | `naive/product-design`, `naive/client-onboarding` | Mon 09:00 studio check-in | Writes the **STUDIO NOTE** from your four answers before anything is made, then hands one first brief to `designer`. |
+| `account-manager` | Studio lead | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, get_client, create_client, add_client_note, list_posts, schedule_post}`, mailbox reads, `send_to_agent`, `list_agents`; `email.send` at **ask** | `naive/product-design`, `naive/client-onboarding` | Mon 09:00 studio check-in | Writes the **STUDIO NOTE** from your four answers before anything is made, then hands one first brief to `designer`. |
 | `designer` | Concept meshes | `generate_3d_model`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `send_to_agent` | `naive/product-design`, `naive/3d-modeling` | — | Waits for a brief. |
 | `engineer` | Dimensioned parts | `build_3d`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`, `send_to_agent` | `naive/product-design`, `naive/cad-parts` | — | Waits for a brief. |
 | `visualizer` | Stills & video | `build_3d` (Blender render of the GLB as the still), `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`; `generate_video` at **ask** | `naive/product-design`, `naive/product-video-3d` | — | Waits for a brief. |
@@ -413,11 +423,10 @@ only marks it approved: nothing is posted, emailed or sent to a manufacturer.
 
 | Screen (under `/app`) | What it does |
 |---|---|
-| Home | Your three answers (from the latest applied install's context), day one's sessions, approvals due, the crew with each timer's next fire, pipeline counts — each card says *not configured* without `NAIVE_API_KEY` |
-| CRM | Pipeline board (lead → proposal → active → churned), contacts, notes, advance-stage, and **Add a client** — the first one included |
+| Home | Your three answers (from the latest applied install's context), day one's sessions, approvals due, the crew with each timer's next fire — each card says *not configured* without `NAIVE_API_KEY` |
 | Approvals | Every agent that has stopped on you: the call it wants to make with the arguments it proposed (approve or reject, with a reason), or the question it asked (answer it, and the agent carries on) |
 | Agents | Every agent in the organization, read from the platform: its budget, what it has spent this period, its sessions and why each one stopped — plus chat with the client-manager |
-| Clients | Active clients; each opens a workspace with Overview · Connections · Calendar · Agents · Posts |
+| Clients | Signed clients (a deal marked won on the CRM becomes one); each opens a workspace with Overview · Connections · Calendar · Agents · Posts |
 | Settings | Platform wiring, and MCP access tokens on a local server |
 
 Nothing publishes without you, and it is the tool policy that says so rather than the
@@ -444,9 +453,10 @@ too. What neither door can do is conjure an account or an inbox: a granted `emai
 still reads nothing until the persona has an inbox, and a granted `googlesearchconsole.*` still
 needs the property connected to the identity.
 
-The sales agent files what it drafts on the client row: `add_client_note` carries the outreach
-or follow-up in full and restates what the client is waiting on, and shows on the client's page.
-Nothing it files is sent; `email.send` is the send, and it always waits for you.
+The sales pipeline is the platform's **CRM** app, beside the dashboard: the sales agent logs each
+opener and follow-up in full on the contact's timeline (`crm.write`) with a dated next step.
+Nothing it logs is sent; `email.send` is the send, and it always waits for you. `/app/crm` now
+lands on Clients.
 
 **A fresh deployment is empty, and that is correct.** The CRM, the calendar and the queue
 start with nothing in them, and fill with what you and your agents put there. No screen has a
@@ -507,18 +517,19 @@ exist **only** on a local server. On the deployment they answer `404`, and Setti
 the platform mints that app's token itself and injects it, so the agents in your project
 already reach `/mcp` without one being handed to whoever finds the URL.
 
-Tools: `list_clients`, `get_client`, `create_lead`, `get_referral_link`, `list_referral_ready`, `record_referral_ask`, `add_client_note`, `advance_pipeline`,
+Tools: `list_clients`, `get_client`, `create_client`, `get_referral_link`, `list_referral_ready`, `record_referral_ask`, `add_client_note`,
 `list_posts`, `create_draft_post`, `approve_post`, `schedule_post`, `list_agents`,
 `start_agent_session`, `get_calendar`, `get_site`, `update_site`.
 
-### Agents and the CRM
+### Agents and the dashboard
 
 The agency's own agents use the same MCP server, with no per-agent wiring. The dashboard app
 declares its endpoint in `naive.config.ts` (`mcp: "/mcp"`); on `naive up` the platform mints
 a bearer token for it, injects it into the app as the `VETTA_MCP_TOKEN` secret, and from then
 on every agent in the project is offered the dashboard's tools on every turn as
-`dashboard.<tool>` (`dashboard.create_lead`, `dashboard.get_calendar`, …). The agents' tool
-policies are deny-by-default, so each one names the CRM tools it works with; none gets
+`dashboard.<tool>` (`dashboard.create_client`, `dashboard.get_calendar`, …). The agents' tool
+policies are deny-by-default, so each one names the dashboard tools it works with — and the
+pipeline seats name the platform's `crm.read` and `crm.write` too; none gets
 `approve_post` or `start_agent_session` — approving and spending stay with you. Nor does
 any hold the platform's `social.post`.
 

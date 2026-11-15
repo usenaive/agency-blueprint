@@ -18,7 +18,6 @@ import { Approvals } from "./screens/Approvals";
 import { ClientAgents } from "./screens/ClientAgents";
 import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
-import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
 import { LaunchReview } from "./screens/LaunchReview";
 import { ProductAudit } from "./screens/ProductAudit";
@@ -28,11 +27,10 @@ const routes = [
     path: "/",
     Component: Shell,
     children: [
-      { index: true, element: <Navigate to="/crm" replace /> },
+      { index: true, element: <Navigate to="/home" replace /> },
       { path: "home", Component: Home },
       { path: "product-audit", Component: ProductAudit },
       { path: "launch-review", Component: LaunchReview },
-      { path: "crm", Component: Crm },
       { path: "approvals", Component: Approvals },
       { path: "agents", Component: AgencyAgents },
       {
@@ -52,25 +50,20 @@ describe("the product audit", () => {
       context: { intake: [] }, identity: { emails: [{}], domains: [{}], connections: [] }, organization_domains: [{}],
       public_site: { company: "Acme Search", contact_email: "hello@acme.com", placeholder_email: false, generic_company: false, pricing_without_answer: false, prices: ["Custom"] },
       content: { total: 3, posted_blog_articles: 1, draft_blog_articles: 1, ad_plans: 1, approved_ad_plans: 0 },
-      crm: { records: 5, prospects: 4, working_notes: 4, internal_records: 1, named_contacts: 2, addressed_contacts: 1 },
+      crm: { records: 5, internal_records: 1 },
       setup_has_paste_artifacts: false,
     };
     const screen = await render("/product-audit", (path) => path === "/api/product-audit" ? { body: snapshot } : { body: [] });
     expect(screen.text()).toContain("LAUNCH BLOCKED");
-    expect(screen.text()).toContain("4 companies; 2 named and 1 addressed contacts");
+    // Prospects are the platform CRM's: the audit no longer grades a pipeline this app cannot read.
+    expect(screen.text()).not.toContain("Sales handoff");
     expect(screen.text()).toContain("1 plans filed; 0 operator-approved");
     expect(screen.text()).toContain("Changes in this hardening release");
   });
 });
 
 describe("the launch review", () => {
-  it("puts prospect evidence, outreach copy, content and its decision on one screen", async () => {
-    const prospect = {
-      id: "cli_1", slug: "acme", name: "Acme", domain: "acme.test", stage: "lead", services: ["SEO"],
-      contact: { name: "Sam", email: "sam@acme.test", role: "Founder" },
-      notes: ["Why now: the pricing pages are not indexed.", "Email draft: Hi Sam — I found three crawl gaps."],
-      nextAction: "Review opener",
-    };
+  it("puts content and its decision on one screen, and no pipeline: prospects are the platform CRM's", async () => {
     const draft = {
       id: "post_1", clientId: "cli_own", title: "GEO guide", summary: "A practical guide", body: "The complete article.",
       kind: "article", channel: "blog", status: "pending", agent: "content-writer", scheduledFor: "2026-10-02", hue: 10,
@@ -82,21 +75,19 @@ describe("the launch review", () => {
       identity: { emails: [{}], domains: [{}], connections: [] }, organization_domains: [{}],
       public_site: { company: "Founder Frame", contact_email: "hello@founderframehq.com", placeholder_email: false, generic_company: false, pricing_without_answer: false, prices: ["Custom"] },
       content: { total: 1, posted_blog_articles: 1, draft_blog_articles: 1, ad_plans: 0, approved_ad_plans: 0 },
-      crm: { records: 1, prospects: 1, working_notes: 2, internal_records: 0, named_contacts: 1, addressed_contacts: 1 },
+      crm: { records: 1, internal_records: 0 },
       setup_has_paste_artifacts: false,
     };
     const screen = await render("/launch-review", (path, init) => {
       if (path === "/api/product-audit") return { body: snapshot };
       if (path === "/api/context") return { body: { context: { answers: [], template: "seo-geo", updated_at: "2026-10-01" }, team: [], intake: [] } };
-      if (path === "/api/clients") return { body: [prospect] };
+      if (path === "/api/clients") return { body: [] };
       if (path === "/api/posts" && !init?.method) return { body: [draft] };
       if (path.includes("/api/sessions")) return { body: { data: [] } };
       if (path === "/api/posts/post_1" && init?.method === "PATCH") return { body: { ...draft, status: "approved" } };
       return { body: "" };
     });
-    expect(screen.text()).toContain("Prospects and outreach drafts");
-    expect(screen.text()).toContain("Why now: the pricing pages are not indexed.");
-    expect(screen.text()).toContain("Email draft: Hi Sam");
+    expect(screen.text()).not.toContain("Prospects and outreach drafts");
     expect(screen.text()).toContain("The complete article.");
     await screen.press("Approve");
     expect(screen.calls.some((call) => call.path === "/api/posts/post_1" && call.init?.method === "PATCH")).toBe(true);
@@ -314,57 +305,27 @@ describe("the approval queue", () => {
   });
 
   it("is on the rail with a count, so a parked agent is visible from every screen", async () => {
-    const { text } = await render("/crm", (path) =>
+    const { text } = await render("/approvals", (path) =>
       path.includes("/api/sessions") ? { body: { data: [parkedSession] } } : { body: [] });
     expect(text()).toContain("Approvals");
   });
 });
 
-describe("the CRM's first client", () => {
-  it("offers a first action on an empty board and files it through the leads route", async () => {
-    const filed: unknown[] = [];
-    const created = { id: "cli_1", slug: "acme-dental", name: "Acme Dental", domain: "acmedental.example", stage: "lead", services: [], contact: { name: "Jordan Lee", email: "jordan@acmedental.example", role: "" }, notes: [] };
-    const screen = await render("/crm", (path, init) => {
-      if (path === "/api/leads" && init?.method === "POST") {
-        filed.push(JSON.parse(String(init.body)));
-        return { status: 201, body: created };
-      }
-      return { body: path.includes("/api/sessions") ? { data: [] } : [] };
-    });
+describe("the rail", () => {
+  it("lists signed clients only, has no CRM board, and says where a client comes from", async () => {
+    const row = (id: string, extra: Record<string, unknown>) =>
+      ({ id, slug: id, name: id, domain: `${id}.example`, stage: "active", services: [], contact: { name: "C", email: `c@${id}.example`, role: "" }, notes: [], ...extra });
+    const clients = [row("Acme", {}), row("OwnRecord", { domain: "", contact: { name: "", email: "", role: "" } }), row("Gone", { stage: "churned" })];
+    const screen = await render("/approvals", (path) => ({ body: path === "/api/clients" ? clients : path.includes("/api/sessions") ? { data: [] } : [] }));
+    const rail = screen.host.querySelector("nav")!.textContent ?? "";
+    expect(rail).toContain("Acme");
+    expect(rail).not.toContain("OwnRecord");
+    expect(rail).not.toContain("Gone");
+    expect(screen.host.querySelector('nav a[href="/crm"]')).toBeNull();
+    expect(screen.text()).not.toContain("Pipeline");
 
-    expect(screen.text()).toContain("Add your first client");
-    await screen.press("Add your first client");
-    await screen.type("Acme Dental", "Acme Dental");
-    await screen.type("acmedental.example", "acmedental.example");
-    await screen.type("Jordan Lee", "Jordan Lee");
-    await screen.type("jordan@acmedental.example", "jordan@acmedental.example");
-    await screen.press("File as a lead");
-
-    expect(filed).toEqual([{
-      name: "Acme Dental",
-      domain: "acmedental.example",
-      contact: { name: "Jordan Lee", email: "jordan@acmedental.example", role: "" },
-      source: "manual",
-    }]);
-    // And the board takes the row the server answered with, rather than one it drew itself.
-    expect(screen.text()).toContain("Acme Dental");
-  });
-
-  it("says where each lead came from, and who referred it", async () => {
-    const row = (id: string, name: string, extra: Record<string, unknown>) =>
-      ({ id, slug: id, name, domain: `${id}.example`, stage: "lead", services: [], contact: { name: "C", email: `c@${id}.example`, role: "" }, notes: [], ...extra });
-    const clients = [
-      row("cli_a", "Acme Dental", { stage: "active", source: "site" }),
-      row("cli_b", "Bayside Ortho", { source: "referral", referredBy: "cli_a" }),
-      row("cli_c", "Cedar Legal", { source: "network" }),
-      row("cli_d", "Old Row Inc", {}),
-    ];
-    const screen = await render("/crm", (path) => ({ body: path === "/api/clients" ? clients : path.includes("/api/sessions") ? { data: [] } : [] }));
-    expect(screen.text()).toContain("via website");
-    expect(screen.text()).toContain("referred by Acme Dental");
-    expect(screen.text()).toContain("via your network");
-    // A row filed before sources existed carries no chip, rather than a guess.
-    expect(screen.text()).not.toContain("via outreach");
+    const empty = await render("/approvals", (path) => ({ body: path.includes("/api/sessions") ? { data: [] } : [] }));
+    expect(empty.text()).toContain("a deal marked won on the CRM becomes one");
   });
 });
 
@@ -491,8 +452,7 @@ describe("the home screen", () => {
  * The reconcile had no trigger.
  *
  * `provisionClientAgents` creates the missing seats and patches the declaration onto the standing
- * ones, and its only caller was the CRM board's lead→active move — a control offered only while the
- * client is not yet active. So a crew provisioned before the template declared `handoffs` could not
+ * ones, and its other caller is the client's creation, which runs once. So a crew provisioned before the template declared `handoffs` could not
  * be reached from anywhere in the dashboard: the operator's one route was a hand-written POST,
  * which is a release note, not a product.
  */
@@ -524,9 +484,9 @@ describe("a crew that is already standing", () => {
     expect(screen.text()).toContain("already matched the template");
   });
 
-  /** The same route graduates a lead. A control that reads as maintenance must never do that. */
-  it("is not offered for a client that is not active, because there the same route is the graduation", async () => {
-    const lead = { ...client, stage: "lead" };
+  /** A churned client has no crew to bring up, and the route refuses it. */
+  it("is not offered for a client that is not active", async () => {
+    const lead = { ...client, stage: "churned" };
     const screen = await render("/clients/cli_1/agents", (path) =>
       path === "/api/clients" ? { body: [lead] }
       : path.startsWith("/api/agents") ? { body: { data: [] } }

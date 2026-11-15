@@ -1,26 +1,24 @@
-import { Bot, Box, Building2, ClipboardCheck, House, KanbanSquare, ListChecks, ShieldAlert, Settings2 } from "lucide-react";
+import { Bot, Box, Building2, ClipboardCheck, House, ListChecks, ShieldAlert, Settings2 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { useApi } from "./api";
-import { TEMPLATE, TEMPLATE_NAME, type Client } from "./data";
+import { signedClients, TEMPLATE, TEMPLATE_NAME, type Client } from "./data";
 import { waitingOn, type PlatformSession } from "./platform";
 
 /** The rail follows the studio's own geometry: a 56px workspace head sharing
  * the pane header's hairline, flat nav rows, then the active clients as a
- * framed roster — the list is the nav into each client's workspace. The counts
- * and the roster are the CRM's real rows; a new agency's rail is empty, and the
- * first lead the sales agent files appears in it. */
+ * framed roster — the list is the nav into each client's workspace. The roster
+ * is the store's real rows; a new agency's rail is empty, and the first contact
+ * the platform CRM marks won appears in it. */
 export function Shell() {
   const { data: clients } = useApi<Client[]>("/clients");
   // The one platform call the rail makes, and it earns it: an agent parked on an approval has
   // stopped working until someone answers it, and it is invisible on every other screen.
   const { data: sessions } = useApi<{ data?: PlatformSession[] }>("/sessions?status=idle");
-  const active = (clients ?? []).filter((c) => c.stage === "active");
-  const prospects = (clients ?? []).filter((c) => c.stage === "lead" || c.stage === "proposal");
+  const active = signedClients(clients ?? []);
   const nav = [
     { to: "/", label: "Home", Icon: House, count: undefined as number | undefined },
     { to: "/launch-review", label: "Launch review", Icon: ListChecks, count: undefined as number | undefined },
     { to: "/product-audit", label: "Product audit", Icon: ClipboardCheck, count: undefined as number | undefined },
-    { to: "/crm", label: "CRM", Icon: KanbanSquare, count: prospects.length },
     { to: "/approvals", label: "Approvals", Icon: ShieldAlert, count: waitingOn(sessions?.data ?? [], new Map()).length },
     // Only a product-design studio files deliverables that are files; no other template has a Studio.
     ...(TEMPLATE_NAME === "product-design" ? [{ to: "/studio", label: "Studio", Icon: Box, count: undefined as number | undefined }] : []),
@@ -63,7 +61,7 @@ export function Shell() {
             </h2>
             {active.length === 0 ? (
               <p className="px-2.5 py-2 text-[0.6875rem] leading-relaxed text-ink-3">
-                No active clients yet — a lead becomes one on the CRM.
+                No clients yet — a deal marked won on the CRM becomes one.
               </p>
             ) : (
               <div className="rail-frame">

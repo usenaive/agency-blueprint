@@ -116,13 +116,13 @@ export async function proxyFetch(
 }
 
 /**
- * Put a public-site inquiry in the agency persona's own inbox as well as its CRM. The anonymous
- * route remains bounded by the lead rate limiter, duplicate leads are not sent twice, and a mail
- * outage never discards the CRM row that is the source of truth.
+ * Put a public-site inquiry in the agency persona's own inbox as well as the platform CRM. The
+ * anonymous route remains bounded by the lead rate limiter, and a mail outage never discards the CRM
+ * contact that is the source of truth.
  */
 export async function notifyLead(
   config: ProxyConfig,
-  lead: { id: string; name: string; domain: string; contact: { name: string; email: string }; services: string[]; notes: string[] },
+  lead: { name: string; domain: string; contact: { name: string; email: string }; services: string[]; notes: string[] },
   agencyAddress: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<boolean> {
@@ -155,8 +155,7 @@ export async function notifyLead(
         `Website: ${lead.domain}`,
         `Contact: ${lead.contact.name} <${lead.contact.email}>`,
         `Services: ${lead.services.join(", ") || "Not specified"}`,
-        `CRM ID: ${lead.id}`,
-        ...(lead.notes[0] ? ["", lead.notes[0]] : []),
+        ...(lead.notes.length > 0 ? ["", ...lead.notes] : []),
       ].join("\n"),
     }),
     fetchImpl,

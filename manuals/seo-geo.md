@@ -32,7 +32,7 @@ On day one:
 
 ## 🤝 Agent team configuration
 
-Seven agents run the agency, a paid-media planner proposes ads, and each client gets a team of four when you move it to active.
+Seven agents run the agency, a paid-media planner proposes ads, and each client gets a team of four when its deal is marked won on the CRM.
 
 - **Sales** finds leads that fit your answer. Before each first email it audits the lead's public site: what it ranks for and whether AI answers cite it. It writes the opener from one finding, keeps a dated next step on every lead and follows up. Tell it which sites to skip.
 - **Client manager** runs each client: the kickoff, the weekly check-in and the referral ask.

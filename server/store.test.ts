@@ -10,7 +10,7 @@ import { emptyState, LEAD_WINDOW_MS, LEADS_PER_WINDOW, openStore, openStoreOver,
 
 /**
  * The rows the store starts with are the *active template's* demo seed, so this suite names them
- * by what they are — a lead, an active client, a pending post — and never by an id. An id here
+ * by what they are — an active client, a pending post — and never by an id. An id here
  * would make switching template a code change in the blueprint's own tests, which is exactly what
  * a template being data is supposed to prevent.
  */
@@ -103,9 +103,7 @@ describe("the site profile", () => {
 });
 
 /**
- * The public form's rate window. The open-leads cap is a spend bound, not a denial-of-service one:
- * before this, `OPEN_LEADS_CAP` scripted pairs filled the inbox in one burst and every real lead
- * for the next day was answered `429`.
+ * The public form's rate window: a script must not file a burst of inquiries into the CRM.
  */
 describe("the public form's rate window", () => {
   it("admits a window's worth, refuses the rest, and reopens on the next window", () => {
@@ -130,85 +128,116 @@ describe("openStore", () => {
     expect(store.read().posts).toHaveLength((ACTIVE_TEMPLATE.seed.posts as unknown[]).length);
   });
 
-  it("creates a lead at the lead stage with a slug derived from the name", () => {
+  it("creates a signed client: active, onboarded, with a referral code and a slug from the name", () => {
     const store = openStore(storeFile());
-    const lead = store.createLead({
+    const client = store.createClient({
       name: "Summit Outdoor Co",
       domain: "summitoutdoor.example",
-      contact: { name: "Jordan Lee", email: "jordan@summitoutdoor.example", role: "Site inquiry" },
+      contact: { name: "Jordan Lee", email: "jordan@summitoutdoor.example", role: "Founder" },
       services: ["SEO"],
-      note: "Inbound from the public site.",
+      crmContact: "ctc_summit",
     });
-    expect(lead.stage).toBe("lead");
-    expect(lead.slug).toBe("summit-outdoor-co");
-    expect(store.read().clients.some((c) => c.id === lead.id)).toBe(true);
+    expect(client).toMatchObject({ stage: "active", slug: "summit-outdoor-co", crmContact: "ctc_summit" });
+    expect(client.onboardedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(client.referralCode).toMatch(/^[\w-]{12}$/);
+    expect(store.read().clients.some((c) => c.id === client.id)).toBe(true);
+  });
+
+  it("makes one client per won deal, however often or however it is filed again", () => {
+    // Sales files it as it marks the deal won; the client manager's Monday pass files every won
+    // contact without a client. Either may run twice: neither may double a client.
+    const store = openStore(storeFile());
+    const before = store.read().clients.length;
+    const contact = { name: "Kim", email: "kim@northwind.example", role: "CEO" };
+    const won = store.createClient({ name: "Northwind", domain: "northwind.example", contact, crmContact: "ctc_nw" });
+    expect(store.createClient({ name: "Northwind Ltd", domain: "", contact: { name: "", email: "", role: "" }, crmContact: "ctc_nw" }).id).toBe(won.id);
+    expect(store.createClient({ name: "Northwind", domain: "", contact: { ...contact, email: "KIM@northwind.example" } }).id).toBe(won.id);
+    expect(store.createClient({ name: "NW", domain: "northwind.example", contact: { name: "", email: "", role: "" }, note: "Kickoff booked." }).id).toBe(won.id);
+    expect(store.read().clients).toHaveLength(before + 1);
+    expect(won.notes).toEqual(["Kickoff booked."]);
+    // A CRM contact alone is a client, never the agency's own record: the Monday pass reads no email.
+    const byContact = store.createClient({ name: "Harbor", domain: "", contact: { name: "", email: "", role: "" }, crmContact: "ctc_hb" });
+    expect(byContact.id).not.toBe(won.id);
+    expect(byContact.onboardedAt).toBeDefined();
   });
 
   it("files the agency's own record once, however many agents file it by name in the same minute", () => {
-    // Five intakes each `create_lead` the agency's own record from the project name alone; the
+    // Five intakes each `create_client` the agency's own record from the project name alone; the
     // first opens it and the rest must land on it, notes included, or day one ends with five twins.
     const store = openStore(storeFile());
     const before = store.read().clients.length;
     const own = { domain: "", contact: { name: "", email: "", role: "" } };
-    const first = store.createLead({ name: "Northwind Studio", ...own, note: "Onboarding checklist." });
-    const second = store.createLead({ name: "Northwind  Studio", ...own, note: "Gap report." });
+    const first = store.createClient({ name: "Northwind Studio", ...own, note: "Onboarding checklist." });
+    const second = store.createClient({ name: "Northwind  Studio", ...own, note: "Gap report." });
     expect(second.id).toBe(first.id);
-    expect(store.createLead({ name: "Meridian Search", ...own }).id).toBe(first.id);
+    expect(store.createClient({ name: "Meridian Search", ...own }).id).toBe(first.id);
     expect(store.read().clients).toHaveLength(before + 1);
     expect(store.read().clients.find((c) => c.id === first.id)?.notes).toEqual(["Onboarding checklist.", "Gap report."]);
-    // A prospect that shares the name is a different company: it has a domain, and it is its own row.
-    const prospect = store.createLead({
+    // The agency is not a client: no onboarding stamp, no referral code, never asked for a referral.
+    expect(first.onboardedAt).toBeUndefined();
+    expect(store.referralCode(first.id)).toBeNull();
+    // A client that shares the name is a different company: it has a domain, and it is its own row.
+    const client = store.createClient({
       name: "Northwind Studio", domain: "northwind.example", contact: { name: "Kim", email: "kim@northwind.example", role: "CEO" },
     });
-    expect(prospect.id).not.toBe(first.id);
+    expect(client.id).not.toBe(first.id);
     expect(store.read().clients).toHaveLength(before + 2);
   });
 
   it("consolidates legacy internal duplicates without losing notes or queued work", () => {
     const state = emptyState();
     state.clients = [
-      { id: "cli_one", slug: "agency", name: "agency", domain: "", stage: "lead", services: ["SEO"], contact: { name: "", email: "", role: "" }, notes: ["site"] },
-      { id: "cli_two", slug: "meridian", name: "Meridian", domain: "", stage: "lead", services: ["GEO"], contact: { name: "", email: "", role: "" }, notes: ["blog"] },
+      { id: "cli_one", slug: "agency", name: "agency", domain: "", stage: "lead" as never, services: ["SEO"], contact: { name: "", email: "", role: "" }, notes: ["site"] },
+      { id: "cli_two", slug: "meridian", name: "Meridian", domain: "", stage: "lead" as never, services: ["GEO"], contact: { name: "", email: "", role: "" }, notes: ["blog"] },
     ];
     state.posts = [{ id: "post_1", clientId: "cli_two", title: "Draft", summary: "s", kind: "article", channel: "blog", status: "pending", agent: "mcp", scheduledFor: "2026-09-26", hue: 1 }];
+    const store = openStoreOver(state, () => {});
+    expect(store.read().clients).toHaveLength(1);
+    expect(store.read().clients[0]).toMatchObject({ id: "cli_one", stage: "active", notes: ["site", "blog"], services: ["SEO", "GEO"] });
+    expect(store.read().posts[0]?.clientId).toBe("cli_one");
+  });
+
+  it("sets a document's old leads and proposals aside once the pipeline is the platform CRM's", () => {
+    const state = emptyState();
+    const row = (id: string, stage: string, domain: string) =>
+      ({ id, slug: id, name: id, domain, stage: stage as never, services: [], contact: { name: "", email: "", role: "" }, notes: [] });
+    state.clients = [row("cli_own", "lead", ""), row("cli_lead", "lead", "a.example"), row("cli_prop", "proposal", "b.example"), row("cli_on", "active", "c.example")];
     let writes = 0;
     const store = openStoreOver(state, () => { writes += 1; });
-    expect(store.read().clients).toHaveLength(1);
-    expect(store.read().clients[0]).toMatchObject({ id: "cli_one", notes: ["site", "blog"], services: ["SEO", "GEO"] });
-    expect(store.read().posts[0]?.clientId).toBe("cli_one");
+    expect(store.read().clients.map((c) => [c.id, c.stage])).toEqual([["cli_own", "active"], ["cli_on", "active"]]);
+    expect((state.legacy_leads as Client[]).map((c) => c.id)).toEqual(["cli_lead", "cli_prop"]);
+    expect(writes).toBe(1);
+    openStoreOver(state, () => { writes += 1; });
     expect(writes).toBe(1);
   });
 
-  it("never files the agency's notes on a prospect that happened to share the name", () => {
-    // The prospect is on the pipeline first, with a domain and a contact; the agency's own record
-    // is then filed from the name alone. A same-slug row that was filed with more is not it.
+  it("never files the agency's notes on a client that happened to share the name", () => {
     const store = openStore(storeFile());
     const before = store.read().clients.length;
-    const prospect = store.createLead({
+    const client = store.createClient({
       name: "Northwind Studio", domain: "northwind.example", contact: { name: "Kim", email: "kim@northwind.example", role: "CEO" },
     });
-    const own = store.createLead({ name: "Northwind Studio", domain: "", contact: { name: "", email: "", role: "" }, note: "Gap report." });
-    expect(own.id).not.toBe(prospect.id);
+    const own = store.createClient({ name: "Northwind Studio", domain: "", contact: { name: "", email: "", role: "" }, note: "Gap report." });
+    expect(own.id).not.toBe(client.id);
     expect(store.read().clients).toHaveLength(before + 2);
-    expect(store.read().clients.find((c) => c.id === prospect.id)?.notes).toEqual([]);
+    expect(store.read().clients.find((c) => c.id === client.id)?.notes).toEqual([]);
   });
 
   it("dedupes a name-only record whose name slugs to nothing on the slug it is actually stored under", () => {
-    // Every character of "東京スタジオ" is dropped by the slug; the row is stored as `client`, and
-    // the second filing must look for `client`, not for an empty string.
+    // Every character of "東京スタジオ" is dropped by the slug; the row is stored as `client`.
     const store = openStore(storeFile());
     const before = store.read().clients.length;
     const own = { domain: "", contact: { name: "", email: "", role: "" } };
-    const first = store.createLead({ name: "東京スタジオ", ...own });
+    const first = store.createClient({ name: "東京スタジオ", ...own });
     expect(first.slug).toBe("client");
-    expect(store.createLead({ name: "東京スタジオ", ...own }).id).toBe(first.id);
+    expect(store.createClient({ name: "東京スタジオ", ...own }).id).toBe(first.id);
     expect(store.read().clients).toHaveLength(before + 1);
   });
 
   it("files a note on a client, restating what it waits on only when told to", () => {
     const file = storeFile();
     const store = openStore(file);
-    const id = clientAt("lead");
+    const id = clientAt("active");
     const before = store.read().clients.find((c) => c.id === id)!;
     const notes = before.notes.length;
     const nextAction = before.nextAction;
@@ -221,24 +250,6 @@ describe("openStore", () => {
     expect(store.addClientNote("nope", "x")).toBeNull();
     const onDisk = JSON.parse(readFileSync(file, "utf8")) as { clients: { id: string; notes: string[] }[] };
     expect(onDisk.clients.find((c) => c.id === id)?.notes).toHaveLength(notes + 2);
-  });
-
-  it("advances a client along the pipeline and persists it", () => {
-    const file = storeFile();
-    const store = openStore(file);
-    const id = clientAt("lead");
-    expect(store.advanceClient(id)?.stage).toBe("proposal");
-    expect(store.advanceClient(id)?.stage).toBe("active");
-    const onDisk = JSON.parse(readFileSync(file, "utf8")) as { clients: { id: string; stage: string }[] };
-    expect(onDisk.clients.find((c) => c.id === id)?.stage).toBe("active");
-    // Reaching active by the pipeline starts the client's clock as onboarding does (the referral rule reads it).
-    expect(store.read().clients.find((c) => c.id === id)?.onboardedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-  });
-
-  it("never advances into churned, and answers null for unknown ids", () => {
-    const store = openStore(storeFile());
-    expect(store.advanceClient(clientAt("active"))?.stage).toBe("active");
-    expect(store.advanceClient("cli_missing")).toBeNull();
   });
 
   it("updates a post's status with the posted/rejected side effects", () => {
@@ -260,7 +271,7 @@ describe("openStore", () => {
 
   it("onboards a client: active, stamped once, churned left alone", () => {
     const store = openStore(storeFile());
-    const id = clientAt("lead");
+    const id = clientAt("active");
     const onboarded = store.onboardClient(id);
     expect(onboarded?.stage).toBe("active");
     const stamp = onboarded?.onboardedAt;

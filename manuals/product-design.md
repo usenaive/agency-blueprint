@@ -36,7 +36,7 @@ On day one:
 
 Each seat does one job. The studio lead reads every brief and hands it on.
 
-- **Studio lead** writes the studio note from your four answers, then reads each brief against it. A brief with millimetres goes to the engineer. Any other object brief goes to the designer. A video goes to the visualizer, once its look or part exists. It adds new clients to the CRM, and asks you when a brief names no way to reach them. It never emails a client before you approve the work.
+- **Studio lead** writes the studio note from your four answers, then reads each brief against it. A brief with millimetres goes to the engineer. Any other object brief goes to the designer. A video goes to the visualizer, once its look or part exists. A brief from a new client marks them won on the CRM and makes them a client here in the same step; it asks you when a brief names no way to reach them. It never emails a client before you approve the work.
 - **Designer** turns a look brief into one textured 3D concept. A concept has no units, so it never claims a size or that the object can be made.
 - **Engineer** builds a part to the millimetres a brief names and checks it is a closed solid of the right size. It files a part only when every edge is within half a millimetre of the brief. Otherwise it stops and notes both sizes on the client.
 - **Visualizer** renders one studio picture of each concept, from the concept file itself, never from the brief's words. A part comes with its own preview from the engineer. It makes a product video only when the brief asks, and only after you approve it.
@@ -47,7 +47,7 @@ To change a seat's job, tell the CEO in plain words.
 
 One timer runs. The rest of the work starts when a brief arrives.
 
-- **Monday morning:** the studio lead lists every file still waiting for your approval. It notes on each client any brief that has gone more than three days with no file, and what it is waiting on. It makes nothing and sends nothing.
+- **Monday morning:** the studio lead lists every file still waiting for your approval. It logs on each client's CRM timeline any brief that has gone more than three days with no file, and what it is waiting on. It makes nothing and sends nothing.
 
 When a brief arrives:
 

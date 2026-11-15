@@ -14,7 +14,6 @@ import { ClientOverview } from "./screens/ClientOverview";
 import { ClientPosts } from "./screens/ClientPosts";
 import { ClientWorkspace } from "./screens/ClientWorkspace";
 import { Clients } from "./screens/Clients";
-import { Crm } from "./screens/Crm";
 import { Home } from "./screens/Home";
 import { LaunchReview } from "./screens/LaunchReview";
 import { ProductAudit } from "./screens/ProductAudit";
@@ -32,7 +31,8 @@ const router = createBrowserRouter([
       { index: true, Component: Home },
       { path: "launch-review", Component: LaunchReview },
       { path: "product-audit", Component: ProductAudit },
-      { path: "crm", Component: Crm },
+      // The pipeline is the platform CRM's own app now; an old bookmark lands on the clients.
+      { path: "crm", element: <Navigate to="/clients" replace /> },
       { path: "approvals", Component: Approvals },
       // The product-design studio's files; the rail names it only under that template (`Shell.tsx`).
       { path: "studio", Component: Studio },

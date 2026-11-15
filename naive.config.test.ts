@@ -16,7 +16,7 @@ const SEO = TEMPLATE === "seo-geo";
 
 /** The tools a connected account contributes to a turn — `<connector>.<tool>`, and never the dashboard's own. */
 const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
-  Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard."));
+  Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard.") && !name.startsWith("crm."));
 
 describe("naive.config.ts", () => {
   it("loads and validates via loadConfig", async () => {
@@ -117,9 +117,10 @@ describe("naive.config.ts", () => {
       expect(agent.system).toMatch(/request it once with request_tools/);
     }
     const byName = Object.fromEntries(result.config.agents.map((a) => [a.name, a]));
-    // The daily pass files follow-ups on the client row, so the sales agent must hold the tool that does.
-    expect(byName["sales"]?.tools?.configs).toHaveProperty("dashboard.create_lead");
-    expect(byName["sales"]?.tools?.configs).toHaveProperty("dashboard.add_client_note");
+    // The pipeline is the platform CRM's: sales works it with crm.read/crm.write and turns a won deal
+    // into a dashboard client with create_client; it holds no dashboard pipeline tool at all.
+    for (const tool of ["crm.read", "crm.write", "dashboard.create_client"]) expect(byName["sales"]?.tools?.configs).toHaveProperty(tool);
+    for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline", "dashboard.add_client_note"]) expect(byName["sales"]?.tools?.configs).not.toHaveProperty(tool);
     expect(byName["sales"]?.schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);
     expect(byName["client-manager"]?.tools?.configs).toHaveProperty("dashboard.get_calendar");
     expect(byName["client-manager"]?.schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);

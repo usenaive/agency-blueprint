@@ -18,7 +18,7 @@
  * `server/proxy.ts`.
  *
  * The dashboard declares its MCP endpoint (`mcp: "/mcp"`), so every agent in the project is
- * offered the dashboard's CRM tools automatically on each turn — no per-agent wiring; the platform
+ * offered the dashboard's tools automatically on each turn — no per-agent wiring; the platform
  * mints the token and injects it into the app as `VETTA_MCP_TOKEN`.
  *
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
@@ -147,7 +147,7 @@ export default defineProject({
       name: "dashboard",
       type: "fullstack",
       description:
-        "The agency's public site at / — served from the site profile the team edits — and the operator dashboard under /app: CRM pipeline, approvals, agents, per-client workspaces.",
+        "The agency's public site at / — served from the site profile the team edits — and the operator dashboard under /app: signed clients' workspaces, approvals, agents. The pipeline is the CRM.",
       deploy_dir: "dist",
       mcp: "/mcp",
       /** The one app the crew files into and the site is served from; the template cannot run without it. */
@@ -160,7 +160,7 @@ export default defineProject({
        * other two are literals and only when set: a base URL and an identity id are not secrets,
        * and a `{ from_env }` on an unset optional would refuse the whole apply.
        *
-       * Without the key the dashboard still runs: the CRM and the deliverable queue are the app's
+       * Without the key the dashboard still runs: the clients and the deliverable queue are the app's
        * own database, so they work, and every platform-backed route answers 503 "not configured"
        * in the screen that asked for it instead of pretending.
        *

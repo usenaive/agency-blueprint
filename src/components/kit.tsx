@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { kindLabel, type PipelineStage, type Post, type PostStatus } from "../data";
+import { kindLabel, type ClientStage, type Post, type PostStatus } from "../data";
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (
@@ -28,15 +28,13 @@ export function StatusChip({ status, label }: { status: PostStatus; label?: stri
   return <span className={`chip ${cls}`}>{label ?? STATUS_LABEL[status]}</span>;
 }
 
-export const STAGE_LABEL: Record<PipelineStage, string> = {
-  lead: "Lead",
-  proposal: "Proposal",
+export const STAGE_LABEL: Record<ClientStage, string> = {
   active: "Active",
   churned: "Churned",
 };
 
-export function StageChip({ stage }: { stage: PipelineStage }) {
-  const cls = stage === "active" ? "chip-credit" : stage === "churned" ? "chip-fail" : "chip-plain";
+export function StageChip({ stage }: { stage: ClientStage }) {
+  const cls = stage === "active" ? "chip-credit" : "chip-fail";
   return <span className={`chip ${cls}`}>{STAGE_LABEL[stage]}</span>;
 }
 
