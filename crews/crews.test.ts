@@ -78,6 +78,8 @@ describe("every crew", () => {
       expect(agent.tools!.default_config.permission).toBe("deny");
       for (const name of ["crm.read", "crm.write", "open_panel"]) expect([agent.name, name, tools[name]?.permission]).toEqual([agent.name, name, "allow"]);
       if (tools["web_fetch"]) expect([agent.name, tools["web_fetch"].permission]).toEqual([agent.name, "allow"]);
+      // The prompt says what the toolset does: opening a public page runs without a card.
+      expect([agent.name, agent.system]).not.toEqual([agent.name, expect.stringMatching(/web_fetch[^.]*asks/)]);
       if (tools["email.send"]) expect([agent.name, tools["email.send"].permission]).toEqual([agent.name, "ask"]);
       if (tools["generate_video"]) expect([agent.name, tools["generate_video"].permission]).toEqual([agent.name, "ask"]);
     }
@@ -206,6 +208,20 @@ describe("the specialisms' own rules", () => {
     }
     for (const agent of await seats("clients-security")) {
       if (!["Customer tester", "Edge-case tester"].includes(agent.name)) expect(agent.tools!.configs["browser"]).toBeUndefined();
+    }
+  });
+
+  /**
+   * The browser's `ask_actions` are its own action names (`canonical-spec §32.7`): goto, click, type,
+   * extract, act, observe, links, screenshot, login, signup and save_context. There is no purchase,
+   * delete, invite or send action to list, so those rules are the prompt's, and every session asks.
+   */
+  it("names only real browser actions in each tester's ask_actions, and the browser itself asks", async () => {
+    const ACTIONS = ["goto", "click", "type", "extract", "act", "observe", "links", "screenshot", "login", "signup", "save_context"];
+    for (const name of ["Customer tester", "Edge-case tester"]) {
+      const browser = (await seat("clients-security", name)).tools!.configs["browser"] as unknown as { permission: string; config: { ask_actions: string[] } };
+      expect(browser.permission).toBe("ask");
+      for (const action of browser.config.ask_actions) expect(ACTIONS).toContain(action);
     }
   });
 
