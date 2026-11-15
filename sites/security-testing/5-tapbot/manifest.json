@@ -1,0 +1,80 @@
+{
+  "id": "security-testing/5-tapbot",
+  "agencyType": "security-testing",
+  "design": "Tapbot",
+  "style": "Playful QA bot on a coral field: rounded Fredoka type, plum, lilac and lime, buttons that sink when pressed, and a little bot in the hero that taps through a sign-up flow until a 'Journey passed' sticker pops.",
+  "theme": "light",
+  "fonts": [
+    "Fredoka",
+    "Atkinson Hyperlegible"
+  ],
+  "concept": {
+    "idea": "Hands-on app testing is tapping every button so users never find the broken one, so the site's mascot is a small test bot doing exactly that, and everything on the page is something you can press.",
+    "signature": "In the hero the bot taps into the email field, types, taps the password field, presses sign up, and a lime 'Journey passed' sticker bounces onto the phone. Its eyes follow each tap or the visitor's pointer; at rest it bobs, blinks and runs the journey again. Process steps are phone screens; buttons sink like keys. Complete and still under reduced motion.",
+    "motionVerb": "tap and bounce: press down, ripple, pop back with overshoot",
+    "palette": {
+      "ground": "#ff7a59",
+      "ink": "#2a1650",
+      "muted": "#4b3a6e",
+      "lilac": "#c9c2ff",
+      "lilacSoft": "#e7e3ff",
+      "lime": "#d4f75b",
+      "white": "#ffffff"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 7.5,
+      "usability": 7.5,
+      "creativity": 8,
+      "content": 7.5,
+      "overall": 7.6
+    },
+    "estimate": 8.7,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with sample and long.json, every focus stop visible, skip link first, nothing moving under reduced motion). No blind critic was run for this batch. Mascot and pressable buttons give a clear voice; the hero phone and bot drop below the fold on a phone."
+  }
+}
