@@ -169,7 +169,7 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect(manager.system).toMatch(/while any piece's card is not done, (compile|show) nothing and announce nothing\. If a piece's card is blocked, tell the CEO/);
     expect(manager.system).toContain("A piece that arrives after you asked");
     expect(manager.system).toContain('with no second ask_operator and no second "is ready" to the CEO');
-    if (blueprint !== "clients-security") expect(manager.system).toContain("goes into that same file: add it with write, save it again with publish_file under the same title and tags");
+    expect(manager.system).toContain("goes into that same file: add it with write, save it again with publish_file under the same title and tags");
   });
 
   it("widens no job", async () => {
@@ -183,7 +183,7 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
 });
 
 describe("the specialisms' own rules", () => {
-  it.each(["clients-research", "clients-recruiting", "clients-advertising"])("lets the %s Client manager compile the pieces into one file, with file tools and no shell", async (blueprint) => {
+  it.each(["clients-research", "clients-recruiting", "clients-advertising", "clients-security"])("lets the %s Client manager compile the pieces into one file, with file tools and no shell", async (blueprint) => {
     const manager = await seat(blueprint, "Client manager");
     for (const tool of ["find_files", "fetch_file", "read", "write", "publish_file"]) expect([tool, permission(manager, tool)]).toEqual([tool, "allow"]);
     expect(manager.system).toContain("fetch_file and dir clients/<the client's ctc_ id>");
@@ -197,6 +197,18 @@ describe("the specialisms' own rules", () => {
         const agent = await seat(blueprint, name);
         for (const tool of ["find_files", "fetch_file", "read"]) expect([blueprint, name, tool, permission(agent, tool)]).toEqual([blueprint, name, tool, "allow"]);
       }
+    }
+  });
+
+  // NEW-17: one compile and one ask per security job, on the board's card states, and no call nobody asked for.
+  it("has the security Client manager compile from the board's card states, and book a call only when asked", async () => {
+    const manager = (await seat("clients-security", "Client manager")).system;
+    expect(manager).toContain("read all of this client's cards again on the board each time you wake, with board_read and no card_id, never from memory or an earlier message");
+    expect(manager).toContain("count the card of the teammate whose message woke you as done when that message says its piece is saved");
+    expect(manager).toContain("Book a kickoff or any other call only when the person or the CEO asked for one");
+    expect(manager).not.toContain("book the kickoff");
+    for (const name of ["Customer tester", "Edge-case tester"]) {
+      expect((await seat("clients-security", name)).system).toMatch(/mark your card for this job done with board_write[^.]*only then tell Client manager with send_to_agent/);
     }
   });
 
