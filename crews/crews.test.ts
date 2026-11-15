@@ -225,13 +225,16 @@ describe("the specialisms' own rules", () => {
     }
   });
 
-  it("puts the Ads app's tags on what the designer and video producer save, and lets ad seats only read accounts", async () => {
+  it("puts the Ads app's tags on what the copywriter, designer and video producer save, and lets ad seats only read accounts", async () => {
     for (const name of ["Designer", "Video producer"]) {
       const agent = await seat("clients-advertising", name);
       expect(agent.system).toMatch(/tags: ad, campaign:<.*stage:review.*format:9x16.*ad:</);
       for (const tool of ["generate_image", "view_image", "fetch_file"]) expect(permission(agent, tool)).toBe("allow");
     }
     expect(permission(await seat("clients-advertising", "Video producer"), "generate_video")).toBe("ask");
+    // Copy is an ad too: the Copywriter's copy sets wait in the Ads app's Review, and are still compiled for the client.
+    expect((await seat("clients-advertising", "Copywriter")).system).toMatch(/Ads app's tags: ad, campaign:<.*>, stage:review.*never change its stage/);
+    expect((await seat("clients-advertising", "Client manager")).system).toContain("Copy is a written piece: compile it, though it also waits in the Ads app.");
     // An ad's approval is the Ads app's Review: the Client manager compiles the written pieces and never asks about an ad again.
     expect((await seat("clients-advertising", "Client manager")).system).toContain("never ask about an ad again and never change its stage");
     for (const agent of await seats("clients-advertising")) {
