@@ -265,6 +265,9 @@ describe("the specialisms' own rules", () => {
 
   it("counts a must-have the candidate's own stated facts plainly meet as shown (stated)", async () => {
     expect((await seat("clients-recruiting", "Screener")).system).toContain("shown, shown (stated), partly or not seen");
+    // vetta-mono #1781 (NEW-24): a must-have that stated facts clearly imply counts as shown (stated).
+    expect((await seat("clients-recruiting", "Screener")).system).toContain("or together clearly imply it, are shown (stated), with the claim quoted, the reasoning in one line when implied");
+    expect((await seat("clients-recruiting", "Screener")).system).toContain("read a must-have for what it asks, not its exact words");
   });
 
   it("keeps the recruiting FAIR rule on every recruiting specialist", async () => {
