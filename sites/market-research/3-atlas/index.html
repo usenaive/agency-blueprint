@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Market research</title>
+<meta name="description" content="Market maps and research from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <path id="land" d="M90 140 C 110 70, 260 50, 360 70 C 450 40, 600 60, 690 110 C 760 150, 740 260, 700 320 C 670 400, 560 470, 430 450 C 330 470, 200 450, 130 390 C 70 340, 60 220, 90 140 Z"/>
+    <path id="isle" d="M610 430 c 30 -20 80 -10 90 15 c 5 25 -40 40 -70 30 c -25 -8 -35 -30 -20 -45 z"/>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#d7402b" stroke-width="1.4"/></pattern>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="wrap top__in">
+    <a class="brand" href="#top"><svg class="rose" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14 10 L23 12 L14 14 L12 23 L10 14 L1 12 L10 10 Z"/><circle cx="12" cy="12" r="2"/></svg><span class="brand__name">{{company_name}}</span></a>
+    <nav aria-label="Primary">
+      <ul class="nav">
+        <li><a href="#legend">Services</a></li>
+        <li><a href="#scales">Method</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero wrap" id="top" aria-labelledby="h1">
+    <div class="cartouche">
+      <p class="plate">Plate I</p>
+      <p class="caps">Market research from {{city}}</p>
+      <h1 id="h1">{{tagline}}</h1>
+      <p class="lede">{{intro}}</p>
+      <a class="btn" href="mailto:{{contact_email}}"><svg class="btn__pin" viewBox="0 0 16 22" aria-hidden="true"><path d="M8 21 C 8 21 1 12 1 8 a 7 7 0 0 1 14 0 c 0 4 -7 13 -7 13 Z"/><circle cx="8" cy="8" r="2.6"/></svg><span>Map your market</span></a>
+    </div>
+
+    <figure class="map" aria-labelledby="map-cap">
+      <div class="map__frame">
+        <ol class="refs refs--x" aria-hidden="true"><li>A</li><li>B</li><li>C</li><li>D</li><li>E</li><li>F</li></ol>
+        <ol class="refs refs--y" aria-hidden="true"><li>1</li><li>2</li><li>3</li><li>4</li></ol>
+        <div class="map__plot">
+          <svg viewBox="0 0 800 520" aria-hidden="true">
+            <rect class="sea" width="800" height="520"/>
+            <path class="grat" d="M0 104H800M0 208H800M0 312H800M0 416H800M133 0V520M267 0V520M400 0V520M533 0V520M667 0V520"/>
+            <use class="coast" href="#land"/><use class="land" href="#land"/>
+            <use class="coast" href="#isle"/><use class="land" href="#isle"/>
+            <path class="border" d="M360 70 C 350 160, 330 230, 300 300 C 280 360, 250 420, 262 455 M555 62 C 540 150, 520 220, 540 300 C 555 360, 560 420, 542 462 M80 260 C 160 250, 230 270, 310 280 M310 280 C 400 270, 450 260, 530 270 M535 270 C 600 250, 680 260, 745 240"/>
+            <g class="opening">
+              <ellipse class="opening__fill" cx="452" cy="330" rx="62" ry="36"/>
+              <ellipse class="opening__line" cx="452" cy="330" rx="62" ry="36" pathLength="1"/>
+              <circle class="ripple" cx="452" cy="330" r="10"/>
+              <circle class="ripple ripple--2" cx="452" cy="330" r="10"/>
+            </g>
+            <g class="pins">
+              <circle cx="150" cy="128" r="6"/><circle cx="262" cy="214" r="6"/><circle cx="404" cy="112" r="6"/><circle cx="492" cy="196" r="6"/>
+              <circle cx="618" cy="128" r="6"/><circle cx="694" cy="226" r="6"/><circle cx="160" cy="318" r="6"/><circle cx="246" cy="372" r="6"/>
+              <circle cx="604" cy="300" r="6"/><circle cx="660" cy="380" r="6"/><circle cx="352" cy="330" r="6"/><circle cx="520" cy="412" r="6"/>
+            </g>
+            <g class="here"><path d="M452 330 C 452 330 440 314 440 306 a 12 12 0 0 1 24 0 c 0 8 -12 24 -12 24 Z"/><circle cx="452" cy="306" r="4.5"/></g>
+          </svg>
+          <ol class="labels" aria-hidden="true">
+            <li style="--x:24%;--y:30%"><b>1</b><span>{{specialties[0]}}</span></li>
+            <li style="--x:57%;--y:27%"><b>2</b><span>{{specialties[1]}}</span></li>
+            <li style="--x:81%;--y:37%"><b>3</b><span>{{specialties[2]}}</span></li>
+            <li style="--x:25%;--y:65%"><b>4</b><span>{{specialties[3]}}</span></li>
+            <li style="--x:37%;--y:79%"><b>5</b><span>{{specialties[4]}}</span></li>
+            <li style="--x:79%;--y:62%"><b>6</b><span>{{specialties[5]}}</span></li>
+          </ol>
+          <p class="opening__label" aria-hidden="true">Unclaimed ground</p>
+        </div>
+      </div>
+      <div class="map__foot">
+        <ul class="key-sym" aria-hidden="true">
+          <li><i class="k-pin"></i>A competitor</li>
+          <li><i class="k-open"></i>Unclaimed ground</li>
+          <li><i class="k-here"></i>Your opening</li>
+        </ul>
+        <figcaption id="map-cap">An illustrative map of a market, with the six territories we know best.</figcaption>
+      </div>
+      <ol class="territories">
+        <li><b aria-hidden="true">1</b>{{specialties[0]}}</li>
+        <li><b aria-hidden="true">2</b>{{specialties[1]}}</li>
+        <li><b aria-hidden="true">3</b>{{specialties[2]}}</li>
+        <li><b aria-hidden="true">4</b>{{specialties[3]}}</li>
+        <li><b aria-hidden="true">5</b>{{specialties[4]}}</li>
+        <li><b aria-hidden="true">6</b>{{specialties[5]}}</li>
+      </ol>
+    </figure>
+  </section>
+
+  <section class="sec wrap" id="legend" aria-labelledby="legend-h">
+    <div class="sec__head"><p class="plate">Plate II</p><h2 id="legend-h">Legend</h2><p class="sec__sub">What we survey for you</p></div>
+    <ul class="legend">
+      <li><svg class="sym" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4 L29 27 H3 Z"/></svg><div><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></div></li>
+      <li><svg class="sym" viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="5" width="22" height="22"/></svg><div><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></div></li>
+      <li><svg class="sym" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="4" class="fill"/></svg><div><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></div></li>
+      <li><svg class="sym" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L19 13 L29 16 L19 19 L16 29 L13 19 L3 16 L13 13 Z"/></svg><div><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></div></li>
+    </ul>
+  </section>
+
+  <section class="sec wrap region" aria-labelledby="region-h">
+    <div class="sec__head"><p class="plate">Plate III</p><h2 id="region-h">Region covered</h2></div>
+    <p class="region__t">{{audience}}</p>
+  </section>
+
+  <section class="sec wrap" id="scales" aria-labelledby="scales-h">
+    <div class="sec__head"><p class="plate">Plate IV</p><h2 id="scales-h">Three scales</h2><p class="sec__sub">How a study zooms in</p></div>
+    <ol class="insets">
+      <li class="inset">
+        <svg viewBox="0 0 240 160" aria-hidden="true"><rect class="sea" width="240" height="160"/><g transform="translate(-6 -6) scale(0.32)"><use class="land" href="#land"/><use class="land" href="#isle"/></g><rect class="box" x="122" y="72" width="44" height="30"/></svg>
+        <p class="inset__scale">The whole market</p>
+        <h3>{{process[0].title}}</h3><p>{{process[0].description}}</p>
+      </li>
+      <li class="inset">
+        <svg viewBox="0 0 240 160" aria-hidden="true"><rect class="sea" width="240" height="160"/><path class="land" d="M-10 30 C 60 10, 150 20, 250 40 V 170 H -10 Z"/><path class="border" d="M80 22 C 90 80, 70 120, 90 170 M170 30 C 160 90, 180 120, 160 170"/><ellipse class="opening__fill" cx="125" cy="98" rx="34" ry="22"/><rect class="box" x="108" y="84" width="34" height="26"/></svg>
+        <p class="inset__scale">One segment</p>
+        <h3>{{process[1].title}}</h3><p>{{process[1].description}}</p>
+      </li>
+      <li class="inset">
+        <svg viewBox="0 0 240 160" aria-hidden="true"><rect class="land" width="240" height="160"/><path class="grat" d="M0 40H240M0 80H240M0 120H240M60 0V160M120 0V160M180 0V160"/><g class="dots"><circle cx="40" cy="30" r="5"/><circle cx="92" cy="58" r="5"/><circle cx="200" cy="34" r="5"/><circle cx="64" cy="122" r="5"/><circle cx="170" cy="128" r="5"/><circle cx="210" cy="92" r="5"/></g><path class="here-s" d="M120 92 C 120 92 108 76 108 68 a 12 12 0 0 1 24 0 c 0 8 -12 24 -12 24 Z"/></svg>
+        <p class="inset__scale">One customer</p>
+        <h3>{{process[2].title}}</h3><p>{{process[2].description}}</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="sec wrap terms" aria-labelledby="terms-h">
+    <div class="sec__head"><p class="plate">Plate V</p><h2 id="terms-h">Terms</h2></div>
+    <div class="terms__box">
+      <p class="terms__t">{{pricing_note}}</p>
+      <div class="scalebar" aria-hidden="true"><i></i><i></i><i></i><i></i><span>Agreed in writing before the survey starts</span></div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec wrap" aria-labelledby="proof-h">
+    <div class="sec__head"><p class="plate">Field reports</p><h2 id="proof-h">From the people we mapped for</h2></div>
+    <div class="reports">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec wrap" aria-labelledby="logos-h">
+    <div class="sec__head"><p class="plate">Gazetteer</p><h2 id="logos-h">Clients we have mapped for</h2></div>
+    <ul class="gaz">
+      {{#if logos[0]}}<li><span>{{logos[0]}}</span><i aria-hidden="true"></i><b aria-hidden="true">A2</b></li>{{/if}}
+      {{#if logos[1]}}<li><span>{{logos[1]}}</span><i aria-hidden="true"></i><b aria-hidden="true">B4</b></li>{{/if}}
+      {{#if logos[2]}}<li><span>{{logos[2]}}</span><i aria-hidden="true"></i><b aria-hidden="true">C1</b></li>{{/if}}
+      {{#if logos[3]}}<li><span>{{logos[3]}}</span><i aria-hidden="true"></i><b aria-hidden="true">D3</b></li>{{/if}}
+      {{#if logos[4]}}<li><span>{{logos[4]}}</span><i aria-hidden="true"></i><b aria-hidden="true">E2</b></li>{{/if}}
+      {{#if logos[5]}}<li><span>{{logos[5]}}</span><i aria-hidden="true"></i><b aria-hidden="true">F4</b></li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="sec wrap contact" id="contact" aria-labelledby="contact-h">
+    <p class="plate">Coordinates</p>
+    <h2 id="contact-h" class="contact__h">Tell us where you want to go</h2>
+    <p class="contact__lede">Send us the market you are looking at and the decision you need to make. We will reply with how we would map it and what that would cost.</p>
+    <a class="btn btn--big" href="mailto:{{contact_email}}"><svg class="btn__pin" viewBox="0 0 16 22" aria-hidden="true"><path d="M8 21 C 8 21 1 12 1 8 a 7 7 0 0 1 14 0 c 0 4 -7 13 -7 13 Z"/><circle cx="8" cy="8" r="2.6"/></svg><span>Map your market</span></a>
+    <dl class="coords">
+      <div><dt>Write to</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+      <div><dt>Based in</dt><dd>{{city}}</dd></div>
+    </dl>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <p class="foot__note">Maps on this site are illustrative.</p>
+    <a class="link" href="#top">Back to Plate I</a>
+  </div>
+</footer>
+</body>
+</html>
