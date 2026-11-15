@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Search and AI answers</title>
+<meta name="description" content="Search and AI answer visibility from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the answer</a>
+
+<header class="top" id="top">
+  <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true">1</span><span>{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#answer"><span>The answer</span></a></li>
+      <li><a href="#sources"><span>Sources</span></a></li>
+      <li><a href="#ask"><span>Ask us</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" class="chat">
+  <div class="thread">
+    <p class="asked"><span class="vh">The question: </span>Who can help people find us on search engines and in AI answers?</p>
+
+    <article class="answer" id="answer" aria-labelledby="h1">
+      <p class="answer__who"><span class="answer__dot" aria-hidden="true"></span>Answer <span class="answer__note">· an illustration, not a real AI response</span></p>
+      <h1 id="h1" data-stream>{{tagline}}</h1>
+      <p class="lede" data-stream>{{company_name}} is a search and AI visibility agency in {{city}}. In their own words:</p>
+      <blockquote class="quote"><p>{{intro}} <a class="cite" href="#src-1" data-src="1" aria-label="Source 1">1</a></p></blockquote>
+
+      <h2 class="answer__h" id="services">What they do, from their site</h2>
+      <ol class="points">
+        <li><strong>{{services[0].title}}.</strong> {{services[0].description}} <a class="cite" href="#src-2" data-src="2" aria-label="Source 2">2</a></li>
+        <li><strong>{{services[1].title}}.</strong> {{services[1].description}} <a class="cite" href="#src-2" data-src="2" aria-label="Source 2">2</a></li>
+        <li><strong>{{services[2].title}}.</strong> {{services[2].description}} <a class="cite" href="#src-2" data-src="2" aria-label="Source 2">2</a></li>
+        <li><strong>{{services[3].title}}.</strong> {{services[3].description}} <a class="cite" href="#src-2" data-src="2" aria-label="Source 2">2</a></li>
+      </ol>
+
+      <h2 class="answer__h">How it works</h2>
+      <ol class="steps">
+        <li><span class="steps__n" aria-hidden="true">1</span><div><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></div></li>
+        <li><span class="steps__n" aria-hidden="true">2</span><div><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></div></li>
+        <li><span class="steps__n" aria-hidden="true">3</span><div><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></div></li>
+      </ol>
+      <p class="aside">They cover {{specialties[0]}}, {{specialties[1]}}, {{specialties[2]}}, {{specialties[3]}}, {{specialties[4]}} and {{specialties[5]}}. <a class="cite" href="#src-3" data-src="3" aria-label="Source 3">3</a></p>
+
+      <h2 class="answer__h">Who it suits, and what it costs</h2>
+      <p>{{audience}} <a class="cite" href="#src-3" data-src="3" aria-label="Source 3">3</a></p>
+      <p>{{pricing_note}} <a class="cite" href="#src-4" data-src="4" aria-label="Source 4">4</a></p>
+
+      {{#if proof}}<h2 class="answer__h">What clients say</h2>
+      <div class="quotes">
+        {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+        {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+        {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+      </div>{{/if}}
+
+      {{#if logos}}<h2 class="answer__h">Clients include</h2>
+      <ul class="clients">
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+      </ul>{{/if}}
+
+      <p class="closing">To start, email them at <a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a>. <a class="cite" href="#src-4" data-src="4" aria-label="Source 4">4</a></p>
+    </article>
+  </div>
+
+  <aside class="sources" id="sources" aria-labelledby="sources-h">
+    <h2 id="sources-h" class="sources__h">Sources <span>4</span></h2>
+    <ol>
+      <li id="src-1" data-src="1"><a href="#answer"><span class="sources__n">1</span><span class="sources__site">{{company_name}}</span><span class="sources__t">About us</span></a></li>
+      <li id="src-2" data-src="2"><a href="#services"><span class="sources__n">2</span><span class="sources__site">{{company_name}}</span><span class="sources__t">Services</span></a></li>
+      <li id="src-3" data-src="3"><a href="#services"><span class="sources__n">3</span><span class="sources__site">{{company_name}}</span><span class="sources__t">Who we work with</span></a></li>
+      <li id="src-4" data-src="4"><a href="#ask"><span class="sources__n">4</span><span class="sources__site">{{company_name}}</span><span class="sources__t">Fees and contact</span></a></li>
+    </ol>
+    <p class="sources__why">Answers like this one quote pages that are clear, specific and easy to check. Writing those pages is the work.</p>
+  </aside>
+</main>
+
+<footer class="foot" id="ask">
+  <div class="composer">
+    <h2 class="composer__h">Ask us directly</h2>
+    <a class="composer__box" href="mailto:{{contact_email}}">
+      <span class="composer__ph">Tell us your site and what you want to be found for…</span>
+      <span class="composer__send" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+    </a>
+    <p class="composer__meta">Opens your email to {{contact_email}} · {{city}}</p>
+  </div>
+  <p class="foot__copy">&copy; {{year}} {{company_name}} <a class="link" href="#top">Back to the top</a></p>
+</footer>
+</body>
+</html>
