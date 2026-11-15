@@ -40,6 +40,10 @@ describe("naive.config.ts", () => {
     // site's read of its own copy (`/api/site`) is same-origin. The app is what the crew files into
     // and the operator approves on, so an install cannot leave it out.
     expect(result.config.apps.map((a) => [a.name, a.mcp, a.required])).toEqual([["dashboard", "/mcp", true]]);
+    // Every agency template carries the platform's four mini apps, declared as the crews declare them.
+    const crews = JSON.parse(readFileSync(new URL("./crews/clients/naive.config.json", import.meta.url), "utf8"));
+    expect(result.config.mini_apps?.map((a) => a.name)).toEqual(["CRM", "Calendar", "Ads", "SEO & GEO"]);
+    expect(result.config.mini_apps).toEqual(crews.mini_apps);
     // The crew that a template with a per-client trio provisions per client, published for the studio.
     expect(result.config.crew_per_client?.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].crew.map((a) => a.name));
     expect(result.config.questions.map((q) => q.key)).toEqual(TEMPLATES[TEMPLATE].questions.map((q) => q.key));
@@ -235,6 +239,7 @@ describe("the installed engine's template list", () => {
       expect(config.agents.map((a) => a.name)).toEqual(["account-manager", "designer", "engineer", "visualizer"]);
       expect(config.questions.map((q) => q.key)).toEqual(["products", "audience", "manufacturable", "done"]);
       expect(config.crew_per_client ?? []).toEqual([]);
+      expect(config.mini_apps?.map((a) => a.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
     } else {
       await expect(load).rejects.toThrow(/product-design template needs @usenaive-sdk\/blueprints >= 0\.16\.0/);
     }

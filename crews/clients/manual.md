@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is a client services agency. A team of agents finds leads, writes to them, books the first call, runs each account, does the client work and writes the posts that bring in the next client. A CRM holds every lead and client. A calendar holds every call and follow-up.
+This company is a client services agency. A team of agents finds leads, writes to them, books the first call, runs each account, does the client work and writes the posts that bring in the next client. A CRM holds every lead and client. A calendar holds every call and follow-up. The Ads app holds every ad for review, and the SEO & GEO app holds the search work.
 
 You bring the trade and the judgement. Every email to a lead or a client waits for your yes. Every piece of client work is filed for your review before it goes out.
 

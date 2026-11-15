@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is a client services agency that starts with no team. You get a CRM that holds every lead and client, and a calendar that holds every call and follow-up. You tell your CEO what you sell, and it hires the agents you need.
+This company is a client services agency that starts with no team. You get a CRM that holds every lead and client, a calendar that holds every call and follow-up, an Ads app for ads and an SEO & GEO app for search work. You tell your CEO what you sell, and it hires the agents you need.
 
 Start here if you know your trade and want to choose who does what. If you'd rather start with a full team, the Client agency in the Marketplace comes with Sales, a client manager, Delivery and Marketing already hired.
 

@@ -50,6 +50,8 @@ flowchart LR
 - **Seven agents** — the active template's crew, each with a role, a private system prompt,
   a deny-by-default tool allow-list, skills from the platform catalogue, a daily budget, and a
   first message that runs on day one. See [The crew](#-the-crew).
+- **Four mini apps** — the platform's own CRM, Calendar, Ads and SEO & GEO screens, carried by
+  every template beside the dashboard and declared the way the Client agency's crews declare them.
 - **The agency identity** (`agency`) — the persona every agent and every schedule acts as. It
   is what owns the agency mailbox and holds any connected account.
 

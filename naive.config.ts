@@ -24,7 +24,7 @@
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
  * via the workspace protocol.
  */
-import { BLUEPRINTS, defineProject } from "@usenaive-sdk/blueprints";
+import { BLUEPRINTS, defineProject, type DefineInput } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
@@ -46,6 +46,45 @@ if (skipped.length > 0) {
 if (!carried.has(TEMPLATE)) {
   throw new Error(`agency: the ${TEMPLATE} template needs @usenaive-sdk/blueprints >= 0.17.0; the installed engine lists only ${[...carried].join(", ")}.`);
 }
+
+/**
+ * The platform's four mini apps every agency template carries (the owner's rule: SEO & GEO, Ads,
+ * Calendar and CRM), declared exactly as the Client agency's crews declare them
+ * (`crews/clients-recruiting/naive.config.json`). They are the platform's own screens over the
+ * company's CRM, calendar and tagged files — nothing to build — and sit beside the dashboard app.
+ */
+const MINI_APPS: NonNullable<DefineInput["mini_apps"]> = [
+  {
+    slug: "crm", name: "CRM", icon: "person",
+    pages: [{ slug: "clients", title: "Clients", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["crm"] },
+      crm: { type: "Crm", props: {} },
+    } } }],
+  },
+  {
+    slug: "calendar", name: "Calendar", icon: "calendar",
+    pages: [{ slug: "month", title: "Calendar", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["calendar", "week"] },
+      calendar: { type: "Calendar", props: {} },
+      team: { type: "Schedule", props: { week: { $source: "schedule" } } },
+      week: { type: "Section", props: { title: "Your team this week", hide_empty: true }, children: ["team"] },
+    } } }],
+  },
+  {
+    slug: "ads", name: "Ads", icon: "megaphone",
+    pages: [{ slug: "ads", title: "Ads", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["ads"] },
+      ads: { type: "AdsLibrary", props: {} },
+    } } }],
+  },
+  {
+    slug: "seo-geo", name: "SEO & GEO", icon: "list",
+    pages: [{ slug: "seo", title: "SEO & GEO", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["seo"] },
+      seo: { type: "SeoLibrary", props: {} },
+    } } }],
+  },
+];
 
 export default defineProject({
   name: PROJECT,
@@ -100,6 +139,8 @@ export default defineProject({
       description: "The agency itself — the persona its agents read, draft and connect accounts as.",
     },
   ],
+
+  mini_apps: MINI_APPS,
 
   apps: [
     {

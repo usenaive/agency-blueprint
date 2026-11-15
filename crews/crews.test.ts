@@ -2,7 +2,8 @@
  * The Client agency's crews (`crews/<blueprint>/`), each loaded by the engine's own `naive up`
  * loader. Each is its own blueprint on the platform, always with the template `agency`
  * (`clients/agency`, `clients-recruiting/agency`, …), so the ids companies already hold never change.
- * None has an app to build: the CRM, Calendar, Ads and SEO & GEO are the platform's own mini apps.
+ * None has an app to build: the CRM, Calendar, Ads and SEO & GEO are the platform's own mini apps,
+ * and every crew carries all four (the owner's rule for every agency template).
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -98,9 +99,9 @@ describe("every crew", () => {
 });
 
 describe("the Client agency (clients)", () => {
-  it("runs on the CRM and Calendar with Sales, Client manager, Delivery and Marketing", async () => {
+  it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
     const config = await configOf("clients");
-    expect(config.mini_apps?.map((app) => app.slug)).toEqual(["crm", "calendar"]);
+    expect(config.mini_apps?.map((app) => app.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
     expect(config.agents.map((agent) => agent.name)).toEqual(["Sales", "Client manager", "Delivery", "Marketing"]);
   });
 
@@ -115,7 +116,7 @@ describe("the Client agency (clients)", () => {
     for (const tool of ["write", "publish_file", "generate_image", "fetch_file"]) expect([tool, permission(marketing, tool)]).toEqual([tool, "allow"]);
   });
 
-  it("has a blank twin: the same CRM and Calendar and questions, and no crew", async () => {
+  it("has a blank twin: the same four apps and questions, and no crew", async () => {
     const [base, blank] = [await configOf("clients"), await configOf("clients-blank")];
     expect([blank.title, blank.agents]).toEqual(["Blank agency", []]);
     expect(blank.mini_apps).toEqual(base.mini_apps);
@@ -128,11 +129,10 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect((await seats(blueprint)).map((agent) => agent.name)).toEqual(["Sales", "Client manager", ...specialists, "Marketing"]);
   });
 
-  it("adds the Ads and SEO & GEO apps to the Client agency's CRM and Calendar", async () => {
-    const [config, base, first] = [await configOf(blueprint), await configOf("clients"), await configOf(SPECIALISMS[0]![0])];
+  it("runs on the Client agency's four apps: CRM, Calendar, Ads and SEO & GEO", async () => {
+    const [config, base] = [await configOf(blueprint), await configOf("clients")];
     expect(config.mini_apps?.map((app) => app.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
-    expect(config.mini_apps?.slice(0, 2)).toEqual(base.mini_apps);
-    expect(config.mini_apps).toEqual(first.mini_apps);
+    expect(config.mini_apps).toEqual(base.mini_apps);
     expect(config.questions.map((one) => one.key).slice(0, 2)).toEqual(["about", "offer"]);
     expect(config.questions).toHaveLength(3);
   });
