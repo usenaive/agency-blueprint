@@ -48,7 +48,7 @@ const sites = AGENCY_TYPES.flatMap((type) => {
   catch { return []; }
 });
 
-it.each(["recruiting", "security-testing", "market-research"])("has the %s batch", (type) => {
+it.each(["recruiting", "security-testing", "market-research", "seo-geo"])("has the %s batch", (type) => {
   expect(sites.filter((s) => s.type === type)).toHaveLength(5);
 });
 
