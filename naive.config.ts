@@ -65,6 +65,12 @@ export default defineProject({
    */
   questions: ACTIVE_TEMPLATE.questions,
   /**
+   * The template's Operator's Manual (`manuals/<template>.md`), written into the company's Files
+   * under Playbooks. It lives beside the crew it describes, so a seat and its manual change in one
+   * pull request; the platform's publisher carries it inline, since a hosted apply has no checkout.
+   */
+  docs: [{ name: "📖 Operator's Manual.md", file: `manuals/${TEMPLATE}.md` }],
+  /**
    * The crew the dashboard provisions per client at onboarding (`server/proxy.ts`), published so
    * the studio can show it. Names carry the client's slug at runtime, so only the shape is here.
    */

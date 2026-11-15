@@ -140,7 +140,7 @@ const seoGeo: TemplateVocabulary = {
     brand: "Meridian Search",
     crmSubtitle: "Every prospect and client, by pipeline stage — the sales agent works this board, search presence first.",
     onboarding:
-      "Moving a client to active onboards them and provisions their team — an SEO writer, a GEO optimizer and an audit runner, each named for the client.",
+      "Moving a client to active onboards them and provisions their team — an SEO writer, a GEO optimizer, an audit runner and a client lead who compiles each job, each named for the client.",
     clientsSubtitle: "Every active engagement — open one to see its connections, calendar, team and deliverables.",
     noActiveClients: "No active clients yet — advance one on the CRM.",
     agentsSubtitle: "Every agent working for this agency — the seven that run it, and each client's team.",

@@ -62,8 +62,8 @@ platform's default and 08:00 UTC is nobody's Monday morning.
 
 A template may also declare a **per-client crew**, provisioned by the dashboard server when
 you onboard a client — their names carry the client's slug, so they are per-client resources
-and cannot be declared in `naive.config.ts`. `seo-geo` declares three (`seo-writer--<slug>`,
-`geo-optimizer--<slug>`, `audit-runner--<slug>`), published to the studio as `crew_per_client`;
+and cannot be declared in `naive.config.ts`. `seo-geo` declares four (`seo-writer--<slug>`,
+`geo-optimizer--<slug>`, `audit-runner--<slug>`, `client-lead--<slug>`), published to the studio as `crew_per_client`;
 `blank` declares none and runs every client through the agency's own seven.
 
 ## 👥 The crew
@@ -148,8 +148,9 @@ granted the two platform tools, `send_to_agent` and `list_agents`:
 |---|---|---|---|
 | `gap-researcher` | `["content-writer"]` | once the gap report is filed (day one, then every Friday) | the agency record's `cli_` id and the ten gaps |
 | `sales` | `["proposal-writer"]` | when a lead is advanced to `proposal` | that lead's `cli_` id, as `handoff_key` too, so a lead is handed once |
-| `audit-runner--<slug>` | `["seo-writer"]` | once a client audit is filed (`seo-geo`) | the audit's `post_` id and the pages it found missing |
-| `seo-writer--<slug>` | `["geo-optimizer"]` | once the pages are drafted (`seo-geo`) | the new drafts' `post_` ids |
+| `audit-runner--<slug>` | `["seo-writer", "client-lead"]` | once a client audit is filed, to the writer only if pages were asked for (`seo-geo`) | the audit's `post_` id, the pages it found missing, what the request asked for |
+| `seo-writer--<slug>` | `["geo-optimizer", "client-lead"]` | once the pages are drafted, to the optimizer only if answer-engine work was asked for (`seo-geo`) | the new drafts' `post_` ids and what the request asked for |
+| `geo-optimizer--<slug>` | `["client-lead"]` | once its drafts are filed (`seo-geo`) | the drafts' `post_` ids and what the request asked for |
 
 Every other seat declares `handoffs: false` and holds neither tool. A handoff is
 `send_to_agent` with `wait: false`: it opens an ordinary session on the receiver, at the
@@ -160,7 +161,9 @@ handoff wrote, and files nothing while no calendar exists yet.
 
 The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
 entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
-`seo-writer--acme` and no other client's writer. Provisioning a client whose crew already exists
+`seo-writer--acme` and no other client's writer. A crew whose list names a seat outside the crew is
+refused before anything is written: a seat every client shares would know the client only from the
+message. The `client-lead--<slug>` compiles each finished job into one file and asks the operator once. Provisioning a client whose crew already exists
 patches the declaration onto each seat (the platform mints a version only where something
 differs), so a crew provisioned before this field existed gains the chain. A seat the active
 template no longer declares is kept as it stands (widen, never narrow).
@@ -346,6 +349,28 @@ installed engine lists and warns about the rest (`agency: the installed
 @usenaive-sdk/blueprints does not list product-design; …`). On an older engine `blank` and
 `seo-geo` work as before; choosing `product-design` there fails with that version in the
 error, and `pnpm up @usenaive-sdk/blueprints@^0.17.0` is the fix.
+
+## 🗂 The Client agency crews
+
+`crews/` holds the Client agency and its specialisms: data-only crews with no app of their own.
+Their CRM, Calendar, Ads and SEO & GEO are the platform's built-in apps. Each is its own
+blueprint on the platform, always with the template `agency`, so the ids companies already hold
+are unchanged:
+
+| Directory | Installs as | What it is |
+| --- | --- | --- |
+| `crews/clients/` | `clients/agency` | Client agency: Sales, Client manager, Delivery, Marketing |
+| `crews/clients-blank/` | `clients-blank/agency` | The same apps with no crew |
+| `crews/clients-advertising/` | `clients-advertising/agency` | Advertising agency |
+| `crews/clients-recruiting/` | `clients-recruiting/agency` | Recruiting agency |
+| `crews/clients-research/` | `clients-research/agency` | Market research agency |
+| `crews/clients-security/` | `clients-security/agency` | Security testing agency |
+
+Each directory is a `naive.config.json` and its Operator's Manual (`manual.md`); `crews/crews.test.ts`
+loads every one through the engine's own loader. The SEO & GEO agency is not here: it is this
+repository's `seo-geo` template (`agency/seo-geo`). To run one yourself, copy its directory and run
+`naive up` in it. The platform publishes them from a tag of this repository, with the same `--tag`
+as the dashboard's templates.
 
 ## 🧪 The product design studio
 
