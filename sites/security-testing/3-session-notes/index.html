@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Exploratory testing</title>
+<meta name="description" content="Exploratory and journey testing from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="theme-color" content="#eceed6">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="sheet top__in">
+    <a class="brand" href="#top">{{company_name}}</a>
+    <nav class="nav" aria-label="Primary">
+      <ul>
+        <li><a href="#charter">Charter</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#method">Method</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="entry hero" id="top">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Session sheet</span></p>
+      <div class="hero__grid">
+        <div class="hero__text">
+          <p class="typed small">Exploratory testing from {{city}}</p>
+          <h1>{{tagline}}</h1>
+          <p class="typed lede">{{intro}}</p>
+          <div class="ctas">
+            <a class="btn btn--ink" href="mailto:{{contact_email}}"><span class="b" aria-hidden="true">[</span>Start a session<span class="b" aria-hidden="true">]</span></a>
+            <a class="btn" href="#method"><span class="b" aria-hidden="true">[</span>Read the method<span class="b" aria-hidden="true">]</span></a>
+          </div>
+        </div>
+        <figure class="log" aria-labelledby="log-cap">
+          <div class="log__head">
+            <span>Session log</span>
+            <span class="log__clock" aria-hidden="true"><span class="rec"></span><span data-clock>01:30:00</span></span>
+          </div>
+          <ol class="log__lines">
+            <li class="line"><span class="line__t" aria-hidden="true">00:04</span><span class="line__x">{{specialties[0]}}</span></li>
+            <li class="line"><span class="line__t" aria-hidden="true">00:17</span><span class="line__x">{{specialties[1]}}</span></li>
+            <li class="line"><span class="line__t" aria-hidden="true">00:31</span><span class="line__x">{{specialties[2]}}</span></li>
+            <li class="line"><span class="line__t" aria-hidden="true">00:46</span><span class="line__x">{{specialties[3]}}</span></li>
+            <li class="line"><span class="line__t" aria-hidden="true">01:02</span><span class="line__x">{{specialties[4]}}</span></li>
+            <li class="line"><span class="line__t" aria-hidden="true">01:15</span><span class="line__x">{{specialties[5]}}</span></li>
+          </ol>
+          <figcaption id="log-cap">Areas we explore, one timed session at a time</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="entry" id="charter" aria-labelledby="charter-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Entry 1</span></p>
+      <h2 id="charter-h">Charter</h2>
+      <div class="charter">
+        <p class="charter__main">Explore the journeys real people take through your product, on the devices they own, and write down every place they would get stuck.</p>
+        <p class="typed charter__out"><span class="tag">Not in our charter</span> <s>penetration testing</s>, <s>red teaming</s>, <s>attacking your systems</s>. We test that your product works for the people using it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="entry" id="services" aria-labelledby="services-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Entry 2</span></p>
+      <h2 id="services-h">Services</h2>
+      <ol class="items">
+        <li class="item"><span class="item__n" aria-hidden="true">a.</span><div><h3>{{services[0].title}}</h3><p class="typed">{{services[0].description}}</p></div></li>
+        <li class="item"><span class="item__n" aria-hidden="true">b.</span><div><h3>{{services[1].title}}</h3><p class="typed">{{services[1].description}}</p></div></li>
+        <li class="item"><span class="item__n" aria-hidden="true">c.</span><div><h3>{{services[2].title}}</h3><p class="typed">{{services[2].description}}</p></div></li>
+        <li class="item"><span class="item__n" aria-hidden="true">d.</span><div><h3>{{services[3].title}}</h3><p class="typed">{{services[3].description}}</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="entry" aria-labelledby="audience-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Entry 3</span></p>
+      <h2 id="audience-h">Who we test for</h2>
+      <p class="statement"><span class="hl">{{audience}}</span></p>
+    </div>
+  </section>
+
+  <section class="entry" id="method" aria-labelledby="method-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Entry 4</span></p>
+      <h2 id="method-h">Method</h2>
+      <ol class="steps">
+        <li class="step"><p class="step__k typed">Before the session</p><h3>{{process[0].title}}</h3><p class="typed">{{process[0].description}}</p></li>
+        <li class="step"><p class="step__k typed">During the session</p><h3>{{process[1].title}}</h3><p class="typed">{{process[1].description}}</p></li>
+        <li class="step"><p class="step__k typed">After the session</p><h3>{{process[2].title}}</h3><p class="typed">{{process[2].description}}</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="entry" aria-labelledby="fees-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Entry 5</span></p>
+      <h2 id="fees-h">Fees</h2>
+      <div class="slip">
+        <p class="slip__text">{{pricing_note}}</p>
+        <p class="typed slip__aside">Agreed in writing before the first session.</p>
+      </div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="entry" aria-labelledby="debrief-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Debrief</span></p>
+      <h2 id="debrief-h">From the debriefs</h2>
+      <ul class="quotes">
+        {{#if proof[0]}}<li class="quote"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<p class="typed quote__src">{{proof[0].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[1]}}<li class="quote"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<p class="typed quote__src">{{proof[1].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[2]}}<li class="quote"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<p class="typed quote__src">{{proof[2].source}}</p>{{/if}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="entry" aria-labelledby="tested-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Index</span></p>
+      <h2 id="tested-h">Products in our notebooks</h2>
+      <ul class="index typed">
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+
+  <section class="entry contact" id="contact" aria-labelledby="contact-h">
+    <div class="sheet">
+      <p class="margin" aria-hidden="true"><span>Next session</span></p>
+      <h2 id="contact-h">Contact</h2>
+      <a class="big" href="mailto:{{contact_email}}">Start a session<span class="caret" aria-hidden="true"></span></a>
+      <p class="typed contact__lede">Write to us with what your product does, who uses it and what you are worried about. We will reply with a first charter.</p>
+      <dl class="meta typed">
+        <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+        <div><dt>Based in</dt><dd>{{city}}</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="sheet foot__in typed">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <a class="foot__top" href="#top"><span class="b" aria-hidden="true">[</span>Back to the top<span class="b" aria-hidden="true">]</span></a>
+  </div>
+</footer>
+</body>
+</html>
