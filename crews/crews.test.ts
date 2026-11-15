@@ -267,6 +267,8 @@ describe("the specialisms' own rules", () => {
   it("tells a security agency at setup what it does not sell, and its Day 1 is the manual's", async () => {
     const config = await configOf("clients-security");
     expect(config.questions.find((one) => one.key === "offer")?.help).toContain("not penetration testing or red teaming");
+    // Said before install too: the Marketplace card, the listing and the template page print `description`.
+    expect(config.description).toContain("This is not penetration testing or red teaming.");
     expect(config.roadmap?.day_one).toContain("scope letter");
     expect(readFileSync(`${dir("clients-security")}manual.md`, "utf8")).toContain("Write your scope letter");
   });
