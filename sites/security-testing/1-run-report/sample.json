@@ -1,0 +1,71 @@
+{
+  "company_name": "Greenline QA",
+  "tagline": "Every release checked the way your customers will use it",
+  "intro": "We test the journeys people take through web and mobile products: sign-up, checkout, settings and the rest. You get a plain report before each release, with every issue written up so your developers can reproduce it.",
+  "audience": "Product teams at software companies and online retailers across Germany and the Nordics, from a first app release to products with a weekly release train.",
+  "pricing_note": "A fixed monthly fee per product, sized by how many journeys we cover and how often you release. One-off runs before a launch are quoted per day.",
+  "city": "Berlin",
+  "contact_email": "runs@greenline-qa.de",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Release regression runs",
+      "description": "Before each release we run your agreed journeys end to end and send a report: what passed, what broke, and the exact steps to see it break."
+    },
+    {
+      "title": "New feature testing",
+      "description": "We test a new flow while it is still in staging, including the odd paths: back buttons, expired sessions, slow networks, half-filled forms."
+    },
+    {
+      "title": "Device and browser coverage",
+      "description": "Your key journeys on the phones, tablets and browsers your customers actually use, so a checkout that works on a laptop also works on a two-year-old Android."
+    },
+    {
+      "title": "Accessibility journey checks",
+      "description": "We complete your main journeys with a keyboard and a screen reader and report where someone relying on them gets stuck."
+    }
+  ],
+  "specialties": [
+    "Sign-up and onboarding",
+    "Checkout and payments",
+    "Subscriptions and billing",
+    "Search and filters",
+    "Account settings",
+    "iOS and Android apps"
+  ],
+  "process": [
+    {
+      "title": "Map the journeys",
+      "description": "We sit with your product team, list the journeys that make you money or lose you customers, and agree which devices and how often."
+    },
+    {
+      "title": "Run and report",
+      "description": "Testers work through every journey on real devices. Each issue goes into your tracker with steps, screenshots and the device it happened on."
+    },
+    {
+      "title": "Recheck and release",
+      "description": "Once a fix lands we run the journey again and mark it passed, so you ship knowing what was checked and what was not."
+    }
+  ],
+  "proof": [
+    {
+      "text": "Their release report is now the last thing we read before we ship.",
+      "source": "Head of product, a Berlin food delivery app (sample)"
+    },
+    {
+      "text": "Every bug came with steps our developers could follow on the first try.",
+      "source": "Engineering lead, a Nordic travel marketplace (sample)"
+    },
+    {
+      "text": "They found the checkout issue on older Android phones before our customers did."
+    }
+  ],
+  "logos": [
+    "Fernweh Travel",
+    "Kochkiste",
+    "Nordhaven Bank",
+    "Lumo Fitness",
+    "Ostwind Mobility",
+    "Papierwerk"
+  ]
+}
