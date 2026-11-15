@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not on the board | {{company_name}}</title>
+<meta name="description" content="This page is not on the board. Head back to the departures.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --board: #0d0d0d; --flap: #1c1c1c; --edge: #2a2a2a; --amber: #ffb000; --ink: #f1ece2; --muted: #a39d92; --red: #ff4130; --g: clamp(16px, 2.2vw, 32px);
+  --fd: "Big Shoulders Display", Impact, sans-serif; --fm: "Space Mono", ui-monospace, monospace; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { background: var(--board); }
+body { margin: 0; color: var(--ink); font: 400 16px/1.6 var(--fm); min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; overflow-wrap: break-word; }
+:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+a { color: inherit; }
+h1, p { margin: 0; }
+.skip { position: absolute; left: var(--g); top: 8px; transform: translateY(-200%); background: var(--amber); color: var(--board); padding: 10px 14px; font-weight: 700; }
+.skip:focus { transform: none; }
+.top { padding: 14px var(--g); border-bottom: 6px solid var(--ink); }
+.mark { display: inline-block; padding: 4px 0; font: 900 clamp(1.35rem, 1.1rem + 1vw, 2rem)/0.95 var(--fd); text-transform: uppercase; text-decoration: none; overflow-wrap: anywhere; transform-origin: 50% 0; }
+@keyframes fold { 0% { transform: perspective(300px) rotateX(-80deg); opacity: 0.4; } 100% { transform: none; opacity: 1; } }
+.mark:focus-visible, .foot a:focus-visible { animation: fold 0.32s; color: var(--amber); }
+@media (hover: hover) { .mark:hover, .foot a:hover { animation: fold 0.32s; color: var(--amber); } }
+main { padding: clamp(24px, 4vw, 56px) var(--g) clamp(48px, 7vw, 96px); }
+.strip { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-bottom: 10px; border-bottom: 2px solid var(--edge); }
+.strip b { color: var(--red); font-weight: 700; }
+h1 { margin: 24px 0 0 -0.04em; font: 900 clamp(3rem, 1rem + 9vw, 10rem)/0.86 var(--fd); text-transform: uppercase; }
+.board { margin-top: clamp(24px, 3.4vw, 48px); border: 6px solid var(--ink); background: #080808; padding: clamp(10px, 1.4vw, 18px); }
+.fl { display: flex; flex-wrap: wrap; gap: 6px 0.7em; font: 700 clamp(1.4rem, 0.8rem + 2.6vw, 3.4rem)/1 var(--fm); }
+.w { display: inline-flex; gap: 3px; }
+.f { position: relative; display: inline-grid; place-items: center; width: 1.2em; height: 1.6em; background: var(--flap); color: var(--amber); border-radius: 2px; }
+.f::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #000; }
+.board p { margin-top: 14px; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.lead { margin-top: 28px; max-width: 52ch; }
+.btn { display: inline-flex; align-items: center; min-height: 48px; margin-top: 24px; padding: 12px 20px; background: var(--amber); color: var(--board); text-decoration: none; font: 700 0.875rem/1 var(--fm); text-transform: uppercase; letter-spacing: 0.04em; transition: transform 0.25s, box-shadow 0.25s; }
+.btn:focus-visible { outline-color: var(--ink); transform: translate(-4px, -4px); box-shadow: 4px 4px 0 var(--ink); }
+@media (hover: hover) { .btn:hover { transform: translate(-4px, -4px); box-shadow: 4px 4px 0 var(--ink); } }
+.foot { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; padding: 20px var(--g); border-top: 6px solid var(--ink); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.foot a { display: inline-block; padding: 6px 0; color: var(--ink); text-decoration: none; transform-origin: 50% 0; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .btn:hover, .btn:focus-visible { transform: none; box-shadow: none; text-decoration: underline; } }
+</style>
+<!--host-head-->
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><a class="mark" href="/">{{company_name}}</a></header>
+<main id="main">
+  <p class="strip"><span>Departures from {{city}}</span><b>Not on the board</b></p>
+  <h1>This page is not on the board</h1>
+  <div class="board" aria-hidden="true">
+    <div class="fl"><span class="w"><span class="f">N</span><span class="f">O</span></span><span class="w"><span class="f">S</span><span class="f">U</span><span class="f">C</span><span class="f">H</span></span><span class="w"><span class="f">D</span><span class="f">E</span><span class="f">P</span><span class="f">A</span><span class="f">R</span><span class="f">T</span><span class="f">U</span><span class="f">R</span><span class="f">E</span></span></div>
+    <p>Desk 404 &middot; Cancelled</p>
+  </div>
+  <p class="lead">The link you followed points to a page that does not exist here. Every open role is on the main board.</p>
+  <a class="btn" href="/">Back to the departures</a>
+</main>
+<footer class="foot"><p>&copy; {{year}} {{company_name}}</p><a href="/">Home</a></footer>
+</body>
+</html>

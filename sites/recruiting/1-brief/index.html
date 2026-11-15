@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{company_name}} | Recruiting</title>
+<meta name="description" content="{{tagline}}. Recruiting from {{city}}.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}} | Recruiting">
+<meta property="og:description" content="{{tagline}}">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#f4f5f2">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add('js')</script>
+<script src="assets/site.js" defer></script>
+<!--host-head-->
+</head>
+<body>
+<a class="skip" href="#main">Skip to the brief</a>
+
+<header class="top doc">
+  <a class="wordmark" data-hm="underline" href="#main">{{company_name}}</a>
+  <nav aria-label="Sections">
+    <ul>
+      <li><a data-hm="underline" href="#services">Services</a></li>
+      <li><a data-hm="underline" href="#roles">Roles</a></li>
+      <li><a data-hm="underline" href="#process">Process</a></li>
+      <li><a data-hm="underline" href="#fees">Fees</a></li>
+      <li><a data-hm="underline" href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="doc">
+
+  <section class="sec hero" aria-labelledby="title" data-set>
+    <dl class="meta">
+      <div><dt>Document</dt><dd>Role brief</dd></div>
+      <div><dt>Office</dt><dd>{{city}}</dd></div>
+      <div><dt>Issued</dt><dd>{{year}}</dd></div>
+      <div><dt>Status</dt><dd>Taking on new searches</dd></div>
+    </dl>
+    <h1 id="title" data-mark="double">{{company_name}}</h1>
+    <p class="tagline">{{tagline}}</p>
+    <p class="note note--hero" data-arrow-to="title" data-phone>start here</p>
+    <p class="actions">
+      <a class="cta" data-hm="circle" href="mailto:{{contact_email}}">Send us a role</a>
+      <a class="quiet" data-hm="underline" href="#summary">Read the brief</a>
+    </p>
+  </section>
+
+  <section class="sec summary" id="summary" aria-labelledby="h-summary" data-set>
+    <h2 id="h-summary"><span class="num">1</span>Summary</h2>
+    <p class="lede r2" data-mark="bracket">{{intro}}</p>
+    <p class="note r2">the short version</p>
+    <div class="field r3">
+      <h3>Scope</h3>
+      <p id="scope" data-mark="wavy">{{audience}}</p>
+    </div>
+    <p class="note r3" data-arrow-to="scope">if this sounds like you, keep reading</p>
+  </section>
+
+  <section class="sec services" id="services" aria-labelledby="h-services" data-set>
+    <h2 id="h-services"><span class="num">2</span>What we take on</h2>
+    <p class="note r2" data-arrow-to="clauses">most briefs fit one of these</p>
+    <ol class="clauses r2" id="clauses">
+      <li><span class="cl">2.1</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><span class="cl">2.2</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><span class="cl">2.3</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><span class="cl">2.4</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec roles" id="roles" aria-labelledby="h-roles" data-set>
+    <h2 id="h-roles"><span class="num">3</span>Roles we fill</h2>
+    <p class="note r1">the usual list. ask if yours is missing</p>
+    <ul class="role-list r2">
+      <li data-mark="tick">{{specialties[0]}}</li>
+      <li data-mark="tick">{{specialties[1]}}</li>
+      <li data-mark="tick">{{specialties[2]}}</li>
+      <li data-mark="tick">{{specialties[3]}}</li>
+      <li data-mark="tick">{{specialties[4]}}</li>
+      <li data-mark="tick">{{specialties[5]}}</li>
+    </ul>
+  </section>
+
+  <section class="sec process" id="process" aria-labelledby="h-process" data-set>
+    <h2 id="h-process"><span class="num">4</span>How a search runs</h2>
+    <p class="note r1">the whole thing, start to finish</p>
+    <ol class="steps r2">
+      <li><span class="step-n" id="s1" data-mark="circle" data-arrow-to="s2">1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><span class="step-n" id="s2" data-mark="circle" data-arrow-to="s3">2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><span class="step-n" id="s3" data-mark="circle">3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec fees" id="fees" aria-labelledby="h-fees" data-set>
+    <h2 id="h-fees"><span class="num">5</span><span id="fees-word" data-mark="circle">Fees</span></h2>
+    <p class="note r1" data-arrow-to="fees-word">the part clients ask about</p>
+    <p class="terms r2">{{pricing_note}}</p>
+    <p class="small r3">Terms are agreed in writing before any search begins.</p>
+  </section>
+
+  <section class="sec contact" id="contact" aria-labelledby="h-contact" data-set>
+    <h2 id="h-contact"><span class="num">6</span>Send us a role</h2>
+    <p class="r2">Tell us the job, the team it sits in and when you need someone. We will come back with questions, then a draft brief.</p>
+    <p class="mail r3"><a id="mail" class="email" data-hm="circle" href="mailto:{{contact_email}}">{{contact_email}}</a></p>
+    <p class="note r3" data-arrow-to="mail">a few lines is plenty</p>
+    <p class="sign r4">Prepared by {{company_name}}, {{city}}</p>
+  </section>
+
+  {{#if proof}}<section class="sec record" id="record" aria-labelledby="h-record" data-set>
+    <h2 id="h-record"><span class="num">A</span>On the record</h2>
+    <p class="note r1">in their words, not ours</p>
+    <ul class="quotes r2">
+      {{#if proof[0]}}<li><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<cite>{{proof[0].source}}</cite>{{/if}}</li>{{/if}}
+      {{#if proof[1]}}<li><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<cite>{{proof[1].source}}</cite>{{/if}}</li>{{/if}}
+      {{#if proof[2]}}<li><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<cite>{{proof[2].source}}</cite>{{/if}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec record" aria-labelledby="h-clients" data-set>
+    <h2 id="h-clients"><span class="num">B</span>Searches run for</h2>
+    <ul class="clients r2">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  </div>
+</main>
+
+<footer class="foot doc">
+  <p class="end" aria-hidden="true">End of brief</p>
+  <p>&copy; {{year}} {{company_name}}</p>
+  <p>{{city}}</p>
+  <p><a data-hm="underline" href="#main">Back to the top</a></p>
+</footer>
+</body>
+</html>

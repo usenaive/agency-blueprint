@@ -1,0 +1,71 @@
+{
+  "company_name": "Marlow Search",
+  "tagline": "The people who should run your kitchen, your floor and your brand",
+  "intro": "Marlow Search is a small search firm for restaurants, hotels and consumer brands. We find general managers, executive chefs and brand leaders, and we introduce them one at a time.",
+  "audience": "Restaurant groups, independent hotels and consumer brands in New York and along the East Coast, hiring at general manager, executive chef and director level.",
+  "pricing_note": "A percentage of first-year base salary, invoiced in two parts: one when the search begins and one when your new hire starts.",
+  "city": "New York",
+  "contact_email": "hello@marlowsearch.com",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Executive search",
+      "description": "Retained searches for general managers, operations leaders and directors, run by one partner from the first call to the signed offer."
+    },
+    {
+      "title": "Culinary leadership",
+      "description": "Executive chefs, chefs de cuisine and culinary directors for restaurant groups and hotels that take the food as seriously as the room."
+    },
+    {
+      "title": "Brand and retail leaders",
+      "description": "Heads of brand, retail directors and flagship store leaders for consumer brands opening or growing in New York and on the East Coast."
+    },
+    {
+      "title": "Confidential searches",
+      "description": "Quiet searches for a seat that is still filled, handled with discretion on both sides of the introduction."
+    }
+  ],
+  "specialties": [
+    "General managers",
+    "Executive chefs",
+    "Beverage directors",
+    "Hotel operations",
+    "Heads of brand",
+    "Retail directors"
+  ],
+  "process": [
+    {
+      "title": "We listen",
+      "description": "A long first conversation about the role, the team and the room. We want to know what the right person will be like on their first Tuesday."
+    },
+    {
+      "title": "We look, quietly",
+      "description": "We approach people we know and people we have watched for a while, and we talk with each of them before you ever hear their name."
+    },
+    {
+      "title": "We introduce",
+      "description": "You meet a short list, one person at a time, with our honest notes on each. We stay close through the offer and the first months."
+    }
+  ],
+  "proof": [
+    {
+      "text": "She found us a chef who cooks the way our guests remember.",
+      "source": "Owner, a West Village restaurant (sample)"
+    },
+    {
+      "text": "One introduction, one hire, and they are still with us.",
+      "source": "Managing director, a boutique hotel group (sample)"
+    },
+    {
+      "text": "Every candidate already knew our room and our menu."
+    }
+  ],
+  "logos": [
+    "Hollis House",
+    "Juniper Hall",
+    "Petit Marché",
+    "Saltmarsh Hotels",
+    "Linden & Co",
+    "Fable Bakery"
+  ]
+}

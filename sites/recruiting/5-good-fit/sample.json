@@ -1,0 +1,71 @@
+{
+  "company_name": "Kindred Hires",
+  "tagline": "Your first 20 hires, matched to the company you are becoming.",
+  "intro": "We recruit the first twenty people at seed and Series A startups: founding engineers, first designers, first growth and ops hires. You meet a short list of people who want this stage, not a stack of resumes.",
+  "audience": "Seed and Series A founders hiring across the US, remote or in Austin. Mostly software, fintech and climate teams of 3 to 40 people making their first senior hires.",
+  "pricing_note": "A percentage of first-year base salary, invoiced when your hire starts. For founding roles we can take part of the fee in equity when cash is tight.",
+  "city": "Austin",
+  "contact_email": "hello@kindredhires.com",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Founding engineers",
+      "description": "Full stack, backend and infra engineers who have built from zero before and are happy owning the whole system while it is still small."
+    },
+    {
+      "title": "Your first designer",
+      "description": "One product designer who can do research, flows and the marketing site, and who will set the habits the next five designers inherit."
+    },
+    {
+      "title": "Growth and ops hires",
+      "description": "Your first marketer, ops lead or chief of staff, chosen for the stage you are in now rather than a title from a big company org chart."
+    },
+    {
+      "title": "Hiring plan sessions",
+      "description": "A two hour working session that maps your next 20 hires, the order to make them in, and what each role should own in its first six months."
+    }
+  ],
+  "specialties": [
+    "Founding engineer",
+    "Product designer",
+    "Growth marketer",
+    "Operations lead",
+    "Chief of staff",
+    "Founding account exec"
+  ],
+  "process": [
+    {
+      "title": "Shape the role",
+      "description": "An hour with the founders on what this person will own, who they report to and what would make them leave. Then we write the brief together."
+    },
+    {
+      "title": "Meet a short list",
+      "description": "You meet three to five people who have heard the honest pitch, hard parts included, and who still want to talk to you."
+    },
+    {
+      "title": "Close and start",
+      "description": "We help with the offer, references and a first-week plan, then check in with you and your hire after their first 30 days."
+    }
+  ],
+  "proof": [
+    {
+      "text": "Our founding engineer came from their first shortlist.",
+      "source": "CEO, a seed-stage climate startup (sample)"
+    },
+    {
+      "text": "They told candidates the hard parts before we did.",
+      "source": "Founder, a Series A fintech (sample)"
+    },
+    {
+      "text": "Hires four through nine, all still here."
+    }
+  ],
+  "logos": [
+    "Tidepool",
+    "Brightloop",
+    "Cactus Labs",
+    "Hearth Health",
+    "Pocketyard",
+    "Moonbeam"
+  ]
+}

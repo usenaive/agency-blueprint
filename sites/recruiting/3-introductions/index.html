@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{company_name}} | Recruiting</title>
+<meta name="description" content="{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}} | Recruiting">
+<meta property="og:description" content="{{tagline}}">
+<meta name="theme-color" content="#f3d9d0">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="assets/site.css">
+<!--host-head-->
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="mark" href="#main" aria-label="{{company_name}}, back to the top">
+    <span class="mark-glyph" aria-hidden="true"><i></i><i></i></span>
+    <span class="mark-name">{{company_name}}</span>
+  </a>
+  <nav aria-label="Main">
+    <ul>
+      <li class="nav-wide"><a class="link" href="#services">What we do</a></li>
+      <li class="nav-wide"><a class="link" href="#process">How it works</a></li>
+      <li><a class="link" href="#write">Write to us</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" tabindex="-1">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="forms" aria-hidden="true">
+      <div class="meet meet-a"><div class="drift drift-a"><div class="form form-a"></div></div></div>
+      <div class="meet meet-b"><div class="drift drift-b"><div class="form form-b"></div></div></div>
+    </div>
+    <p class="side side-a"><span class="side-k">For companies</span> a role worth filling</p>
+    <p class="side side-b"><span class="side-k">For people</span> work worth doing</p>
+    <div class="lens">
+      <p class="kicker">Recruiters based in {{city}}</p>
+      <h1 id="hero-title">{{tagline}}</h1>
+      <p class="intro">{{intro}}</p>
+      <div class="ctas">
+        <a class="btn btn-solid" href="mailto:{{contact_email}}?subject=A%20role"><span class="dots" aria-hidden="true"><i></i><i></i></span>Send us a role</a>
+        <a class="btn btn-line" href="mailto:{{contact_email}}?subject=Introducing%20myself"><span class="dots" aria-hidden="true"><i></i><i></i></span>Introduce yourself</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="services wrap" id="services" aria-labelledby="services-title">
+    <div class="head">
+      <p class="label">What we do</p>
+      <h2 id="services-title">Four ways we bring the right people together</h2>
+      <p class="aside">Whatever the brief, the work is the same: understand both sides well, then make the introduction.</p>
+    </div>
+    <ol class="rows">
+      <li class="row" data-meet style="--d:1"><span class="pair" aria-hidden="true"><i></i><i></i></span><span class="num">01</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li class="row" data-meet style="--d:.66"><span class="pair" aria-hidden="true"><i></i><i></i></span><span class="num">02</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li class="row" data-meet style="--d:.33"><span class="pair" aria-hidden="true"><i></i><i></i></span><span class="num">03</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li class="row" data-meet style="--d:0"><span class="pair" aria-hidden="true"><i></i><i></i></span><span class="num">04</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="who wrap" aria-labelledby="who-title">
+    <div class="head">
+      <p class="label">Who we introduce</p>
+      <h2 id="who-title">Two sides of every search</h2>
+      <p class="aside">An introduction only works when it is right for both. Here is who sits on each side.</p>
+    </div>
+    <div class="halves" data-meet>
+      <div class="half half-a">
+        <h3 class="side-k">The companies</h3>
+        <p class="audience">{{audience}}</p>
+      </div>
+      <div class="half half-b">
+        <h3 class="side-k">The people</h3>
+        <ul class="specs">
+          <li>{{specialties[0]}}</li>
+          <li>{{specialties[1]}}</li>
+          <li>{{specialties[2]}}</li>
+          <li>{{specialties[3]}}</li>
+          <li>{{specialties[4]}}</li>
+          <li>{{specialties[5]}}</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="process wrap" id="process" aria-labelledby="process-title">
+    <div class="head">
+      <p class="label">How an introduction happens</p>
+      <h2 id="process-title">Every search starts with two people who have not met yet</h2>
+      <p class="aside">Three steps, taken one at a time, and you always know which one we are on.</p>
+    </div>
+    <ol class="steps">
+      <li class="step" data-meet style="--d:1"><span class="pair big" aria-hidden="true"><i></i><i></i></span><span class="num">01</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li class="step" data-meet style="--d:.55"><span class="pair big" aria-hidden="true"><i></i><i></i></span><span class="num">02</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li class="step" data-meet style="--d:0"><span class="pair big" aria-hidden="true"><i></i><i></i></span><span class="num">03</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="fee wrap" aria-labelledby="fee-title">
+    <h2 id="fee-title" class="label">The fee</h2>
+    <p class="fee-note">{{pricing_note}}</p>
+    <p class="fee-aside">Ask us anything about it before we begin.</p>
+  </section>
+
+  {{#if proof}}<section class="fee wrap kind" aria-labelledby="kind-title">
+    <h2 id="kind-title" class="label">Kind words</h2>
+    <ul class="kind-list">
+        {{#if proof[0]}}<li><span class="pair" aria-hidden="true"><i></i><i></i></span><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<cite>{{proof[0].source}}</cite>{{/if}}</li>{{/if}}
+        {{#if proof[1]}}<li><span class="pair" aria-hidden="true"><i></i><i></i></span><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<cite>{{proof[1].source}}</cite>{{/if}}</li>{{/if}}
+        {{#if proof[2]}}<li><span class="pair" aria-hidden="true"><i></i><i></i></span><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<cite>{{proof[2].source}}</cite>{{/if}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+  {{#if logos}}<section class="fee wrap kind" aria-labelledby="tables-title">
+    <h2 id="tables-title" class="label">Introductions made at</h2>
+    <ul class="tables">
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="write" id="write" aria-labelledby="write-title">
+    <div class="forms" aria-hidden="true" data-meet>
+      <div class="meet meet-a"><div class="form form-a"></div></div>
+      <div class="meet meet-b"><div class="form form-b"></div></div>
+    </div>
+    <div class="letter">
+      <span class="stamp" aria-hidden="true"><i></i><i></i></span>
+      <h2 id="write-title">Write to us</h2>
+      <p class="salute">Dear reader,</p>
+      <p>Tell us about the role you need to fill, or about the work you want to do next. A few honest lines are the best way to start an introduction.</p>
+      <a class="email" href="mailto:{{contact_email}}">{{contact_email}}</a>
+      <p class="sign">Warmly,<br><span class="sign-name">{{company_name}}</span><br>{{city}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <p>{{city}}</p>
+  <p><a class="link" href="mailto:{{contact_email}}">Write to us</a></p>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

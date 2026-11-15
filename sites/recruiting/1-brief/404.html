@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f4f5f2">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { color-scheme: light; --paper: #f4f5f2; --ink: #141414; --muted: #4b4e48; --line: #d3d6cf; --pencil: #1f47d6; --pad: clamp(1rem, 4.5vw, 4rem); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font: 400 clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem)/1.55 "Newsreader", Georgia, serif; }
+h1, p { margin: 0; overflow-wrap: anywhere; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--pencil); outline-offset: 4px; border-radius: 2px; }
+.skip { position: absolute; left: var(--pad); top: 0.75rem; padding: 0.5rem 0.9rem; background: var(--ink); color: var(--paper); text-decoration: none; translate: 0 -200%; }
+.skip:focus-visible { translate: none; }
+.doc { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: var(--pad); }
+.top { padding-block: 1.5rem 0; }
+.wordmark { display: inline-block; padding-block: 0.3rem; font-size: 1.125rem; font-weight: 600; text-decoration: none; max-width: 24ch; line-height: 1.25; }
+main { flex: 1; padding-block: clamp(4rem, 12vw, 9rem); }
+.meta { color: var(--muted); font-size: 0.9375rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); max-width: 46rem; }
+h1 { position: relative; display: inline-block; margin-top: clamp(2.5rem, 6vw, 4.5rem); font-size: clamp(2.6rem, 0.6rem + 7.4vw, 8rem); font-weight: 400; line-height: 0.98; letter-spacing: -0.035em; }
+.strike { position: absolute; left: -2%; top: 48%; width: 104%; height: 0.3em; overflow: visible; }
+.strike path { fill: none; stroke: var(--pencil); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.note { margin-top: 1.25rem; font-family: "Caveat", cursive; font-weight: 600; font-size: 1.7rem; line-height: 1.1; color: var(--pencil); rotate: -3deg; transform-origin: left center; }
+.lede { margin-top: 2rem; max-width: 34rem; }
+.home { display: inline-block; margin-top: 2rem; padding: 0.6rem 0.15rem; font-size: clamp(1.2rem, 1.06rem + 0.55vw, 1.55rem); font-weight: 500; text-underline-offset: 0.3em; text-decoration-thickness: 1px; transition: translate 0.3s; }
+@media (hover: hover) { .home:hover { translate: 0.4rem 0; text-decoration-color: var(--pencil); text-decoration-thickness: 2px; } }
+.home:focus-visible { text-decoration-color: var(--pencil); }
+.foot { padding-block: 1.5rem 2.5rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9375rem; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<!--host-head-->
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="top doc"><a class="wordmark" href="/">{{company_name}}</a></header>
+<main id="main" class="doc">
+  <p class="meta">Document: Role brief. Section: not found</p>
+  <h1>Page not found<svg class="strike" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><path d="M1 6C25 4 50 7 75 4.5S96 3 99 3.5"/></svg></h1>
+  <p class="note">struck from the brief</p>
+  <p class="lede">This page is not part of the brief, or it moved. The full document starts on the home page.</p>
+  <a class="home" href="/">Back to the brief</a>
+</main>
+<footer class="foot doc"><p>&copy; {{year}} {{company_name}}, {{city}}</p></footer>
+</body>
+</html>

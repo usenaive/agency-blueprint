@@ -1,0 +1,71 @@
+{
+  "company_name": "Fieldnote Talent",
+  "tagline": "Product and engineering hires for fintech and payments teams",
+  "intro": "We find product managers, engineers and designers for fintech and payments companies. Every search starts with a written brief, agreed with you before we approach a single candidate.",
+  "audience": "Scale-ups and established payments firms in London, across the UK and in Europe, hiring from senior individual contributors up to heads of department.",
+  "pricing_note": "A percentage of first-year base salary, agreed in writing before we start and invoiced only when your hire starts. Retained searches are split into three stages.",
+  "city": "London",
+  "contact_email": "hello@fieldnotetalent.co.uk",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Contingent search",
+      "description": "For single roles where you are also hiring directly. We send a short list of people we have properly spoken to, and you only pay if one of them joins."
+    },
+    {
+      "title": "Retained search",
+      "description": "For senior and leadership roles. A dedicated search with a mapped market, a written update every week and a shortlist you can compare side by side."
+    },
+    {
+      "title": "Team builds",
+      "description": "When you need several engineers or a whole product squad at once. One brief, one point of contact, and interviews planned around your team's week."
+    },
+    {
+      "title": "Hiring brief workshop",
+      "description": "A half-day session that turns a loose headcount into a role brief: scope, level, salary band and interview loop. Yours to keep, whoever you hire through."
+    }
+  ],
+  "specialties": [
+    "Backend and platform engineers",
+    "Payments product managers",
+    "Mobile engineers",
+    "Risk and fraud data scientists",
+    "Product designers",
+    "Engineering managers"
+  ],
+  "process": [
+    {
+      "title": "Write the brief",
+      "description": "An hour with the hiring manager to write the role up properly: the work, the team, the band and the must-haves. You sign it off before anyone is approached."
+    },
+    {
+      "title": "Search and screen",
+      "description": "We approach people who match the brief, speak to each one ourselves and send a short list with a written note on every candidate and why they fit."
+    },
+    {
+      "title": "Interview and close",
+      "description": "We run the scheduling, gather feedback from both sides after each round and handle the offer conversation until your new hire has signed."
+    }
+  ],
+  "proof": [
+    {
+      "text": "They wrote the brief better than we could have, and the shortlist matched it.",
+      "source": "CTO, a London payments company (sample)"
+    },
+    {
+      "text": "Three of our first five platform engineers came through one search.",
+      "source": "VP Engineering, a Series B lender (sample)"
+    },
+    {
+      "text": "Every candidate had already heard the hard parts of the job."
+    }
+  ],
+  "logos": [
+    "Ledgerline",
+    "Cobalt Pay",
+    "Harbour Credit",
+    "Northgate FX",
+    "Tallyhouse",
+    "Fernpoint"
+  ]
+}
