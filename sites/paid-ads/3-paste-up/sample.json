@@ -1,0 +1,28 @@
+{
+  "company_name": "Fly Post Media",
+  "tagline": "Loud ads for brands that refuse to blend in",
+  "intro": "We are a paid ads crew for independent brands: we plan the campaign, make the posters, videos and lines that stop people mid-scroll, run them across social and search and report back in plain words.",
+  "audience": "Independent drinks, food, fashion and music brands across the UK and Europe, from a first launch to a national push, who want ads that look like nobody else's.",
+  "pricing_note": "One fee per campaign for the plan and the creative, quoted before we start, then a monthly fee while it runs. Your ad spend goes straight to the platforms.",
+  "city": "Bristol",
+  "contact_email": "wall@flypost.media",
+  "year": "2026",
+  "services": [
+    { "title": "Campaign ideas", "description": "One big idea per campaign that works as a poster, a six-second video and a search line, so every placement says the same thing loudly." },
+    { "title": "Creative and copy", "description": "Posters, statics, carousels and short videos made in-house, with lines written to be read in a second by someone who was not looking." },
+    { "title": "Media planning and buying", "description": "Where the campaign goes up, when and with how much: social, short-form video, search and shopping, bought and adjusted by hand." },
+    { "title": "Straight reporting", "description": "A short report every fortnight: what ran, what it cost, what it brought back and which posters come down next." }
+  ],
+  "specialties": ["Paid social", "Short-form video", "Search ads", "Shopping ads", "Launch campaigns", "Creator ads"],
+  "process": [
+    { "title": "Find the line", "description": "A workshop to find the one thing your brand can say that a rival cannot, then three ways to say it." },
+    { "title": "Put it up", "description": "We make the creative, plan the placements and launch, with small budgets first so the wall tells us what works." },
+    { "title": "Keep it fresh", "description": "New creative every two weeks, the winners pushed harder and the tired posters taken down before people stop noticing them." }
+  ],
+  "proof": [
+    { "text": "Our launch ads finally looked like our brand and not like everyone else's.", "source": "Founder, an independent cider maker (sample)" },
+    { "text": "They kill their own ideas fast when the numbers say so. No ego about it.", "source": "Marketing lead, a streetwear label (sample)" },
+    { "text": "A fortnightly report that fits on one screen.", "source": "Co-founder, a hot sauce brand (sample)" }
+  ],
+  "logos": ["Orchard Riot Cider", "Concrete Club", "Sauce Bros", "Late Bus Records", "Harbourside Gin", "Low Tide Apparel"]
+}
