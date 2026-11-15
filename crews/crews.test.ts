@@ -98,6 +98,14 @@ describe("every crew", () => {
   });
 });
 
+// NEW-60: a "pseudonymous account" sign-up on a real company's site was carded to the security crew's tester.
+it.each(WITH_CREW)("%s has every working seat refuse a made-up identity or any other deception of a real party", async (blueprint) => {
+  for (const agent of await seats(blueprint)) {
+    if (["Sales", "Client manager", "Marketing"].includes(agent.name)) continue;
+    expect([agent.name, agent.system]).toEqual([agent.name, expect.stringContaining("Never make an account under a made-up name or a false identity, or deceive a real person or company any other way: decline that step and say why.")]);
+  }
+});
+
 describe("the Client agency (clients)", () => {
   it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
     const config = await configOf("clients");
