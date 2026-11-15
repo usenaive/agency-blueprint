@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Market research</title>
+<meta name="description" content="Market research from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#071018">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="bar__in">
+    <a class="brand" href="#top"><span class="brand__cur" aria-hidden="true"></span><span class="brand__name">{{company_name}}</span></a>
+    <nav aria-label="Primary">
+      <ul class="keys">
+        <li><a href="#coverage"><kbd>F1</kbd><span>Coverage</span></a></li>
+        <li><a href="#services"><kbd>F2</kbd><span>Services</span></a></li>
+        <li><a href="#method"><kbd>F3</kbd><span>Method</span></a></li>
+        <li><a href="#contact"><kbd>F4</kbd><span>Contact</span></a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="dash dash--hero" id="top" aria-labelledby="h1">
+    <div class="panel brief">
+      <p class="ptitle"><span>Brief</span><span class="live">Desk open in {{city}}</span></p>
+      <div class="brief__body">
+        <h1 id="h1">{{tagline}}</h1>
+        <p class="lede">{{intro}}</p>
+        <a class="key-btn" href="mailto:{{contact_email}}"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>
+      </div>
+    </div>
+
+    <div class="panel console" aria-labelledby="console-t">
+      <p class="ptitle"><span id="console-t">Query log</span><span>Every study runs these</span></p>
+      <ol class="log">
+        <li><span class="cmd">size market --top-down --bottom-up</span><span class="ok">done</span></li>
+        <li><span class="cmd">teardown competitors --pricing --positioning</span><span class="ok">done</span></li>
+        <li><span class="cmd">interview customers --won --lost --churned</span><span class="ok">done</span></li>
+        <li><span class="cmd">write finding --sources attached</span><span class="ok">done</span></li>
+      </ol>
+      <p class="prompt" aria-hidden="true"><span class="caret"></span></p>
+    </div>
+
+    <figure class="panel chart" aria-labelledby="chart-t">
+      <p class="ptitle"><span id="chart-t">Demand, illustrative</span><span class="mag">Signal</span></p>
+      <div class="chart__plot">
+        <svg viewBox="0 0 480 200" preserveAspectRatio="none" aria-hidden="true">
+          <path class="grid" d="M0 50H480M0 100H480M0 150H480M80 0V200M160 0V200M240 0V200M320 0V200M400 0V200"/>
+          <path class="area" d="M0 168 L40 160 L80 164 L120 140 L160 146 L200 120 L240 126 L280 98 L320 104 L360 76 L400 84 L440 52 L480 40 V200 H0 Z"/>
+          <path class="trace" d="M0 168 L40 160 L80 164 L120 140 L160 146 L200 120 L240 126 L280 98 L320 104 L360 76 L400 84 L440 52 L480 40"/>
+          <line class="cross" x1="0" x2="0" y1="0" y2="200"/>
+        </svg>
+        <span class="dot" aria-hidden="true"></span>
+      </div>
+    </figure>
+
+    <div class="panel cov" id="coverage" aria-labelledby="cov-t">
+      <p class="ptitle"><span id="cov-t">Coverage</span><span>Markets on our desk</span></p>
+      <ul class="cov__list">
+        <li><span class="sym">{{specialties[0]}}</span><span class="meter" aria-hidden="true"><i style="--v:0.82"></i></span></li>
+        <li><span class="sym">{{specialties[1]}}</span><span class="meter" aria-hidden="true"><i style="--v:0.64"></i></span></li>
+        <li><span class="sym">{{specialties[2]}}</span><span class="meter" aria-hidden="true"><i style="--v:0.9"></i></span></li>
+        <li><span class="sym">{{specialties[3]}}</span><span class="meter" aria-hidden="true"><i style="--v:0.55"></i></span></li>
+        <li><span class="sym">{{specialties[4]}}</span><span class="meter" aria-hidden="true"><i style="--v:0.73"></i></span></li>
+        <li><span class="sym">{{specialties[5]}}</span><span class="meter" aria-hidden="true"><i style="--v:0.6"></i></span></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="tape" aria-hidden="true">
+    <div class="tape__run">
+      <span>{{specialties[0]}}</span><span>{{specialties[1]}}</span><span>{{specialties[2]}}</span><span>{{specialties[3]}}</span><span>{{specialties[4]}}</span><span>{{specialties[5]}}</span>
+      <span>{{specialties[0]}}</span><span>{{specialties[1]}}</span><span>{{specialties[2]}}</span><span>{{specialties[3]}}</span><span>{{specialties[4]}}</span><span>{{specialties[5]}}</span>
+    </div>
+  </div>
+
+  <section class="sec" id="services" aria-labelledby="services-h">
+    <h2 id="services-h" class="sec__h"><kbd aria-hidden="true">F2</kbd>Services</h2>
+    <ul class="dash dash--4">
+      <li class="panel svc"><p class="ptitle"><span>Fn 01</span></p><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li class="panel svc"><p class="ptitle"><span>Fn 02</span></p><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li class="panel svc"><p class="ptitle"><span>Fn 03</span></p><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li class="panel svc"><p class="ptitle"><span>Fn 04</span></p><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ul>
+  </section>
+
+  <section class="sec" aria-labelledby="universe-h">
+    <div class="dash dash--split">
+      <div class="panel">
+        <p class="ptitle"><span>Screen</span></p>
+        <h2 id="universe-h" class="panel__h">Who we cover</h2>
+        <p class="big">{{audience}}</p>
+      </div>
+      <div class="panel">
+        <p class="ptitle"><span>Pricing</span></p>
+        <h2 class="panel__h">How we charge</h2>
+        <p class="big big--sm">{{pricing_note}}</p>
+        <p class="fine">Scope, sources and fee agreed in writing before the first query runs.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="method" aria-labelledby="method-h">
+    <h2 id="method-h" class="sec__h"><kbd aria-hidden="true">F3</kbd>Method</h2>
+    <ol class="dash dash--3 pipe">
+      <li class="panel stage"><p class="ptitle"><span>Stage 1 of 3</span></p><span class="stage__bar" aria-hidden="true"><i></i></span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li class="panel stage"><p class="ptitle"><span>Stage 2 of 3</span></p><span class="stage__bar" aria-hidden="true"><i></i></span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li class="panel stage"><p class="ptitle"><span>Stage 3 of 3</span></p><span class="stage__bar" aria-hidden="true"><i></i></span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  {{#if proof}}<section class="sec" aria-labelledby="proof-h">
+    <h2 id="proof-h" class="sec__h"><kbd aria-hidden="true">&gt;</kbd>Client notes</h2>
+    <div class="dash dash--3">
+      {{#if proof[0]}}<figure class="panel note"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure class="panel note"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure class="panel note"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec" aria-labelledby="logos-h">
+    <h2 id="logos-h" class="sec__h"><kbd aria-hidden="true">&gt;</kbd>Accounts</h2>
+    <ul class="dash dash--accts">
+      {{#if logos[0]}}<li class="panel acct">{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li class="panel acct">{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li class="panel acct">{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li class="panel acct">{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li class="panel acct">{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li class="panel acct">{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="sec contact" id="contact" aria-labelledby="contact-h">
+    <div class="panel contact__panel">
+      <p class="ptitle"><span>Contact</span><span class="live">Accepting studies</span></p>
+      <p class="contact__cmd" aria-hidden="true">&gt; new study --question "<span>your question here</span>"</p>
+      <h2 id="contact-h" class="contact__h">Bring us the question your team cannot settle</h2>
+      <p class="contact__lede">Tell us the market, the decision and the deadline. We reply with the queries we would run and a fixed fee.</p>
+      <a class="key-btn" href="mailto:{{contact_email}}"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>
+      <dl class="kv">
+        <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+        <div><dt>Desk</dt><dd>{{city}}</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="bar bar--foot">
+  <div class="bar__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <p class="clock" aria-hidden="true">Your time <time data-clock>00:00:00</time></p>
+    <a class="link" href="#top">Back to the top</a>
+  </div>
+</footer>
+</body>
+</html>

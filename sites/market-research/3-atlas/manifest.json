@@ -1,0 +1,80 @@
+{
+  "id": "market-research/3-atlas",
+  "agencyType": "market-research",
+  "design": "Atlas",
+  "style": "An atlas of the client's market: Bodoni Moda plate titles, wide Archivo map lettering, a double-ruled neatline plate with grid references, specialties as numbered territories, competitor pins, a hatched patch of unclaimed ground, and inset maps at three scales.",
+  "theme": "light",
+  "fonts": [
+    "Bodoni Moda",
+    "Archivo"
+  ],
+  "concept": {
+    "idea": "Market research maps where competitors stand and where the open ground is, so the site is an atlas: every section is a plate, services are the legend, the method is three insets zooming from the whole market to one customer.",
+    "signature": "Plate I: twelve competitor pins drop onto the map, a red dashed line traces the unclaimed ground and hatches it, then the 'Your opening' pin lands and keeps rippling at rest. A finished plate without JS or with reduced motion.",
+    "motionVerb": "survey: pins drop, a boundary is traced, the opening lands",
+    "palette": {
+      "ground": "#f3f4f1",
+      "land": "#fbfbf8",
+      "sea": "#d6e2e7",
+      "ink": "#14213d",
+      "muted": "#47536d",
+      "red": "#d03a25",
+      "redInk": "#b42f1c"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 7.5,
+      "usability": 7.5,
+      "creativity": 8,
+      "content": 7.5,
+      "overall": 7.6
+    },
+    "estimate": 8.7,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with sample and long.json, no tap target under 24 px, every focus stop visible, skip link first, nothing moving under reduced motion). No blind critic was run for this batch. The most composed frame of the batch: a neatline plate, territories, competitor pins and hatched open ground, carried through the legend, the insets and the 404. Bodoni hairlines thin out at small sizes, and on a phone the map shows numbers with a key below it."
+  }
+}

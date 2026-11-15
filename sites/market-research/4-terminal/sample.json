@@ -1,0 +1,28 @@
+{
+  "company_name": "Quantile Research",
+  "tagline": "Numbers you can defend in the board meeting, with the working shown",
+  "intro": "An analyst desk for B2B software companies in Southeast Asia. We size markets, pull competitors apart and interview buyers, then hand over a model you can rerun and a memo that says what the numbers mean.",
+  "audience": "Founders, finance and strategy leads at B2B software companies selling across Singapore, Indonesia, Vietnam and the Philippines, plus the funds that back them.",
+  "pricing_note": "Fixed-fee studies scoped in a one-page brief, or a monthly desk retainer for teams that need answers every week. Half up front, half on delivery.",
+  "city": "Singapore",
+  "contact_email": "desk@quantile.sg",
+  "year": "2026",
+  "services": [
+    { "title": "Market sizing models", "description": "A spreadsheet model built bottom-up from buyer counts and spend, cross-checked top-down, with every input sourced and every assumption in one tab you can change." },
+    { "title": "Competitor teardowns", "description": "Pricing, packaging, sales motion, hiring and funding for your closest rivals, refreshed each quarter if you want it kept current." },
+    { "title": "Buyer interviews", "description": "Structured calls with economic buyers and users in your target accounts, coded and counted, so the qualitative answer comes with a number attached." },
+    { "title": "Desk retainer", "description": "A named analyst on call for the questions that come up between board meetings: a new rival, a pricing change, a market you had not considered." }
+  ],
+  "specialties": ["HR and payroll software", "Logistics platforms", "Fintech infrastructure", "Retail point of sale", "Healthcare IT", "Cybersecurity"],
+  "process": [
+    { "title": "Scope the question", "description": "A thirty-minute call and a one-page brief: the decision, the market, the deadline and what a good answer looks like." },
+    { "title": "Run the queries", "description": "Desk research, data pulls, competitor sign-ups and buyer calls, logged in a source sheet as we go, with a check-in halfway." },
+    { "title": "Hand over the model", "description": "A memo that leads with the answer, the model behind it and an hour with your team to stress-test the assumptions together." }
+  ],
+  "proof": [
+    { "text": "Our investors stopped questioning the market size once they could change the inputs themselves.", "source": "Chief financial officer, a Singapore payroll platform (sample)" },
+    { "text": "The quarterly teardown is the most read document in our sales channel.", "source": "Revenue lead, a Jakarta logistics start-up (sample)" },
+    { "text": "Fast, careful and honest about what the data could not tell us." }
+  ],
+  "logos": ["Gajah Payroll", "Lintas Logistics", "Merlion Pay", "Kasir Retail", "Sehat Health Systems", "Benteng Security"]
+}

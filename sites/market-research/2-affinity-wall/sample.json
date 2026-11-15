@@ -1,0 +1,28 @@
+{
+  "company_name": "Listening Post",
+  "tagline": "We talk to your customers so you stop guessing what they think",
+  "intro": "A small team of customer researchers. We recruit the right people, interview them properly, and stick every useful thing they say on the wall until the pattern is obvious to everyone in the room.",
+  "audience": "Marketing and product teams at Australian and New Zealand consumer brands, from a founder-led shop on its first hundred customers to a household name with a loyalty scheme.",
+  "pricing_note": "A fixed price per study, set by how many people we interview and how hard they are to find. Participant incentives are passed through at cost, with no markup.",
+  "city": "Melbourne",
+  "contact_email": "hello@listeningpost.com.au",
+  "year": "2026",
+  "services": [
+    { "title": "Customer interviews", "description": "Forty-five minute conversations with the people who buy from you, recorded and transcribed, so you hear the reasons in their own words." },
+    { "title": "Why people cancel", "description": "We talk to customers in the month after they leave, while they still remember the moment it went wrong, and tell you which fixes would have kept them." },
+    { "title": "Reviews and support mining", "description": "Every review, support ticket and survey comment from the last year, read and sorted into themes, with counts you can track from quarter to quarter." },
+    { "title": "Message testing", "description": "Your new headline, pack or pricing page shown to real buyers before launch, with what they understood, what they missed and what put them off." }
+  ],
+  "specialties": ["Subscription boxes", "Food and drink", "Health and wellbeing", "Home and garden", "Pet care", "Banking apps"],
+  "process": [
+    { "title": "Find the right people", "description": "We agree who matters, write the screener and recruit from your customer list or our own panels, then book every session around their week." },
+    { "title": "Listen and record", "description": "One of us interviews, one of us takes notes, and your team can watch live. Nobody is pitched to and nobody is led to an answer." },
+    { "title": "Sort it on the wall", "description": "Every useful quote goes on a note, the notes get sorted into themes, and you get a short report and a workshop where your team sees the wall for itself." }
+  ],
+  "proof": [
+    { "text": "We had argued about why people cancelled for a year. Two weeks of interviews settled it.", "source": "Head of growth, a Melbourne meal kit brand (sample)" },
+    { "text": "Watching the sessions live changed how our designers talk about customers.", "source": "Product lead, an Auckland banking app (sample)" },
+    { "text": "The wall workshop was the first research readout nobody looked at their phone during." }
+  ],
+  "logos": ["Bramble Box", "Kettle and Crumb", "Northcote Pet Co", "Saltbush Skincare", "Tandem Bank", "Greenhaven Gardens"]
+}

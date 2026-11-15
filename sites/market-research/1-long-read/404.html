@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --ground: #f6f7f7; --paper: #fff; --ink: #16181d; --muted: #535a63; --line: #d8dbdf; --teal: #0b7471; --coral: #d23f59; --sans: "Libre Franklin", "Helvetica Neue", Arial, sans-serif; --gut: clamp(20px, 4vw, 56px); --ease: cubic-bezier(0.25, 0.8, 0.25, 1); }
+@media (prefers-color-scheme: dark) { :root { --ground: #111418; --paper: #181c21; --ink: #e9ebee; --muted: #a3aab3; --line: #2b3038; --teal: #45c4bd; --coral: #ff7d90; } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--ground); color: var(--ink); font: 400 1.125rem/1.6 "Literata", Georgia, serif; -webkit-font-smoothing: antialiased; }
+h1, p, figure { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--ink); color: var(--ground); font-family: var(--sans); }
+.skip:focus { top: 12px; }
+.wrap { width: 100%; max-width: 1320px; margin-inline: auto; padding-inline: var(--gut); }
+header { border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; align-items: center; min-height: 72px; }
+.brand { font: 600 1.0625rem/1.2 var(--sans); text-decoration: none; overflow-wrap: anywhere; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 0.35s var(--ease); }
+main { flex: 1; }
+main .wrap { display: grid; grid-template-columns: minmax(0, 620px) minmax(0, 1fr); gap: 64px; align-items: center; padding-block: clamp(48px, 9vw, 120px); }
+.kicker { font: 600 0.8125rem var(--sans); color: var(--teal); }
+h1 { margin-top: 14px; font-size: clamp(2.5rem, 1.4rem + 3.6vw, 4.5rem); font-weight: 600; line-height: 1.04; letter-spacing: -0.025em; }
+.lede { margin-top: 24px; color: var(--muted); font-size: 1.25rem; max-width: 30em; }
+.cta { display: inline-flex; align-items: center; gap: 12px; margin-top: 32px; padding: 14px 22px; background: var(--ink); color: var(--ground); text-decoration: none; font: 600 1rem var(--sans); position: relative; overflow: hidden; isolation: isolate; }
+.cta::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--teal); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.4s var(--ease); }
+figure { padding: 20px; background: var(--paper); border: 1px solid var(--line); }
+svg { display: block; width: 100%; height: auto; }
+.axis { fill: none; stroke: var(--muted); }
+.flat { fill: none; stroke: var(--coral); stroke-width: 2; stroke-dasharray: 6 6; }
+figcaption { margin-top: 12px; font: 400 0.875rem/1.5 var(--sans); color: var(--muted); }
+figcaption b { color: var(--ink); }
+text { font: 600 13px var(--sans); fill: var(--ink); }
+footer { border-top: 2px solid var(--ink); font: 400 0.9375rem var(--sans); }
+footer p { padding-block: 24px; overflow-wrap: anywhere; }
+@media (hover: hover) { .cta:hover::before { transform: scaleX(1); } .brand:hover { background-size: 100% 1px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 800px) { main .wrap { grid-template-columns: minmax(0, 1fr); gap: 40px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><div class="wrap"><a class="brand" href="/">{{company_name}}</a></div></header>
+<main id="main">
+  <div class="wrap">
+    <div>
+      <p class="kicker">Not found</p>
+      <h1>No data at this address</h1>
+      <p class="lede">We looked for the page you asked for and found nothing to report. The link may be old, or the page may have moved.</p>
+      <a class="cta" href="/">Back to the front page</a>
+    </div>
+    <figure aria-labelledby="cap">
+      <svg viewBox="0 0 400 240" aria-hidden="true">
+        <path class="axis" d="M20 220H390M20 220V12"/>
+        <path class="flat" d="M20 220H390"/>
+        <circle cx="205" cy="220" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="190" y="196">Nothing recorded</text>
+      </svg>
+      <figcaption id="cap"><b>Figure 404.</b> Visits to this page, plotted. There is no line because there is no page.</figcaption>
+    </figure>
+  </div>
+</main>
+<footer><div class="wrap"><p>&copy; {{year}} {{company_name}}</p></div></footer>
+</body>
+</html>
