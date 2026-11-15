@@ -1,0 +1,28 @@
+{
+  "company_name": "Jump Cut Social",
+  "tagline": "Short ads, cut to stop the thumb",
+  "intro": "We are a small edit-first ad studio. We write, shoot and cut short-form video ads for consumer brands, then plan and run them on social and search, and recut them every week from what the numbers say.",
+  "audience": "Consumer brands in Australia and New Zealand selling online, from a first test budget to a full always-on program, mostly in beauty, food and drink, fitness and pets.",
+  "pricing_note": "A monthly fee covering a set number of new edits, plus campaign planning, buying and reporting. Shoot days are quoted separately. Ad spend is paid to the platforms by you.",
+  "city": "Melbourne",
+  "contact_email": "cuts@jumpcut.social",
+  "year": "2026",
+  "services": [
+    { "title": "Short-form video ads", "description": "Scripted, shot and cut in vertical first, with a hook in the opening second, captions burned in and versions for every placement." },
+    { "title": "Creator edits", "description": "Footage from creators and customers recut into ads that keep their voice and add a clear offer and call to action." },
+    { "title": "Planning and buying", "description": "Campaigns set up across paid social and search, with budgets and audiences planned around which edits we want to learn from." },
+    { "title": "Weekly recuts", "description": "Every week we look at where people stop watching, then recut the hook, the order or the ending of the edits that are nearly working." }
+  ],
+  "specialties": ["Paid social", "Short-form video", "Creator ads", "Search ads", "Shopping ads", "Retargeting"],
+  "process": [
+    { "title": "Script the hooks", "description": "A call about your product and customers, then ten hooks and three scripts for you to pick from before anything is shot." },
+    { "title": "Shoot and cut", "description": "A half-day shoot or your existing footage, cut into a first round of edits with captions and sizes for every placement." },
+    { "title": "Run and recut", "description": "The edits go live, we watch the drop-off every week and recut what is close, so the ads keep getting better." }
+  ],
+  "proof": [
+    { "text": "The recuts are the point. Week four's version of an ad looks nothing like week one's, and it is better.", "source": "Founder, a pet food brand (sample)" },
+    { "text": "They showed us exactly where people stopped watching and what they changed because of it.", "source": "Marketing manager, a skincare brand (sample)" },
+    { "text": "Fast turnaround, clear captions, no fuss.", "source": "Owner, a coffee roaster (sample)" }
+  ],
+  "logos": ["Good Paws Kitchen", "Daybreak Skin", "Southside Roasters", "Lift Club", "Salt and Fern", "Little Wild Snacks"]
+}
