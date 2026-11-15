@@ -1,0 +1,111 @@
+{
+  "$comment": "Per agency type, the copy a filled site uses where the company has given none: true for any agency of the type, never a claim about a client. The platform fills company_name, city, contact_email and year from the company, and replaces intro, audience and pricing_note with the owner's setup answers when it has them. No proof and no logos: those only ever come from the company.",
+  "recruiting": {
+    "tagline": "Hires found from a written brief, agreed before we search",
+    "intro": "We find people for the roles you need to fill. Every search starts with a written brief, agreed with you before we approach a single candidate.",
+    "audience": "Companies hiring for roles where a good shortlist matters more than a long one, from first hires to senior leaders.",
+    "pricing_note": "Fees are agreed in writing before a search starts, and you know what you pay and when before we approach anyone.",
+    "services": [
+      { "title": "Contingent search", "description": "For single roles you are also hiring for directly. We send a short list of people we have spoken to, and you pay only if one of them joins." },
+      { "title": "Retained search", "description": "For senior and hard to fill roles. A dedicated search with a mapped market, a written update every week and a shortlist you can compare." },
+      { "title": "Team builds", "description": "When you need several people at once. One brief, one point of contact, and interviews planned around your team's week." },
+      { "title": "Role brief writing", "description": "We turn a loose headcount into a written role brief: scope, level, salary band and interview loop. Yours to keep, whoever you hire through." }
+    ],
+    "specialties": ["Engineering", "Product", "Design", "Sales", "Operations", "Leadership"],
+    "process": [
+      { "title": "Write the brief", "description": "We write the role up with the hiring manager: the work, the team, the band and the must haves. You sign it off before anyone is approached." },
+      { "title": "Search and screen", "description": "We approach people who match the brief, speak to each one ourselves and send a short list with a note on why each person fits." },
+      { "title": "Interview and close", "description": "We schedule interviews, gather feedback from both sides after each round and handle the offer until your new hire has signed." }
+    ]
+  },
+  "security-testing": {
+    "tagline": "Your product tested the way your customers use it",
+    "intro": "We test the journeys people take through your web and mobile products, such as sign up, checkout and settings, and send a plain report your developers can act on.",
+    "audience": "Product teams shipping web and mobile software, from a first release to a weekly release train.",
+    "pricing_note": "A fee per product, sized by how many journeys we cover and how often you release, agreed before the first run.",
+    "services": [
+      { "title": "Release checks", "description": "Before each release we run your agreed journeys end to end and report what passed, what broke and the exact steps to see it break." },
+      { "title": "New feature testing", "description": "We test a new flow while it is still in staging, including the odd paths: back buttons, expired sessions and half filled forms." },
+      { "title": "Device and browser coverage", "description": "Your key journeys on the phones, tablets and browsers your customers use, so what works on a laptop also works on an older phone." },
+      { "title": "Accessibility journey checks", "description": "We complete your main journeys with a keyboard and a screen reader and report where someone relying on them gets stuck." }
+    ],
+    "specialties": ["Sign up and log in", "Checkout and payments", "Account settings", "Mobile apps", "Browser coverage", "Accessibility"],
+    "process": [
+      { "title": "Map the journeys", "description": "We agree with you which journeys matter most and write each one down as steps, so every run checks the same thing." },
+      { "title": "Run the tests", "description": "We work through every journey on the devices and browsers you choose and record each issue with the steps to reproduce it." },
+      { "title": "Report and recheck", "description": "You get a plain report before you ship. Once a fix lands, we run the journey again and tell you it passes." }
+    ]
+  },
+  "market-research": {
+    "tagline": "Research that answers the question you need to decide on",
+    "intro": "We run market and customer research for teams with a decision to make. Every study starts from the question you need answered and ends with a plain written answer.",
+    "audience": "Founders, product and marketing teams who need evidence before they enter a market, launch a product or change a price.",
+    "pricing_note": "A fixed fee per study, set by its scope and agreed in writing before fieldwork starts.",
+    "services": [
+      { "title": "Market sizing", "description": "How big the market you are looking at is, who is in it and how it is changing, built up from sources we name." },
+      { "title": "Customer interviews", "description": "We talk to the people you want to sell to and report what they said, what they meant and what it means for your decision." },
+      { "title": "Competitor reviews", "description": "Who you are up against, what they offer and charge, and where they leave room for you." },
+      { "title": "Surveys", "description": "A survey designed around your question, sent to the right people, with the results read for you rather than handed over raw." }
+    ],
+    "specialties": ["Market sizing", "Customer interviews", "Competitor analysis", "Pricing research", "Surveys", "Desk research"],
+    "process": [
+      { "title": "Frame the question", "description": "We agree the decision the research supports and the question it has to answer, so the study stays on point." },
+      { "title": "Gather the evidence", "description": "We run the interviews, surveys and desk research the question needs, and keep every source so you can check it." },
+      { "title": "Write the answer", "description": "You get a short written answer to your question, the evidence behind it and what we would do next in your place." }
+    ]
+  },
+  "paid-ads": {
+    "tagline": "Paid ads that are tested, measured and plainly reported",
+    "intro": "We plan, make and run paid ads for businesses that want every dollar of spend accounted for, with a plain report on what worked.",
+    "audience": "Businesses ready to spend on paid search and social, from a first campaign to accounts that need a fresh pair of hands.",
+    "pricing_note": "A monthly management fee agreed before we start, kept separate from your ad spend, which you pay to the platforms directly.",
+    "services": [
+      { "title": "Campaign setup", "description": "Accounts, tracking and campaigns built properly from the start, so every result can be traced back to the ad that earned it." },
+      { "title": "Ad creative", "description": "Copy and simple visuals written for each platform and audience, with several versions so the best one can win." },
+      { "title": "Ongoing management", "description": "Budgets, bids and audiences adjusted every week from what the numbers say, not from habit." },
+      { "title": "Reporting", "description": "A plain report on what you spent, what it brought in and what we are changing next, in words as well as charts." }
+    ],
+    "specialties": ["Search ads", "Social ads", "Video ads", "Retargeting", "Landing pages", "Conversion tracking"],
+    "process": [
+      { "title": "Audit and plan", "description": "We look at what you have run before, agree the goal and the budget, and write a plan for the first month." },
+      { "title": "Build and launch", "description": "We set up tracking, write the ads and launch them, with each campaign named so its results are easy to read." },
+      { "title": "Test and report", "description": "We test new ads against the best ones, move budget to what works and report what changed and why." }
+    ]
+  },
+  "seo-geo": {
+    "tagline": "Found in search and in the answers people ask for",
+    "intro": "We help businesses get found when people search and when they ask AI assistants for a recommendation, with technical fixes, useful content and plain reporting.",
+    "audience": "Businesses that want more of their customers to find them through search and AI answers, from local services to online stores.",
+    "pricing_note": "A monthly fee agreed before we start, sized by the size of your site and how much new content you need.",
+    "services": [
+      { "title": "Technical audit", "description": "We check how search engines and AI crawlers read your site and fix what stops your pages being found, indexed or quoted." },
+      { "title": "Content", "description": "Pages and articles written to answer the questions your customers actually ask, in your voice and checked for accuracy." },
+      { "title": "AI answer visibility", "description": "We track whether AI assistants mention you when people ask about your field, and work on the pages that make them do so." },
+      { "title": "Reporting", "description": "A plain monthly report on rankings, mentions and visits, and what we are doing next to improve them." }
+    ],
+    "specialties": ["Technical SEO", "Content writing", "AI answer visibility", "Local search", "Site structure", "Reporting"],
+    "process": [
+      { "title": "Audit", "description": "We review your site, your rankings and how AI assistants describe you, and list the fixes in order of impact." },
+      { "title": "Fix and write", "description": "We make the technical fixes and publish content that answers your customers' questions better than anyone else." },
+      { "title": "Track and report", "description": "We measure what moved each month and tell you plainly what worked, what did not and what comes next." }
+    ]
+  },
+  "general": {
+    "tagline": "A small team that does the work and tells you how it went",
+    "intro": "We are an agency that takes on client work with a clear scope, a named point of contact and plain updates from the first week.",
+    "audience": "Businesses that want work done well by a team that answers quickly and writes things down.",
+    "pricing_note": "Every engagement is scoped and priced in writing before work starts, so you know what you pay and what you get.",
+    "services": [
+      { "title": "Project work", "description": "A piece of work with a clear scope, a fixed price and a date, delivered by the people you met at the start." },
+      { "title": "Ongoing support", "description": "A monthly arrangement for work that never quite stops, with a plan agreed each month and a report at the end of it." },
+      { "title": "Strategy sessions", "description": "A focused session to work through a problem with you and leave you with a written plan, whoever carries it out." },
+      { "title": "Reviews", "description": "A fresh look at work already done, with a plain list of what to keep, what to fix and what to stop." }
+    ],
+    "specialties": ["Strategy", "Planning", "Delivery", "Reporting", "Client service", "Project management"],
+    "process": [
+      { "title": "Agree the scope", "description": "We talk through what you need, then write down the scope, the price and the dates for you to approve." },
+      { "title": "Do the work", "description": "We get on with it and send a short update every week, so you always know where things stand." },
+      { "title": "Review together", "description": "We go through the result with you, fix what needs fixing and agree what, if anything, comes next." }
+    ]
+  }
+}

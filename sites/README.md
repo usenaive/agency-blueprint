@@ -11,6 +11,7 @@ then Publish), and the Marketing agent edits the copy from there.
 ```
 sites/
   placeholders.json        the one fill vocabulary, shared by all 30 sites
+  defaults.json            per agency type, the copy used where the company gave none
   fill.ts                  the fill: plain string replacement, no model
   preview.ts               fill with sample.json, then screenshot desktop + phone
   selfhost-fonts.ts        swap a Google Fonts <link> for woff2 files in assets/
@@ -67,6 +68,19 @@ subset of the keys; its manifest lists exactly the ones it uses. Placeholders ap
 node --experimental-strip-types sites/fill.ts sites/recruiting/1-brief /tmp/out values.json
 node --experimental-strip-types sites/preview.ts sites/recruiting/1-brief   # writes the two previews
 ```
+
+## defaults.json and the platform
+
+`defaults.json` holds, per agency type, every required value except the four the platform takes
+from the company (`company_name`, `city`, `contact_email`, `year`): copy true for any agency of
+that type, never a claim about a client. At activation the platform fills the chosen design from
+these defaults, with `intro`, `audience` and `pricing_note` replaced by the owner's setup answers
+(`about`, `markets`, `offer`) when it has them. No model writes the copy.
+
+The platform publishes this folder from a tag with
+`node scripts/publish-artifacts.mjs --sites --tag=vX.Y.Z --env=<env>` (vetta-mono): one tree per
+design, without the files that are not served, and an index naming every design with these
+defaults.
 
 ## Host head marker
 
