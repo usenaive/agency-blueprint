@@ -211,14 +211,15 @@ describe("provisionClientAgents", () => {
   it("slugs a member's `handoffs` list like its name, so the chain stays inside one client's crew", async () => {
     // The template writes `audit-runner → seo-writer → geo-optimizer`; the platform resolves a
     // handoff target by agent name, and this client's writer is `seo-writer--acme`, not the seat.
+    // Every member also reports to the agency's own `client-manager`, which is no crew seat and keeps its name.
     const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
       init?.method === "GET" ? json({ data: [] }) : json({ id: "agt_new" }));
     await provisionClientAgents(config, "acme", fetchImpl as typeof fetch, crew);
     const bodies = creates(fetchImpl).map(([, init]) => JSON.parse(String(init?.body)) as { name: string; handoffs: unknown });
     expect(bodies.map((b) => [b.name, b.handoffs])).toEqual([
-      ["seo-writer--acme", ["geo-optimizer--acme"]],
-      ["geo-optimizer--acme", false],
-      ["audit-runner--acme", ["seo-writer--acme"]],
+      ["seo-writer--acme", ["geo-optimizer--acme", "client-manager"]],
+      ["geo-optimizer--acme", ["client-manager"]],
+      ["audit-runner--acme", ["seo-writer--acme", "client-manager"]],
     ]);
   });
 
@@ -244,9 +245,9 @@ describe("provisionClientAgents", () => {
     const bodies = patches(fetchImpl).map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);
     // The whole declaration, slugged like a create — and without the name: a patch renames nothing.
     expect(bodies.map((b) => [b.handoffs, b.name])).toEqual([
-      [["geo-optimizer--acme"], undefined],
-      [false, undefined],
-      [["seo-writer--acme"], undefined],
+      [["geo-optimizer--acme", "client-manager"], undefined],
+      [["client-manager"], undefined],
+      [["seo-writer--acme", "client-manager"], undefined],
     ]);
     for (const [i, body] of bodies.entries()) {
       expect(body.system).toBe(crew[i]?.system);

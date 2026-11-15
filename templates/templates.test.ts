@@ -80,7 +80,11 @@ describe("every template of this blueprint", () => {
       expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
       expect([at, agent.description?.match(/[.!?](\s|$)/g)?.length]).toEqual([at, 2]);
       const n = words(agent.system ?? "");
-      expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
+      // 620 for seo-geo's client manager: it compiles each client job and asks once, a procedure it
+      // runs when a teammate reports in, so no intake or timer can carry it (folded in from the
+      // Client agency's SEO & GEO crew, 2026-11-15).
+      const cap = template.name === "seo-geo" && at === "client-manager" ? 620 : 400;
+      expect([at, n >= 150 && n <= cap]).toEqual([at, true]);
       expect([at, (agent.skills ?? []).length > 0]).toEqual([at, true]);
       for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
       expect([at, agent.intake?.budget_micro_usd]).toEqual([at, 20_000_000]);
@@ -220,8 +224,10 @@ describe("handoffs", () => {
   const CHAIN: Record<string, string[]> = {
     sales: ["proposal-writer"],
     "gap-researcher": ["content-writer"],
-    "audit-runner": ["seo-writer"],
-    "seo-writer": ["geo-optimizer"],
+    // Each search crew member also reports what it filed to the agency's client manager, which compiles the job.
+    "audit-runner": ["seo-writer", "client-manager"],
+    "seo-writer": ["geo-optimizer", "client-manager"],
+    "geo-optimizer": ["client-manager"],
     // product-design: the studio lead routes each brief; the two makers hand their file to the visualizer.
     "account-manager": ["designer", "engineer", "visualizer"],
     designer: ["visualizer"],
@@ -355,6 +361,37 @@ describe("seo-geo", () => {
     // The crew's model is the template's, not the server's — `server/proxy.ts` posts these as they
     // stand and decides nothing.
     for (const member of seoGeo.crew) expect(member.model).toBe(blank.agents[0]!.model);
+  });
+
+  /** Folded in from the Client agency's SEO & GEO crew (owner, 2026-11-15), which this template replaces. */
+  it("keeps every crew job to what was asked, and reports each one to the client manager", () => {
+    for (const member of seoGeo.crew) {
+      expect(member.system).toMatch(/never widen a job past what was asked, never send a teammate a piece for reference/);
+      expect(member.system).toMatch(/tell client-manager with send_to_agent \(wait false\), naming the client's cli_ id, the post_ ids you filed and what the request asked for/);
+    }
+    expect(seoGeo.crew.find((a) => a.name === "audit-runner")!.system).toMatch(/SEO writer[^.]*only if the request also asked for pages or articles/);
+    expect(seoGeo.crew.find((a) => a.name === "seo-writer")!.system).toMatch(/GEO optimizer[^.]*only if the request also asked for answer-engine work/);
+  });
+
+  it("has the client manager compile each client job into one file and ask the operator once", () => {
+    const manager = seoGeo.agents.find((a) => a.name === "client-manager")!;
+    const configs = manager.tools?.configs ?? {};
+    for (const tool of ["find_files", "fetch_file", "read", "write", "publish_file"]) expect([tool, configs[tool]?.permission]).toEqual([tool, "allow"]);
+    expect(configs["bash"]).toBeUndefined();
+    expect(manager.system).toMatch(/compile only once every piece the request asked for is filed.*while one is missing, compile nothing and announce nothing/);
+    expect(manager.system).toMatch(/a kind:report file already saved for this job is its deliverable, so never write a second/);
+    expect(manager.system).toMatch(/tags client:<the cli_ id> and kind:report/);
+    expect(manager.system).toMatch(/ask the operator once with ask_operator: "Ready for <client name>: <its title>\. Approve before it goes out\." One ask per client job/);
+    expect(manager.system).toMatch(/a piece filed after you asked goes into that same file .* with no second ask/);
+    // blank's client manager runs every client itself and compiles nothing.
+    expect(Object.keys(blank.agents.find((a) => a.name === "client-manager")!.tools?.configs ?? {})).not.toContain("publish_file");
+  });
+
+  it("keeps the CRM true: sales reads a lead's notes before writing and leaves a dated next action", () => {
+    const sales = seoGeo.agents.find((a) => a.name === "sales")!;
+    for (const text of [sales.intake?.message ?? "", sales.schedules?.[0]?.input ?? ""]) {
+      expect(text).toMatch(/read its notes with get_client .* next_action that has a date/);
+    }
   });
 
   it("widens over blank: it drops no agent blank declares", () => {

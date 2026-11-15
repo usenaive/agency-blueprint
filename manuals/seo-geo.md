@@ -1,12 +1,12 @@
 # 📖 SEO & GEO agency: Operator's Manual
 
-> 👋 This is how you run your search agency with its team. Start with Setup: three answers, then four things on day one.
+> 👋 This is how you run your search agency with its team. Start with Setup: four answers, then four things on day one.
 
 ## 🧭 Overview
 
 This company is an agency that wins search for its clients. It covers two kinds of search. SEO is ranking in the classic results. GEO is being cited when someone asks an AI engine the question.
 
-A team of agents finds and signs clients, audits each client's site, writes the pages and articles that should rank, and tunes them so AI answers cite them. A CRM holds every lead and client. Every email waits for your yes, and every piece of client work waits for your review.
+A team of agents finds and signs clients, audits each client's site, writes the pages and articles that should rank, and tunes them so AI answers cite them. Your dashboard holds the CRM, the approval queue and your public site. Every email waits for your yes, and every piece of client work waits for your review.
 
 **You:** say what you sell, to whom, and which competitors your clients lose to. Approve emails and review each audit, article and answer block. Take the calls the team books, and own each client relationship.
 
@@ -14,49 +14,58 @@ A team of agents finds and signs clients, audits each client's site, writes the 
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer four questions. Every agent reads them before each run.
 
-- **What does your agency do, and for whom?** Name the buyer: "Search for dental clinics in the UK."
-- **What do you sell, and for about how much?** Your offer and its rough price, as you would quote it. The team quotes only this.
-- **Which three competitors do your clients lose to in search?** Real domains. The audit runner compares every client against them.
+- **Your public name, a verified inbox and how you price.** The site uses these. Nothing is priced that you did not say.
+- **What does your agency sell, SEO, GEO, content, and to whom?** Name the buyer: "Search for dental clinics in the UK."
+- **Who is your ideal client?** Industry, size, place. Sales builds its first list from this.
+- **Which three competitors do your clients lose to in search?** Real domains. The gap researcher compares your site against them.
 
 On day one:
 
 - [ ] Connect your email domain, so the team writes from your address.
-- [ ] Read the first ten leads Sales finds. Mark the good ones and say why the others miss.
-- [ ] Approve the first email to a lead, or rewrite it the way you would say it.
+- [ ] Approve the site builder's rewrite of your public site.
+- [ ] Read the first leads Sales finds. Mark the good ones and say why the others miss.
 - [ ] Add any client you already have to the CRM, with their domain and what you do for them.
 
 > ⚠️ Never promise a ranking or a citation. No one controls either. Sell the work and the reporting, not a position.
 
 ## 🤝 Agent team configuration
 
-Each seat does one job and hands work on through the board.
+Seven agents run the agency, a paid-media planner proposes ads, and each client gets a team of three when you move it to active.
 
-- **Sales** finds leads that fit your answer, writes a short first email, follows up and books the first call. Tell it which sites to skip.
-- **Client manager** runs each client: the kickoff, the calls, the weekly update and the renewal. It drafts each update and asks before it sends.
-- **Audit runner** audits each client's site and rankings. It ranks issues worst first and hands the missing pages to the SEO writer when the card asks for pages. Ask it "what are the three worst issues for this client?"
-- **SEO writer** writes briefs, articles and landing pages, one search query each. It works from the audit and the client's own facts. Ask it for the brief first when a page matters.
-- **GEO optimizer** tunes pages to be cited by AI answers: short answer blocks, clear entities, schema and an llms.txt file. It works on pages that already exist.
-- **Marketing** writes your own posts and case studies. Give it a real result with the client's yes. It never invents one.
+- **Sales** finds leads that fit your answer. Before each first email it audits the lead's public site: what it ranks for and whether AI answers cite it. It writes the opener from one finding, keeps a dated next step on every lead and follows up. Tell it which sites to skip.
+- **Client manager** runs each client: the kickoff, the weekly check-in and the referral ask. It compiles each client job into one file for your review.
+- **Site builder** keeps your public site true to your answers. Every change waits for you.
+- **Content writer** and **content reviser** write and sharpen your own blog, one search query a post.
+- **Gap researcher** compares your site with the three competitors you named, every Friday.
+- **Proposal writer** turns a qualified lead into a proposal, priced only from what you said.
+- **Paid-media planner** proposes paid search and social plans. It never launches or spends.
+
+Each client's team:
+
+- **Audit runner** audits the client's site and rankings, worst issue first. Ask it "what are the three worst issues for this client?"
+- **SEO writer** writes briefs, articles and landing pages, one search query each, from the audit and the client's own facts.
+- **GEO optimizer** tunes pages to be cited by AI answers: short answer blocks, clear entities, schema and an llms.txt file.
 
 ## 🗓️ Scheduling & automation
 
 The team works on timers. Between them, nothing runs and nothing spends.
 
-- **Each weekday morning:** the pipeline pass. Sales finds new leads, writes follow-ups and moves leads in the CRM.
-- **Every Monday:** the week ahead. The client manager plans each client's week and drafts the updates.
+- **Each weekday morning:** the pipeline pass. Sales reads the inbox, files replies and drafts follow-ups.
+- **Every Monday:** the client check-in. The client manager reviews each client's calendar and drafts the update.
+- **Tuesdays and Thursdays:** a new post for your own blog. **Wednesday:** the three weakest pages get a revision. **Friday:** the competitor gap report.
 
-Client work runs when a card asks for it. For a new client, usually:
+Client work runs when you ask a client's team for it. For a new client, usually:
 
 1. The audit runner audits the site and files the report.
-2. It opens a card per missing page for the SEO writer.
+2. If you asked for pages too, it hands the missing pages to the SEO writer.
 3. The SEO writer writes each page and files it for review.
-4. The GEO optimizer adds answer blocks and schema to approved pages.
+4. If you asked for answer-engine work, the GEO optimizer tunes those pages.
 
-The team does only the pieces the card asks for. Ask for an audit alone and no pages are written.
+The team does only what you asked. Ask for an audit alone and no pages are written.
 
-The client manager compiles the finished pieces into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. Each page still goes live from the SEO & GEO app.
+Each member tells the client manager what it filed. Once every piece you asked for is in, the client manager compiles them into one file and asks you once to approve it. A piece that comes later goes into the same file, with no second ask. Each draft still waits for its own approval in the queue, and nothing reaches the client until you approve it.
 
 To audit every client each month, ask the CEO to add a monthly timer for the audit runner. Each timer has a cap per run.
 
