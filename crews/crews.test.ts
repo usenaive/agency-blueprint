@@ -121,6 +121,8 @@ describe("the Client agency (clients)", () => {
     expect([blank.title, blank.agents]).toEqual(["Blank agency", []]);
     expect(blank.mini_apps).toEqual(base.mini_apps);
     expect(blank.questions).toEqual(base.questions);
+    // QA NEW-57: the listing named two of its four apps.
+    for (const app of blank.mini_apps ?? []) expect(blank.description).toContain(app.name);
   });
 });
 

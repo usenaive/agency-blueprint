@@ -4,7 +4,7 @@
   "blueprint": "clients-blank",
   "template": "agency",
   "title": "Blank agency",
-  "description": "An agency's CRM and calendar with no team yet. Tell your CEO what you sell and it hires who you need.",
+  "description": "An agency with its CRM, Calendar, Ads and SEO & GEO apps and no team yet. Tell your CEO what you sell and it hires who you need.",
   "roadmap": {
     "day_one": "Tell your CEO what you sell and who you need",
     "every_day": "What your team does is up to you"
