@@ -9,7 +9,6 @@
     document.querySelectorAll('.cols-overlay span').forEach((s, i) => s.style.setProperty('--i', i));
     btn.addEventListener('click', () => {
       const on = root.classList.toggle('show-grid');
-      btn.setAttribute('aria-pressed', String(on));
       btn.lastElementChild.textContent = on ? 'Hide the grid' : 'Show the grid';
     });
   }

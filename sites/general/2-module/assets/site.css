@@ -39,7 +39,7 @@ button { font: inherit; color: inherit; }
 .nav a span, .foot__up span, .mail span { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 0.45s var(--settle); }
 .gridbtn { grid-column: 11 / span 2; justify-self: end; display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; background: none; border: 0; cursor: pointer; white-space: nowrap; }
 .gridbtn__ic { width: 14px; height: 14px; background: repeating-linear-gradient(90deg, var(--ink) 0 1.5px, transparent 1.5px 4.5px); transition: transform 0.5s var(--settle); }
-.gridbtn[aria-pressed="true"] .gridbtn__ic { transform: rotate(90deg); background: repeating-linear-gradient(90deg, var(--green) 0 1.5px, transparent 1.5px 4.5px); }
+.show-grid .gridbtn__ic { transform: rotate(90deg); background: repeating-linear-gradient(90deg, var(--green) 0 1.5px, transparent 1.5px 4.5px); }
 
 /* Hero */
 .hero { padding-block: clamp(40px, 6vw, 96px) clamp(56px, 7vw, 112px); row-gap: 0; align-items: start; }
