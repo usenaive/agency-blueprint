@@ -128,7 +128,7 @@ h1 { margin-top: 18px; font: 400 clamp(3.25rem, 0.6rem + 7.4vw, 9.5rem)/0.88 var
 .flyer h2 { margin-top: 18px; font: 400 clamp(2.75rem, 1rem + 5.6vw, 6.5rem)/0.9 var(--display); text-transform: uppercase; overflow-wrap: anywhere; }
 .flyer__body > p:not([class]) { max-width: 30em; margin: 20px auto 0; font-size: 1.1875rem; font-weight: 500; }
 .flyer__mail { margin-top: 22px; font-weight: 700; overflow-wrap: anywhere; }
-.flyer__mail a { text-decoration-thickness: 2px; text-underline-offset: 4px; transition: text-underline-offset 0.3s var(--ease); }
+.flyer__mail a { display: inline-block; padding-block: 3px; text-decoration-thickness: 2px; text-underline-offset: 4px; transition: text-underline-offset 0.3s var(--ease); }
 .flyer__city { margin-top: 6px; color: var(--muted); font-size: 0.9375rem; overflow-wrap: anywhere; }
 .tabs { position: relative; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); border-top: 2px dashed #8e877b; }
 .tabs li { display: grid; place-items: center; height: 150px; border-right: 2px dashed #8e877b; font: 700 0.875rem/1 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; }
@@ -142,7 +142,7 @@ h1 { margin-top: 18px; font: 400 clamp(3.25rem, 0.6rem + 7.4vw, 9.5rem)/0.88 var
 
 @media (hover: hover) {
   .brand:hover { transform: rotate(1deg) scale(1.03); }
-  .nav a:hover { transform: rotate(0deg) translateY(-3px); background: var(--yellow); }
+  .nav li:nth-child(n) a:hover { transform: rotate(0deg) translateY(-3px); background: var(--yellow); }
   .btn:hover { transform: translate(-2px, -2px) rotate(-1deg); box-shadow: 8px 8px 0 var(--pink); }
   .btn--ink:hover { box-shadow: 8px 8px 0 var(--blue); }
   .btn:hover i { transform: translateX(5px); }

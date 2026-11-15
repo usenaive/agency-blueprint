@@ -82,7 +82,7 @@ h1 { margin-top: 18px; max-width: 11em; font: 900 clamp(2.75rem, 0.6rem + 6vw, 7
 .c-v.clip { background: var(--v); }
 .c-t.clip { background: var(--t); }
 .c-a.clip { background: var(--a); }
-.clip__tc { font: 500 0.6875rem/1 var(--mono); opacity: 0.75; }
+.clip__tc { font: 500 0.6875rem/1 var(--mono); }
 .clip__l { margin-top: 4px; font: 800 0.9375rem/1.15 var(--sans); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .clip.is-on { box-shadow: 0 0 0 2px var(--ink); transform: translateY(-2px); }
 .wave { height: 40px; border-radius: 6px; background: rgb(63 208 181 / 0.12);
@@ -144,7 +144,7 @@ h2 { max-width: 16em; font: 850 clamp(2rem, 1rem + 2.6vw, 3.75rem)/1 var(--sans)
 .contact h2 { margin-top: 18px; max-width: 13em; font-size: clamp(2.5rem, 1rem + 4.6vw, 6rem); line-height: 0.95; letter-spacing: -0.05em; }
 .btn--big { font-size: 1.125rem; padding: 17px 26px; }
 .contact__mail { margin-top: 22px; font-size: 1rem; overflow-wrap: anywhere; }
-.contact__mail a { text-decoration-color: var(--r); text-decoration-thickness: 2px; text-underline-offset: 4px; transition: text-underline-offset 0.3s var(--ease); }
+.contact__mail a { display: inline-block; padding-block: 3px; text-decoration-color: var(--r); text-decoration-thickness: 2px; text-underline-offset: 4px; transition: text-underline-offset 0.3s var(--ease); }
 
 .foot { background: var(--panel); border-top: 1px solid var(--line); }
 .foot__in { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding-block: 22px; font-weight: 600; font-size: 0.9375rem; }

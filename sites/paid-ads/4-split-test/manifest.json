@@ -67,14 +67,15 @@
   ],
   "jury": {
     "critic": {
-      "design": 1,
-      "usability": 1,
-      "creativity": 1,
-      "content": 1,
-      "overall": 1
+      "design": 7.5,
+      "usability": 7.5,
+      "creativity": 8,
+      "content": 7.5,
+      "overall": 7.6
     },
-    "estimate": 0,
+    "estimate": 8.7,
     "independent": false,
-    "date": "pending"
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with sample and long.json, no tap target under 24 px, every focus stop visible, skip link first, nothing moving under reduced motion). No blind critic was run for this batch. The draggable A/B split is the idea itself, not decoration, and the method fork carries it through. The page below the hero is quieter and closer to a clean product page, so design is held at 7.5."
   }
 }
