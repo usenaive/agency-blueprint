@@ -34,7 +34,7 @@ On day one:
 - **Sales and Client manager.** Sales finds brands that fit, writes to them and books calls. The client manager runs each client: kickoff, calls, weekly update and renewal. Both ask before any email goes out.
 - **Media planner** audits each client's ad accounts, read only, and writes the campaign plan the creative is made for: audience, offer, budget split and what to test.
 - **Creative director** writes each client's creative brief and three campaign concepts from the client's goals, brand and past ads.
-- **Copywriter** writes headlines, body copy and scripts for each concept, for each placement.
+- **Copywriter** writes headlines, body copy and scripts for each concept, for each placement. Each copy set lands in the Ads app for review.
 - **Designer** makes the static ads for each concept in every size the brief names. Each lands in the Ads app for review.
 - **Video producer** makes short video ads from the scripts, with voice-over and music. Every render waits for your yes, because renders cost the most.
 - **Performance analyst** reports each week on each client's spend, results and cost against the plan, and names the one decision needed.
@@ -54,9 +54,9 @@ Client work runs when a card asks for it. For a new campaign:
 5. You review every ad in the Ads app.
 6. You or the client launch it.
 
-The team does only the pieces the card asks for. Ask for a plan alone and no creative is made. Ask for copy alone and no ads are made.
+The team does only the pieces the card asks for. Ask for a plan alone and no creative is made. Ask for copy alone and no pictures or videos are made; the copy still waits in the Ads app.
 
-The client manager compiles the written pieces, such as the plan, the brief and the copy, into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The ads themselves are approved in the Ads app only, not asked twice.
+The client manager compiles the written pieces, such as the plan, the brief and the copy, into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The ads themselves are approved in the Ads app only, not asked twice. Copy is in both: in that file, for the client, and in the Ads app, where its stage says whether it may run.
 
 Once a campaign is live, ask the CEO to add a weekly timer for the performance analyst.
 
