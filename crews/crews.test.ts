@@ -132,6 +132,14 @@ describe("the Client agency (clients)", () => {
     for (const tool of ["write", "publish_file", "generate_image", "fetch_file"]) expect([tool, permission(marketing, tool)]).toEqual([tool, "allow"]);
   });
 
+  // QA NEW-53: a draft "awaiting your approval" in a done card's note raised nothing in Needs you.
+  it.each(["clients", "clients-advertising", "clients-recruiting", "clients-research", "clients-security"])("has %s's Marketing ask for a yes on every piece, not leave it in a card note", async (crew) => {
+    const marketing = await seat(crew, "Marketing");
+    expect(permission(marketing, "ask_operator")).toBe("allow");
+    expect(marketing.system).toContain('call ask_operator once with the prompt "Ready to post: <its title>. Approve before it goes out."');
+    expect(marketing.system).toContain("never only in a card's note");
+  });
+
   it("has a blank twin: the same four apps and questions, and no crew", async () => {
     const [base, blank] = [await configOf("clients"), await configOf("clients-blank")];
     expect([blank.title, blank.agents]).toEqual(["Blank agency", []]);
