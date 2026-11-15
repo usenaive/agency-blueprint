@@ -1,0 +1,28 @@
+{
+  "company_name": "Halden Pike Research",
+  "tagline": "Know the size of the prize before you spend a pound chasing it",
+  "intro": "We size markets, take competitors apart and listen to customers, then write it up as a report your board will read to the end. Every figure comes with its source and every claim with its working.",
+  "audience": "Founders, strategy leads and investors at UK and Irish B2B software and fintech companies, from a first market entry to a Series B board pack.",
+  "pricing_note": "A fixed fee per study, agreed before we start and paid in two halves. Most studies run four to eight weeks. Quarterly tracking is quoted as a retainer.",
+  "city": "London",
+  "contact_email": "desk@haldenpike.co.uk",
+  "year": "2026",
+  "services": [
+    { "title": "Market sizing", "description": "Top-down and bottom-up estimates of your total, reachable and winnable market, with every assumption written down so you can change one and see what moves." },
+    { "title": "Competitor teardowns", "description": "We sign up, buy, sit through sales calls and read the job ads of up to eight rivals, then lay out their pricing, positioning and gaps side by side." },
+    { "title": "Voice of the customer", "description": "Twenty to forty recorded interviews with buyers, churned accounts and lost deals, coded by theme, with the quotes that explain why people choose, stay or leave." },
+    { "title": "Market entry briefs", "description": "A short report on one new country or segment: who buys, who already sells, what it costs to get in, and what would make us tell you to wait." }
+  ],
+  "specialties": ["B2B software", "Payments and fintech", "Insurance", "Developer tools", "Vertical SaaS", "Entering the EU market"],
+  "process": [
+    { "title": "Agree the question", "description": "One call to pin down the decision the research has to inform, the markets in scope and the date you need it by. It goes into a one-page brief you sign off." },
+    { "title": "Gather the evidence", "description": "Desk research, pricing pages, filings, expert calls and customer interviews, all logged in a source list that comes with the report." },
+    { "title": "Write the finding", "description": "A report that leads with the answer, shows the working behind every figure and ends with what we would do next. We present it live, then it is yours to keep." }
+  ],
+  "proof": [
+    { "text": "The first sizing model our board did not argue with, because every input was on the page.", "source": "Chief executive, a London payments start-up (sample)" },
+    { "text": "Their teardown changed how we priced our middle tier.", "source": "Head of product, a Dublin insurance platform (sample)" },
+    { "text": "Thirty interviews, one clear reason customers were leaving, and it was not the one we had guessed." }
+  ],
+  "logos": ["Fernhill Payments", "Corriedale Insurance", "Ledgerline", "Tidewell Software", "Castlebar Capital", "Quayside Health"]
+}
