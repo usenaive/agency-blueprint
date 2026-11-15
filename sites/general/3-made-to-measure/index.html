@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Made to measure</title>
+<meta name="description" content="{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="head wrap" id="top">
+  <a class="brand" href="#top"><span class="brand__knot" aria-hidden="true"></span><span>{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#bench">On the bench</a></li>
+      <li><a href="#how">How it goes</a></li>
+      <li><a href="#terms">Terms</a></li>
+      <li><a class="patch patch--sm" href="#write"><span>Start a commission</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero wrap" aria-labelledby="h1">
+    <div class="hero__text">
+      <p class="eyebrow">A small studio in {{city}}</p>
+      <h1 id="h1">{{tagline}}</h1>
+      <p class="hero__intro">{{intro}}</p>
+      <a class="patch" href="#write"><span>Start a commission</span></a>
+    </div>
+    <figure class="hoop" aria-hidden="true">
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <circle class="hoop__wood" cx="200" cy="200" r="184"/>
+        <circle class="hoop__cloth" cx="200" cy="200" r="168"/>
+        <circle class="hoop__inner" cx="200" cy="200" r="168"/>
+        <path class="hoop__weave" d="M40 120h320M32 160h336M32 200h336M32 240h336M40 280h320M120 40v320M160 32v336M200 32v336M240 32v336M280 40v320"/>
+        <rect class="hoop__clamp" x="186" y="2" width="28" height="22" rx="4"/>
+        <g class="hoop__stitch">
+          <text x="200" y="186" text-anchor="middle">made to</text>
+          <text x="200" y="252" text-anchor="middle">measure</text>
+        </g>
+        <path class="hoop__thread" d="M318 300c22 26 40 54 62 70"/>
+        <g class="hoop__needle"><path d="M300 282l58 -58" /><circle cx="354" cy="228" r="4"/></g>
+      </svg>
+    </figure>
+  </section>
+
+  <section class="stamps wrap" aria-labelledby="stamps-h">
+    <h2 id="stamps-h" class="small-h">What we work in</h2>
+    <ul class="stamps__list">
+      <li><span>{{specialties[0]}}</span></li>
+      <li><span>{{specialties[1]}}</span></li>
+      <li><span>{{specialties[2]}}</span></li>
+      <li><span>{{specialties[3]}}</span></li>
+      <li><span>{{specialties[4]}}</span></li>
+      <li><span>{{specialties[5]}}</span></li>
+    </ul>
+  </section>
+
+  <section class="bench" id="bench" aria-labelledby="bench-h">
+    <div class="wrap">
+      <h2 id="bench-h" class="sec-h">On the bench</h2>
+      <p class="sec-lede">Four kinds of work, each cut to fit the client in front of us.</p>
+      <ul class="tags">
+        <li class="tag" style="--r:-2.5deg"><span class="tag__n">No. 1</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+        <li class="tag" style="--r:1.8deg"><span class="tag__n">No. 2</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+        <li class="tag" style="--r:-1.2deg"><span class="tag__n">No. 3</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+        <li class="tag" style="--r:2.4deg"><span class="tag__n">No. 4</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="how wrap" id="how" aria-labelledby="how-h">
+    <h2 id="how-h" class="sec-h">How a commission goes</h2>
+    <div class="seam">
+      <div class="seam__line" aria-hidden="true"><span class="seam__sewn"></span></div>
+      <ol class="seam__steps">
+        <li><span class="seam__n" aria-hidden="true">1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+        <li><span class="seam__n" aria-hidden="true">2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+        <li><span class="seam__n" aria-hidden="true">3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="terms wrap" id="terms" aria-labelledby="terms-h">
+    <h2 id="terms-h" class="visually-hidden">Terms</h2>
+    <div class="pattern">
+      <h3 class="small-h">Who we make for</h3>
+      <p>{{audience}}</p>
+    </div>
+    <div class="ticket">
+      <h3 class="small-h">How we charge</h3>
+      <p>{{pricing_note}}</p>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="notes wrap" aria-labelledby="notes-h">
+    <h2 id="notes-h" class="sec-h">Notes from clients</h2>
+    <div class="notes__row">
+      {{#if proof[0]}}<figure class="card" style="--r:-1.5deg"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure class="card" style="--r:1.2deg"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure class="card" style="--r:-0.6deg"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="made wrap" aria-labelledby="made-h">
+    <h2 id="made-h" class="small-h">Made for</h2>
+    <ul class="made__list">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="write wrap" id="write" aria-labelledby="write-h">
+    <div class="write__panel">
+      <h2 id="write-h" class="sec-h">Start a commission</h2>
+      <p>Tell us what needs making, fixing or running, and roughly when. We will write back with how we would go about it and what it would cost.</p>
+      <a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
+      <p class="write__where">{{company_name}}, {{city}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="up" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>
