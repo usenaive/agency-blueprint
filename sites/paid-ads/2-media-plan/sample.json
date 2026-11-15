@@ -1,0 +1,28 @@
+{
+  "company_name": "Ledger and Lane",
+  "tagline": "Paid media, planned week by week before a penny is spent",
+  "intro": "We are a small media planning and buying team for retailers and subscription brands. We write the plan first, make the creative to fit it, buy the media and report against the plan every week.",
+  "audience": "Retailers and subscription brands in the UK and Ireland spending on paid social, search and shopping for the first or second year, with a marketing team of one to five people.",
+  "pricing_note": "A planning fee for the first plan, then a monthly management fee tied to your media budget band. Creative is quoted per round. Media is billed to you at cost, with no mark-up.",
+  "city": "Manchester",
+  "contact_email": "plans@ledgerandlane.co.uk",
+  "year": "2026",
+  "services": [
+    { "title": "Media plans and flighting", "description": "A quarter on one sheet: which channels, which weeks, what budget in each and what we expect to learn before we move money." },
+    { "title": "Creative and copy", "description": "Ads written and designed for each line of the plan, in every size the placements ask for, with two or three angles to test in each round." },
+    { "title": "Buying and optimisation", "description": "Campaigns built, launched and adjusted by hand every few days, with every change logged so you can see what was moved and why." },
+    { "title": "Weekly plan-versus-actual", "description": "Every Friday, the plan beside what actually ran and what it returned, with the two or three changes we will make next week." }
+  ],
+  "specialties": ["Paid social", "Search ads", "Shopping ads", "Short-form video", "Retargeting", "Seasonal launches"],
+  "process": [
+    { "title": "Test the angles", "description": "Small budgets across channels and three creative angles each, so we learn where your customers are and what makes them click." },
+    { "title": "Back the winners", "description": "Money moves to the channels and messages that earned it, and the next round of creative builds on what worked." },
+    { "title": "Scale with care", "description": "Budgets rise step by step, with the plan updated each week so spend never runs ahead of what the numbers support." }
+  ],
+  "proof": [
+    { "text": "For the first time our ad spend had a plan we could show the board, and a report that matched it.", "source": "Marketing director, a homeware retailer (sample)" },
+    { "text": "The Friday sheet is the most useful thing in my inbox.", "source": "Founder, a coffee subscription (sample)" },
+    { "text": "They log every change they make, so nothing about our account is a mystery.", "source": "Head of ecommerce, a fashion brand (sample)" }
+  ],
+  "logos": ["Copper Kettle Home", "Northern Roast", "Weft and Warp", "Peak Provisions", "Hollow Oak Toys", "Bramble Beauty"]
+}
