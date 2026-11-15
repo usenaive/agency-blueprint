@@ -1,0 +1,71 @@
+{
+  "company_name": "Northbound Talent",
+  "tagline": "Operations and supply chain hires for the Midwest",
+  "intro": "We recruit the people who keep freight moving: warehouse leaders, demand planners and transport managers for distributors, manufacturers and 3PLs across the Midwest.",
+  "audience": "Distributors, manufacturers and third-party logistics operators in Illinois, Indiana, Wisconsin, Ohio and Michigan, hiring from shift supervisor up to director.",
+  "pricing_note": "A percentage of first-year base salary, invoiced when your hire starts. Director searches are retained and billed in three parts.",
+  "city": "Chicago",
+  "contact_email": "desk@northboundtalent.com",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Contingent search",
+      "description": "Supervisor and manager roles on the warehouse floor and in the planning office. You pay a fee only when you hire someone we introduced."
+    },
+    {
+      "title": "Retained director search",
+      "description": "A dedicated search for directors and heads of operations, with a map of who holds similar jobs in your region and a weekly shortlist call."
+    },
+    {
+      "title": "Peak season leadership",
+      "description": "Shift leads and area managers hired in late summer, so your fourth quarter team is trained before the volume arrives."
+    },
+    {
+      "title": "Pay and market briefings",
+      "description": "Salary ranges and candidate availability for one role in one location, written up before you open the requisition."
+    }
+  ],
+  "specialties": [
+    "Warehouse operations managers",
+    "Distribution center leadership",
+    "Demand and supply planners",
+    "Transport and fleet managers",
+    "Procurement and buying",
+    "Continuous improvement leads"
+  ],
+  "process": [
+    {
+      "title": "Brief",
+      "description": "A half-hour call on the role, the site, the shift pattern and the pay range. We write the job brief and send it back for your sign-off."
+    },
+    {
+      "title": "Shortlist",
+      "description": "We search, screen and interview, then send a short list of candidates with notes on each one and what they expect to earn."
+    },
+    {
+      "title": "Offer and start",
+      "description": "We set up interviews, take references, handle the offer conversation and keep in touch with your new hire until their first shift."
+    }
+  ],
+  "proof": [
+    {
+      "text": "Filled two night-shift operations managers before peak season.",
+      "source": "Regional director, a Midwest 3PL (sample)"
+    },
+    {
+      "text": "Their planners understood our ERP on day one.",
+      "source": "COO, a food distributor (sample)"
+    },
+    {
+      "text": "Clear weekly updates, every role, every week."
+    }
+  ],
+  "logos": [
+    "Lakeshore Freight",
+    "Prairie Cold Chain",
+    "Ironline 3PL",
+    "Crossdock Supply",
+    "Heartland Parts",
+    "Riverbend Foods"
+  ]
+}

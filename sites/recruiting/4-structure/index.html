@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Recruiting</title>
+<meta name="description" content="Recruiting from {{city}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="page top__in">
+    <a class="brand" href="#top"><span class="node node--root" aria-hidden="true"></span><span class="brand__name">{{company_name}}</span></a>
+    <nav class="nav" aria-label="Primary">
+      <ul>
+        <li><a class="draw" href="#services">Services</a></li>
+        <li><a class="draw" href="#process">Process</a></li>
+        <li><a class="draw" href="#fees">Fees</a></li>
+        <li><a class="draw" href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--solid top__cta" href="mailto:{{contact_email}}">Send us a role<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="sec hero" id="top" data-connect>
+    <div class="page g">
+      <div class="hero__text">
+        <div class="head"><span class="node" aria-hidden="true"></span><p class="mono">Recruiting from {{city}}</p></div>
+        <h1>{{tagline}}</h1>
+        <p class="lede">{{intro}}</p>
+        <div class="ctas">
+          <a class="btn btn--solid" href="mailto:{{contact_email}}">Send us a role<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+          <a class="btn" href="#process">How a search runs<svg class="arr arr--down" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+        </div>
+      </div>
+
+      <figure class="chart pre" aria-labelledby="chart-cap">
+        <div class="chart__root"><span class="sq sq--on" aria-hidden="true"></span><span class="mono">Your company</span></div>
+        <ul class="chart__seats">
+          <li class="seat"><span class="seat__tag mono" aria-hidden="true"><span class="sq"></span><span class="seat__st"></span></span><span class="seat__role">{{specialties[0]}}</span></li>
+          <li class="seat"><span class="seat__tag mono" aria-hidden="true"><span class="sq"></span><span class="seat__st"></span></span><span class="seat__role">{{specialties[1]}}</span></li>
+          <li class="seat"><span class="seat__tag mono" aria-hidden="true"><span class="sq"></span><span class="seat__st"></span></span><span class="seat__role">{{specialties[2]}}</span></li>
+          <li class="seat"><span class="seat__tag mono" aria-hidden="true"><span class="sq"></span><span class="seat__st"></span></span><span class="seat__role">{{specialties[3]}}</span></li>
+          <li class="seat"><span class="seat__tag mono" aria-hidden="true"><span class="sq"></span><span class="seat__st"></span></span><span class="seat__role">{{specialties[4]}}</span></li>
+          <li class="seat"><span class="seat__tag mono" aria-hidden="true"><span class="sq"></span><span class="seat__st"></span></span><span class="seat__role">{{specialties[5]}}</span></li>
+        </ul>
+        <figcaption id="chart-cap" class="mono">The seats we recruit for</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec services" id="services" aria-labelledby="services-h" data-connect>
+    <div class="page">
+      <div class="head"><span class="node" aria-hidden="true"></span><h2 id="services-h">Services</h2></div>
+      <ul class="rows">
+        <li class="row g"><span class="node node--sub" aria-hidden="true"></span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+        <li class="row g"><span class="node node--sub" aria-hidden="true"></span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+        <li class="row g"><span class="node node--sub" aria-hidden="true"></span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+        <li class="row g"><span class="node node--sub" aria-hidden="true"></span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec audience" aria-labelledby="audience-h" data-connect>
+    <div class="page g">
+      <div class="head"><span class="node" aria-hidden="true"></span><h2 id="audience-h">Who we work with</h2></div>
+      <p class="statement">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="sec process" id="process" aria-labelledby="process-h" data-connect>
+    <div class="page">
+      <div class="head"><span class="node" aria-hidden="true"></span><h2 id="process-h">How a search runs</h2></div>
+      <ol class="steps g">
+        <li class="step"><span class="node node--sub" aria-hidden="true"></span><span class="step__n mono">Step 1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+        <li class="step"><span class="node node--sub" aria-hidden="true"></span><span class="step__n mono">Step 2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+        <li class="step"><span class="node node--sub" aria-hidden="true"></span><span class="step__n mono">Step 3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec fees" id="fees" aria-labelledby="fees-h" data-connect>
+    <div class="page g">
+      <div class="head"><span class="node" aria-hidden="true"></span><h2 id="fees-h">Fees</h2></div>
+      <div class="fees__note">
+        <p class="fees__text">{{pricing_note}}</p>
+        <p class="fees__aside">Terms are agreed in writing before a search starts.</p>
+      </div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec fees refs" aria-labelledby="refs-h" data-connect>
+    <div class="page g">
+      <div class="head"><span class="node" aria-hidden="true"></span><h2 id="refs-h">References</h2></div>
+      <div class="fees__note">
+        <ul class="refs__list">
+          {{#if proof[0]}}<li class="ref"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<p class="mono ref__src">{{proof[0].source}}</p>{{/if}}</li>{{/if}}
+          {{#if proof[1]}}<li class="ref"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<p class="mono ref__src">{{proof[1].source}}</p>{{/if}}</li>{{/if}}
+          {{#if proof[2]}}<li class="ref"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<p class="mono ref__src">{{proof[2].source}}</p>{{/if}}</li>{{/if}}
+        </ul>
+      </div>
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec fees refs" aria-labelledby="clients-h" data-connect>
+    <div class="page g">
+      <div class="head"><span class="node" aria-hidden="true"></span><h2 id="clients-h">Seats filled at</h2></div>
+      <div class="fees__note">
+        <ul class="chips">
+          {{#if logos[0]}}<li class="seat-chip"><span class="sq" aria-hidden="true"></span>{{logos[0]}}</li>{{/if}}
+          {{#if logos[1]}}<li class="seat-chip"><span class="sq" aria-hidden="true"></span>{{logos[1]}}</li>{{/if}}
+          {{#if logos[2]}}<li class="seat-chip"><span class="sq" aria-hidden="true"></span>{{logos[2]}}</li>{{/if}}
+          {{#if logos[3]}}<li class="seat-chip"><span class="sq" aria-hidden="true"></span>{{logos[3]}}</li>{{/if}}
+          {{#if logos[4]}}<li class="seat-chip"><span class="sq" aria-hidden="true"></span>{{logos[4]}}</li>{{/if}}
+          {{#if logos[5]}}<li class="seat-chip"><span class="sq" aria-hidden="true"></span>{{logos[5]}}</li>{{/if}}
+        </ul>
+      </div>
+    </div>
+  </section>{{/if}}
+
+  <section class="sec contact" id="contact" aria-labelledby="contact-h" data-connect>
+    <div class="page g">
+      <div class="head"><span class="node node--end" aria-hidden="true"></span><h2 id="contact-h">Contact</h2></div>
+      <div class="contact__body">
+        <a class="bigcta" href="mailto:{{contact_email}}"><span class="bigcta__t">Send us a role</span><svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+        <p class="contact__lede">Tell us the seat, who it reports to and when you need someone in it. We will come back with how we would run the search.</p>
+        <dl class="contact__meta">
+          <div><dt class="mono">Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+          <div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="page foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <a class="foot__top" href="#top">Back to top<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{
+  "company_name": "Keystone Talent Partners",
+  "tagline": "Finance and operations leaders for Canada's mid-market companies",
+  "intro": "We recruit controllers, FP&A leads, CFOs and operations directors for privately held and investor-backed companies across Canada. A partner runs every search from the first brief to the signed offer.",
+  "audience": "Mid-market companies across Ontario, Quebec, the Prairies and British Columbia, hiring finance and operations people at manager, director and executive level.",
+  "pricing_note": "A percentage of first-year base salary, invoiced when your hire starts. CFO and VP searches run on retained terms, with the retainer credited against the final fee.",
+  "city": "Toronto",
+  "contact_email": "searches@keystonetalent.ca",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Retained executive search",
+      "description": "For CFO, VP finance and COO seats. A defined search with a written brief, a researched shortlist, full referencing and a partner at every debrief."
+    },
+    {
+      "title": "Contingent finance hiring",
+      "description": "Controllers, assistant controllers and accounting managers. You pay only when someone you chose accepts your offer and starts."
+    },
+    {
+      "title": "Interim and contract leaders",
+      "description": "A controller or finance lead to cover a year-end close, a system change or a leave, on a fixed term while you hire for the permanent seat."
+    },
+    {
+      "title": "Salary and structure advice",
+      "description": "Before you post a role: what the seat pays in your region, who it should report to and what experienced candidates will expect from you."
+    }
+  ],
+  "specialties": [
+    "Controllers",
+    "FP&A leaders",
+    "Chief financial officers",
+    "VP finance",
+    "Operations directors",
+    "Accounting managers"
+  ],
+  "process": [
+    {
+      "title": "Brief the seat",
+      "description": "We meet the hiring manager, map who the role reports to and agree the scorecard, the salary band and the timeline before we approach anyone."
+    },
+    {
+      "title": "Search and assess",
+      "description": "We approach people directly, interview each one on technical depth and fit with your team, and check references before you meet them."
+    },
+    {
+      "title": "Shortlist and close",
+      "description": "You see a short list with our notes on each person. We arrange interviews, manage the offer and stay in touch through the first months."
+    }
+  ],
+  "proof": [
+    {
+      "text": "Our new controller closed the first quarter without a gap.",
+      "source": "CEO, a Calgary manufacturer (sample)"
+    },
+    {
+      "text": "A partner ran the search from brief to signed offer.",
+      "source": "CFO, an Ontario distributor (sample)"
+    },
+    {
+      "text": "Clear shortlists, and every reference checked."
+    }
+  ],
+  "logos": [
+    "Maplecrest Foods",
+    "Northline Logistics",
+    "Granite Ridge Health",
+    "Bayfield Industries",
+    "Cedarview Capital",
+    "Lakehead Supply"
+  ]
+}

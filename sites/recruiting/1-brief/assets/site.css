@@ -1,0 +1,220 @@
+/* Brief: a role brief, typeset like a printed document and marked up in blue pencil. */
+:root {
+  color-scheme: light;
+  --paper: #f4f5f2;
+  --ink: #141414;
+  --muted: #4b4e48;
+  --line: #d3d6cf;
+  --pencil: #1f47d6;
+  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+  --pad: clamp(1rem, 4.5vw, 4rem);
+  --t-display: clamp(2.6rem, 0.6rem + 7.4vw, 8.75rem);
+  --t-l: clamp(1.55rem, 1.15rem + 1.5vw, 2.4rem);
+  --t-m: clamp(1.2rem, 1.06rem + 0.55vw, 1.55rem);
+  --t-body: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
+  --t-s: 0.9375rem;
+  --ease: cubic-bezier(0.45, 0.05, 0.3, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  position: relative;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--t-body)/1.55 var(--serif);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+h1, h2, h3, p, li, dd, a { overflow-wrap: anywhere; }
+::selection { background: rgba(31, 71, 214, 0.18); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--pencil); outline-offset: 4px; border-radius: 2px; }
+main:focus { outline: none; }
+
+.skip {
+  position: absolute; left: var(--pad); top: 0.75rem; z-index: 10;
+  padding: 0.5rem 0.9rem; background: var(--ink); color: var(--paper);
+  font-size: var(--t-s); text-decoration: none; translate: 0 -200%;
+}
+.skip:focus-visible { translate: none; }
+
+.doc { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: var(--pad); }
+
+/* Header: letterhead, not chrome. */
+.top {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 0.75rem 2rem; padding-block: 1.5rem 0;
+}
+.wordmark {
+  font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em;
+  display: inline-block; padding-block: 0.3rem; text-decoration: none; max-width: 24ch; line-height: 1.25;
+}
+.top ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.6rem; }
+.top a[data-hm] { display: inline-block; padding-block: 0.3rem; font-size: var(--t-s); text-decoration: none; }
+
+/* Hover marks: the pencil draws on the thing you point at. */
+[data-hm] { position: relative; }
+.hm { position: absolute; left: -12px; top: -12px; pointer-events: none; overflow: visible; }
+.hm path, .marks path {
+  fill: none; stroke: var(--pencil); stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1 1; stroke-dashoffset: 1;
+}
+.hm path { stroke-width: 2; opacity: 0; transition: stroke-dashoffset 0.45s var(--ease), opacity 0s 0.45s; }
+@media (hover: none) { .hm { display: none; } }
+@media (hover: hover) { [data-hm]:hover > .hm path { stroke-dashoffset: 0; opacity: 1; transition-delay: 0s; } }
+[data-hm]:focus-visible > .hm path { stroke-dashoffset: 0; opacity: 1; transition-delay: 0s; }
+html:not(.js) [data-hm]:hover { text-decoration: underline; text-decoration-color: var(--pencil); }
+
+/* Margin marks overlay (built by site.js). */
+.marks { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; mix-blend-mode: multiply; }
+.marks path { stroke-width: 2.25; stroke-opacity: 0.92; opacity: 0; }
+.marks g.on path { stroke-dashoffset: 0; opacity: 1; transition: stroke-dashoffset var(--t, 0.6s) var(--ease) var(--d, 0s), opacity 0s linear var(--d, 0s); }
+
+/* Margin notes: handwriting, real text. */
+.note {
+  font-family: var(--hand); font-weight: 600; font-size: 1.6rem; line-height: 1.05;
+  color: var(--pencil); max-width: 14rem; rotate: -3deg; transform-origin: left center;
+  margin-block: 1rem 0.25rem;
+}
+
+/* Sections: a three-column document. Numbers hang in the left margin, notes sit in the right. */
+.sec { display: grid; grid-template-columns: minmax(0, 1fr); padding-top: clamp(4rem, 9vw, 8.5rem); }
+h2 {
+  position: relative; font-size: var(--t-l); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em;
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+.num { display: inline-block; min-width: 1.6em; color: var(--muted); font-style: italic; font-weight: 300; }
+h3 { font-size: var(--t-m); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+
+/* Hero */
+.hero { padding-top: clamp(2.5rem, 7vw, 6rem); }
+.meta {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1.5rem;
+  padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); font-size: var(--t-s);
+}
+.meta dt { color: var(--muted); font-size: 0.8125rem; letter-spacing: 0.02em; }
+.meta dd { line-height: 1.35; }
+h1 {
+  margin-top: clamp(2.5rem, 7vw, 5.5rem);
+  font-size: var(--t-display); font-weight: 400; line-height: 0.98; letter-spacing: -0.035em;
+  margin-left: -0.04em; text-wrap: balance; hyphens: auto;
+}
+.tagline {
+  margin-top: clamp(1.6rem, 3.4vw, 2.6rem); max-width: 30ch;
+  font-size: var(--t-l); font-style: italic; font-weight: 300; line-height: 1.18; letter-spacing: -0.015em;
+}
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem 2.25rem; margin-top: clamp(2rem, 4vw, 3rem); }
+.cta {
+  display: inline-block; padding: 0.7rem 0.15rem; font-size: var(--t-m); font-weight: 500;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em;
+  transition: translate 0.3s var(--ease);
+}
+.cta:active, .email:active { translate: 0 1px; }
+.quiet { display: inline-block; padding-block: 0.6rem; color: var(--muted); font-size: var(--t-s); text-underline-offset: 0.25em; }
+.quiet:hover { color: var(--ink); }
+.note--hero { order: -1; justify-self: end; margin: 1.5rem 0.5rem -1.25rem 0; rotate: -6deg; }
+
+/* Summary */
+.lede { font-size: var(--t-l); line-height: 1.28; letter-spacing: -0.015em; max-width: 34ch; }
+.field { margin-top: clamp(2.5rem, 5vw, 4rem); max-width: 40rem; }
+.field h3, .small { font-size: var(--t-s); font-weight: 400; color: var(--muted); }
+.field h3 { margin-bottom: 0.5rem; }
+
+/* Services: clauses */
+.clauses li { display: grid; gap: 0.5rem 2rem; padding-block: 1.6rem; position: relative; }
+.clauses li + li { border-top: 1px solid var(--line); }
+.cl { white-space: nowrap; color: var(--muted); font-size: var(--t-s); font-variant-numeric: tabular-nums; }
+.clauses p, .steps p { max-width: 38rem; }
+
+/* Roles */
+.role-list { display: grid; gap: 1rem 3rem; padding-left: 2.6rem; }
+.role-list li { font-size: var(--t-l); line-height: 1.15; letter-spacing: -0.015em; }
+
+/* Process */
+.steps { display: grid; gap: 2.75rem; }
+.step-n {
+  display: inline-block; margin: 0 0 1rem 0.9rem;
+  font-size: clamp(2.4rem, 2rem + 1.6vw, 3.4rem); font-weight: 300; line-height: 1; font-variant-numeric: lining-nums;
+}
+.steps h3 { margin-bottom: 0.6rem; }
+
+/* Fees */
+#fees-word { display: inline-block; }
+.terms { font-size: var(--t-m); line-height: 1.4; max-width: 36rem; }
+.small { margin-top: 1.25rem; }
+
+/* Contact */
+.contact > p:not(.note) { max-width: 36rem; }
+.mail { margin-top: 1.75rem; }
+.email {
+  display: inline-block; max-width: 100%; padding: 0.35rem 0.1rem;
+  font-size: var(--t-l); line-height: 1.2; letter-spacing: -0.015em;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.22em;
+}
+.sign { margin-top: clamp(2.5rem, 5vw, 4rem); color: var(--muted); font-style: italic; }
+
+/* Footer */
+.foot {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; align-items: baseline;
+  margin-top: clamp(5rem, 10vw, 9rem); padding-block: 1.5rem 2.5rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: var(--t-s);
+}
+.foot .end { width: 100%; margin-bottom: 0.75rem; font-family: var(--hand); font-size: 1.5rem; color: var(--pencil); }
+.foot a { display: inline-block; padding-block: 0.25rem; text-underline-offset: 0.2em; }
+.foot a:hover { color: var(--ink); }
+
+/* Desktop: the real margin. */
+@media (min-width: 48rem) {
+  .meta { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .clauses li { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); }
+  .clauses li h3 { grid-column: 1; }
+  .clauses li p { grid-column: 2; grid-row: 1 / span 3; }
+  .role-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 64rem) {
+  .sec { grid-template-columns: 7rem minmax(0, 46rem) minmax(12rem, 1fr); column-gap: 3rem; }
+  .sec > * { grid-column: 2; }
+  .sec > .note { grid-column: 3; align-self: start; margin-top: 0.5rem; }
+  .r1 { grid-row: 1; } .r2 { grid-row: 2; } .r3 { grid-row: 3; } .r4 { grid-row: 4; }
+  .num { position: absolute; right: calc(100% + 3rem); min-width: 0; }
+  .cl { position: absolute; right: calc(100% + 3rem); top: 1.95rem; }
+  .meta, .hero h1 { grid-column: 2 / 4; }
+  .hero .meta { grid-row: 1; } .hero h1 { grid-row: 2; }
+  .sec > .note--hero { grid-column: 3; grid-row: 3; order: 0; justify-self: start; margin: 5rem 0 0 2.5rem; }
+  .tagline { grid-row: 3; }
+  .actions { grid-row: 4; }
+  .role-list, .steps { grid-column: 2 / 4; }
+  .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; }
+  .roles .note, .process .note { grid-row: 1; }
+  .fees .terms { font-size: var(--t-l); line-height: 1.25; letter-spacing: -0.015em; max-width: 30ch; }
+}
+@media (max-width: 47.99rem) {
+  .top nav { width: 100%; }
+  .top ul { gap: 0.25rem 1.2rem; }
+  .hero .meta { order: -2; }
+  .role-list { padding-left: 2.2rem; }
+  .note { font-size: 1.5rem; }
+  .process .note { margin-bottom: 2.25rem; }
+}
+
+/* Motion: notes write themselves in once their section is read. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js .note { clip-path: inset(-20% 102% -20% -6%); transition: clip-path 0.9s var(--ease) var(--nd, 0.2s); }
+  html.js .is-on .note { clip-path: inset(-20% -6% -20% -6%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* Appendix: company-supplied proof, present only when filled */
+.quotes { list-style: none; padding: 0; display: grid; gap: 2.25rem; max-width: 40rem; }
+.quotes blockquote { margin: 0; font-size: var(--t-m); line-height: 1.4; font-style: italic; }
+.quotes blockquote p::before { content: "\201C"; } .quotes blockquote p::after { content: "\201D"; }
+.quotes cite { display: block; margin-top: 0.5rem; font-style: normal; font-size: var(--t-s); color: var(--muted); }
+.clients { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; font-size: var(--t-m); }
