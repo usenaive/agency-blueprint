@@ -1,0 +1,28 @@
+{
+  "company_name": "Lindqvist Hart",
+  "tagline": "Clear plans, carried out by the people who wrote them",
+  "intro": "We are a client-services agency in Rotterdam. We take on marketing, operations and delivery work for companies that need it done properly and on time, with one lead who stays with you from the first call to the handover.",
+  "audience": "Companies of twenty to five hundred people in the Netherlands and Belgium, in logistics, manufacturing, professional services and the public sector.",
+  "pricing_note": "A fixed price per project, agreed in writing before work starts. Ongoing work runs on a quarterly retainer with a set scope and a monthly review.",
+  "city": "Rotterdam",
+  "contact_email": "office@lindqvisthart.nl",
+  "year": "2026",
+  "services": [
+    { "title": "Planning and strategy", "description": "We turn a goal into a written plan: what will be done, by whom, in which order and how you will know it worked." },
+    { "title": "Marketing operations", "description": "Campaigns, content and the systems behind them run to a calendar, with a monthly note on what went out and what came back." },
+    { "title": "Process and operations", "description": "We map how work moves through your company today, remove the steps that slow it down and document the new way of working." },
+    { "title": "Programme delivery", "description": "Larger pieces of work, such as a launch or a migration, run end to end by one lead with a plan, a budget and a weekly status." }
+  ],
+  "specialties": ["Strategy", "Marketing", "Operations", "Programme management", "Documentation", "Reporting"],
+  "process": [
+    { "title": "Define", "description": "We meet, ask questions and write a short proposal with the scope, the price, the dates and the name of your lead." },
+    { "title": "Deliver", "description": "Your lead runs the work, brings in the specialists it needs and sends a short written status every week." },
+    { "title": "Review", "description": "We go through the result with you, record what we learned and agree what, if anything, comes next." }
+  ],
+  "proof": [
+    { "text": "They wrote the plan, then they did exactly what the plan said. That is rarer than it should be.", "source": "Operations director, a logistics company (sample)" },
+    { "text": "The weekly status was one page and always on time.", "source": "Marketing manager, a machinery maker (sample)" },
+    { "text": "Our handover documents are still the ones the team uses.", "source": "Head of service, a municipality (sample)" }
+  ],
+  "logos": ["Maasweg Logistics", "Brandt Machinery", "Haven Office Group", "Kade Foods", "Vermeer Installaties", "Delta Housing"]
+}

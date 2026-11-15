@@ -1,0 +1,28 @@
+{
+  "company_name": "Ledger & Lane",
+  "tagline": "One studio for the work your business keeps putting off",
+  "intro": "We are a small client-services agency in Leeds. We take on marketing, operations and delivery work for growing businesses, with one named lead for every client and a written update every Friday.",
+  "audience": "Owner-led businesses across Yorkshire and the North of England, from ten to two hundred people, mostly in trades, hospitality, professional services and retail.",
+  "pricing_note": "Project work is quoted as a fixed price before we start. Ongoing work is a monthly retainer agreed for a quarter at a time, with the hours and the scope written down.",
+  "city": "Leeds",
+  "contact_email": "hello@ledgerandlane.co.uk",
+  "year": "2026",
+  "services": [
+    { "title": "Marketing that ships", "description": "Campaigns, email, social posts and website updates planned a month ahead and delivered on the dates we agreed, with a note on what went out and what came back." },
+    { "title": "Operations clean-up", "description": "We map how work moves through your business, fix the handoffs that drop things and write the checklists your team will actually use." },
+    { "title": "Project delivery", "description": "A launch, a move or a rebuild run end to end by one lead, with a plan, a weekly status and a list of decisions we need from you." },
+    { "title": "Monthly cover", "description": "A standing team for the jobs that never stop: reports, supplier chasing, content and the odd fire, planned at the start of each month." }
+  ],
+  "specialties": ["Campaign planning", "Email and newsletters", "Process mapping", "Supplier management", "Project management", "Reporting"],
+  "process": [
+    { "title": "Write the brief together", "description": "A call about what needs doing and why, then a one-page brief with the scope, the price and the dates for you to sign off." },
+    { "title": "Do the work in the open", "description": "One lead runs it and sends a Friday note: what got done, what is next and anything we need from you." },
+    { "title": "Hand it back properly", "description": "We walk you through what we made, leave the files and the notes behind and agree what, if anything, comes next." }
+  ],
+  "proof": [
+    { "text": "The Friday note alone was worth it. For the first time I knew what was happening without asking.", "source": "Owner, a building supplies firm (sample)" },
+    { "text": "They wrote down how our orders actually move, then fixed the two places they kept getting stuck.", "source": "Operations lead, a bakery group (sample)" },
+    { "text": "One person to call, and that person always knew the answer.", "source": "Director, an accountancy practice (sample)" }
+  ],
+  "logos": ["Harrow Joinery", "Kirkgate Bakers", "Aire Valley Accountants", "Northfold Interiors", "The Calder Rooms", "Wharfe Supply Co"]
+}

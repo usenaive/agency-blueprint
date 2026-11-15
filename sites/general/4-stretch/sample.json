@@ -1,0 +1,28 @@
+{
+  "company_name": "Loudhouse",
+  "tagline": "Hand us the jobs nobody has time for. We will get them done.",
+  "intro": "Loudhouse is a client-services agency in Glasgow. We take on marketing, operations and delivery work for growing companies, move quickly, and tell you plainly what got done each week.",
+  "audience": "Growing companies across Scotland and the North of England, from ten to three hundred people, in hospitality, retail, events, software and professional services.",
+  "pricing_note": "Fixed prices for projects, agreed before we start. A monthly retainer for ongoing work, with the scope written down and a month's notice either way.",
+  "city": "Glasgow",
+  "contact_email": "hello@loudhouse.agency",
+  "year": "2026",
+  "services": [
+    { "title": "Campaigns", "description": "Launches, seasonal pushes and always-on marketing, planned, written, made and run across the channels your customers actually use." },
+    { "title": "Operations", "description": "The processes, tools and checklists behind the work, sorted so your team spends less time chasing and more time doing." },
+    { "title": "Delivery", "description": "Projects with a start, an end and a lot of moving parts, run by one lead with a plan, a budget and a weekly update." },
+    { "title": "Cover", "description": "A standing team on a monthly retainer for the work that never stops, from reporting to content to supplier wrangling." }
+  ],
+  "specialties": ["Campaigns", "Content", "Events", "Operations", "Project delivery", "Reporting"],
+  "process": [
+    { "title": "Brief", "description": "Half an hour on a call, then a one-page plan back within two working days: the scope, the price, the dates and who is on it." },
+    { "title": "Build", "description": "We get on with it, with a short written update every Friday and a call whenever a decision is yours to make." },
+    { "title": "Ship", "description": "The work goes live, we walk you through what we did and what we would do next, and you decide if we carry on." }
+  ],
+  "proof": [
+    { "text": "We sent a messy brief on a Monday and had a plan we could sign by Wednesday.", "source": "Founder, a restaurant group (sample)" },
+    { "text": "They took the event off our plate completely and the Friday notes meant I never had to ask.", "source": "Head of marketing, a software company (sample)" },
+    { "text": "Quick, clear and never once over the quote.", "source": "Operations manager, a retailer (sample)" }
+  ],
+  "logos": ["Merchant City Kitchens", "Clydeside Games", "Kelvin Supply", "Northlight Events", "Barras Cycles", "Tollcross Studios"]
+}

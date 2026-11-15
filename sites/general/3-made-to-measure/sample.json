@@ -1,0 +1,28 @@
+{
+  "company_name": "Tinker & Thread",
+  "tagline": "Careful work for small businesses, cut to fit",
+  "intro": "We are a small studio in Asheville that takes on marketing, operations and delivery work for independent businesses. Every job is scoped around what you actually need, and the person who quotes it is the person who does it.",
+  "audience": "Independent shops, makers, cafés and service businesses across the Blue Ridge and the Carolinas, usually with fewer than fifty people and no in-house team for this kind of work.",
+  "pricing_note": "We quote each job as a fixed price once we understand it. Ongoing help is a simple monthly fee for an agreed list of work, and you can stop at the end of any month.",
+  "city": "Asheville",
+  "contact_email": "studio@tinkerandthread.com",
+  "year": "2026",
+  "services": [
+    { "title": "Shopfront and marketing", "description": "Your website, newsletter, social posts and printed pieces, written and made in one consistent voice, then kept up to date month by month." },
+    { "title": "Back-office tidy-up", "description": "Bookings, invoices, stock and the spreadsheets in between, sorted into a way of working your team can keep up without us." },
+    { "title": "Launches and one-off jobs", "description": "A new product, a second location or a seasonal push, planned and carried through from first sketch to the day it opens." },
+    { "title": "A pair of hands each month", "description": "A set number of days every month for whatever comes up, booked in advance and reported back in a short note." }
+  ],
+  "specialties": ["Websites", "Newsletters", "Social posts", "Print", "Bookkeeping set-up", "Launch planning"],
+  "process": [
+    { "title": "Take the measurements", "description": "We visit or call, see how things run today and write down what you need, what it will cost and when it will be ready." },
+    { "title": "Make it, with fittings", "description": "We do the work in stages and show you each one, so you can say what fits and what needs taking in before we finish." },
+    { "title": "Hand it over finished", "description": "You get the finished work, the files and a short guide to keeping it up, and we check back a month later." }
+  ],
+  "proof": [
+    { "text": "They came to the shop, watched how we actually take orders, and fixed it in a week.", "source": "Owner, a framing shop (sample)" },
+    { "text": "Our newsletter finally sounds like us.", "source": "Co-founder, a bakery (sample)" },
+    { "text": "Every invoice matched the quote. Every single one.", "source": "Manager, a bike repair shop (sample)" }
+  ],
+  "logos": ["Laurel Framing", "Hearth Street Bakery", "Swannanoa Cycles", "Blue Ridge Pottery", "Old Mill Books", "French Broad Flowers"]
+}

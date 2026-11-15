@@ -1,0 +1,83 @@
+{
+  "id": "general/5-many-hands",
+  "agencyType": "general",
+  "design": "Many Hands",
+  "style": "A cut-paper collage on warm paper (or warm black): flat shapes in vermilion, leaf green, ochre, pink, sky and ink, heavy Gabarito over Crimson Pro, the six disciplines as six cut-outs gathered round 'one team', services and quotes on cut card.",
+  "theme": "both",
+  "fonts": [
+    "Gabarito",
+    "Crimson Pro"
+  ],
+  "concept": {
+    "idea": "One team, many hands: a client-services agency brings different people to each job and runs them as one. Each discipline is a different cut-paper shape, and together they make one composition with 'one team' at its centre, like a cut-out collage pieced together by hand.",
+    "signature": "The six cut-outs start scattered and spring together into one round composition around 'one team', one after another. A button scatters and gathers them again, and a piece lifts under the pointer. Without JS or with reduced motion the collage is simply assembled.",
+    "motionVerb": "gather, lift",
+    "palette": {
+      "paper": "#f5efe3",
+      "ink": "#191714",
+      "muted": "#57514a",
+      "red": "#f06a4a",
+      "leaf": "#2f7a4d",
+      "ochre": "#e9a83a",
+      "pink": "#f3a6b9",
+      "sky": "#8fc3e6",
+      "darkPaper": "#1b1815",
+      "darkInk": "#f2ebde"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 8,
+      "usability": 7.5,
+      "creativity": 7.5,
+      "content": 7.5,
+      "overall": 7.7
+    },
+    "estimate": 8.8,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with the sample and with long.json, no tap target under 24 px, skip link first and every focus stop visible, no colour-only primary hover, nothing moving under reduced motion). No blind critic was run for this batch. Bright, legible collage with a clear one-team metaphor; the cut-outs gather on load and can be scattered again. At 390 px the collage is small, and at maximum length the labels inside the shapes hyphenate."
+  }
+}
