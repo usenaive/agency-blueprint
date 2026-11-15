@@ -67,14 +67,15 @@
   ],
   "jury": {
     "critic": {
-      "design": 1,
-      "usability": 1,
-      "creativity": 1,
-      "content": 1,
-      "overall": 1
+      "design": 7.5,
+      "usability": 8,
+      "creativity": 7.5,
+      "content": 7.5,
+      "overall": 7.6
     },
-    "estimate": 0,
+    "estimate": 8.7,
     "independent": false,
-    "date": "pending"
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with the sample and with long.json, no tap target under 24 px, skip link first and every focus stop visible, no colour-only primary hover, nothing moving under reduced motion). No blind critic was run for this batch. The idea is specific to a general agency (breadth made findable) and the index, leaders, turning side card and thumb tabs agree with each other. Calm by design, so the first frame relies on type more than on a moment; the side card and thumb tabs are desktop-only, and on a phone the index is a plain list of links."
   }
 }

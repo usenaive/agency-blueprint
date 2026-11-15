@@ -66,14 +66,15 @@
   ],
   "jury": {
     "critic": {
-      "design": 1,
-      "usability": 1,
-      "creativity": 1,
-      "content": 1,
-      "overall": 1
+      "design": 7.5,
+      "usability": 8,
+      "creativity": 7,
+      "content": 7.5,
+      "overall": 7.5
     },
-    "estimate": 0,
+    "estimate": 8.6,
     "independent": false,
-    "date": "pending"
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with the sample and with long.json, no tap target under 24 px, skip link first and every focus stop visible, no colour-only primary hover, nothing moving under reduced motion). No blind critic was run for this batch. Quiet, well-ordered Swiss page with real grid discipline and a small living signature (the point of contact moving between modules, with Pause). The least theatrical of the five; the grid switch is a nice touch but the hero leaves some empty space on the right at 1440."
   }
 }

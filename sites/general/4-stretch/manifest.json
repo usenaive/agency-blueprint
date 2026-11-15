@@ -67,14 +67,15 @@
   ],
   "jury": {
     "critic": {
-      "design": 1,
-      "usability": 1,
-      "creativity": 1,
-      "content": 1,
-      "overall": 1
+      "design": 8,
+      "usability": 7.5,
+      "creativity": 8,
+      "content": 7.5,
+      "overall": 7.8
     },
-    "estimate": 0,
+    "estimate": 8.9,
     "independent": false,
-    "date": "pending"
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with the sample and with long.json, no tap target under 24 px, skip link first and every focus stop visible, no colour-only primary hover, nothing moving under reduced motion). No blind critic was run for this batch. A strong poster first frame: each discipline fitted edge to edge along the width axis, with a stretch-in intro and a pointer bulge. Very short or very long disciplines change the line height a lot (the fit scales size as well as width), which is part of the look but can feel uneven."
   }
 }
