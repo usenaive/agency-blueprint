@@ -206,6 +206,10 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect(manager.system).toContain("One ask per client job, and then you stop: no review of your own work, no edit, no search for a tool, no other message to the CEO.");
     expect(manager.system).toContain('A correction you notice later is a note on that same review, never a new hand-off: log it on the client\'s timeline under the review line');
     expect(manager.system).toContain("change the file only when the person answers Changes needed");
+    // NEW-80: after Changes needed the revision was read as a late piece ("no second ask_operator"), so the
+    // revised report never came back to Needs you; and the review had no box for what to change.
+    expect(manager.system).toContain("Approve or Changes needed, and an optional text field, What to change.");
+    expect(manager.system).toContain("The revised file is a new version for the person, not a late piece: once it is saved under the same title and tags, tell the CEO it is ready and call ask_operator again the same way, as for the first.");
   });
 
   it("widens no job", async () => {
