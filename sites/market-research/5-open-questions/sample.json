@@ -1,0 +1,28 @@
+{
+  "company_name": "Askwell Research",
+  "tagline": "Good answers start with a better question",
+  "intro": "We are a research studio for consumer brands. You bring the question your team keeps circling; we find the people who can answer it, measure what can be measured and tell you plainly what we found.",
+  "audience": "Founders and marketing leads at US direct-to-consumer brands in food, beauty, home and wellness, usually between their first retail listing and their first national campaign.",
+  "pricing_note": "Each project is a fixed price, quoted after a free thirty-minute call. Small questions start as a two-week sprint; bigger ones are split into stages you approve one at a time.",
+  "city": "Chicago",
+  "contact_email": "questions@askwell.co",
+  "year": "2026",
+  "services": [
+    { "title": "Market sizing", "description": "How many people could buy what you sell, how often and at what price, built from survey data and public sources, with the assumptions spelled out." },
+    { "title": "Competitor teardowns", "description": "We buy, unbox, subscribe and cancel with your closest rivals, then compare their pricing, promises and customer experience with yours." },
+    { "title": "Customer interviews", "description": "One-to-one conversations with buyers, lapsed buyers and people who almost bought, so you learn what tipped them in or out." },
+    { "title": "Surveys that get answered", "description": "Short, well-written surveys sent to the right panel, with results cut by the segments you care about and written up in plain English." }
+  ],
+  "specialties": ["Food and beverage", "Beauty and personal care", "Home goods", "Wellness and supplements", "Pet products", "Baby and parenting"],
+  "process": [
+    { "title": "Sharpen the question", "description": "A thirty-minute call to turn a worry into a question research can answer, and to agree what you will do with the answer." },
+    { "title": "Find the answer", "description": "We pick the method that fits, whether interviews, a survey, desk research or a mix, and keep you posted every week." },
+    { "title": "Say it plainly", "description": "A short readout that starts with the answer, shows the evidence and ends with the decision we would make in your place." }
+  ],
+  "proof": [
+    { "text": "They turned a vague worry about pricing into one clear question and then answered it.", "source": "Founder, a Chicago snack brand (sample)" },
+    { "text": "The interviews told us why our second purchase rate was low, in our customers' own words.", "source": "Head of marketing, a skincare start-up (sample)" },
+    { "text": "Short readouts, no jargon, and a recommendation at the end." }
+  ],
+  "logos": ["Prairie Pantry", "Lumen Skin", "Hearth and Loom", "Steady Greens", "Good Boy Provisions", "Little Acre"]
+}

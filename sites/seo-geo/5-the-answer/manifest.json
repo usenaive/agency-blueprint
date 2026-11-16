@@ -1,0 +1,82 @@
+{
+  "id": "seo-geo/5-the-answer",
+  "agencyType": "seo-geo",
+  "design": "Be the Answer",
+  "style": "A typographic manifesto on sage-grey paper (or near black): Libre Caslon Display at poster scale, Hanken Grotesk for the rest, and old search habits struck through in red and rewritten as the answer, from the hero to the contact line.",
+  "theme": "both",
+  "fonts": [
+    "Libre Caslon Display",
+    "Hanken Grotesk"
+  ],
+  "concept": {
+    "idea": "Generative search changes the goal from being one of ten links to being the answer itself, so the site is a manifesto that strikes out the old habits of search marketing and writes the new ones beside them.",
+    "signature": "In the hero the struck habit keeps changing: it fades, a new one is written in ('Be on page two.', 'Be a keyword.'), and a red strike sweeps across it above a fixed 'Be the answer.'; down the page each belief gets its red strike as it arrives. Every strike is already drawn without JS or with reduced motion.",
+    "motionVerb": "rewrite: strike through, then answer",
+    "palette": {
+      "ground": "#e8ebe3",
+      "ink": "#121412",
+      "muted": "#5a5f57",
+      "line": "#c6ccc0",
+      "red": "#d4301c",
+      "redText": "#b0240f",
+      "darkGround": "#0f110f",
+      "darkInk": "#edefe8",
+      "darkRed": "#ff5a43"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 8.0,
+      "usability": 8.0,
+      "creativity": 7.5,
+      "content": 8.0,
+      "overall": 7.9
+    },
+    "estimate": 9.0,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score against the /jury rubric from the previews (desktop, phone, dark, long.json); no critic agent was run for this batch. Poster-scale Caslon with one red strike per line makes the generative-search argument in five rewrites, and the hero keeps striking out a new old habit at rest. Designed light and dark. A typographic manifesto is a known form, and the batch already has a minimalist question wall in market research, so creativity is held at 7.5."
+  }
+}

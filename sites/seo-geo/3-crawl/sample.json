@@ -1,0 +1,28 @@
+{
+  "company_name": "Crawlspace",
+  "tagline": "Sites that search engines and AI can read end to end",
+  "intro": "We are a technical search studio. We read your site the way crawlers and AI assistants do, fix what blocks them, and shape the structure and content so every page worth finding gets found and understood.",
+  "audience": "Online shops, publishers and software companies with large or messy sites, from a few hundred to a few hundred thousand pages, across North America.",
+  "pricing_note": "A fixed fee for the first crawl and audit, then a monthly retainer for fixes, content structure and monitoring. We quote both after a short call about your site.",
+  "city": "Portland",
+  "contact_email": "crawl@crawlspace.studio",
+  "year": "2026",
+  "services": [
+    { "title": "Full-site crawl and audit", "description": "We walk every page the way a crawler does and list what blocks it: redirects, duplicates, orphaned pages, broken links, slow templates and blocked resources." },
+    { "title": "Site structure", "description": "Navigation, internal links, URLs and sitemaps reworked so your most important pages sit close to the top and are easy to reach." },
+    { "title": "Readable for AI", "description": "Clean HTML, structured data and plain answers on the page, so AI assistants can read, trust and quote what you publish." },
+    { "title": "Release checks", "description": "We crawl your staging site before big releases and migrations, so a redesign never quietly removes pages from search." }
+  ],
+  "specialties": ["Technical SEO", "Site migrations", "Structured data", "AI crawler access", "Large ecommerce sites", "Internal linking"],
+  "process": [
+    { "title": "Crawl", "description": "We crawl the whole site, compare it with what search engines have indexed, and ask AI assistants what they know about you." },
+    { "title": "Fix the paths", "description": "We rank the problems by how many pages they hide and work through them with your developers, ticket by ticket." },
+    { "title": "Keep walking", "description": "A monthly crawl catches new problems early, and a short report tells you what changed and what we fixed." }
+  ],
+  "proof": [
+    { "text": "They found whole sections of our catalogue that no crawler could reach and showed us how to fix them.", "source": "Head of ecommerce, an outdoor gear retailer (sample)" },
+    { "text": "Our migration went live without losing a page, because they crawled staging first.", "source": "Product lead, a software company (sample)" },
+    { "text": "Clear tickets our developers could act on the same week.", "source": "Engineering manager, a publisher (sample)" }
+  ],
+  "logos": ["Cascade Outfitters", "Northwind Docs", "Rose City Press", "Timberline Home", "Willamette Supply Co.", "Fieldnote Software"]
+}

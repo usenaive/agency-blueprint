@@ -1,0 +1,81 @@
+{
+  "id": "security-testing/4-clear-to-ship",
+  "agencyType": "security-testing",
+  "design": "Clear to Ship",
+  "style": "Calm corporate assurance: a deep pine field with a quiet Source Serif voice and brass details, and a release gate in the hero whose barrier lifts once every customer journey is checked.",
+  "theme": "light",
+  "fonts": [
+    "Source Serif 4",
+    "Public Sans"
+  ],
+  "concept": {
+    "idea": "For regulated, risk-averse clients the job of journey testing is a decision: is this release clear to ship? The page is built around that gate, with the agency as the calm, written sign-off.",
+    "signature": "The hero gate: a release waits at a striped barrier while the six journeys are checked one by one; the light turns green, the barrier lifts and the release moves through, reading 'Clear to ship'. At rest the light breathes, and every twelve seconds a new release arrives and is checked again. Open and fully checked without JS motion.",
+    "motionVerb": "settle and clear: slow eases, a barrier that lifts, fills that rise",
+    "palette": {
+      "ground": "#f2f5f4",
+      "surface": "#ffffff",
+      "ink": "#0d2a2a",
+      "muted": "#4a5c5b",
+      "pine": "#0f3d3a",
+      "brass": "#d9b26a",
+      "brassDeep": "#8a6320",
+      "go": "#8fdcb0"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 7.5,
+      "usability": 8,
+      "creativity": 7,
+      "content": 7.5,
+      "overall": 7.55
+    },
+    "estimate": 8.65,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with sample and long.json, every focus stop visible, skip link first, nothing moving under reduced motion). No blind critic was run for this batch. Calm and clear for regulated buyers; the gate is a good idea but quieter than the others by design."
+  }
+}

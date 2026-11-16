@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Search and AI visibility</title>
+<meta name="description" content="{{#if city}}Search and AI visibility from {{city}}. {{/if}}{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top" id="top">
+  <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true">A</span><span>{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#belief"><span>What we believe</span></a></li>
+      <li><a href="#services"><span>What we do</span></a></li>
+      <li><a href="#contact"><span>Ask us</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="h1">
+    <p class="hero__big">
+      <span class="rewrite"><del data-cycle>Be one of ten blue links.</del></span>
+      <ins>Be the answer.</ins>
+    </p>
+    <div class="hero__foot">
+      <h1 id="h1">{{tagline}}</h1>
+      <div>
+        <p class="hero__lede">{{intro}}</p>
+        <a class="btn" href="#contact"><span>Ask us a question</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="belief" id="belief" aria-labelledby="belief-h">
+    <h2 id="belief-h" class="label">What we believe, rewritten</h2>
+    <ol class="lines">
+      <li class="rewrite"><del>Rank for keywords.</del> <ins>Answer the question.</ins></li>
+      <li class="rewrite"><del>Write for the algorithm.</del> <ins>Write for the person asking.</ins></li>
+      <li class="rewrite"><del>Publish more pages.</del> <ins>Publish better ones.</ins></li>
+      <li class="rewrite"><del>Chase the click.</del> <ins>Earn the mention.</ins></li>
+      <li class="rewrite"><del>Be a link.</del> <ins>Be the source.</ins></li>
+    </ol>
+  </section>
+
+  <section class="sec" id="services" aria-labelledby="services-h">
+    <h2 id="services-h" class="label">So this is what we do</h2>
+    <ol class="services">
+      <li><span class="services__n" aria-hidden="true">i.</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><span class="services__n" aria-hidden="true">ii.</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><span class="services__n" aria-hidden="true">iii.</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><span class="services__n" aria-hidden="true">iv.</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec runin" aria-labelledby="spec-h">
+    <h2 id="spec-h" class="label">Questions we answer best</h2>
+    <p class="runin__t"><span>{{specialties[0]}}</span> <i aria-hidden="true">/</i> <span>{{specialties[1]}}</span> <i aria-hidden="true">/</i> <span>{{specialties[2]}}</span> <i aria-hidden="true">/</i> <span>{{specialties[3]}}</span> <i aria-hidden="true">/</i> <span>{{specialties[4]}}</span> <i aria-hidden="true">/</i> <span>{{specialties[5]}}</span></p>
+  </section>
+
+  <section class="sec" aria-labelledby="process-h">
+    <h2 id="process-h" class="label">How it goes</h2>
+    <ol class="process">
+      <li><p class="process__k">First</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><p class="process__k">Then</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><p class="process__k">Every month</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec terms" aria-labelledby="who-h">
+    <div><h2 id="who-h" class="label">Who we answer for</h2><p class="terms__t">{{audience}}</p></div>
+    <div><h2 class="label">What it costs</h2><p class="terms__t">{{pricing_note}}</p></div>
+  </section>
+
+  {{#if proof}}<section class="sec" aria-labelledby="proof-h">
+    <h2 id="proof-h" class="label">In clients' words</h2>
+    <div class="quotes">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec" aria-labelledby="logos-h">
+    <h2 id="logos-h" class="label">Answering for</h2>
+    <ul class="names">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <h2 id="contact-h" class="contact__h"><span class="rewrite"><del>Fill in our form.</del></span> <ins>Ask us anything.</ins></h2>
+    <p class="contact__lede">Send us your site and the question you most want to be the answer to. We will reply with what stands in the way.</p>
+    <a class="contact__mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
+    <p class="contact__city">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="link" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>

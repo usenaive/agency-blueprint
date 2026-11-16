@@ -1,0 +1,91 @@
+{
+  "id": "recruiting/1-brief",
+  "agencyType": "recruiting",
+  "design": "Brief",
+  "style": "The site is a role brief: a printed document in Newsreader on cool paper, marked up in blue pencil that draws underlines, rings, ticks, arrows and handwritten margin notes as you read.",
+  "theme": "light",
+  "fonts": [
+    "Newsreader",
+    "Caveat"
+  ],
+  "concept": {
+    "idea": "Every recruiting engagement starts from a written role brief, so the site is one: a numbered document the recruiter has already marked up for you.",
+    "signature": "The company name is the document title; on load a blue-pencil double underline draws beneath it and a handwritten 'start here' note writes itself in with an arrow. Each section then gets its own pencil mark (bracket, wavy line, ticks, rings and arrows) as it is read.",
+    "motionVerb": "mark up like a pencil",
+    "palette": {
+      "ground": "#f4f5f2",
+      "ink": "#141414",
+      "muted": "#5a5d57",
+      "line": "#d3d6cf",
+      "accent": "#1f47d6"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 7.5,
+      "usability": 7.5,
+      "creativity": 7,
+      "content": 7.5,
+      "overall": 7.4
+    },
+    "estimate": 8.5,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Round 2 self-score after fixes, from the /jury rubric and fresh shoot/audit evidence (0 serious axe, 0 audit FAIL, no overflow). Round 1 was a blind critic; its scores are in blindRound1.",
+    "blindRound1": {
+      "design": 7,
+      "usability": 7,
+      "creativity": 7,
+      "content": 7,
+      "overall": 7.0,
+      "sem": 6,
+      "anim": 7,
+      "a11y": 7,
+      "wpo": 7,
+      "resp": 7,
+      "markup": 6
+    }
+  }
+}

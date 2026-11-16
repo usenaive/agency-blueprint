@@ -1,0 +1,71 @@
+{
+  "company_name": "Fieldbook Testing",
+  "tagline": "Exploratory testing that finds what your scripts never thought to try",
+  "intro": "We are a small team of exploratory testers. We spend timed sessions inside your product the way a curious, impatient customer would, and write up everything we notice in notes your developers can act on.",
+  "audience": "Software teams in the UK and Ireland building web apps, mobile apps and internal tools, especially those with some automated tests but nobody paid to wander off the happy path.",
+  "pricing_note": "Sessions are sold in blocks of ten, each ninety minutes with a written debrief. Most teams start with one block before a release and add more as they need them.",
+  "city": "Edinburgh",
+  "contact_email": "sessions@fieldbooktesting.co.uk",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Exploratory sessions",
+      "description": "Ninety-minute sessions against a written charter, such as new users on a slow phone. You get timestamped notes, bugs with steps and the questions we could not answer."
+    },
+    {
+      "title": "Release bug bashes",
+      "description": "Two days before a release, several of us explore the new build together and triage what we find with your team at the end of each day."
+    },
+    {
+      "title": "Journey walkthroughs",
+      "description": "We follow your most important journeys from first visit to repeat use and note every place a real person would hesitate, get it wrong or give up."
+    },
+    {
+      "title": "Test notes for your team",
+      "description": "We turn what we learned into short, readable checklists your own team can rerun before each release, without needing a testing background."
+    }
+  ],
+  "specialties": [
+    "New user onboarding",
+    "Forms and validation",
+    "Payments and invoices",
+    "Roles and permissions",
+    "Offline and slow networks",
+    "Mobile apps on old phones"
+  ],
+  "process": [
+    {
+      "title": "Write the charter",
+      "description": "We agree with you what each session explores and why: an area, a kind of user, a risk you are worried about. One charter per session, on a single page."
+    },
+    {
+      "title": "Explore and take notes",
+      "description": "A tester works through the charter for ninety minutes, logging what they tried, what happened and anything that looked wrong, with timestamps."
+    },
+    {
+      "title": "Debrief the same day",
+      "description": "A short call to walk your team through the notes. Bugs go into your tracker with steps; open questions go to whoever can answer them."
+    }
+  ],
+  "proof": [
+    {
+      "text": "The session notes read like a customer thinking aloud. Our designers asked for them too.",
+      "source": "Product lead, an Edinburgh property software company (sample)"
+    },
+    {
+      "text": "They found three ways to get stuck in onboarding in the first ninety minutes.",
+      "source": "CTO, a Dublin payroll start-up (sample)"
+    },
+    {
+      "text": "The checklists they left behind are now part of our release routine."
+    }
+  ],
+  "logos": [
+    "Thistle Payroll",
+    "Harbour Lettings",
+    "Canny Accounts",
+    "Loch Health",
+    "Glenbrook Learning",
+    "Ferry Freight"
+  ]
+}

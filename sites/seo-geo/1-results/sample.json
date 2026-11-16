@@ -1,0 +1,28 @@
+{
+  "company_name": "Plainview Search",
+  "tagline": "Be the first useful result, in search and in AI answers",
+  "intro": "We are a small search studio for local service businesses. We fix what stops search engines and AI assistants reading your site, then write the pages that answer what your customers ask before they call.",
+  "audience": "Plumbers, dentists, physios, law firms and other local service businesses across Colorado and the Mountain West, usually with one to five locations.",
+  "pricing_note": "A flat monthly fee agreed after a free site check, with a three-month minimum. The first month is the audit and the fixes; content and reporting follow every month after.",
+  "city": "Denver",
+  "contact_email": "hello@plainviewsearch.com",
+  "year": "2026",
+  "services": [
+    { "title": "Technical fixes", "description": "Crawl errors, slow pages, broken links, missing titles and confused site structure, found and fixed so every page you want seen can be read and indexed." },
+    { "title": "Local search", "description": "Your business listings, map profile, reviews and location pages kept accurate and consistent, so you show up when someone nearby needs you today." },
+    { "title": "Answer pages", "description": "Plain pages that answer the questions customers ask before they call, written with you and structured so AI assistants can quote them correctly." },
+    { "title": "Monthly check-in", "description": "A short report and a thirty-minute call: what changed in search and in AI answers, what we did about it and what we will do next." }
+  ],
+  "specialties": ["Local SEO", "Technical SEO", "AI answer visibility", "Service area pages", "Map listings", "Site speed"],
+  "process": [
+    { "title": "A free site check", "description": "We read your site the way a crawler and an AI assistant do, search for you the way your customers would, and send you the list of what is in the way." },
+    { "title": "Fix, then write", "description": "We make the technical fixes in the first month, then publish one or two answer pages a month, each one reviewed by you before it goes live." },
+    { "title": "Report in plain words", "description": "Every month you get one page: where you show up, where you do not, and what we are doing about it. No dashboards to decode." }
+  ],
+  "proof": [
+    { "text": "They explained what was wrong with our site in plain English and then simply fixed it.", "source": "Owner, a Denver plumbing company (sample)" },
+    { "text": "Our answer pages are the ones patients mention when they call to book.", "source": "Practice manager, a dental clinic (sample)" },
+    { "text": "The monthly report is one page long and I actually read it.", "source": "Partner, a family law firm (sample)" }
+  ],
+  "logos": ["Front Range Plumbing", "Cherry Creek Dental", "Mile High Physio", "Holloway Family Law", "Larkspur Roofing", "Boulder Pet Clinic"]
+}

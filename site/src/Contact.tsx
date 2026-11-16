@@ -5,8 +5,8 @@ import { referralCode, submitLead, type ContactForm } from "./lead.ts";
 const EMPTY: ContactForm = { company: "", website: "", name: "", email: "", services: [], note: "" };
 
 /**
- * The contact form. On submit it POSTs a CRM lead to the dashboard server's
- * `/api/leads`; when the server isn't reachable (static deploy) it degrades to
+ * The contact form. On submit it POSTs an inquiry to the dashboard server's
+ * `/api/leads`, which files it in the platform CRM; when the server isn't reachable (static deploy) it degrades to
  * a direct-email prompt rather than an error — the visitor is never stuck.
  */
 export function Contact({ site }: { site: SiteProfile }) {

@@ -55,6 +55,28 @@ export const tools = (allow: string[], ask: string[] = []): AgentDecl["tools"] =
 export const crm = (...names: string[]): string[] => names.map((name) => `dashboard.${name}`);
 
 /**
+ * The platform CRM, where the sales pipeline lives (owner, 2026-11-15): prospects, stages, notes and
+ * the Calendar. Offered because every template declares the `crm` mini app (`naive.config.ts`). The
+ * dashboard keeps signed clients only.
+ */
+export const PLATFORM_CRM = ["crm.read", "crm.write"];
+
+/**
+ * How a deal becomes a client: in the same step that moves its contact to won. No click, no sync —
+ * the agent that marks it won makes the client, and `create_client` answers the one on file when
+ * it is called again, so a retry or a second pass never doubles one.
+ */
+export const WON =
+  "When one signs: won and create_client (ctc_ id as crm_contact) in the same step.";
+
+/**
+ * One chat, one client (platform rule): a chat that opens a contact keeps to it. A routine pass reads
+ * the CRM's directory and starts a chat of its own seat for each contact that needs work.
+ */
+export const FAN_OUT = (key: string) =>
+  `One chat, one contact: a routine pass gives each contact due work its own chat (send_to_agent to self, wait false, client its ctc_ id, handoff_key ${key}:<ctc_ id>).`;
+
+/**
  * The two built-ins every template agent holds: `project_context` (the setup answers, §31.8 —
  * offered only to an agent whose metadata names a project with an applied install) and
  * `read_skill` (the `naive/*` skills below).
@@ -110,11 +132,12 @@ export const mailbox =
   "If email.read is not among your tools, request it with request_tools; if it is offered but returns no inboxes, the persona has none provisioned yet — report that plainly and ask the operator for one with ask_operator rather than read anything else as the mailbox.";
 
 /**
- * Where the agency's own work goes. The CRM holds clients; the agency's site, blog, templates and
- * research are the agency's own, so they are filed on one record that stands for the agency itself.
+ * Where the agency's own work goes. The dashboard holds signed clients; the agency's site, blog,
+ * templates and research are the agency's own, so they are filed on one record that stands for the
+ * agency itself.
  */
 export const OWN_RECORD =
-  "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own CRM record: find it with list_clients, or create it once with create_lead from the project name alone; never ask for a domain or contact.";
+  "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own record in the dashboard: find it with list_clients, or create it once with create_client from the project name alone; never ask for a domain or contact.";
 
 const system = (role: string): string => `${PREAMBLE} ${gate} ${role}`;
 const withMailbox = (role: string): string => `${PREAMBLE} ${gate} ${mailbox} ${role}`;
@@ -188,12 +211,13 @@ export const roster: AgentDecl[] = [
     model,
     budget,
     description:
-      "Works the pipeline end to end: finds prospects that match the ideal client, files them as leads with a why-now, drafts openers and follow-ups, and advances stages. Reads the mailbox; never sends without approval.",
+      "Works the pipeline end to end in the CRM: finds prospects that match the ideal client, adds them as leads with a why-now, drafts openers and follow-ups, moves stages, and turns a signed deal into a client. Reads the mailbox; never sends without approval.",
     system: withMailbox(
-      "You are the sales agent: fill and work the pipeline. Read list_clients first. File each prospect with create_lead and a one-line why-now, file openers and follow-ups with add_client_note restating the next action, and advance_pipeline only once the operator agrees. Hand each lead you advance to proposal to proposal-writer once: send_to_agent, wait false, handoff_key and message naming its cli_ id and what it needs. Never send, and never file a prospect you cannot name.",
+      "You are the sales agent: work the pipeline in the CRM (crm.read, crm.write). Add each prospect as a lead with a one-line why-now, log every opener and follow-up on its timeline with a dated next step, and move a stage only once the operator agrees. " +
+        `Hand a contact moved to proposal to proposal-writer once, naming its ctc_ id. ${WON} Never send.`,
     ),
     tools: tools(
-      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note", "advance_pipeline"), ...MAILBOX_READ, ...HANDOFF],
+      [...CONTEXT, "web_search", "web_fetch", ...PLATFORM_CRM, ...crm("list_clients", "create_client"), ...MAILBOX_READ, ...HANDOFF],
       [...MAILBOX_SEND, ...OPERATOR],
     ),
     handoffs: ["proposal-writer"],
@@ -203,15 +227,15 @@ export const roster: AgentDecl[] = [
       timer(
         "30 8 * * 1-5",
         "Inbox and new leads",
-        `Read project_context. Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (list_clients): file any new reply as a lead first (create_lead with referred_by and the client's cli_ id when an existing client introduced them, source network when it is someone the operator knows, otherwise outreach), note what it said on the client, and for every lead that moved or went quiet draft the next touch in full with add_client_note, next_action set to what you now wait on. A lead the operator has agreed to move to proposal: advance_pipeline it, then hand it to the proposal writer with send_to_agent (wait false, handoff_key its cli_ id) naming that id. Then add up to three new prospects that fit the ideal client. For any opener you draft: ${OPENER} Send nothing.`,
+        `Read project_context. Then read the agency inboxes (email.inboxes, email.read since yesterday) and the CRM (crm.read): a reply from someone not on file is added first with crm.write add — source referral when an existing client (list_clients) introduced them, and its chat logs "Referred by <client name> (<cli_ id>)" as its first note; source network when it is someone the operator knows; otherwise outreach. A reply moves a lead to talking. For every contact that replied, moved or went quiet, start its own chat (${FAN_OUT("followup")}) to log what it said and draft the next touch in full with crm.write log and a dated next step. A contact the operator has agreed to move to proposal: move it, then hand it to the proposal writer. A contact that signed: won and create_client (its company, domain, email, ctc_ id as crm_contact) in the same step. Then add up to three new prospects that fit the ideal client. For any opener you draft: ${OPENER} Send nothing.`,
         10_000_000,
       ),
     ],
     intake: {
       message:
-        `Read project_context. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name, each with a one-line why-now — and file every one with create_lead (source outreach). Draft (do not send) openers for the three best, as notes on each. ${OPENER} ` +
+        `Read project_context. Build a first list of fifteen prospects that match the ideal-client answer — real companies you can name — and add every one to the CRM with crm.write add (stage lead, source outreach, its one-line why-now as next_step). Then give the three best a chat each (send_to_agent to self, wait false, client its ctc_ id) that drafts (does not send) its opener and logs it on the contact's timeline. ${OPENER} ` +
         "Then the operator's own network, last because asking waits for them: if the context holds a network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there; on any other template, which asks no network question at setup, ask the operator once with ask_operator who they already know who might need this work or know someone who does (name, company, how they know them). " +
-        "File each person named with create_lead (source network, their company as the name, the person as contact_name) and draft a short personal note to each with add_client_note — do not send. Write it in the operator's voice, say how they know each other, and ask for advice or an introduction rather than pitching; never claim a result, client or credential the context does not hold. If the answer is empty or the operator has nobody, stop there; never invent a contact.",
+        "Add each person named with crm.write add (source network, the person as name, their company as company), and give each a chat of its own that drafts a short personal note on their timeline — do not send. Write it in the operator's voice, say how they know each other, and ask for advice or an introduction rather than pitching; never claim a result, client or credential the context does not hold. If the answer is empty or the operator has nobody, stop there; never invent a contact.",
       budget_micro_usd: DAY_ONE,
     },
   },
@@ -221,28 +245,29 @@ export const roster: AgentDecl[] = [
     model,
     budget,
     description:
-      "Owns every client that goes active: runs onboarding, keeps each calendar honest, and flags a stall before the client notices. Drafts the check-in; you send it.",
+      "Owns every signed client: runs onboarding, keeps each calendar honest, and flags a stall before the client notices. Drafts the check-in; you send it.",
     system: withMailbox(
-      "You are the client manager: every active client's calendar is yours to keep honest. Read list_clients, get_client and get_calendar before acting. Through the dashboard tools, file missing deliverables with create_draft_post, reslot with schedule_post, and record what you flagged with add_client_note. Approving and publishing are the operator's, never yours.",
+      "You are the client manager: keep signed clients' calendars honest. Read get_client and get_calendar first; file missing deliverables with create_draft_post, reslot with schedule_post. " +
+        "Flags and check-ins go on the client's CRM timeline (crm.write log). A won contact with no client gets one: create_client, ctc_ id as crm_contact.",
     ),
     tools: tools(
-      [...CONTEXT, ...crm("list_clients", "get_client", "create_lead", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note", "list_referral_ready", "record_referral_ask"), ...MAILBOX_READ],
+      [...CONTEXT, ...PLATFORM_CRM, ...crm("list_clients", "get_client", "create_client", "get_calendar", "list_posts", "create_draft_post", "schedule_post", "add_client_note", "list_referral_ready", "record_referral_ask"), ...MAILBOX_READ, ...HANDOFF],
       [...MAILBOX_SEND, ...OPERATOR],
     ),
-    handoffs: false,
+    handoffs: ["sales"],
     skills: ["naive/client-onboarding"],
     identity: AGENCY_IDENTITY,
     schedules: [
       timer(
         "0 8 * * 1",
         "Client check-in",
-        `Read project_context. Weekly review: for every active client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts); flag anything stalled or unscheduled as a note on the client and file a pending draft for each deliverable the calendar is missing. Read the mailbox (email.read, since = 7 days ago) for anything a client asked for, and draft the check-in as a note. ${REFERRAL_ASK} Approve and publish nothing.`,
+        `Read project_context. Weekly review: first make a client of every won contact (crm.read stage won) that no client's crm_contact names (create_client, its ctc_ id as crm_contact). Then for every signed client (list_clients), read the calendar for last week and this week (get_calendar) against the queue (list_posts) and file a pending draft for each deliverable the calendar is missing. Give each client with something to flag or ask a chat of its own (send_to_agent to self, wait false, client its crm_contact, handoff_key week:<that ctc_ id>) that reads the mailbox (email.read, since = 7 days ago) for what it asked and logs the flag and the drafted check-in on its CRM timeline. ${REFERRAL_ASK} Approve and publish nothing.`,
         10_000_000,
       ),
     ],
     intake: {
       message:
-        "Read project_context. Write the onboarding checklist and a first-30-days calendar template for the service this agency sells, and file both as one note on the agency's own client record (list_clients; create it with create_lead if it is not there yet).",
+        "Read project_context. Write the onboarding checklist and a first-30-days calendar template for the service this agency sells, and file both as one note on the agency's own record with add_client_note (list_clients; create it with create_client from the project name if it is not there yet).",
       budget_micro_usd: DAY_ONE,
     },
   },
@@ -257,7 +282,7 @@ export const roster: AgentDecl[] = [
       "You are the content writer for the agency's own blog. Read the site (dashboard.get_site) and the queue (list_posts) first, so you never repeat a title. Through the dashboard tools, file the editorial calendar as a note and every post as a pending draft with create_draft_post — one target keyword, a named search intent, a real introduction, in the agency's voice from the context. The calendar is written from the gap researcher's handoff, whose message names the agency record's cli_ id and the ten gaps. Never publish, never write for a client whose record you have not read, and never cite a statistic you did not fetch.",
     ),
     tools: tools(
-      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_lead", "list_posts", "create_draft_post", "add_client_note", "get_site")],
+      [...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "get_client", "create_client", "list_posts", "create_draft_post", "add_client_note", "get_site")],
       OPERATOR,
     ),
     handoffs: false,
@@ -287,7 +312,7 @@ export const roster: AgentDecl[] = [
     system: own(
       "You are the content reviser. Read every page of the public site (dashboard.get_site) and every posted item in the queue (list_posts) before judging anything. Through the dashboard tools, file each revision as a pending draft with create_draft_post, titled for the page it replaces, with a one-line reason — thin, stale, or not in the agency's voice from the context. Never edit the site directly, never revise what is performing, and never file more than three revisions in one session.",
     ),
-    tools: tools([...CONTEXT, "web_fetch", ...crm("list_clients", "create_lead", "list_posts", "create_draft_post", "get_site")], OPERATOR),
+    tools: tools([...CONTEXT, "web_fetch", ...crm("list_clients", "create_client", "list_posts", "create_draft_post", "get_site")], OPERATOR),
     handoffs: false,
     skills: ["naive/content-revision"],
     identity: AGENCY_IDENTITY,
@@ -315,7 +340,7 @@ export const roster: AgentDecl[] = [
     system: own(
       "You are the gap researcher. Read the agency's site (dashboard.get_site) first, then the competitors — the ones the context names, or three you find and say how you chose. Compare keywords, page types and on-page elements, and file one gap report with add_client_note on the agency's own record: the ten highest-value misses, each with the evidence you fetched. Then hand it to content-writer with send_to_agent, wait false, the message naming the agency record's cli_ id and the ten gaps. Never present a guess as a ranking, never name a competitor you did not visit, and never change the site yourself.",
     ),
-    tools: tools([...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "create_lead", "add_client_note", "get_site"), ...HANDOFF], OPERATOR),
+    tools: tools([...CONTEXT, "web_search", "web_fetch", ...crm("list_clients", "create_client", "add_client_note", "get_site"), ...HANDOFF], OPERATOR),
     handoffs: ["content-writer"],
     skills: ["naive/keyword-gap-analysis"],
     identity: AGENCY_IDENTITY,
@@ -339,18 +364,18 @@ export const roster: AgentDecl[] = [
     model,
     budget,
     description:
-      "Turns a qualified lead into a proposal: scope, three package tiers from the pricing answer, timeline. Works when sales hands one over; files it as a note on the client.",
+      "Turns a qualified lead into a proposal: scope, three package tiers from the pricing answer, timeline. Works when sales hands one over; logs it on the contact's CRM timeline.",
     system: own(
-      "You are the proposal writer. A session sales opens names the lead's cli_ id: read that client with get_client — notes, services, what it waits on — and the pricing answer in the context before writing a line. File each proposal with add_client_note on that client: scope, three package tiers — priced from the pricing answer when the context holds one; when it does not, scoped without prices, and ask the operator once with ask_operator — a timeline, and what the client must provide. Never quote a price the context does not support, never promise a result, never send it — the operator does.",
+      "You are the proposal writer. A session sales opens names the contact's ctc_ id: read that contact and its timeline with crm.read — what it said, what it needs, what it waits on — and the pricing answer in the context before writing a line. Log each proposal on that contact's timeline with crm.write log: scope, three package tiers — priced from the pricing answer when the context holds one; when it does not, scoped without prices, and ask the operator once with ask_operator — a timeline, and what the client must provide. Never quote a price the context does not support, never promise a result, never send it — the operator does.",
     ),
-    tools: tools([...CONTEXT, "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note")], OPERATOR),
+    tools: tools([...CONTEXT, "web_fetch", ...PLATFORM_CRM, ...crm("list_clients", "create_client", "add_client_note")], OPERATOR),
     handoffs: false,
     skills: ["naive/proposal-writing"],
     identity: AGENCY_IDENTITY,
     schedules: [],
     intake: {
       message:
-        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers: priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price. File it as a note on the agency's own record (list_clients; create it with create_lead if it is not there yet).",
+        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers: priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price. File it as a note on the agency's own record (list_clients; create it with create_client from the project name if it is not there yet).",
       budget_micro_usd: DAY_ONE,
     },
   },

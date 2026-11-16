@@ -1,0 +1,28 @@
+{
+  "company_name": "Upward Search Co.",
+  "tagline": "Climb the searches your customers make, one rung at a time",
+  "intro": "We are a search agency for growing online shops and service brands. We work through what lifts a site in search and in AI answers, in order, and tell you every month which rung you are on.",
+  "audience": "UK online shops and service brands with a site that works but is rarely found, usually with a small in-house team and no one dedicated to search yet.",
+  "pricing_note": "A monthly retainer in three sizes, set by how much content and development you need. Six months to start, because climbing takes time, then rolling monthly.",
+  "city": "Manchester",
+  "contact_email": "climb@upwardsearch.co.uk",
+  "year": "2026",
+  "services": [
+    { "title": "Foundations", "description": "Speed, crawling, indexing and site structure fixed first, because nothing else lifts you while search engines and AI crawlers cannot read the site properly." },
+    { "title": "Product and service pages", "description": "Every page that sells rewritten to answer what buyers search for and ask AI assistants, with clear titles, specifics and prices." },
+    { "title": "Guides and answers", "description": "Buying guides, comparisons and plain answers to common questions, the pages people and AI answers turn to before they choose." },
+    { "title": "Links and mentions", "description": "Honest outreach to the publications, directories and partners your customers already read, so other sites point to yours." }
+  ],
+  "specialties": ["Site foundations", "Ecommerce SEO", "Product page copy", "Buying guides", "AI answer visibility", "Digital PR"],
+  "process": [
+    { "title": "Find your rung", "description": "An audit of your site, your searches and what AI assistants say about you, so we know where you stand and what to fix first." },
+    { "title": "Work up in order", "description": "Foundations first, then pages, then guides, then links. Each month has a short plan you approve before we start." },
+    { "title": "Check every month", "description": "A plain report on the searches that matter to you, what moved, what did not and which rung comes next." }
+  ],
+  "proof": [
+    { "text": "For the first time someone explained what to fix first and why, and then did it.", "source": "Founder, a Manchester homeware shop (sample)" },
+    { "text": "Our product pages finally say what customers want to know before they buy.", "source": "Ecommerce manager, a cycling brand (sample)" },
+    { "text": "Clear monthly plans, no jargon, and they always do what they said they would.", "source": "Director, a garden design studio (sample)" }
+  ],
+  "logos": ["Northern Quarter Home", "Pennine Cycles", "Ancoats Coffee Roasters", "Hale Garden Studio", "Salford Tile Co.", "Peak Outdoor Supply"]
+}

@@ -14,7 +14,7 @@
  * open none at all.
  *
  * The whole request is **one transaction over the locked document row**. It used to be a plain
- * read-modify-write, which for a single jsonb row is last-write-wins: eight parallel `create_lead`
+ * read-modify-write, which for a single jsonb row is last-write-wins: eight parallel `create_client`
  * calls each answered 200 and six clients survived, an agent's write vanishing with no error
  * anywhere. `select … for update` in `begin` holds the row for the length of the request, so the
  * next writer reads what the last one wrote. Serialising costs nothing here — the writers are one

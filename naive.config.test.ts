@@ -1,4 +1,5 @@
 /** The committed config must load and validate through the real `naive up` loader. */
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -15,7 +16,7 @@ const SEO = TEMPLATE === "seo-geo";
 
 /** The tools a connected account contributes to a turn — `<connector>.<tool>`, and never the dashboard's own. */
 const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
-  Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard."));
+  Object.keys(agent.tools?.configs ?? {}).filter((name) => name.includes(".") && !name.startsWith("dashboard.") && !name.startsWith("crm."));
 
 describe("naive.config.ts", () => {
   it("loads and validates via loadConfig", async () => {
@@ -39,6 +40,10 @@ describe("naive.config.ts", () => {
     // site's read of its own copy (`/api/site`) is same-origin. The app is what the crew files into
     // and the operator approves on, so an install cannot leave it out.
     expect(result.config.apps.map((a) => [a.name, a.mcp, a.required])).toEqual([["dashboard", "/mcp", true]]);
+    // Every agency template carries the platform's four mini apps, declared as the crews declare them.
+    const crews = JSON.parse(readFileSync(new URL("./crews/clients/naive.config.json", import.meta.url), "utf8"));
+    expect(result.config.mini_apps?.map((a) => a.name)).toEqual(["CRM", "Calendar", "Ads", "SEO & GEO"]);
+    expect(result.config.mini_apps).toEqual(crews.mini_apps);
     // The crew that a template with a per-client trio provisions per client, published for the studio.
     expect(result.config.crew_per_client?.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].crew.map((a) => a.name));
     expect(result.config.questions.map((q) => q.key)).toEqual(TEMPLATES[TEMPLATE].questions.map((q) => q.key));
@@ -112,9 +117,10 @@ describe("naive.config.ts", () => {
       expect(agent.system).toMatch(/request it once with request_tools/);
     }
     const byName = Object.fromEntries(result.config.agents.map((a) => [a.name, a]));
-    // The daily pass files follow-ups on the client row, so the sales agent must hold the tool that does.
-    expect(byName["sales"]?.tools?.configs).toHaveProperty("dashboard.create_lead");
-    expect(byName["sales"]?.tools?.configs).toHaveProperty("dashboard.add_client_note");
+    // The pipeline is the platform CRM's: sales works it with crm.read/crm.write and turns a won deal
+    // into a dashboard client with create_client; it holds no dashboard pipeline tool at all.
+    for (const tool of ["crm.read", "crm.write", "dashboard.create_client"]) expect(byName["sales"]?.tools?.configs).toHaveProperty(tool);
+    for (const tool of ["dashboard.create_lead", "dashboard.advance_pipeline", "dashboard.add_client_note"]) expect(byName["sales"]?.tools?.configs).not.toHaveProperty(tool);
     expect(byName["sales"]?.schedules?.map((s) => s.cron)).toEqual(["30 8 * * 1-5"]);
     expect(byName["client-manager"]?.tools?.configs).toHaveProperty("dashboard.get_calendar");
     expect(byName["client-manager"]?.schedules?.map((s) => s.cron)).toEqual(["0 8 * * 1"]);
@@ -138,6 +144,15 @@ describe("naive.config.ts", () => {
       expect(siblingsOnly).toEqual(listed.includes("product-design") ? ["account-manager", "designer", "engineer", "visualizer"] : []);
     }
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
+  }, 30_000);
+
+  it("carries the chosen template's Operator's Manual, and every template has one", async () => {
+    const result = await loaded;
+    if (!result.ok) throw new Error(result.message);
+    expect(result.config.docs).toEqual([{ name: "📖 Operator's Manual.md", file: `manuals/${TEMPLATE}.md` }]);
+    for (const name of Object.keys(TEMPLATES)) {
+      expect(readFileSync(new URL(`./manuals/${name}.md`, import.meta.url), "utf8")).toMatch(/^# 📖 .+: Operator's Manual\n/);
+    }
   }, 30_000);
 });
 
@@ -225,6 +240,7 @@ describe("the installed engine's template list", () => {
       expect(config.agents.map((a) => a.name)).toEqual(["account-manager", "designer", "engineer", "visualizer"]);
       expect(config.questions.map((q) => q.key)).toEqual(["products", "audience", "manufacturable", "done"]);
       expect(config.crew_per_client ?? []).toEqual([]);
+      expect(config.mini_apps?.map((a) => a.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
     } else {
       await expect(load).rejects.toThrow(/product-design template needs @usenaive-sdk\/blueprints >= 0\.16\.0/);
     }

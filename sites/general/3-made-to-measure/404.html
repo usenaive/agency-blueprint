@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --kraft: #e9dcc5; --linen: #f7f0e3; --ink: #2a1d14; --muted: #5f4c3d; --line: #c9b391; --thread: #a8331f; --wood: #b07a45; --woodDark: #8a5a2e; --gut: clamp(16px, 4vw, 64px); --swing: cubic-bezier(0.34, 1.56, 0.64, 1); }
+@media (prefers-color-scheme: dark) { :root { --kraft: #1f1813; --linen: #2b221b; --ink: #f2e6d2; --muted: #c7b39b; --line: #4f3f30; --thread: #ff8466; --wood: #8a5a2e; --woodDark: #5f3c1d; } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--kraft); color: var(--ink); font: 400 1.0625rem/1.6 "Karla", Arial, sans-serif; overflow-x: hidden; }
+h1, p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px dashed var(--thread); outline-offset: 4px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--ink); color: var(--linen); }
+.skip:focus { top: 12px; }
+.wrap { width: 100%; max-width: 1320px; margin-inline: auto; padding-inline: var(--gut); }
+header { padding-block: 22px; }
+.brand { display: inline-flex; align-items: center; gap: 12px; font: 400 1.5rem/1.1 "Caprasimo", Georgia, serif; text-decoration: none; overflow-wrap: anywhere; }
+.brand i { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 3px dashed var(--thread); }
+main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(24px, 4vw, 64px); align-items: center; padding-block: clamp(40px, 6vw, 96px); }
+.k { display: inline-block; padding: 4px 12px; border: 2px solid var(--ink); border-radius: 999px; font-weight: 600; font-size: 0.9375rem; }
+h1 { margin-top: 22px; font: 400 clamp(2.5rem, 1.2rem + 4.8vw, 5.2rem)/1.02 "Caprasimo", Georgia, serif; }
+.lede { margin-block: 22px 30px; max-width: 30em; font-size: 1.125rem; }
+.patch { display: inline-block; padding: 6px; border-radius: 14px; background: var(--thread); color: var(--linen); text-decoration: none; font-weight: 700; transform: rotate(-1.5deg); transition: transform 0.45s var(--swing); }
+.patch span { display: block; padding: 12px 22px; border: 2px dashed rgb(247 240 227 / 0.75); border-radius: 9px; }
+@media (prefers-color-scheme: dark) { .patch { color: #2a1206; } .patch span { border-color: rgb(42 18 6 / 0.55); } }
+svg { width: min(36vw, 360px); height: auto; }
+.wood { fill: none; stroke: var(--wood); stroke-width: 18; }
+.cloth { fill: var(--linen); }
+.loose { fill: none; stroke: var(--thread); stroke-width: 3; stroke-dasharray: 7 5; stroke-linecap: round; }
+footer { padding-block: 24px 40px; border-top: 2px dashed var(--line); font-weight: 600; overflow-wrap: anywhere; }
+@media (hover: hover) { .patch:hover { transform: rotate(1deg) translateY(-3px) scale(1.03); } }
+@media (max-width: 700px) { main { grid-template-columns: 1fr; } svg { width: 200px; grid-row: 1; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap"><a class="brand" href="/"><i aria-hidden="true"></i>{{company_name}}</a></header>
+<main id="main" class="wrap">
+  <div>
+    <p class="k">Error 404</p>
+    <h1>This thread came loose</h1>
+    <p class="lede">The page you asked for is not here. The link may be old, or the page may have moved.</p>
+    <a class="patch" href="/"><span>Back to the studio</span></a>
+  </div>
+  <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle class="wood" cx="200" cy="200" r="184"/><circle class="cloth" cx="200" cy="200" r="168"/><path class="loose" d="M90 210c40-60 80 40 120-10s60 30 70 60c10 30 40 50 90 150"/></svg>
+</main>
+<footer class="wrap"><p>&copy; {{year}} {{company_name}}</p></footer>
+</body>
+</html>

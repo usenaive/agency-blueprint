@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Paid ads</title>
+<meta name="description" content="{{#if city}}Paid ads from {{city}}. {{/if}}{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top wrap">
+  <a class="brand" href="#top"><span class="brand__dot" aria-hidden="true"></span><span class="brand__name">{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#formats">What we make</a></li>
+      <li><a href="#how">How it runs</a></li>
+      <li><a class="nav__cta" href="#contact">Send a brief</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero wrap" id="top" aria-labelledby="h1">
+    <div class="hero__copy">
+      <p class="tag"><span class="tag__dot" aria-hidden="true"></span>Paid ads{{#if city}} from {{city}}{{/if}}</p>
+      <h1 id="h1">{{tagline}}</h1>
+      <p class="lede">{{intro}}</p>
+      <div class="hero__cta">
+        <a class="btn" href="#contact"><span>Send a brief</span><i aria-hidden="true">→</i></a>
+        <a class="link" href="#formats">See what we make</a>
+      </div>
+    </div>
+
+    <aside class="feed" aria-labelledby="feed-h">
+      <h2 id="feed-h" class="vh">Channels we run</h2>
+      <div class="feed__bar">
+        <span class="mono">Your customer’s feed</span>
+        <button class="feed__pause mono" type="button" hidden>Pause</button>
+      </div>
+      <div class="feed__window">
+        <div class="feed__track">
+          <ul class="feed__list">
+            <li class="ad c1"><div class="ad__head"><span class="ad__av" aria-hidden="true"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r45"><span class="mono ad__fmt">4:5</span><p>{{specialties[0]}}</p></div><div class="ad__foot"><span>Learn more</span><i aria-hidden="true">→</i></div></li>
+            <li class="ad c2"><div class="ad__head"><span class="ad__av" aria-hidden="true"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r11"><span class="mono ad__fmt">1:1</span><p>{{specialties[1]}}</p></div><div class="ad__foot"><span>Shop now</span><i aria-hidden="true">→</i></div></li>
+            <li class="ad c3"><div class="ad__head"><span class="ad__av" aria-hidden="true"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r45"><span class="mono ad__fmt">9:16</span><p>{{specialties[2]}}</p></div><div class="ad__foot"><span>Watch more</span><i aria-hidden="true">→</i></div></li>
+            <li class="ad c4"><div class="ad__head"><span class="ad__av" aria-hidden="true"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r11"><span class="mono ad__fmt">1:1</span><p>{{specialties[3]}}</p></div><div class="ad__foot"><span>Sign up</span><i aria-hidden="true">→</i></div></li>
+            <li class="ad c5"><div class="ad__head"><span class="ad__av" aria-hidden="true"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r45"><span class="mono ad__fmt">4:5</span><p>{{specialties[4]}}</p></div><div class="ad__foot"><span>Learn more</span><i aria-hidden="true">→</i></div></li>
+            <li class="ad c6"><div class="ad__head"><span class="ad__av" aria-hidden="true"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r11"><span class="mono ad__fmt">16:9</span><p>{{specialties[5]}}</p></div><div class="ad__foot"><span>Get a quote</span><i aria-hidden="true">→</i></div></li>
+          </ul>
+          <ul class="feed__list" aria-hidden="true">
+            <li class="ad c1"><div class="ad__head"><span class="ad__av"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r45"><span class="mono ad__fmt">4:5</span><p>{{specialties[0]}}</p></div><div class="ad__foot"><span>Learn more</span><i>→</i></div></li>
+            <li class="ad c2"><div class="ad__head"><span class="ad__av"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r11"><span class="mono ad__fmt">1:1</span><p>{{specialties[1]}}</p></div><div class="ad__foot"><span>Shop now</span><i>→</i></div></li>
+            <li class="ad c3"><div class="ad__head"><span class="ad__av"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r45"><span class="mono ad__fmt">9:16</span><p>{{specialties[2]}}</p></div><div class="ad__foot"><span>Watch more</span><i>→</i></div></li>
+            <li class="ad c4"><div class="ad__head"><span class="ad__av"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r11"><span class="mono ad__fmt">1:1</span><p>{{specialties[3]}}</p></div><div class="ad__foot"><span>Sign up</span><i>→</i></div></li>
+            <li class="ad c5"><div class="ad__head"><span class="ad__av"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r45"><span class="mono ad__fmt">4:5</span><p>{{specialties[4]}}</p></div><div class="ad__foot"><span>Learn more</span><i>→</i></div></li>
+            <li class="ad c6"><div class="ad__head"><span class="ad__av"></span><span class="ad__who"><b>{{company_name}}</b><small>Sponsored</small></span></div><div class="ad__art r11"><span class="mono ad__fmt">16:9</span><p>{{specialties[5]}}</p></div><div class="ad__foot"><span>Get a quote</span><i>→</i></div></li>
+          </ul>
+        </div>
+      </div>
+      <p class="feed__cap mono">The channels we run, as your customer scrolls past them. Point at an ad to stop the scroll.</p>
+    </aside>
+  </section>
+
+  <section class="sec wrap" id="formats" aria-labelledby="formats-h">
+    <div class="sec__head">
+      <p class="mono kicker">01 / What we make</p>
+      <h2 id="formats-h">Ads built for the thumb, not the boardroom</h2>
+    </div>
+    <ol class="formats">
+      <li class="fmt c1"><span class="fmt__shape s916" aria-hidden="true"></span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li class="fmt c2"><span class="fmt__shape s11" aria-hidden="true"></span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li class="fmt c4"><span class="fmt__shape s45" aria-hidden="true"></span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li class="fmt c5"><span class="fmt__shape s169" aria-hidden="true"></span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="target" aria-labelledby="target-h">
+    <div class="wrap target__in">
+      <p class="mono kicker">02 / Who we make it for</p>
+      <h2 id="target-h" class="vh">Who we make it for</h2>
+      <p class="target__t">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="how" aria-labelledby="how-h">
+    <div class="sec__head">
+      <p class="mono kicker">03 / How it runs</p>
+      <h2 id="how-h">Three steps, then it runs every week</h2>
+    </div>
+    <ol class="story">
+      <li><span class="story__bar" aria-hidden="true"><b></b></span><p class="mono">Step 1</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><span class="story__bar" aria-hidden="true"><b></b></span><p class="mono">Step 2</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><span class="story__bar" aria-hidden="true"><b></b></span><p class="mono">Step 3</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+    <div class="fee">
+      <h3 class="mono">How we charge</h3>
+      <p>{{pricing_note}}</p>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec wrap" aria-labelledby="proof-h">
+    <div class="sec__head">
+      <p class="mono kicker">In the comments</p>
+      <h2 id="proof-h">What clients say about working with us</h2>
+    </div>
+    <ul class="comments">
+      {{#if proof[0]}}<li><figure><span class="comments__av" aria-hidden="true"></span><div><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</div></figure></li>{{/if}}
+      {{#if proof[1]}}<li><figure><span class="comments__av" aria-hidden="true"></span><div><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</div></figure></li>{{/if}}
+      {{#if proof[2]}}<li><figure><span class="comments__av" aria-hidden="true"></span><div><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</div></figure></li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="sec wrap" aria-labelledby="logos-h">
+    <p class="mono kicker" id="logos-h">Brands we have run ads for</p>
+    <ul class="handles">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap contact__in">
+      <p class="mono kicker">04 / Send a brief</p>
+      <h2 id="contact-h">Tell us what you sell and who should see it</h2>
+      <a class="compose" href="mailto:{{contact_email}}">
+        <span class="compose__field">Write to {{contact_email}}</span>
+        <span class="compose__send"><span>Send a brief</span><i aria-hidden="true">→</i></span>
+      </a>
+      <p class="contact__meta">A short note is enough: what you sell, where you sell it and the budget you have in mind.{{#if city}} Based in {{city}}.{{/if}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="link" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>

@@ -1,14 +1,14 @@
 import { Link } from "react-router";
 import { useApi } from "../api";
 import { PageHeader, StageChip } from "../components/kit";
-import { TEMPLATE, type Client, type Post } from "../data";
+import { signedClients, TEMPLATE, type Client, type Post } from "../data";
 
 /** Active clients — each row opens that client's workspace. Prospects live on
- * the CRM until they graduate. */
+ * the platform CRM; a contact marked won there becomes a client here. */
 export function Clients() {
   const { data: clients, error } = useApi<Client[]>("/clients");
   const { data: posts } = useApi<Post[]>("/posts");
-  const rows = (clients ?? []).filter((c) => c.stage === "active");
+  const rows = signedClients(clients ?? []);
 
   return (
     <div className="pane-in">

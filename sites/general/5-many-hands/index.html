@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | One team, many hands</title>
+<meta name="description" content="{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="head wrap" id="top">
+  <a class="brand" href="#top"><span class="brand__cut" aria-hidden="true"></span><span>{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#hands">What we do</a></li>
+      <li><a href="#how">How we work</a></li>
+      <li><a href="#terms">Terms</a></li>
+      <li><a class="nav__cta" href="#bring">Bring us in</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero wrap" aria-labelledby="h1">
+    <div class="hero__text">
+      <p class="kicker">One team, many hands{{#if city}}. {{city}}{{/if}}</p>
+      <h1 id="h1">{{tagline}}</h1>
+      <p class="hero__intro">{{intro}}</p>
+      <a class="btn" href="#bring"><span>Bring us in</span></a>
+    </div>
+    <div class="collage">
+      <h2 class="visually-hidden">The hands on every job</h2>
+      <ul class="stage" data-stage>
+        <li class="cut c1"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4C76 4 96 26 94 52 92 80 70 96 46 95 20 94 4 74 6 48 8 22 26 4 50 4Z"/></svg><span>{{specialties[0]}}</span></li>
+        <li class="cut c2"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 2C70 22 98 30 96 56 94 82 72 98 50 96 24 94 4 78 6 52 8 28 34 18 50 2Z"/></svg><span>{{specialties[1]}}</span></li>
+        <li class="cut c3"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M8 96V44C8 20 27 4 50 4S92 20 92 44V96Z"/></svg><span>{{specialties[2]}}</span></li>
+        <li class="cut c4"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 3 61 20 80 12 80 32 98 40 85 55 96 72 76 76 72 96 55 86 40 98 33 79 12 82 18 62 2 50 18 38 12 18 33 21 40 3 50 3Z"/></svg><span>{{specialties[3]}}</span></li>
+        <li class="cut c5"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M6 20C22 6 40 14 50 8 62 2 80 4 94 18 98 40 90 52 96 70 98 86 80 98 58 92 40 98 18 96 8 82 2 64 10 50 4 36 4 30 4 24 6 20Z"/></svg><span>{{specialties[4]}}</span></li>
+        <li class="cut c6"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M3 50C16 16 84 10 97 50 84 90 16 84 3 50Z"/></svg><span>{{specialties[5]}}</span></li>
+        <li class="core" aria-hidden="true"><span>One team</span></li>
+      </ul>
+      <button class="toggle" type="button" hidden>Scatter the pieces</button>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="hands" aria-labelledby="hands-h">
+    <h2 id="hands-h" class="sec-h">What we do</h2>
+    <ul class="cards">
+      <li class="card k1"><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li class="card k2"><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li class="card k3"><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li class="card k4"><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ul>
+  </section>
+
+  <section class="sec how wrap" id="how" aria-labelledby="how-h">
+    <h2 id="how-h" class="sec-h">How we work</h2>
+    <ol class="pass">
+      <li><span class="pass__n" aria-hidden="true">1</span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><span class="pass__n" aria-hidden="true">2</span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><span class="pass__n" aria-hidden="true">3</span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec terms wrap" id="terms" aria-labelledby="terms-h">
+    <h2 id="terms-h" class="visually-hidden">Terms</h2>
+    <div class="terms__for"><h3 class="mini">Who we work for</h3><p>{{audience}}</p></div>
+    <div class="terms__fee"><h3 class="mini">How we charge</h3><p>{{pricing_note}}</p></div>
+  </section>
+
+  {{#if proof}}<section class="sec wrap" aria-labelledby="voices-h">
+    <h2 id="voices-h" class="sec-h">In clients&#39; words</h2>
+    <div class="voices">
+      {{#if proof[0]}}<figure class="v1"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure class="v2"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure class="v3"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="sec sec--tight wrap" aria-labelledby="with-h">
+    <h2 id="with-h" class="mini">Worked alongside</h2>
+    <ul class="strips">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="sec bring wrap" id="bring" aria-labelledby="bring-h">
+    <div class="sun" aria-hidden="true"></div>
+    <div class="bring__body">
+      <h2 id="bring-h" class="sec-h">Bring us in</h2>
+      <p>Tell us what needs doing, and we will tell you which hands it needs, how long it takes and what it costs.</p>
+      <a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
+      <p class="bring__where">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="up" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>

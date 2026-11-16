@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Paid ads</title>
+<meta name="description" content="Paid ads{{#if city}} planned in {{city}}{{/if}}. {{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top__in">
+    <a class="brand" href="#top"><span class="brand__cell" aria-hidden="true">A1</span><span class="brand__name">{{company_name}}</span></a>
+    <nav aria-label="Primary">
+      <ul class="tabs">
+        <li><a href="#plan">The plan</a></li>
+        <li><a href="#items">Line items</a></li>
+        <li><a href="#fees">Fees</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="h1">
+    <div class="wrap">
+      <div class="fx" aria-hidden="true"><span class="fx__ref">B2</span><span class="fx__fn">fx</span><span class="fx__val">=PLAN({{#if city}}“{{city}}”{{/if}})</span></div>
+      <div class="cols" aria-hidden="true"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span><span>K</span><span>L</span></div>
+      <div class="hero__grid">
+        <div class="rnums" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span></div>
+        <p class="hero__k mono">Paid ads{{#if city}}, planned in {{city}}{{/if}}</p>
+        <h1 id="h1">{{tagline}}</h1>
+        <div class="hero__side">
+          <p class="lede">{{intro}}</p>
+          <a class="btn" href="#contact"><span>Ask for a plan</span><i aria-hidden="true">↘</i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plan" id="plan" aria-labelledby="plan-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <p class="mono k">Sheet 1</p>
+        <h2 id="plan-h">The plan: every channel, every week, on one sheet</h2>
+      </div>
+      <div class="sheet">
+        <div class="phases" aria-hidden="true">
+          <span class="phases__n">3</span><span class="phases__lab mono">Phase</span>
+          <span class="phase"><b>{{process[0].title}}</b></span>
+          <span class="phase"><b>{{process[1].title}}</b></span>
+          <span class="phase"><b>{{process[2].title}}</b></span>
+        </div>
+        <div class="weeks mono" aria-hidden="true">
+          <span class="phases__n">4</span><span>Channel</span>
+          <span class="weeks__w"><i>W1</i><i>W2</i><i>W3</i><i>W4</i><i>W5</i><i>W6</i><i>W7</i><i>W8</i><i>W9</i><i>W10</i><i>W11</i><i>W12</i></span>
+        </div>
+        <ul class="rows" aria-label="Channels we plan and buy">
+          <li class="row"><span class="row__n" aria-hidden="true">5</span><span class="row__ch">{{specialties[0]}}</span><span class="row__wk" aria-hidden="true"><span class="bar b0" style="--s:1;--e:13"></span></span></li>
+          <li class="row"><span class="row__n" aria-hidden="true">6</span><span class="row__ch">{{specialties[1]}}</span><span class="row__wk" aria-hidden="true"><span class="bar b1" style="--s:1;--e:5"></span><span class="bar b1" style="--s:7;--e:13"></span></span></li>
+          <li class="row"><span class="row__n" aria-hidden="true">7</span><span class="row__ch">{{specialties[2]}}</span><span class="row__wk" aria-hidden="true"><span class="bar b2" style="--s:3;--e:7"></span><span class="bar b2" style="--s:9;--e:13"></span></span></li>
+          <li class="row"><span class="row__n" aria-hidden="true">8</span><span class="row__ch">{{specialties[3]}}</span><span class="row__wk" aria-hidden="true"><span class="bar b0" style="--s:5;--e:13"></span></span></li>
+          <li class="row"><span class="row__n" aria-hidden="true">9</span><span class="row__ch">{{specialties[4]}}</span><span class="row__wk" aria-hidden="true"><span class="bar b1" style="--s:2;--e:4"></span><span class="bar b1" style="--s:6;--e:8"></span><span class="bar b1" style="--s:10;--e:12"></span></span></li>
+          <li class="row"><span class="row__n" aria-hidden="true">10</span><span class="row__ch">{{specialties[5]}}</span><span class="row__wk" aria-hidden="true"><span class="bar b2" style="--s:9;--e:13"></span></span></li>
+        </ul>
+        <span class="cursor" aria-hidden="true"></span>
+      </div>
+      <p class="cap mono">An illustrative flighting plan for one quarter: which channel runs in which week. Yours is drawn from your budget and your season.</p>
+    </div>
+  </section>
+
+  <section class="items" id="items" aria-labelledby="items-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <p class="mono k">Sheet 2</p>
+        <h2 id="items-h">Line items</h2>
+      </div>
+      <ol class="lines">
+        <li><span class="lines__n mono" aria-hidden="true">01</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+        <li><span class="lines__n mono" aria-hidden="true">02</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+        <li><span class="lines__n mono" aria-hidden="true">03</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+        <li><span class="lines__n mono" aria-hidden="true">04</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="note" aria-labelledby="note-h">
+    <div class="wrap note__in">
+      <h2 id="note-h" class="mono k">Note on cell B2: who this plan is for</h2>
+      <p class="note__t">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="steps" aria-labelledby="steps-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <p class="mono k">Sheet 3</p>
+        <h2 id="steps-h">How a quarter runs</h2>
+      </div>
+      <ol class="phaselist">
+        <li><p class="mono">Weeks 1 to 4</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+        <li><p class="mono">Weeks 5 to 8</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+        <li><p class="mono">Weeks 9 to 12</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+      </ol>
+      <div class="total" id="fees">
+        <h3 class="mono">Fees</h3>
+        <p>{{pricing_note}}</p>
+      </div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="said" aria-labelledby="said-h">
+    <div class="wrap">
+      <div class="sec__head">
+        <p class="mono k">Signed off</p>
+        <h2 id="said-h">What clients wrote back</h2>
+      </div>
+      <div class="said__grid">
+        {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption class="mono">{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+        {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption class="mono">{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+        {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption class="mono">{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+      </div>
+    </div>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="accts" aria-labelledby="accts-h">
+    <div class="wrap">
+      <h2 id="accts-h" class="mono k">Accounts we have planned for</h2>
+      <ul class="accts__list">
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap">
+      <p class="mono k">Last sheet</p>
+      <h2 id="contact-h">Send us the brief. We will send back a <em>plan</em>.</h2>
+      <a class="cell-link" href="mailto:{{contact_email}}"><span class="mono">Email</span><b>{{contact_email}}</b></a>
+      <p class="contact__city mono">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <a class="up" href="#top">Back to cell A1</a>
+  </div>
+</footer>
+</body>
+</html>

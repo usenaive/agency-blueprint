@@ -1,0 +1,83 @@
+{
+  "id": "security-testing/1-run-report",
+  "agencyType": "security-testing",
+  "design": "Run Report",
+  "style": "The site is a QA run report: crisp Geist on cool grey, status pills, a live suite list in the hero where each user journey goes queued, running, passed, and one finds an issue that is reported and rechecked.",
+  "theme": "both",
+  "fonts": [
+    "Geist",
+    "Geist Mono"
+  ],
+  "concept": {
+    "idea": "What a QA journey-testing agency hands a client is a run report, so the whole page is one: journeys as suites, services as test cases, the process as a staged pipeline.",
+    "signature": "The hero run panel: the six specialties run one by one with live timers, the fourth finds an issue, a note says it was reported with steps to reproduce, it is rechecked and passes; at rest a suite re-runs every few seconds. Complete and all passing without JS or with reduced motion.",
+    "motionVerb": "run, then pass: queued, spinning, ticked",
+    "palette": {
+      "ground": "#f4f5f6",
+      "surface": "#ffffff",
+      "ink": "#111315",
+      "muted": "#4c535b",
+      "pass": "#0a7a42",
+      "fail": "#b8202b",
+      "run": "#8a5a00",
+      "darkGround": "#0e1012",
+      "darkInk": "#e9ebed",
+      "darkPass": "#4fd58d"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 7.5,
+      "usability": 8,
+      "creativity": 7,
+      "content": 7.5,
+      "overall": 7.55
+    },
+    "estimate": 8.65,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Self-score from the /jury rubric and shoot.mjs evidence (0 axe violations, no horizontal overflow at 390 or 1440 with sample and long.json, every focus stop visible, skip link first, nothing moving under reduced motion). No blind critic was run for this batch. Strong report idea, clean light and dark; the hero frame reads close to a product UI template, so creativity held at 7."
+  }
+}

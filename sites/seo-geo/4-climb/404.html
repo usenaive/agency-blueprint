@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --ground: #1638c9; --deep: #0c1f73; --ink: #fff; --muted: #c9d2f7; --line: #4a66da; --lemon: #e4ff4f; --step: cubic-bezier(.5,0,.2,1.25); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--ground); color: var(--ink); font: 400 19px/1.55 "Sofia Sans", Arial, sans-serif; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--lemon); outline-offset: 3px; }
+.skip { position: absolute; left: 16px; top: -60px; padding: 10px 16px; background: var(--lemon); color: var(--deep); font-weight: 700; text-decoration: none; }
+.skip:focus { top: 12px; }
+header { padding: 22px 48px; border-bottom: 2px solid var(--line); }
+header a { font-weight: 700; font-size: 20px; text-decoration: none; color: inherit; }
+main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 64px 48px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 48px 80px; align-items: center; }
+h1 { margin: 0 0 20px; font: 800 clamp(64px, 10vw, 160px)/.85 "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; }
+p { margin: 0 0 32px; max-width: 46ch; color: var(--muted); }
+.btn { display: inline-flex; align-items: center; min-height: 60px; padding: 14px 28px; background: var(--lemon); color: var(--deep); font: 800 30px/1 "Sofia Sans Extra Condensed", "Arial Narrow", sans-serif; text-decoration: none; box-shadow: 0 6px 0 var(--deep); transition: transform .35s var(--step), box-shadow .35s var(--step); }
+.btn:hover { transform: translateY(-6px); box-shadow: 0 12px 0 var(--deep); }
+.lad { position: relative; height: 340px; border-left: 8px solid var(--ink); border-right: 8px solid var(--ink); border-radius: 4px; background: repeating-linear-gradient(to bottom, transparent 0 52px, var(--ink) 52px 60px); }
+.lad::after { content: ""; position: absolute; left: -8px; right: -8px; top: 120px; height: 60px; background: var(--ground); border-left: 8px dashed var(--line); border-right: 8px dashed var(--line); }
+footer { padding: 24px 48px; background: var(--deep); color: var(--muted); font-size: 15px; }
+@media (max-width: 680px) { header, footer { padding: 14px 16px; } main { grid-template-columns: minmax(0, 1fr); padding: 40px 16px; } .lad { width: 180px; height: 240px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><a href="/">{{company_name}}</a></header>
+<main id="main">
+  <div>
+    <h1>This rung is missing</h1>
+    <p>There is no page at this address. It may have moved, or the link may have a typo. The way up starts from the home page.</p>
+    <a class="btn" href="/">Back to the bottom rung</a>
+  </div>
+  <div class="lad" aria-hidden="true"></div>
+</main>
+<footer>&copy; {{year}} {{company_name}}</footer>
+</body>
+</html>

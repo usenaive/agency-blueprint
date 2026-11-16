@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --paper: #f5efe3; --ink: #191714; --muted: #57514a; --red: #f06a4a; --leaf: #2f7a4d; --ochre: #e9a83a; --pink: #f3a6b9; --sky: #8fc3e6; --gut: clamp(16px, 4vw, 64px); --gather: cubic-bezier(0.3, 1.35, 0.5, 1); }
+@media (prefers-color-scheme: dark) { :root { --paper: #1b1815; --ink: #f2ebde; --muted: #b9b0a3; } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font: 400 1.1875rem/1.5 "Crimson Pro", Georgia, serif; overflow-x: hidden; }
+h1, p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--ink); color: var(--paper); }
+.skip:focus { top: 12px; }
+.wrap { width: 100%; max-width: 1400px; margin-inline: auto; padding-inline: var(--gut); }
+.d { font-family: "Gabarito", "Trebuchet MS", sans-serif; }
+header { padding-block: 22px; }
+.brand { font-weight: 800; font-size: 1.375rem; text-decoration: none; overflow-wrap: anywhere; }
+main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); align-items: center; padding-block: clamp(40px, 6vw, 96px); }
+.k { font-weight: 600; color: var(--muted); }
+h1 { margin-top: 16px; font-weight: 800; font-size: clamp(2.5rem, 1.2rem + 4.2vw, 5rem); line-height: 0.98; letter-spacing: -0.03em; }
+.lede { margin-block: 22px 30px; max-width: 28em; }
+.btn { display: inline-block; padding: 14px 24px; background: var(--red); color: #191714; font-weight: 700; text-decoration: none; border-radius: 46% 54% 52% 48% / 60% 50% 50% 40%; box-shadow: 6px 6px 0 var(--leaf); transition: translate 0.4s var(--gather), rotate 0.4s var(--gather); }
+.bits { position: relative; aspect-ratio: 1; max-width: 460px; width: 100%; justify-self: center; }
+.bits span { position: absolute; width: 34%; aspect-ratio: 1; }
+.b1 { left: 2%; top: 6%; background: var(--red); border-radius: 50%; rotate: -12deg; }
+.b2 { right: 4%; top: 0; background: var(--sky); border-radius: 50% 50% 0 0; rotate: 22deg; }
+.b3 { left: 30%; bottom: 4%; background: var(--ochre); clip-path: polygon(50% 0, 100% 100%, 0 100%); rotate: -30deg; }
+.b4 { right: 0; bottom: 18%; width: 24% !important; background: var(--pink); border-radius: 0 100% 0 100%; }
+.gap { left: 33%; top: 33%; border: 3px dashed var(--muted); border-radius: 50%; }
+footer { padding-block: 24px 40px; border-top: 3px solid var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+@media (hover: hover) { .btn:hover { translate: -2px -3px; rotate: -2deg; } }
+@media (max-width: 700px) { main { grid-template-columns: minmax(0, 1fr); } .bits { max-width: 240px; grid-row: 1; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip d" href="#main">Skip to content</a>
+<header class="wrap d"><a class="brand" href="/">{{company_name}}</a></header>
+<main id="main" class="wrap">
+  <div>
+    <p class="k d">Error 404</p>
+    <h1 class="d">A piece is missing</h1>
+    <p class="lede">The page you asked for is not part of the picture. The link may be old, or the page may have moved.</p>
+    <a class="btn d" href="/">Back to the whole picture</a>
+  </div>
+  <div class="bits" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span><span class="gap"></span></div>
+</main>
+<footer class="wrap d"><p>&copy; {{year}} {{company_name}}</p></footer>
+</body>
+</html>

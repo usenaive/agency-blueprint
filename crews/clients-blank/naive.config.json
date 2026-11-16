@@ -1,0 +1,162 @@
+{
+  "name": "blank-agency",
+  "crew_edits_apps": false,
+  "blueprint": "clients-blank",
+  "template": "agency",
+  "title": "Blank agency",
+  "description": "An agency's CRM and calendar with no team yet. Tell your CEO what you sell and it hires who you need.",
+  "roadmap": {
+    "day_one": "Tell your CEO what you sell and who you need",
+    "every_day": "What your team does is up to you"
+  },
+  "questions": [
+    {
+      "key": "about",
+      "label": "What does your agency do, and for whom?",
+      "type": "text",
+      "help": "Your team writes to clients and leads from this."
+    },
+    {
+      "key": "offer",
+      "label": "What do you sell, and for about how much?",
+      "type": "text",
+      "placeholder": "SEO retainers, $3,000 a month"
+    }
+  ],
+  "mini_apps": [
+    {
+      "slug": "crm",
+      "name": "CRM",
+      "icon": "person",
+      "pages": [
+        {
+          "slug": "clients",
+          "title": "Clients",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "crm"
+                ]
+              },
+              "crm": {
+                "type": "Crm",
+                "props": {}
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "calendar",
+      "name": "Calendar",
+      "icon": "calendar",
+      "pages": [
+        {
+          "slug": "month",
+          "title": "Calendar",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "calendar",
+                  "week"
+                ]
+              },
+              "calendar": {
+                "type": "Calendar",
+                "props": {}
+              },
+              "team": {
+                "type": "Schedule",
+                "props": {
+                  "week": {
+                    "$source": "schedule"
+                  }
+                }
+              },
+              "week": {
+                "type": "Section",
+                "props": {
+                  "title": "Your team this week",
+                  "hide_empty": true
+                },
+                "children": [
+                  "team"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "ads",
+      "name": "Ads",
+      "icon": "megaphone",
+      "pages": [
+        {
+          "slug": "ads",
+          "title": "Ads",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "ads"
+                ]
+              },
+              "ads": {
+                "type": "AdsLibrary",
+                "props": {}
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "seo-geo",
+      "name": "SEO & GEO",
+      "icon": "list",
+      "pages": [
+        {
+          "slug": "seo",
+          "title": "SEO & GEO",
+          "spec": {
+            "root": "page",
+            "elements": {
+              "page": {
+                "type": "Page",
+                "props": {},
+                "children": [
+                  "seo"
+                ]
+              },
+              "seo": {
+                "type": "SeoLibrary",
+                "props": {}
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "agents": [],
+  "docs": [
+    {
+      "name": "📖 Operator's Manual.md",
+      "file": "manual.md"
+    }
+  ]
+}

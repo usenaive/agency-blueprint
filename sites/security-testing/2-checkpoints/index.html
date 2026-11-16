@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Journey testing</title>
+<meta name="description" content="{{#if city}}Journey testing from {{city}}. {{/if}}{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="theme-color" content="#e6eedf">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top__in">
+    <a class="brand" href="#top"><svg class="brand__pin" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 23s8-7.6 8-13.5A8 8 0 0 0 2 9.5C2 15.4 10 23 10 23Z"/><circle cx="10" cy="9.5" r="3"/></svg><span>{{company_name}}</span></a>
+    <nav class="nav" aria-label="Primary">
+      <ul>
+        <li><a href="#route">The route</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#process">How we work</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--route top__cta" href="mailto:{{contact_email}}"><span>Plan a route</span></a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="hero__grid">
+        <div class="hero__title">
+          {{#if city}}<p class="kicker">Journey testing from {{city}}</p>{{/if}}
+          <h1>{{tagline}}</h1>
+        </div>
+        <div class="hero__side">
+          <p class="lede">{{intro}}</p>
+          <div class="ctas">
+            <a class="btn btn--route" href="mailto:{{contact_email}}"><span>Plan a route</span></a>
+            <a class="btn btn--ghost" href="#route"><span>See the route</span></a>
+          </div>
+        </div>
+      </div>
+
+      <figure class="map" id="route" aria-labelledby="map-cap">
+        <svg class="map__svg" aria-hidden="true"><path class="map__base"/><path class="map__line"/></svg>
+        <span class="walker" aria-hidden="true"></span>
+        <ol class="cps">
+          <li class="cp cp--end" aria-hidden="true"><span class="pin"><svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="3"/></svg></span><span class="cp__l"><span class="cp__k">Start</span><span class="cp__t">First visit</span></span></li>
+          <li class="cp"><span class="pin" aria-hidden="true"><b>1</b></span><span class="cp__l"><span class="cp__k">Checkpoint 1</span><span class="cp__t">{{specialties[0]}}</span></span></li>
+          <li class="cp"><span class="pin" aria-hidden="true"><b>2</b></span><span class="cp__l"><span class="cp__k">Checkpoint 2</span><span class="cp__t">{{specialties[1]}}</span></span></li>
+          <li class="cp"><span class="pin" aria-hidden="true"><b>3</b></span><span class="cp__l"><span class="cp__k">Checkpoint 3</span><span class="cp__t">{{specialties[2]}}</span></span></li>
+          <li class="cp"><span class="pin" aria-hidden="true"><b>4</b></span><span class="cp__l"><span class="cp__k">Checkpoint 4</span><span class="cp__t">{{specialties[3]}}</span></span></li>
+          <li class="cp"><span class="pin" aria-hidden="true"><b>5</b></span><span class="cp__l"><span class="cp__k">Checkpoint 5</span><span class="cp__t">{{specialties[4]}}</span></span></li>
+          <li class="cp"><span class="pin" aria-hidden="true"><b>6</b></span><span class="cp__l"><span class="cp__k">Checkpoint 6</span><span class="cp__t">{{specialties[5]}}</span></span></li>
+          <li class="cp cp--end cp--finish" aria-hidden="true"><span class="pin"><svg viewBox="0 0 12 12"><path d="M3 11V1.5h6.5L8 4l1.5 2.5H3"/></svg></span><span class="cp__l"><span class="cp__k">Finish</span><span class="cp__t">Ready to ship</span></span></li>
+        </ol>
+        <figcaption id="map-cap">The journeys we walk, checkpoint by checkpoint</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec scope" aria-labelledby="scope-h">
+    <div class="wrap scope__grid">
+      <h2 id="scope-h" class="h2">We test the way in, <span>not the defences</span></h2>
+      <div class="scope__cols">
+        <div class="scope__on">
+          <p class="tag tag--on">On our map</p>
+          <p>The routes your users take every day: arriving, signing up, finding something, paying for it, changing their mind. We walk each one on real devices and mark every place someone could get lost or stuck.</p>
+        </div>
+        <div class="scope__off">
+          <p class="tag">Off our map</p>
+          <p>Penetration testing and red teaming. We do not try to break in. We make sure the people you built the product for can get where they are going.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec services" id="services" aria-labelledby="services-h">
+    <div class="wrap">
+      <h2 id="services-h" class="h2">Services</h2>
+      <ul class="signs">
+        <li class="sign"><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+        <li class="sign"><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+        <li class="sign"><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+        <li class="sign"><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec audience" aria-labelledby="audience-h">
+    <div class="wrap audience__in">
+      <h2 id="audience-h" class="kicker kicker--light">Who travels with us</h2>
+      <p class="statement">{{audience}}</p>
+    </div>
+  </section>
+
+  <section class="sec process" id="process" aria-labelledby="process-h">
+    <div class="wrap">
+      <h2 id="process-h" class="h2">How we work, in three legs</h2>
+      <ol class="legs">
+        <li class="leg"><span class="leg__n" aria-hidden="true">1</span><div><p class="kicker">Leg 1</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></div></li>
+        <li class="leg"><span class="leg__n" aria-hidden="true">2</span><div><p class="kicker">Leg 2</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></div></li>
+        <li class="leg"><span class="leg__n" aria-hidden="true">3</span><div><p class="kicker">Leg 3</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec fees" aria-labelledby="fees-h">
+    <div class="wrap fees__grid">
+      <h2 id="fees-h" class="h2">Fees</h2>
+      <div class="ticket">
+        <p class="ticket__text">{{pricing_note}}</p>
+        <p class="ticket__aside">The route and the fee are agreed in writing before we set off.</p>
+      </div>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec proof" aria-labelledby="proof-h">
+    <div class="wrap">
+      <h2 id="proof-h" class="h2">Notes from the road</h2>
+      <ul class="cards">
+        {{#if proof[0]}}<li class="card"><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<p class="card__src">{{proof[0].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[1]}}<li class="card"><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<p class="card__src">{{proof[1].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[2]}}<li class="card"><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<p class="card__src">{{proof[2].source}}</p>{{/if}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec places" aria-labelledby="places-h">
+    <div class="wrap">
+      <h2 id="places-h" class="h2">Products we have walked through</h2>
+      <ul class="stops">
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+      </ul>
+    </div>
+  </section>{{/if}}
+
+  <section class="sec contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap contact__in">
+      <h2 id="contact-h" class="kicker">Contact</h2>
+      <a class="big" href="mailto:{{contact_email}}"><span>Plan a route with us</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h17M14 5l7 7-7 7"/></svg></a>
+      <p class="contact__lede">Tell us what your product does, which journeys keep you up at night and when you release next. We will sketch the route we would test.</p>
+      <dl class="meta">
+        <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+        {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    <a class="foot__top" href="#top"><span>Back to the start</span></a>
+  </div>
+</footer>
+</body>
+</html>

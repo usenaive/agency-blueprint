@@ -108,15 +108,18 @@ describe("every template of this blueprint", () => {
     // On blank the question is optional: a missing answer is a skip, never a second ask.
     expect(intake).toMatch(/network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there/);
     expect(intake).toMatch(/on any other template, which asks no network question at setup, ask the operator once with ask_operator/);
-    expect(intake).toMatch(/create_lead \(source network.*add_client_note — do not send/);
+    expect(intake).toMatch(/crm\.write add \(source network.*a chat of its own that drafts a short personal note on their timeline — do not send/);
     expect(intake).toMatch(/never invent a contact/);
     // Prospects first, network last: asking parks the session, and the list should not wait on it.
     expect(intake.indexOf("fifteen prospects")).toBeLessThan(intake.indexOf("ask_operator"));
-    expect(intake).toMatch(/create_lead \(source outreach\)/);
+    expect(intake).toMatch(/crm\.write add \(stage lead, source outreach/);
     expect(intake).toMatch(/ask for advice or an introduction rather than pitching; never claim a result/);
     // The daily inbox pass files each new reply with where it came from.
     const inbox = sales.schedules?.[0]?.input ?? "";
-    expect(inbox).toMatch(/referred_by and the client's cli_ id.*source network.*otherwise outreach/);
+    expect(inbox).toMatch(/source referral when an existing client.*"Referred by <client name> \(<cli_ id>\)".*source network.*otherwise outreach/);
+    // A deal that signs becomes a client in the same step, never by a later click.
+    expect(sales.system).toMatch(/won and create_client \(ctc_ id as crm_contact\) in the same step/);
+    expect(inbox).toMatch(/won and create_client .* in the same step/);
   });
 
   it.each(agencies)("$name never sends an agent to a setup answer the template did not ask for", (template) => {
@@ -161,7 +164,7 @@ describe("connected accounts", () => {
    * ended up able to call `web_search` and `web_fetch` and nothing else.
    */
   const connectionTools = (agent: { tools?: { configs: Record<string, { permission: string }> } }) =>
-    Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard."));
+    Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard.") && !name.startsWith("crm."));
 
   it.each(all)("$name grants connected accounts only to agents that consume them", (template) => {
     // Blank needs only the mailbox-facing seats. SEO/GEO additionally grants read-only measurement
@@ -171,7 +174,8 @@ describe("connected accounts", () => {
         (template.name === "seo-geo" && ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"].includes(agent.name));
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
-    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, true]);
+    // The client lead compiles what the others filed and reads no account of the client's.
+    for (const agent of template.crew) expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, agent.name !== "client-lead"]);
   });
 
   it("lets the SEO/GEO agency's own scheduled work read its Search Console and Analytics evidence", () => {
@@ -219,9 +223,14 @@ describe("handoffs", () => {
    */
   const CHAIN: Record<string, string[]> = {
     sales: ["proposal-writer"],
+    // The client manager's Monday pass starts a chat of its own seat per client (one chat, one
+    // client); a `handoffs` list is what offers it `send_to_agent`, and sales is where an upsell goes.
+    "client-manager": ["sales"],
     "gap-researcher": ["content-writer"],
-    "audit-runner": ["seo-writer"],
-    "seo-writer": ["geo-optimizer"],
+    // Each search crew member also reports what it filed to its client's own lead, which compiles the job.
+    "audit-runner": ["seo-writer", "client-lead"],
+    "seo-writer": ["geo-optimizer", "client-lead"],
+    "geo-optimizer": ["client-lead"],
     // product-design: the studio lead routes each brief; the two makers hand their file to the visualizer.
     "account-manager": ["designer", "engineer", "visualizer"],
     designer: ["visualizer"],
@@ -249,9 +258,10 @@ describe("handoffs", () => {
       const sender = roster.get(from);
       if (sender === undefined) continue; // `blank` provisions no crew
       const receiver = roster.get(to!)!;
-      expect([from, sender.system]).toEqual([from, expect.stringMatching(/send_to_agent[^.]*wait false/)]);
-      // Everything on the agency's side is a CRM row; everything in a client's account is a draft.
-      const id = template.crew.some((a) => a.name === from) ? /post_ id/ : /cli_ id/;
+      const work = [sender.system, sender.intake?.message, ...(sender.schedules ?? []).map((t) => t.input)].join(" ");
+      expect([from, work]).toEqual([from, expect.stringMatching(/send_to_agent[^.]*wait false/)]);
+      // A prospect is a platform CRM contact; the agency's own work a dashboard row; a client's account a draft.
+      const id = template.crew.some((a) => a.name === from) ? /post_ id/ : ["sales", "client-manager"].includes(from) ? /ctc_ id/ : /cli_ id/;
       expect([from, sender.system]).toEqual([from, expect.stringMatching(id)]);
       expect([to, receiver.system]).toEqual([to, expect.stringMatching(id)]);
     }
@@ -341,7 +351,7 @@ describe("seo-geo", () => {
       expect(text).toMatch(/short public audit of the prospect.*web_fetch.*web_search/);
       // The audit is for cold openers; the personal notes to the operator's own network stay notes.
       expect(text).toMatch(/every cold opener \(not the personal notes to people the operator knows\)/);
-      expect(text).toMatch(/add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes/);
+      expect(text).toMatch(/crm\.write log: what it ranks for, whether AI answers cite it, and two or three concrete fixes/);
       expect(text).toMatch(/no ranking, citation or traffic figure you did not see yourself/);
     }
     // blank asks for one observation, not an audit.
@@ -351,10 +361,44 @@ describe("seo-geo", () => {
 
   it("adds the specialism: the kinds, and the crew provisioned per client", () => {
     expect(seoGeo.kinds.map((k) => k.id)).toEqual(["article", "landing-page", "answer-block", "serp-report", "audit", "ad-plan"]);
-    expect(seoGeo.crew.map((a) => a.name)).toEqual(["seo-writer", "geo-optimizer", "audit-runner"]);
+    expect(seoGeo.crew.map((a) => a.name)).toEqual(["seo-writer", "geo-optimizer", "audit-runner", "client-lead"]);
     // The crew's model is the template's, not the server's — `server/proxy.ts` posts these as they
     // stand and decides nothing.
     for (const member of seoGeo.crew) expect(member.model).toBe(blank.agents[0]!.model);
+  });
+
+  /** Folded in from the Client agency's SEO & GEO crew (owner, 2026-11-15), which this template replaces. */
+  it("keeps every crew job to what was asked, and reports each one to its client's own lead", () => {
+    for (const member of seoGeo.crew.filter((a) => a.name !== "client-lead")) {
+      expect(member.system).toMatch(/never widen a job past what was asked, never send a teammate a piece for reference/);
+      expect(member.system).toMatch(/tell this client's client lead with send_to_agent \(wait false\), naming the post_ ids you filed and what the request asked for/);
+    }
+    expect(seoGeo.crew.find((a) => a.name === "audit-runner")!.system).toMatch(/SEO writer[^.]*only if the request also asked for pages or articles/);
+    expect(seoGeo.crew.find((a) => a.name === "seo-writer")!.system).toMatch(/GEO optimizer[^.]*only if the request also asked for answer-engine work/);
+  });
+
+  it("has the client lead, a seat of one client, compile each job into one file and ask the operator once", () => {
+    const manager = seoGeo.crew.find((a) => a.name === "client-lead")!;
+    expect(manager.handoffs).toBe(false);
+    const configs = manager.tools?.configs ?? {};
+    for (const tool of ["find_files", "fetch_file", "read", "write", "publish_file"]) expect([tool, configs[tool]?.permission]).toEqual([tool, "allow"]);
+    expect(configs["bash"]).toBeUndefined();
+    expect(manager.system).toMatch(/compile only once every piece the request asked for is filed.*while one is missing, compile nothing and announce nothing/);
+    expect(manager.system).toMatch(/a kind:report file already saved for this job is its deliverable, so never write a second/);
+    expect(manager.system).toMatch(/tags client:<your client's cli_ id> and kind:report/);
+    expect(manager.system).toMatch(/ask the operator once with ask_operator: "Ready for <client name>: <its title>\. Approve before it goes out\." One ask per client job/);
+    expect(manager.system).toMatch(/a piece filed after you asked goes into that same file .* with no second ask/);
+    // No seat every client shares compiles: the agency's own client manager holds no file tools.
+    for (const template of [blank, seoGeo]) {
+      expect(Object.keys(template.agents.find((a) => a.name === "client-manager")!.tools?.configs ?? {})).not.toContain("publish_file");
+    }
+  });
+
+  it("keeps the CRM true: sales reads a lead's timeline before writing and leaves a dated next step", () => {
+    const sales = seoGeo.agents.find((a) => a.name === "sales")!;
+    for (const text of [sales.intake?.message ?? "", sales.schedules?.[0]?.input ?? ""]) {
+      expect(text).toMatch(/read its timeline with crm\.read .* next step that has a date/);
+    }
   });
 
   it("widens over blank: it drops no agent blank declares", () => {
@@ -433,8 +477,9 @@ describe("product-design", () => {
     expect(lead).toMatch(/is a look: hand it to designer/);
     expect(lead).toMatch(/contradicts the note.*ask_operator once/);
     expect(lead).toMatch(/Never email a client before the deliverable is approved/);
-    // Live run r2: three name-only create_lead calls for a client returned the agency's own record.
-    expect(lead).toMatch(/create_lead with the domain or contact_email the brief gives — a name alone files the agency's own record — and with neither, ask_operator once for one; never invent one/);
+    // Live run r2: three name-only filings for a client returned the agency's own record. A brief
+    // is a signed job: the contact goes to won on the CRM and the client is made in the same step.
+    expect(lead).toMatch(/at won and create_client with its domain or email, ctc_ id as crm_contact/);
   });
 
   it("gives the designer meshes and never build_3d, and the engineer build_3d and never a generated mesh", () => {

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Index of capabilities</title>
+<meta name="description" content="{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="head wrap" id="top">
+  <a class="brand" href="#top"><span class="brand__mark" aria-hidden="true">&sect;</span><span class="brand__name">{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#index"><span>Index</span></a></li>
+      <li><a href="#capabilities"><span>Capabilities</span></a></li>
+      <li><a href="#method"><span>Method</span></a></li>
+      <li><a href="#write"><span>Write to us</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="title wrap" aria-labelledby="h1">
+    <p class="runhead"><span>Index of capabilities</span>{{#if city}}<span>{{city}}</span>{{/if}}</p>
+    <h1 id="h1">{{tagline}}</h1>
+    <p class="title__intro">{{intro}}</p>
+  </section>
+
+  <section class="index wrap" id="index" aria-labelledby="index-h">
+    <div class="index__list">
+      <h2 id="index-h" class="label">Index</h2>
+      <p class="index__how">Entries run in the order we work. Each number points to its section below.</p>
+      <div class="cols">
+        <dl class="entry">
+          <dt>Capabilities</dt>
+          <dd><a href="#cap-1" data-loc="1.1"><span class="e">{{services[0].title}}</span><i aria-hidden="true"></i><b>1.1</b></a></dd>
+          <dd><a href="#cap-2" data-loc="1.2"><span class="e">{{services[1].title}}</span><i aria-hidden="true"></i><b>1.2</b></a></dd>
+          <dd><a href="#cap-3" data-loc="1.3"><span class="e">{{services[2].title}}</span><i aria-hidden="true"></i><b>1.3</b></a></dd>
+          <dd><a href="#cap-4" data-loc="1.4"><span class="e">{{services[3].title}}</span><i aria-hidden="true"></i><b>1.4</b></a></dd>
+        </dl>
+        <dl class="entry">
+          <dt>Disciplines</dt>
+          <dd><a href="#disciplines" data-loc="2"><span class="e">{{specialties[0]}}</span><i aria-hidden="true"></i><b>2</b></a></dd>
+          <dd><a href="#disciplines" data-loc="2"><span class="e">{{specialties[1]}}</span><i aria-hidden="true"></i><b>2</b></a></dd>
+          <dd><a href="#disciplines" data-loc="2"><span class="e">{{specialties[2]}}</span><i aria-hidden="true"></i><b>2</b></a></dd>
+          <dd><a href="#disciplines" data-loc="2"><span class="e">{{specialties[3]}}</span><i aria-hidden="true"></i><b>2</b></a></dd>
+          <dd><a href="#disciplines" data-loc="2"><span class="e">{{specialties[4]}}</span><i aria-hidden="true"></i><b>2</b></a></dd>
+          <dd><a href="#disciplines" data-loc="2"><span class="e">{{specialties[5]}}</span><i aria-hidden="true"></i><b>2</b></a></dd>
+        </dl>
+        <dl class="entry">
+          <dt>Method</dt>
+          <dd><a href="#step-1" data-loc="3.1"><span class="e">{{process[0].title}}</span><i aria-hidden="true"></i><b>3.1</b></a></dd>
+          <dd><a href="#step-2" data-loc="3.2"><span class="e">{{process[1].title}}</span><i aria-hidden="true"></i><b>3.2</b></a></dd>
+          <dd><a href="#step-3" data-loc="3.3"><span class="e">{{process[2].title}}</span><i aria-hidden="true"></i><b>3.3</b></a></dd>
+        </dl>
+        <dl class="entry">
+          <dt>Terms</dt>
+          <dd><a href="#for" data-loc="4.1"><span class="e">Who we work for</span><i aria-hidden="true"></i><b>4.1</b></a></dd>
+          <dd><a href="#fees" data-loc="4.2"><span class="e">How we charge</span><i aria-hidden="true"></i><b>4.2</b></a></dd>
+          {{#if proof}}<dd><a href="#references" data-loc="4.3"><span class="e">References</span><i aria-hidden="true"></i><b>4.3</b></a></dd>{{/if}}
+          <dd><a href="#write" data-loc="5"><span class="e">Write to us</span><i aria-hidden="true"></i><b>5</b></a></dd>
+        </dl>
+      </div>
+    </div>
+    <aside class="peek" aria-hidden="true">
+      <div class="peek__card">
+        <p class="peek__loc" data-peek="loc">&sect;</p>
+        <p class="peek__t" data-peek="t">Turn to any entry</p>
+        <p class="peek__d" data-peek="d">Point at an entry in the index to see what sits on that page. Follow it to go there.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section class="sec wrap" id="capabilities" aria-labelledby="cap-h">
+    <h2 id="cap-h" class="shead"><span class="shead__n">1</span><span>Capabilities</span></h2>
+    <ol class="caps">
+      <li id="cap-1"><p class="loc">1.1</p><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li id="cap-2"><p class="loc">1.2</p><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li id="cap-3"><p class="loc">1.3</p><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li id="cap-4"><p class="loc">1.4</p><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec wrap" id="disciplines" aria-labelledby="dis-h">
+    <h2 id="dis-h" class="shead"><span class="shead__n">2</span><span>Disciplines</span></h2>
+    <p class="seealso"><em>See also</em> <span>{{specialties[0]}};</span> <span>{{specialties[1]}};</span> <span>{{specialties[2]}};</span> <span>{{specialties[3]}};</span> <span>{{specialties[4]}};</span> <span>{{specialties[5]}}.</span></p>
+  </section>
+
+  <section class="sec wrap" id="method" aria-labelledby="met-h">
+    <h2 id="met-h" class="shead"><span class="shead__n">3</span><span>Method</span></h2>
+    <ol class="steps">
+      <li id="step-1"><p class="loc">3.1</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li id="step-2"><p class="loc">3.2</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li id="step-3"><p class="loc">3.3</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec wrap" id="terms" aria-labelledby="ter-h">
+    <h2 id="ter-h" class="shead"><span class="shead__n">4</span><span>Terms</span></h2>
+    <div class="terms">
+      <div id="for"><p class="loc">4.1</p><h3>Who we work for</h3><p>{{audience}}</p></div>
+      <div id="fees"><p class="loc">4.2</p><h3>How we charge</h3><p>{{pricing_note}}</p></div>
+    </div>
+    {{#if proof}}<div class="refs" id="references">
+      <p class="loc">4.3</p><h3>References</h3>
+      <ol>
+        {{#if proof[0]}}<li><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<p class="src">{{proof[0].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[1]}}<li><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<p class="src">{{proof[1].source}}</p>{{/if}}</li>{{/if}}
+        {{#if proof[2]}}<li><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<p class="src">{{proof[2].source}}</p>{{/if}}</li>{{/if}}
+      </ol>
+    </div>{{/if}}
+    {{#if logos}}<div class="clients">
+      <h3>Clients, in no particular order</h3>
+      <ul>
+        {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+        {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+        {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+        {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+        {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+        {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+      </ul>
+    </div>{{/if}}
+  </section>
+
+  <section class="sec write wrap" id="write" aria-labelledby="write-h">
+    <h2 id="write-h" class="shead"><span class="shead__n">5</span><span>Write to us</span></h2>
+    <p class="write__lede">Tell us what needs doing and by when. We reply with what we would take on, how we would run it and what it would cost.</p>
+    <a class="mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span></a>
+    <p class="write__where">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="back" href="#index"><span>Back to the index</span></a>
+</footer>
+<nav class="thumbs" aria-label="Sections">
+  <a href="#index" data-tab="index"><span>Ix</span><em>Index</em></a>
+  <a href="#capabilities" data-tab="capabilities"><span>1</span><em>Capabilities</em></a>
+  <a href="#disciplines" data-tab="disciplines"><span>2</span><em>Disciplines</em></a>
+  <a href="#method" data-tab="method"><span>3</span><em>Method</em></a>
+  <a href="#terms" data-tab="terms"><span>4</span><em>Terms</em></a>
+  <a href="#write" data-tab="write"><span>5</span><em>Write</em></a>
+</nav>
+</body>
+</html>

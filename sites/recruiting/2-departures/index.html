@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{company_name}} | Recruiting</title>
+<meta name="description" content="{{tagline}}.{{#if city}} Recruiting from {{city}}.{{/if}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add("js");if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("motion");</script>
+<script src="assets/site.js" defer></script>
+<!--host-head-->
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="mark" href="#main">{{company_name}}</a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#roles">Roles</a>
+    <a href="#services">Services</a>
+    <a href="#process">Process</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <a class="btn btn--top" href="mailto:{{contact_email}}" data-flip>Send us a role</a>
+</header>
+
+<main id="main" tabindex="-1">
+  <section class="hero" aria-labelledby="hero-title">
+    <p class="strip">{{#if city}}<span>Departures from {{city}}</span>{{/if}}<span class="strip__status">Open for briefs</span></p>
+    <h1 id="hero-title" class="hero__name" data-fit>{{company_name}}</h1>
+    <p class="hero__tag">{{tagline}}</p>
+
+    <div class="board" data-board>
+      <div class="board__head">
+        <span class="lamp" aria-hidden="true"></span>
+        <span class="board__label">Now boarding</span>
+        <span class="board__count" aria-hidden="true" data-count></span>
+        <button class="pause" type="button" data-pause aria-pressed="false" hidden>Pause board</button>
+      </div>
+      <ol class="board__static" aria-hidden="true">
+        <li>{{specialties[0]}}</li>
+        <li>{{specialties[1]}}</li>
+        <li>{{specialties[2]}}</li>
+        <li>{{specialties[3]}}</li>
+        <li>{{specialties[4]}}</li>
+        <li>{{specialties[5]}}</li>
+      </ol>
+      <div class="board__flaps" aria-hidden="true" data-flaps></div>
+    </div>
+
+    <div class="hero__foot">
+      <p class="hero__intro">{{intro}}</p>
+      <div class="hero__actions">
+        <a class="btn" href="mailto:{{contact_email}}" data-flip>Send us a role</a>
+        <a class="textlink" href="#roles">See the board</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec roles" id="roles" aria-labelledby="roles-title">
+    <div class="sec__head">
+      <h2 id="roles-title" class="sec__title">Roles on the board</h2>
+      <p class="sec__note">Every desk below takes briefs today. Tell us which one your next hire belongs to.</p>
+    </div>
+    <table class="dep" data-reveal-board>
+      <thead>
+        <tr><th scope="col">Desk</th><th scope="col">Role</th><th scope="col">Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="dep__no">01</td><td class="dep__role"><span data-flap data-spec>{{specialties[0]}}</span></td><td class="dep__st">Open for briefs</td></tr>
+        <tr><td class="dep__no">02</td><td class="dep__role"><span data-flap data-spec>{{specialties[1]}}</span></td><td class="dep__st">Open for briefs</td></tr>
+        <tr><td class="dep__no">03</td><td class="dep__role"><span data-flap data-spec>{{specialties[2]}}</span></td><td class="dep__st">Open for briefs</td></tr>
+        <tr><td class="dep__no">04</td><td class="dep__role"><span data-flap data-spec>{{specialties[3]}}</span></td><td class="dep__st">Open for briefs</td></tr>
+        <tr><td class="dep__no">05</td><td class="dep__role"><span data-flap data-spec>{{specialties[4]}}</span></td><td class="dep__st">Open for briefs</td></tr>
+        <tr><td class="dep__no">06</td><td class="dep__role"><span data-flap data-spec>{{specialties[5]}}</span></td><td class="dep__st">Open for briefs</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="sec services" id="services" aria-labelledby="services-title">
+    <div class="sec__head">
+      <h2 id="services-title" class="sec__title">Services</h2>
+      <p class="sec__note">Four ways to put a hire on the board.</p>
+    </div>
+    <div class="svc__cols" aria-hidden="true"><span>Service</span><span>What it covers</span></div>
+    <ul class="svc">
+      <li><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ul>
+  </section>
+
+  <section class="sec process" id="process" aria-labelledby="process-title">
+    <div class="sec__head">
+      <h2 id="process-title" class="sec__title">From brief to start date</h2>
+      <p class="sec__note">Three stops between your first call and a hire on site.</p>
+    </div>
+    <ol class="route">
+      <li><span class="route__no"><span data-flap>1</span></span><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><span class="route__no"><span data-flap>2</span></span><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><span class="route__no"><span data-flap>3</span></span><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+  </section>
+
+  {{#if proof}}<section class="sec arrivals" aria-labelledby="arrivals-title">
+    <div class="sec__head">
+      <h2 id="arrivals-title" class="sec__title">Arrivals</h2>
+      <p class="sec__note">What clients said once the hire landed.</p>
+    </div>
+    <ul class="svc arr">
+      {{#if proof[0]}}<li><p class="arr__src">{{#if proof[0].source}}{{proof[0].source}}{{/if}}</p><blockquote><p>{{proof[0].text}}</p></blockquote></li>{{/if}}
+      {{#if proof[1]}}<li><p class="arr__src">{{#if proof[1].source}}{{proof[1].source}}{{/if}}</p><blockquote><p>{{proof[1].text}}</p></blockquote></li>{{/if}}
+      {{#if proof[2]}}<li><p class="arr__src">{{#if proof[2].source}}{{proof[2].source}}{{/if}}</p><blockquote><p>{{proof[2].text}}</p></blockquote></li>{{/if}}
+    </ul>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec clients" aria-labelledby="clients-title">
+    <h2 id="clients-title" class="label">Boarded for</h2>
+    <ul class="clients__list">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="sec terms" aria-label="Who we hire for and how we charge">
+    <div class="terms__who">
+      <h2 class="label">Who we hire for</h2>
+      <p class="terms__aud">{{audience}}</p>
+    </div>
+    <div class="terms__fare">
+      <h2 class="label">How we charge</h2>
+      <p>{{pricing_note}}</p>
+    </div>
+  </section>
+
+  <section class="contact" id="contact" aria-labelledby="contact-title">
+    <p class="strip"><span>Next departure</span><span class="strip__status">Open for briefs</span></p>
+    <h2 id="contact-title" class="contact__title"><a href="mailto:{{contact_email}}" class="bigcta"><span class="bigcta__t">Send us a role</span><span class="bigcta__arrow" aria-hidden="true">&#8594;</span></a></h2>
+    <div class="contact__meta">
+      <p>Write with the role, the location and the start date you have in mind.</p>
+      <p><a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a></p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>&copy; {{year}} {{company_name}}</p>
+  {{#if city}}<p>{{city}}</p>{{/if}}
+  <a href="#main">Back to the top</a>
+</footer>
+</body>
+</html>

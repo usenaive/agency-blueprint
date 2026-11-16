@@ -1,0 +1,91 @@
+{
+  "id": "recruiting/5-good-fit",
+  "agencyType": "recruiting",
+  "design": "Good Fit",
+  "style": "Bright, chunky jigsaw pieces on white with hard ink outlines: a role piece and a person piece that snap together, for founders making their first hires.",
+  "theme": "light",
+  "fonts": [
+    "Bricolage Grotesque"
+  ],
+  "concept": {
+    "idea": "Hiring is finding the piece that fits: every part of the site is a jigsaw piece whose tab locks into the next one's blank.",
+    "signature": "In the hero, a pink role piece and a mint person piece swing in from either side and interlock with a little overshoot, then the pair wobbles at rest and the person piece lifts out and re-seats itself now and then. Services form a chain where each piece clicks down into the next on hover; the six roles are one puzzle that snaps together on scroll.",
+    "motionVerb": "snap into place: a little overshoot, then lock",
+    "palette": {
+      "ground": "#ffffff",
+      "ink": "#161616",
+      "muted": "#4a4a4a",
+      "pink": "#ff9ac1",
+      "mint": "#8fe3c0",
+      "sun": "#ffd447"
+    }
+  },
+  "placeholders": [
+    "audience",
+    "city",
+    "company_name",
+    "contact_email",
+    "intro",
+    "logos[0]",
+    "logos[1]",
+    "logos[2]",
+    "logos[3]",
+    "logos[4]",
+    "logos[5]",
+    "pricing_note",
+    "process[0].description",
+    "process[0].title",
+    "process[1].description",
+    "process[1].title",
+    "process[2].description",
+    "process[2].title",
+    "proof[0].source",
+    "proof[0].text",
+    "proof[1].source",
+    "proof[1].text",
+    "proof[2].source",
+    "proof[2].text",
+    "services[0].description",
+    "services[0].title",
+    "services[1].description",
+    "services[1].title",
+    "services[2].description",
+    "services[2].title",
+    "services[3].description",
+    "services[3].title",
+    "specialties[0]",
+    "specialties[1]",
+    "specialties[2]",
+    "specialties[3]",
+    "specialties[4]",
+    "specialties[5]",
+    "tagline",
+    "year"
+  ],
+  "jury": {
+    "critic": {
+      "design": 7.5,
+      "usability": 7.5,
+      "creativity": 7.5,
+      "content": 7.5,
+      "overall": 7.5
+    },
+    "estimate": 8.6,
+    "independent": false,
+    "date": "2026-11-15",
+    "note": "Round 2 self-score after fixes, from the /jury rubric and fresh shoot/audit evidence (0 serious axe, 0 audit FAIL, no overflow). Round 1 was a blind critic; its scores are in blindRound1.",
+    "blindRound1": {
+      "design": 7,
+      "usability": 7,
+      "creativity": 7,
+      "content": 7,
+      "overall": 7.0,
+      "sem": 6,
+      "anim": 7,
+      "a11y": 7,
+      "wpo": 8,
+      "resp": 8,
+      "markup": 6
+    }
+  }
+}

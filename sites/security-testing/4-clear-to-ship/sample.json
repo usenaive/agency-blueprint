@@ -1,0 +1,71 @@
+{
+  "company_name": "Halden Quality Partners",
+  "tagline": "Release testing for teams who cannot afford a bad Monday morning",
+  "intro": "We test the customer journeys in banking, insurance and healthcare software before every release. A named lead runs your account, works to your release calendar and signs off each release with a written report.",
+  "audience": "Product and engineering teams at banks, insurers, healthcare providers and public services across the north-east United States, usually with a monthly or quarterly release cycle.",
+  "pricing_note": "An annual agreement priced per product and per release, with a fixed number of testing days for each. Extra days are billed at an agreed daily rate.",
+  "city": "Boston",
+  "contact_email": "releases@haldenquality.com",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Release assurance",
+      "description": "A named lead plans testing against your release calendar, runs the agreed journeys before each release and signs off with a written report."
+    },
+    {
+      "title": "Regression programmes",
+      "description": "We build and maintain the set of journeys that must work every time, and run them on every release candidate you send us."
+    },
+    {
+      "title": "Acceptance testing support",
+      "description": "We prepare and run user acceptance testing with your business teams, so new features are checked by the people who will use them."
+    },
+    {
+      "title": "Accessibility checks",
+      "description": "Your core journeys completed with keyboards and screen readers, with findings mapped to the accessibility standards you report against."
+    }
+  ],
+  "specialties": [
+    "Account opening",
+    "Online and mobile banking",
+    "Claims and policy changes",
+    "Patient portals",
+    "Payments and statements",
+    "Customer support flows"
+  ],
+  "process": [
+    {
+      "title": "Agree the scope",
+      "description": "We agree which journeys matter, on which devices and browsers, and what has to be true before a release is cleared. All of it written down."
+    },
+    {
+      "title": "Test each release",
+      "description": "Our testers work through every agreed journey on the release candidate, log findings in your tracker and keep you updated daily."
+    },
+    {
+      "title": "Sign off in writing",
+      "description": "Before the release goes out you receive a report listing what was tested, what was found, what was fixed and what remains open."
+    }
+  ],
+  "proof": [
+    {
+      "text": "The sign-off report has become part of our change approval board pack.",
+      "source": "Head of digital delivery, a regional credit union (sample)"
+    },
+    {
+      "text": "Calm, thorough and always on time for our release windows.",
+      "source": "Engineering manager, a Massachusetts health insurer (sample)"
+    },
+    {
+      "text": "Our business teams finally enjoy acceptance testing."
+    }
+  ],
+  "logos": [
+    "Charles River Credit Union",
+    "Bayview Health",
+    "Granite Mutual",
+    "Northgate Insurance",
+    "Commonwealth Pensions",
+    "Harborline Bank"
+  ]
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --ground: #fbfbfa; --ink: #121212; --muted: #5b5b5b; --line: #e3e2df; --orange: #ff4d17; --serif: "Gloock", Didot, Georgia, serif; --gut: clamp(20px, 4vw, 64px); --ease: cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-color-scheme: dark) { :root { --ground: #0f0f0f; --ink: #f1efea; --muted: #a9a7a2; --line: #2a2a2a; --orange: #ff6a3d; } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--ground); color: var(--ink); font: 400 1.0625rem/1.6 "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+h1, p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--ink); color: var(--ground); }
+.skip:focus { top: 12px; }
+.wrap { width: 100%; max-width: 1440px; margin-inline: auto; padding-inline: var(--gut); }
+header { display: flex; align-items: center; min-height: 84px; }
+.brand { display: inline-flex; align-items: baseline; gap: 8px; padding-block: 6px; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.brand i { font: 400 1.5rem/1 var(--serif); font-style: normal; color: var(--orange); display: inline-block; transition: transform 0.45s var(--ease); }
+main { flex: 1; position: relative; display: flex; align-items: center; overflow: hidden; }
+main .wrap { position: relative; z-index: 1; padding-block: clamp(48px, 8vw, 120px); }
+.label { color: var(--muted); font-weight: 500; }
+h1 { margin-top: 18px; max-width: 12em; font: 400 clamp(3rem, 1rem + 6.5vw, 8rem)/0.95 var(--serif); letter-spacing: -0.03em; }
+h1 span { color: var(--orange); }
+.lede { margin-top: 26px; max-width: 32em; color: var(--muted); font-size: 1.1875rem; }
+.cta { display: inline-flex; align-items: center; gap: 16px; margin-top: 34px; padding: 12px 12px 12px 26px; border: 1.5px solid var(--ink); border-radius: 999px; font-weight: 600; text-decoration: none; position: relative; overflow: hidden; isolation: isolate; }
+.cta::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); transform: translateY(101%); transition: transform 0.45s var(--ease); }
+.cta b { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--orange); color: #121212; font: 400 1.5rem/1 var(--serif); transition: transform 0.5s var(--ease); }
+.cta span { transition: color 0.3s; }
+.big { position: absolute; right: -2vw; bottom: -8vw; font: 400 clamp(18rem, 10rem + 30vw, 44rem)/0.8 var(--serif); color: var(--orange); opacity: 0.14; transform: rotate(-12deg); pointer-events: none; }
+footer { border-top: 1px solid var(--line); font-weight: 600; font-size: 0.9375rem; }
+footer p { padding-block: 26px; overflow-wrap: anywhere; }
+@media (hover: hover) { .cta:hover::before { transform: translateY(0); } .cta:hover span { color: var(--ground); } .cta:hover b { transform: rotate(360deg); } .brand:hover i { transform: rotate(-14deg) scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="wrap"><a class="brand" href="/"><i aria-hidden="true">?</i>{{company_name}}</a></header>
+<main id="main">
+  <div class="wrap">
+    <p class="label">Page not found</p>
+    <h1>Where did this page go<span aria-hidden="true">?</span></h1>
+    <p class="lede">An open question, and not one we can answer. The link may be old, or the page may have moved. The home page has better questions.</p>
+    <a class="cta" href="/"><span>Back to the home page</span><b aria-hidden="true">?</b></a>
+  </div>
+  <span class="big" aria-hidden="true">?</span>
+</main>
+<footer class="wrap"><p>&copy; {{year}} {{company_name}}</p></footer>
+</body>
+</html>

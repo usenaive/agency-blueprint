@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>Page not found | {{company_name}}</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/fonts.css">
+<style>
+:root { --ground: #f3f4f1; --land: #fbfbf8; --sea: #d6e2e7; --ink: #14213d; --muted: #47536d; --line: #c9d0d6; --grat: #b3c6cf; --red: #d03a25; --redInk: #b42f1c; --serif: "Bodoni Moda", Didot, Georgia, serif; --sans: "Archivo", "Helvetica Neue", Arial, sans-serif; --gut: clamp(20px, 4vw, 56px); --ease: cubic-bezier(0.22, 0.9, 0.3, 1); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: var(--ground); color: var(--ink); font: 400 1.0625rem/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+h1, p, figure { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.skip { position: absolute; left: 12px; top: -80px; padding: 10px 14px; background: var(--ink); color: #fff; }
+.skip:focus { top: 12px; }
+.wrap { width: 100%; max-width: 1400px; margin-inline: auto; padding-inline: var(--gut); }
+header { border-bottom: 1px solid var(--ink); box-shadow: 0 3px 0 -2px var(--ink); }
+header .wrap { display: flex; align-items: center; min-height: 76px; }
+.brand { display: inline-flex; align-items: center; gap: 12px; padding-block: 6px; font: 600 1.1875rem/1.2 var(--serif); text-decoration: none; overflow-wrap: anywhere; }
+.brand svg { flex: none; width: 26px; height: 26px; transition: transform 0.6s var(--ease); }
+main { flex: 1; }
+main .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; align-items: center; padding-block: clamp(40px, 8vw, 112px); }
+.plate { font: italic 500 1.125rem/1.2 var(--serif); color: var(--redInk); }
+h1 { margin-top: 16px; font: 500 clamp(2.5rem, 1.4rem + 3.4vw, 4.5rem)/1.02 var(--serif); letter-spacing: -0.02em; }
+.lede { margin-top: 22px; color: var(--muted); font-size: 1.125rem; max-width: 30em; }
+.btn { display: inline-flex; margin-top: 30px; padding: 15px 24px; background: var(--ink); color: #fff; text-decoration: none; font: 600 0.8125rem/1 var(--sans); font-stretch: 125%; text-transform: uppercase; letter-spacing: 0.12em; position: relative; overflow: hidden; isolation: isolate; }
+.btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--redInk); transform: translateY(101%); transition: transform 0.4s var(--ease); }
+figure { padding: 18px; border: 1px solid var(--ink); outline: 3px solid var(--ink); outline-offset: 4px; background: var(--land); }
+svg.plot { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
+.cap { margin-top: 14px; font: italic 400 0.9375rem/1.4 var(--serif); color: var(--muted); }
+footer { border-top: 1px solid var(--ink); font-weight: 600; font-size: 0.9375rem; }
+footer p { padding-block: 24px; overflow-wrap: anywhere; }
+@media (hover: hover) { .btn:hover::before { transform: translateY(0); } .brand:hover svg { transform: rotate(45deg); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 860px) { main .wrap { grid-template-columns: minmax(0, 1fr); gap: 40px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><div class="wrap"><a class="brand" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1 L14 10 L23 12 L14 14 L12 23 L10 14 L1 12 L10 10 Z" fill="#14213d"/><circle cx="12" cy="12" r="2" fill="#d03a25"/></svg>{{company_name}}</a></div></header>
+<main id="main">
+  <div class="wrap">
+    <div>
+      <p class="plate">Plate 404</p>
+      <h1>This page is off the map</h1>
+      <p class="lede">We have no survey of the address you followed. The link may be old, or the page may have moved to new ground.</p>
+      <a class="btn" href="/">Back to Plate I</a>
+    </div>
+    <figure aria-labelledby="cap">
+      <svg class="plot" viewBox="0 0 600 360" aria-hidden="true">
+        <rect width="600" height="360" fill="#d6e2e7"/>
+        <path d="M0 90H600M0 180H600M0 270H600M120 0V360M240 0V360M360 0V360M480 0V360" stroke="#b3c6cf" stroke-dasharray="2 4" fill="none"/>
+        <path d="M-20 300 C 60 260, 140 290, 180 380 L -20 380 Z" fill="#fbfbf8" stroke="#14213d" stroke-width="1.4"/>
+        <text x="300" y="170" text-anchor="middle" font-family="Bodoni Moda, Georgia, serif" font-style="italic" font-size="26" fill="#47536d">Here be no page</text>
+        <circle cx="300" cy="210" r="16" fill="none" stroke="#d03a25" stroke-width="2" stroke-dasharray="4 4"/>
+      </svg>
+      <p class="cap" id="cap">Uncharted water where a page should be.</p>
+    </figure>
+  </div>
+</main>
+<footer><div class="wrap"><p>&copy; {{year}} {{company_name}}</p></div></footer>
+</body>
+</html>

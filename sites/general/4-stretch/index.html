@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Client services</title>
+<meta name="description" content="{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="head band" id="top">
+  <div class="wrap head__in">
+    <a class="brand" href="#top"><span>{{company_name}}</span></a>
+    <nav aria-label="Primary">
+      <ul class="nav">
+        <li><a href="#work">Work we take on</a></li>
+        <li><a href="#how">How it runs</a></li>
+        <li><a href="#terms">Terms</a></li>
+        <li><a class="nav__cta" href="#brief">Send the brief</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero band" aria-labelledby="h1">
+    <div class="wrap">
+    <p class="kicker">Client services{{#if city}}, {{city}}{{/if}}</p>
+    <h1 id="h1">{{tagline}}</h1>
+    <p class="hero__intro">{{intro}}</p>
+    <h2 class="visually-hidden">What we do</h2>
+    <ul class="stack" data-stack>
+      <li><span class="stack__w">{{specialties[0]}}</span></li>
+      <li><span class="stack__w">{{specialties[1]}}</span></li>
+      <li><span class="stack__w">{{specialties[2]}}</span></li>
+      <li><span class="stack__w">{{specialties[3]}}</span></li>
+      <li><span class="stack__w">{{specialties[4]}}</span></li>
+      <li><span class="stack__w">{{specialties[5]}}</span></li>
+    </ul>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="work" aria-labelledby="work-h">
+    <h2 id="work-h" class="sec-h">Work we take on</h2>
+    <ol class="svc">
+      <li><span class="svc__n" aria-hidden="true">01</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><span class="svc__n" aria-hidden="true">02</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><span class="svc__n" aria-hidden="true">03</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><span class="svc__n" aria-hidden="true">04</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec wrap" id="how" aria-labelledby="how-h">
+    <h2 id="how-h" class="sec-h">How it runs</h2>
+    <ol class="steps">
+      <li><span class="steps__n" aria-hidden="true">1</span><div><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></div></li>
+      <li><span class="steps__n" aria-hidden="true">2</span><div><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></div></li>
+      <li><span class="steps__n" aria-hidden="true">3</span><div><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></div></li>
+    </ol>
+  </section>
+
+  <section class="sec terms wrap" id="terms" aria-labelledby="terms-h">
+    <h2 id="terms-h" class="sec-h">Terms</h2>
+    <div class="terms__for"><h3 class="mini">Who we work for</h3><p>{{audience}}</p></div>
+    <div class="terms__fee"><h3 class="mini">How we charge</h3><p>{{pricing_note}}</p></div>
+  </section>
+
+  {{#if proof}}<section class="sec wrap" aria-labelledby="said-h">
+    <h2 id="said-h" class="sec-h">Said about us</h2>
+    <div class="said">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+
+  {{#if logos}}<section class="sec sec--tight wrap" aria-labelledby="for-h">
+    <h2 id="for-h" class="mini">Worked with</h2>
+    <ul class="names">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="band brief" id="brief" aria-labelledby="brief-h">
+  <div class="wrap">
+    <h2 id="brief-h" class="brief__h"><span>Send</span> <span>the brief</span></h2>
+    <p class="brief__lede">Say what needs doing and by when. We reply with what we would do, who would do it and what it costs.</p>
+    <a class="mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span><i aria-hidden="true">&rarr;</i></a>
+  </div>
+  </section>
+</main>
+
+<footer class="foot band">
+  <div class="wrap foot__in">
+    <p>&copy; {{year}} {{company_name}}</p>
+    {{#if city}}<p>{{city}}</p>{{/if}}
+    <a class="up" href="#top">Back to the top</a>
+  </div>
+</footer>
+</body>
+</html>

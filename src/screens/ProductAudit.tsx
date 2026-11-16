@@ -27,13 +27,10 @@ export interface AuditSnapshot {
     ad_plans: number;
     approved_ad_plans: number;
   };
+  /** The dashboard's own rows; prospects are the platform CRM's, which this app's key cannot read. */
   crm: {
     records: number;
-    prospects: number;
-    working_notes: number;
     internal_records: number;
-    named_contacts: number;
-    addressed_contacts: number;
   };
   setup_has_paste_artifacts: boolean;
 }
@@ -72,15 +69,13 @@ export function ProductAudit() {
   const mailbox = (data.identity?.emails.length ?? 0) > 0 && data.organization_domains.length > 0;
   const site = !data.public_site.generic_company && !data.public_site.placeholder_email && !data.public_site.pricing_without_answer;
   const landing = site && data.content.posted_blog_articles > 0;
-  const sales = data.crm.prospects > 0 && data.crm.named_contacts === data.crm.prospects && data.crm.addressed_contacts === data.crm.prospects;
   const dashboard = data.agents.length === data.expected_agents && data.deployments.length > 0;
   const marketing = data.content.approved_ad_plans > 0;
-  const ready = mailbox && landing && sales && dashboard && marketing && waiting === 0 && data.crm.internal_records <= 1 && !data.setup_has_paste_artifacts;
+  const ready = mailbox && landing && dashboard && marketing && waiting === 0 && data.crm.internal_records <= 1 && !data.setup_has_paste_artifacts;
 
   const gaps = [
     ["Verify and personalize the public site", site, `${data.public_site.company}; ${data.public_site.contact_email || "no verified contact"}; ${data.public_site.prices.join(", ")}.`],
     ["Publish one reviewed SEO & GEO article", data.content.posted_blog_articles > 0, `${data.content.posted_blog_articles} posted; ${data.content.draft_blog_articles} drafts.`],
-    ["Finish contact-ready prospect coverage", sales, `${data.crm.prospects} prospects; ${data.crm.named_contacts} named; ${data.crm.addressed_contacts} addressed.`],
     ["Approve the paid-media proposal", marketing, `${data.content.ad_plans} filed; ${data.content.approved_ad_plans} approved.`],
     ["Deduplicate internal agency records", data.crm.internal_records <= 1, `${data.crm.internal_records} name-only internal records.`],
     ["Clear operator questions and approvals", waiting === 0, `${waiting} parked action${waiting === 1 ? "" : "s"}.`],
@@ -95,9 +90,8 @@ export function ProductAudit() {
         actions={<span className={`chip ${ready ? "chip-credit" : "chip-fail"}`}>{ready ? "READY" : "LAUNCH BLOCKED"}</span>}
       />
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <Card name="Landing page + blog" ready={landing} evidence={`${data.content.posted_blog_articles} public article${data.content.posted_blog_articles === 1 ? "" : "s"}; site identity ${site ? "verified" : "not accepted"}.`} />
-        <Card name="Sales handoff" ready={sales} evidence={`${data.crm.prospects} companies; ${data.crm.named_contacts} named and ${data.crm.addressed_contacts} addressed contacts.`} />
         <Card name="Management dashboard" ready={dashboard} evidence={`${data.agents.length}/${data.expected_agents} agents and ${data.deployments.length} schedules observed.`} />
         <Card name="Paid-media plan" ready={marketing} evidence={`${data.content.ad_plans} plans filed; ${data.content.approved_ad_plans} operator-approved.`} />
       </section>

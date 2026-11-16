@@ -18,13 +18,13 @@
  * `server/proxy.ts`.
  *
  * The dashboard declares its MCP endpoint (`mcp: "/mcp"`), so every agent in the project is
- * offered the dashboard's CRM tools automatically on each turn — no per-agent wiring; the platform
+ * offered the dashboard's tools automatically on each turn — no per-agent wiring; the platform
  * mints the token and injects it into the app as `VETTA_MCP_TOKEN`.
  *
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
  * via the workspace protocol.
  */
-import { BLUEPRINTS, defineProject } from "@usenaive-sdk/blueprints";
+import { BLUEPRINTS, defineProject, type DefineInput } from "@usenaive-sdk/blueprints";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
@@ -47,6 +47,45 @@ if (!carried.has(TEMPLATE)) {
   throw new Error(`agency: the ${TEMPLATE} template needs @usenaive-sdk/blueprints >= 0.17.0; the installed engine lists only ${[...carried].join(", ")}.`);
 }
 
+/**
+ * The platform's four mini apps every agency template carries (the owner's rule: SEO & GEO, Ads,
+ * Calendar and CRM), declared exactly as the Client agency's crews declare them
+ * (`crews/clients-recruiting/naive.config.json`). They are the platform's own screens over the
+ * company's CRM, calendar and tagged files — nothing to build — and sit beside the dashboard app.
+ */
+const MINI_APPS: NonNullable<DefineInput["mini_apps"]> = [
+  {
+    slug: "crm", name: "CRM", icon: "person",
+    pages: [{ slug: "clients", title: "Clients", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["crm"] },
+      crm: { type: "Crm", props: {} },
+    } } }],
+  },
+  {
+    slug: "calendar", name: "Calendar", icon: "calendar",
+    pages: [{ slug: "month", title: "Calendar", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["calendar", "week"] },
+      calendar: { type: "Calendar", props: {} },
+      team: { type: "Schedule", props: { week: { $source: "schedule" } } },
+      week: { type: "Section", props: { title: "Your team this week", hide_empty: true }, children: ["team"] },
+    } } }],
+  },
+  {
+    slug: "ads", name: "Ads", icon: "megaphone",
+    pages: [{ slug: "ads", title: "Ads", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["ads"] },
+      ads: { type: "AdsLibrary", props: {} },
+    } } }],
+  },
+  {
+    slug: "seo-geo", name: "SEO & GEO", icon: "list",
+    pages: [{ slug: "seo", title: "SEO & GEO", spec: { root: "page", elements: {
+      page: { type: "Page", props: {}, children: ["seo"] },
+      seo: { type: "SeoLibrary", props: {} },
+    } } }],
+  },
+];
+
 export default defineProject({
   name: PROJECT,
   blueprint: "agency",
@@ -64,6 +103,12 @@ export default defineProject({
    * reader is needed for an answer to a declared question.
    */
   questions: ACTIVE_TEMPLATE.questions,
+  /**
+   * The template's Operator's Manual (`manuals/<template>.md`), written into the company's Files
+   * under Playbooks. It lives beside the crew it describes, so a seat and its manual change in one
+   * pull request; the platform's publisher carries it inline, since a hosted apply has no checkout.
+   */
+  docs: [{ name: "📖 Operator's Manual.md", file: `manuals/${TEMPLATE}.md` }],
   /**
    * The crew the dashboard provisions per client at onboarding (`server/proxy.ts`), published so
    * the studio can show it. Names carry the client's slug at runtime, so only the shape is here.
@@ -95,12 +140,14 @@ export default defineProject({
     },
   ],
 
+  mini_apps: MINI_APPS,
+
   apps: [
     {
       name: "dashboard",
       type: "fullstack",
       description:
-        "The agency's public site at / — served from the site profile the team edits — and the operator dashboard under /app: CRM pipeline, approvals, agents, per-client workspaces.",
+        "The agency's public site at / — served from the site profile the team edits — and the operator dashboard under /app: signed clients' workspaces, approvals, agents. The pipeline is the CRM.",
       deploy_dir: "dist",
       mcp: "/mcp",
       /** The one app the crew files into and the site is served from; the template cannot run without it. */
@@ -113,7 +160,7 @@ export default defineProject({
        * other two are literals and only when set: a base URL and an identity id are not secrets,
        * and a `{ from_env }` on an unset optional would refuse the whole apply.
        *
-       * Without the key the dashboard still runs: the CRM and the deliverable queue are the app's
+       * Without the key the dashboard still runs: the clients and the deliverable queue are the app's
        * own database, so they work, and every platform-backed route answers 503 "not configured"
        * in the screen that asked for it instead of pretending.
        *

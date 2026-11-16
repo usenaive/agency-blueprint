@@ -1,0 +1,28 @@
+{
+  "company_name": "Common Room",
+  "tagline": "One team for your marketing, operations and delivery",
+  "intro": "Common Room is a client-services agency in Melbourne. We bring the right mix of people to each job, from planners and writers to project leads, and run it as one team with one point of contact.",
+  "audience": "Growing businesses and not-for-profits across Victoria and New South Wales, usually between fifteen and two hundred people, without a big in-house team.",
+  "pricing_note": "Projects are quoted at a fixed price before we begin. Ongoing work is a monthly retainer for an agreed set of hands and hours, reviewed every quarter.",
+  "city": "Melbourne",
+  "contact_email": "hello@commonroom.com.au",
+  "year": "2026",
+  "services": [
+    { "title": "Campaigns and content", "description": "Planning, writing and making the campaigns, newsletters and posts that keep you in front of the people you serve, month after month." },
+    { "title": "Events and launches", "description": "From a product launch to an annual fundraiser, planned and run by one lead with the suppliers, run sheet and follow-up handled." },
+    { "title": "Operations support", "description": "Tidier processes, cleaner handoffs and the documents that keep them that way, built with the team who has to use them." },
+    { "title": "An extra team", "description": "A standing group of people on a monthly retainer, ready for whatever lands on your desk, with a plan agreed at the start of each month." }
+  ],
+  "specialties": ["Planning", "Writing", "Design", "Events", "Operations", "Project leads"],
+  "process": [
+    { "title": "Pick the hands", "description": "We learn what you need, then propose the team for it: who does what, for how long and at what price." },
+    { "title": "Work as one", "description": "Your lead keeps everyone moving and sends a short weekly note on what is done, what is next and what we need from you." },
+    { "title": "Pass it back", "description": "We hand over the finished work with the files and notes, and talk through what should happen next." }
+  ],
+  "proof": [
+    { "text": "It felt like having five specialists and only one person to call.", "source": "CEO, a community health charity (sample)" },
+    { "text": "They planned our launch, wrote every word of it and ran the day.", "source": "Founder, a homewares brand (sample)" },
+    { "text": "Our processes finally live in one place that people use.", "source": "Operations manager, a design practice (sample)" }
+  ],
+  "logos": ["Yarra Bend Health", "Fitzroy Homewares", "Southbank Theatre Co", "Merri Creek Studio", "Northside Food Bank", "Kinfolk Architects"]
+}

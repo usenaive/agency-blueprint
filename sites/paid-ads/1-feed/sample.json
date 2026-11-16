@@ -1,0 +1,28 @@
+{
+  "company_name": "Thumbstop Studio",
+  "tagline": "Ads people stop scrolling for",
+  "intro": "We plan, make and run paid social and search ads for consumer brands. One small team writes the hooks, cuts the videos, sets up the campaigns and tells you every Monday what is working and what we are changing.",
+  "audience": "Consumer brands selling online in the US and Canada, from their first ad budget to the point where ads are their biggest channel, mostly in food, beauty, fitness and home.",
+  "pricing_note": "A flat monthly fee for planning, creative and reporting, separate from your ad spend, which you pay to the ad platforms directly. Three months to start, then month to month.",
+  "city": "Austin",
+  "contact_email": "brief@thumbstop.studio",
+  "year": "2026",
+  "services": [
+    { "title": "Short-form video ads", "description": "Hooks written for the first two seconds, shot with creators or cut from your footage, in vertical, square and wide versions for every placement." },
+    { "title": "Static and carousel ads", "description": "Product shots, offers and reviews turned into scroll-stopping statics and carousels, with fresh variations every week so the feed never sees the same ad too long." },
+    { "title": "Campaign planning and buying", "description": "Budgets, audiences and bids set up across paid social and search, with a written plan for what we test first and why." },
+    { "title": "Weekly reporting", "description": "One page every Monday: what we spent, what it brought back, which ads we are cutting and what we are trying next. No dashboard to decode." }
+  ],
+  "specialties": ["Paid social", "Short-form video", "Search ads", "Shopping ads", "Creator content", "Retargeting"],
+  "process": [
+    { "title": "Plan the test", "description": "A call about your product, margins and customers, then a written plan: who we target, what we say to them and how we will know it worked." },
+    { "title": "Make the ads", "description": "We write and produce the first round of creative, ten to twenty variations, and send it to you for approval before anything goes live." },
+    { "title": "Run, read, repeat", "description": "Ads go live, we read the numbers every week, cut what does not work and make more of what does." }
+  ],
+  "proof": [
+    { "text": "The first agency that sent us new creative every single week without being chased.", "source": "Founder, a skincare brand (sample)" },
+    { "text": "The Monday report is one page long and I actually read it.", "source": "Head of growth, a meal kit company (sample)" },
+    { "text": "They told us which ads to switch off, not only which ones to scale.", "source": "Marketing lead, a fitness app (sample)" }
+  ],
+  "logos": ["Oat and Ember", "Kindred Skin", "Field Day Fitness", "Northbound Coffee", "Little Lantern", "Saltwork Goods"]
+}

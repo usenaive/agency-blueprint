@@ -27,7 +27,7 @@ import type { AgentDecl } from "@usenaive-sdk/blueprints";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import {
-  AGENCY_IDENTITY, budget, CONTEXT, crm, DAY_ONE, gate, HANDOFF, MAILBOX_READ, MAILBOX_SEND, model, OPERATOR, OWN_RECORD, PREAMBLE,
+  AGENCY_IDENTITY, budget, CONTEXT, crm, DAY_ONE, gate, HANDOFF, MAILBOX_READ, MAILBOX_SEND, model, OPERATOR, OWN_RECORD, PLATFORM_CRM, PREAMBLE,
   timer, tools, type AgencyTemplate,
 } from "./blank.ts";
 import { VOCABULARY } from "./index.ts";
@@ -41,7 +41,7 @@ export const STUDIO_NOTE = "STUDIO NOTE";
 const system = (role: string): string => `${PREAMBLE} ${gate} ${OWN_RECORD} ${role}`;
 
 /**
- * How a seat finds the note: it is a note on the agency's own CRM record, never a file and never
+ * How a seat finds the note: it is a note on the agency's own record, never a file and never
  * a guess.
  */
 const READ_NOTE =
@@ -62,13 +62,13 @@ const accountManager: AgentDecl = {
   system: system(
     `You are the account manager and studio lead. Read every brief against the ${STUDIO_NOTE} on the agency's own record before routing it. ` +
       "A brief that names sizes in millimetres is a part: hand it to engineer. Any other object brief is a look: hand it to designer. A product video goes to visualizer only once its look or part exists. " +
-      "A client not yet on the CRM: create_lead with the domain or contact_email the brief gives — a name alone files the agency's own record — and with neither, ask_operator once for one; never invent one. " +
+      "A brief from a new client is a signed job: add them on the CRM at won and create_client with its domain or email, ctc_ id as crm_contact. " +
       "Hand off with send_to_agent, wait false, one brief per session, naming the client's cli_ id, the brief in the operator's words and what done means. " +
       "A brief that contradicts the note stops: ask_operator once, then wait. " +
       "Never email a client before the deliverable is approved.",
   ),
   tools: tools(
-    [...CONTEXT, "web_fetch", ...crm("list_clients", "get_client", "create_lead", "add_client_note", "list_posts", "schedule_post"), ...MAILBOX_READ, ...HANDOFF],
+    [...CONTEXT, "web_fetch", ...PLATFORM_CRM, ...crm("list_clients", "get_client", "create_client", "add_client_note", "list_posts", "schedule_post"), ...MAILBOX_READ, ...HANDOFF],
     [...MAILBOX_SEND, ...OPERATOR],
   ),
   handoffs: ["designer", "engineer", "visualizer"],
@@ -78,13 +78,13 @@ const accountManager: AgentDecl = {
     timer(
       "0 9 * * 1",
       "Studio check-in",
-      `Read project_context and the ${STUDIO_NOTE}. List every pending studio deliverable (list_posts for each active client and the agency's own record) and note on each client any brief that has waited more than three days with no file, with what it waits on. Propose nothing outward, make nothing, and send nothing.`,
+      `Read project_context and the ${STUDIO_NOTE}. List every pending studio deliverable (list_posts for each active client and the agency's own record). For each client with a brief that has waited more than three days with no file, start a chat of its own (send_to_agent to self, wait false, client its crm_contact, handoff_key week:<that ctc_ id>) that logs on its CRM timeline (crm.write log) what the brief waits on. Propose nothing outward, make nothing, and send nothing.`,
       5_000_000,
     ),
   ],
   intake: {
     message:
-      `Read project_context. Before any other tool: write the ${STUDIO_NOTE} — the four answers in the operator's words, then one line each: what counts as a look, what counts as a part, what done means here — as a note titled ${STUDIO_NOTE} on the agency's own record (list_clients; create it with create_lead from the project name if missing). ` +
+      `Read project_context. Before any other tool: write the ${STUDIO_NOTE} — the four answers in the operator's words, then one line each: what counts as a look, what counts as a part, what done means here — as a note titled ${STUDIO_NOTE} on the agency's own record (list_clients; create it with create_client from the project name if missing). ` +
       "A missing answer: ask_operator once after the note is filed. " +
       "Then hand ONE first brief to designer (send_to_agent, wait false): the product the answers name, as a look, or the skill's pour-over carafe brief if they name none — the message names the agency record's cli_ id, the brief and what done means.",
     budget_micro_usd: DAY_ONE,
@@ -216,13 +216,6 @@ const clients: Client[] = [
     contact: { name: "Sample Contact", email: "contact@demo-fixtures.example", role: "Product lead" },
     notes: ["Demo row — replace it with a client of your own.", "Briefs give sizes in millimetres."],
     nextAction: "Review the bracket part",
-  },
-  {
-    id: "cli_pd03", slug: "demo-lighting", name: "Demo Lighting", domain: "demo-lighting.example", stage: "lead",
-    services: [],
-    contact: { name: "Sample Contact", email: "contact@demo-lighting.example", role: "Design director" },
-    notes: ["Demo row — inbound from the site's contact form."],
-    nextAction: "Ask for a first brief",
   },
 ];
 

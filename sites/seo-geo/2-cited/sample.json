@@ -1,0 +1,28 @@
+{
+  "company_name": "Footnote Search",
+  "tagline": "We make your business the source AI answers quote",
+  "intro": "We help specialist firms show up when buyers ask search engines and AI assistants for a recommendation. We write the clear, checkable pages those answers draw on, and fix whatever stops them being read.",
+  "audience": "Independent professional firms in Scotland and the north of England: accountants, architects, solicitors, surveyors and specialist consultancies with five to fifty staff.",
+  "pricing_note": "A fixed monthly fee, quoted after a one-hour review of your site and how AI assistants describe you today. No long contract: three months to start, then monthly.",
+  "city": "Edinburgh",
+  "contact_email": "ask@footnotesearch.co.uk",
+  "year": "2026",
+  "services": [
+    { "title": "AI answer check", "description": "We ask the major AI assistants the questions your buyers ask, record what they say about you and your competitors, and show you where you are missing or misdescribed." },
+    { "title": "Source pages", "description": "Service, pricing and question pages written with your team: specific, dated and easy to quote, so an assistant has something accurate to cite." },
+    { "title": "Technical groundwork", "description": "Crawl access, page speed, structured data, internal links and clean titles, so search engines and AI crawlers can read every page that matters." },
+    { "title": "Mentions elsewhere", "description": "Directory listings, trade bodies and industry press that assistants trust, checked for accuracy and filled in where you are absent." }
+  ],
+  "specialties": ["AI answer visibility", "Technical SEO", "Professional services", "Question-led content", "Structured data", "Local search"],
+  "process": [
+    { "title": "Ask the questions", "description": "We put fifty real buyer questions to search engines and AI assistants and record who gets named, quoted and linked." },
+    { "title": "Write the sources", "description": "We fix the technical gaps and write the pages that answer those questions properly, approved by you before they go live." },
+    { "title": "Ask again", "description": "Every month we ask the same questions again and send you a short note on what changed, in plain language." }
+  ],
+  "proof": [
+    { "text": "They showed us exactly what the assistants were saying about us, and why it was wrong.", "source": "Managing partner, an Edinburgh architecture practice (sample)" },
+    { "text": "The pages they wrote with us are clearer than anything we had written ourselves.", "source": "Director, a Leeds surveying firm (sample)" },
+    { "text": "A plain monthly note that tells us what moved and what they are doing next.", "source": "Founder, a tax consultancy (sample)" }
+  ],
+  "logos": ["Hallam and Reid Architects", "Northgate Surveyors", "Corrie Tax", "Abbeyhill Legal", "Fenwick Planning", "Tay Valley Engineering"]
+}

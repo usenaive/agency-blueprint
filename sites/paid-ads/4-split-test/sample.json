@@ -1,0 +1,72 @@
+{
+  "company_name": "Second Draft Media",
+  "tagline": "We test the ad before you bet the budget",
+  "intro": "We run paid ads as a string of small tests. Every week we put two versions of an ad, an audience or an offer side by side, keep the one that earns more and write down why, so your spend follows evidence instead of hunches.",
+  "audience": "Software and subscription companies in Canada and the US selling to consumers or small businesses, with a product people already pay for and a team that asks why ads work.",
+  "pricing_note": "A monthly retainer for planning, creative, testing and reporting, quoted on your ad budget and how many tests a month. You pay ad spend to the platforms. Thirty days' notice.",
+  "city": "Toronto",
+  "contact_email": "tests@seconddraft.media",
+  "year": "2026",
+  "services": [
+    {
+      "title": "Creative testing",
+      "description": "Two or more versions of the same ad, changing one thing at a time: the hook, the image, the offer or the call to action, so you learn what moved people."
+    },
+    {
+      "title": "Audience testing",
+      "description": "The same ad shown to different groups, from broad audiences to lookalikes and interests, to find who responds and what it costs to reach them."
+    },
+    {
+      "title": "Landing page tests",
+      "description": "Ad and page tested together, because a good ad that lands on the wrong page still loses money. We write the copy for both."
+    },
+    {
+      "title": "Test reports",
+      "description": "Every test written up in one paragraph: what we changed, what happened, how sure we are and what we will try next."
+    }
+  ],
+  "specialties": [
+    "Paid social",
+    "Search ads",
+    "Short-form video",
+    "App install ads",
+    "Landing pages",
+    "Retargeting"
+  ],
+  "process": [
+    {
+      "title": "Write the hypothesis",
+      "description": "We agree one question per test, the one change that answers it and the number that decides the winner."
+    },
+    {
+      "title": "Run both variants",
+      "description": "Two versions go live with an even split and enough budget to give a clear answer, usually inside a week or two."
+    },
+    {
+      "title": "Keep the winner",
+      "description": "The better variant takes the budget, the lesson goes in the log and the next test starts from there."
+    }
+  ],
+  "proof": [
+    {
+      "text": "We stopped arguing about which ad was better. Now we just ask them to test it.",
+      "source": "CEO, a budgeting app (sample)"
+    },
+    {
+      "text": "The test log is the most useful marketing document we own.",
+      "source": "Head of growth, a language-learning app (sample)"
+    },
+    {
+      "text": "They are happy to tell us when a test showed nothing, which is rarer than it should be.",
+      "source": "Founder, a scheduling tool (sample)"
+    }
+  ],
+  "logos": [
+    "Pennywise Budget",
+    "Lingo Lane",
+    "Slotbook",
+    "Northstar Fitness",
+    "Quill Notes",
+    "Harbour Health"
+  ]
+}

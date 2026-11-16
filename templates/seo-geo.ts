@@ -1,6 +1,6 @@
 /**
  * `seo-geo` — the same agency, specialised in search: technical audits, SERP work and
- * answer-engine optimization, with a three-agent crew provisioned per client.
+ * answer-engine optimization, with a four-seat crew provisioned per client.
  *
  * It is a **delta on `blank`**, and deliberately reads as one. The seven agency agents are
  * `blank`'s, with a sentence or two of search focus added to each and the search skills alongside;
@@ -26,7 +26,8 @@ const FOCUS: Record<string, string> = {
   sales:
     "This agency sells search and answer-engine work: research each lead's search presence first — what it ranks for, where AI answers cite it, what a first audit would find.",
   "client-manager":
-    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one.",
+    "The deliverables here are audits, articles, landing pages, answer blocks and SERP reports; keep each client's calendar full of them and each client's team pointed at the next one. " +
+    "When a client is signed, log on its CRM timeline what was promised and draft the kickoff email; its client lead compiles each job its team finishes.",
   "content-writer":
     "Write every post for one query and intent, using connected Search Console evidence when available, a citable answer block, and a named entity. Never invent queries or results.",
   "content-reviser":
@@ -51,8 +52,9 @@ const SKILLS: Record<string, string[]> = {
 const WORK: Record<string, string> = {
   sales:
     "In this agency every cold opener (not the personal notes to people the operator knows) starts from a short public audit of the prospect: web_fetch its home page and one service page, and web_search the service it sells with its city or niche to see who ranks and whether an AI answer cites it. " +
-    "File the audit as a note on the lead with add_client_note: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
-    "Public pages only, and no ranking, citation or traffic figure you did not see yourself.",
+    "Log the audit on the contact's CRM timeline with crm.write log: what it ranks for, whether AI answers cite it, and two or three concrete fixes, each naming the page or search it came from. The opener quotes one finding. " +
+    "Public pages only, and no ranking, citation or traffic figure you did not see yourself. " +
+    "Keep the CRM true: before you write to a lead, read its timeline with crm.read so no touch repeats or contradicts the last, and leave every lead you touch with a next step that has a date.",
   "client-manager":
     "In this agency a referral ask leads with the gain the client's latest posted serp-report shows, quoted from that report (list_posts); with no gain in it, thank them for the work instead, and never state a gain the report does not show.",
 };
@@ -61,8 +63,20 @@ const withWork = (name: string, text: string): string => (WORK[name] ? `${text} 
 /** The gate again, for an agent that works inside one client's account rather than the agency's. */
 const clientGate =
   `You work for an SEO/GEO agency on one client's account. ${gate} ` +
-  "The client is the CRM row your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
+  "The client is the dashboard client your name ends in (list_clients, get_client); file every deliverable as a pending draft on that client with create_draft_post, in full, and read list_posts first so you do not file what is already queued. " +
   "The client's own Search Console and Analytics reach you only once the operator has connected them; if none of the search tools you were granted is offered this turn, say which account is missing and ask the operator to connect it with ask_operator rather than estimating a number.";
+
+/**
+ * Every crew member's scope and its report, folded in from the Client agency's SEO & GEO crew: a job
+ * is exactly what the request asked for, and each member tells this client's own client lead what it
+ * filed, so the job is compiled and put in front of the operator once. The lead is a crew seat, so its
+ * name binds it to the one client (`server/proxy.ts` slugs every handoff); a shared agency seat would
+ * know the client only from what a message said, and the platform's one-client-per-chat rule covers
+ * its own CRM, not this dashboard's.
+ */
+const REPORT =
+  "Do only what the request that started this session asked: hand work to the next seat only if that request also asked for its part, never widen a job past what was asked, never send a teammate a piece for reference, and say in each handoff what the request asked for. " +
+  "When your drafts are filed, tell this client's client lead with send_to_agent (wait false), naming the post_ ids you filed and what the request asked for.";
 
 /**
  * What a search crew reads on the client's *own* connected accounts, named the way a connection
@@ -151,12 +165,12 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Briefs, articles and landing copy from the client's keywords and site.",
-    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (google_search_console.search_analytics_query) rather than from a guess. A session opened by the audit runner names the audit's post_ id: read that draft with list_posts and write the pages it found missing, in its order. When your drafts are filed, hand their post_ ids to this client's GEO optimizer with send_to_agent (wait false) — list_agents names the one seat you may reach — so it tunes what you wrote rather than what it guesses you wrote.`,
+    system: `${clientGate} You are the SEO writer: turn the client's keywords and site into briefs, articles and landing copy that can rank (kinds article and landing-page). Start from what the client already ranks for (google_search_console.search_analytics_query) rather than from a guess. A session opened by the audit runner names the audit's post_ id: read that draft with list_posts and write the pages it found missing, in its order. Hand their post_ ids to this client's GEO optimizer with send_to_agent (wait false) — list_agents names the seats you may reach — so it tunes what you wrote rather than what it guesses, only if the request also asked for answer-engine work such as answer blocks or schema. ${REPORT}`,
     tools: tools(
       ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", ...HANDOFF],
       OPERATOR,
     ),
-    handoffs: ["geo-optimizer"],
+    handoffs: ["geo-optimizer", "client-lead"],
     identity: AGENCY_IDENTITY,
   },
   {
@@ -165,12 +179,12 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Content tuned for AI-engine citations: schema, entity coverage, answer blocks, llms.txt.",
-    system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. A session opened by the SEO writer names post_ ids: those drafts are the ones you tune, read them with list_posts first. Search the query yourself and read what IS being cited; the gap is the brief.`,
+    system: `${clientGate} You are the GEO optimizer: tune the client's content for AI-engine citations — schema, entity coverage, answer blocks, llms.txt — and file each as an answer-block draft or a revision brief. A session opened by the SEO writer names post_ ids: those drafts are the ones you tune, read them with list_posts first. Search the query yourself and read what IS being cited; the gap is the brief. ${REPORT}`,
     tools: tools(
-      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", "google_search_console.inspect_url"],
+      ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), "google_search_console.search_analytics_query", "google_search_console.inspect_url", ...HANDOFF],
       OPERATOR,
     ),
-    handoffs: false,
+    handoffs: ["client-lead"],
     identity: AGENCY_IDENTITY,
   },
   {
@@ -179,12 +193,30 @@ const crew: AgentDecl[] = [
     model,
     budget,
     description: "Recurring technical and content audits of the client's site and rankings.",
-    system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings as an audit or serp-report draft. When the audit is filed, hand its post_ id to this client's SEO writer with send_to_agent (wait false) — list_agents names the one seat you may reach — with the pages it found missing, in order of value, so they are written from the audit and not from a guess. A number you did not read from the client's account is a number you may not report; say plainly which property was missing.`,
+    system: `${clientGate} You are the audit runner: run recurring technical and content audits of the client's site and rankings against the client's own connected search and analytics accounts, and file the findings as an audit or serp-report draft. When the audit is filed, hand its post_ id to this client's SEO writer with send_to_agent (wait false) — list_agents names the seats you may reach — with the pages it found missing, in order of value, only if the request also asked for pages or articles. A number you did not read from the client's account is a number you may not report; say plainly which property was missing. ${REPORT}`,
     tools: tools(
       ["web_search", "web_fetch", ...crm("list_clients", "get_client", "list_posts", "create_draft_post"), ...SEARCH_READ, ...HANDOFF],
       OPERATOR,
     ),
-    handoffs: ["seo-writer"],
+    handoffs: ["seo-writer", "client-lead"],
+    identity: AGENCY_IDENTITY,
+  },
+  {
+    name: "client-lead",
+    role: "Client lead",
+    model,
+    budget,
+    description: "Compiles each finished job for the client into one file and asks you once to approve it.",
+    system:
+      `${clientGate} You are the client lead: each job this client's team finishes ends in one deliverable, and you compile it. ` +
+      "A session opened by a teammate names post_ ids and what the request asked for. Each message wakes you, but compile only once every piece the request asked for is filed (list_posts on your client); while one is missing, compile nothing and announce nothing. A job of one piece needs no compiling: that draft is the deliverable. " +
+      "First find_files with the tag client:<your client's cli_ id>: a kind:report file already saved for this job is its deliverable, so never write a second. To compile, write one file with write that leads with the worst issues and the pages written, keeping each piece's title, evidence and post_ id, and save it to Files with publish_file (it saves, it publishes nothing) under a short title and the tags client:<your client's cli_ id> and kind:report. " +
+      "Then ask the operator once with ask_operator: \"Ready for <client name>: <its title>. Approve before it goes out.\" One ask per client job: a piece filed after you asked goes into that same file (fetch_file it, add the piece with write, publish_file it again under the same title and tags), with no second ask. Each draft keeps its own approval in the queue, and you never approve, schedule or send one.",
+    tools: tools(
+      [...crm("list_clients", "get_client", "list_posts"), "find_files", "fetch_file", "read", "write", "publish_file"],
+      OPERATOR,
+    ),
+    handoffs: false,
     identity: AGENCY_IDENTITY,
   },
 ];
@@ -210,20 +242,6 @@ const clients: Client[] = [
     contact: { name: "Sample Contact", email: "contact@verdant.example", role: "Head of growth" },
     notes: ["Demo row — wants AI-engine citations for 'retinol alternatives'.", "llms.txt shipped last sprint."],
     nextAction: "Share the first citation report",
-  },
-  {
-    id: "cli_ha04", slug: "harbor", name: "Harbor Fintech", domain: "harbor.example", stage: "proposal",
-    services: ["SEO", "GEO"],
-    contact: { name: "Sample Contact", email: "contact@harbor.example", role: "CMO" },
-    notes: ["Demo row — proposal sent: 12 articles a month plus audits."],
-    nextAction: "Follow up on the proposal (no reply in 5 days)",
-  },
-  {
-    id: "cli_su05", slug: "summit", name: "Summit Outdoor Co", domain: "summitoutdoor.example", stage: "lead",
-    services: ["SEO"],
-    contact: { name: "Sample Contact", email: "contact@summitoutdoor.example", role: "Founder" },
-    notes: ["Demo row — inbound from the site's contact form; wants a technical audit first."],
-    nextAction: "Book discovery call",
   },
   {
     id: "cli_or07", slug: "orchard", name: "Orchard Realty", domain: "orchardrealty.example", stage: "churned",

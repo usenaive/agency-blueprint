@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--host-head-->
+<title>{{company_name}} | Market research</title>
+<meta name="description" content="{{#if city}}Market research from {{city}}. {{/if}}{{tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{company_name}}">
+<meta property="og:description" content="{{tagline}}">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches ? 'js' : 'motion');</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top wrap">
+  <a class="brand" href="#top"><span class="brand__q" aria-hidden="true">?</span><span class="brand__name">{{company_name}}</span></a>
+  <nav aria-label="Primary">
+    <ul class="nav">
+      <li><a href="#questions"><span>Questions</span></a></li>
+      <li><a href="#services"><span>Services</span></a></li>
+      <li><a href="#contact"><span>Contact</span></a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero wrap" id="top" aria-labelledby="h1">
+    <p class="eyebrow">Market research{{#if city}} from {{city}}{{/if}}</p>
+    <h1 id="h1">{{tagline}}</h1>
+    <div class="hero__foot">
+      <p class="lede">{{intro}}</p>
+      <a class="cta" href="mailto:{{contact_email}}"><span class="cta__t">Ask us a question</span><span class="cta__q" aria-hidden="true">?</span></a>
+    </div>
+    <span class="bigq" aria-hidden="true">?</span>
+  </section>
+
+  <section class="wall-sec" id="questions" aria-labelledby="questions-h">
+    <div class="wrap">
+      <h2 id="questions-h" class="label">The questions clients bring us</h2>
+      <ul class="wall">
+        <li>How big is this market, <span class="nw"><em>really</em><b>?</b></span></li>
+        <li>Who else is selling this, and for how <span class="nw">much<b>?</b></span></li>
+        <li>Why do our customers <span class="nw">leave<b>?</b></span></li>
+        <li>What would they pay for the next <span class="nw">version<b>?</b></span></li>
+        <li>Where should we launch <span class="nw">next<b>?</b></span></li>
+        <li>What are we not <span class="nw">seeing<b>?</b></span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec wrap" aria-labelledby="markets-h">
+    <h2 id="markets-h" class="label">Markets we know well</h2>
+    <ul class="markets">
+      <li>{{specialties[0]}}</li>
+      <li>{{specialties[1]}}</li>
+      <li>{{specialties[2]}}</li>
+      <li>{{specialties[3]}}</li>
+      <li>{{specialties[4]}}</li>
+      <li>{{specialties[5]}}</li>
+    </ul>
+  </section>
+
+  <section class="sec wrap" id="services" aria-labelledby="services-h">
+    <h2 id="services-h" class="label">How we answer them</h2>
+    <ol class="index">
+      <li><span class="index__n" aria-hidden="true">1</span><h3>{{services[0].title}}</h3><p>{{services[0].description}}</p></li>
+      <li><span class="index__n" aria-hidden="true">2</span><h3>{{services[1].title}}</h3><p>{{services[1].description}}</p></li>
+      <li><span class="index__n" aria-hidden="true">3</span><h3>{{services[2].title}}</h3><p>{{services[2].description}}</p></li>
+      <li><span class="index__n" aria-hidden="true">4</span><h3>{{services[3].title}}</h3><p>{{services[3].description}}</p></li>
+    </ol>
+  </section>
+
+  <section class="sec wrap statement" aria-labelledby="who-h">
+    <h2 id="who-h" class="label">Who asks us</h2>
+    <p class="statement__t">{{audience}}</p>
+  </section>
+
+  <section class="sec wrap" aria-labelledby="process-h">
+    <h2 id="process-h" class="label">From question to answer</h2>
+    <ol class="steps">
+      <li><p class="steps__k">First</p><h3>{{process[0].title}}</h3><p>{{process[0].description}}</p></li>
+      <li><p class="steps__k">Then</p><h3>{{process[1].title}}</h3><p>{{process[1].description}}</p></li>
+      <li><p class="steps__k">Finally</p><h3>{{process[2].title}}</h3><p>{{process[2].description}}</p></li>
+    </ol>
+    <div class="fees">
+      <h3 class="label">What it costs</h3>
+      <p class="fees__t">{{pricing_note}}</p>
+    </div>
+  </section>
+
+  {{#if proof}}<section class="sec wrap" aria-labelledby="proof-h">
+    <h2 id="proof-h" class="label">And the answers, in clients’ words</h2>
+    <div class="quotes">
+      {{#if proof[0]}}<figure><blockquote><p>{{proof[0].text}}</p></blockquote>{{#if proof[0].source}}<figcaption>{{proof[0].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[1]}}<figure><blockquote><p>{{proof[1].text}}</p></blockquote>{{#if proof[1].source}}<figcaption>{{proof[1].source}}</figcaption>{{/if}}</figure>{{/if}}
+      {{#if proof[2]}}<figure><blockquote><p>{{proof[2].text}}</p></blockquote>{{#if proof[2].source}}<figcaption>{{proof[2].source}}</figcaption>{{/if}}</figure>{{/if}}
+    </div>
+  </section>{{/if}}
+  {{#if logos}}<section class="sec wrap" aria-labelledby="logos-h">
+    <h2 id="logos-h" class="label">Who has asked</h2>
+    <ul class="names">
+      {{#if logos[0]}}<li>{{logos[0]}}</li>{{/if}}
+      {{#if logos[1]}}<li>{{logos[1]}}</li>{{/if}}
+      {{#if logos[2]}}<li>{{logos[2]}}</li>{{/if}}
+      {{#if logos[3]}}<li>{{logos[3]}}</li>{{/if}}
+      {{#if logos[4]}}<li>{{logos[4]}}</li>{{/if}}
+      {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
+    </ul>
+  </section>{{/if}}
+
+  <section class="contact wrap" id="contact" aria-labelledby="contact-h">
+    <h2 id="contact-h" class="contact__h">What is your question<span aria-hidden="true">?</span></h2>
+    <p class="contact__lede">Write it down in a line or two and send it to us. We will reply with how we would answer it, how long it would take and what it would cost.</p>
+    <a class="cta" href="mailto:{{contact_email}}"><span class="cta__t">Ask us a question</span><span class="cta__q" aria-hidden="true">?</span></a>
+    <dl class="meta">
+      <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+      {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
+    </dl>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>&copy; {{year}} {{company_name}}</p>
+  <a class="link" href="#top">Back to the top</a>
+</footer>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Client } from "../seed/clients";
 import type { Post } from "../seed/posts";
 import { ACTIVE } from "../templates/index";
@@ -93,34 +93,57 @@ describe("mcp protocol", () => {
 });
 
 describe("mcp tools", () => {
-  it("create_lead mutates the same store the dashboard reads", async () => {
+  it("create_client makes a signed client in the same store the dashboard reads", async () => {
     const store = freshStore();
     const before = store.read().clients.length;
-    const answer = (await handleMcp(call("create_lead", {
+    const answer = (await handleMcp(call("create_client", {
       name: "Pine & Post", domain: "pineandpost.example",
       contact_name: "Ada", contact_email: "ada@pineandpost.example", contact_role: "CEO",
-      note: "Came in over MCP.",
+      crm_contact: "ctc_pine", note: "Won over MCP.",
     }), store, null)) as CallResult;
-    const lead = JSON.parse(answer.result.content[0]!.text) as { id: string; stage: string; slug: string };
-    expect(lead.stage).toBe("lead");
-    expect(lead.slug).toBe("pine-post");
+    const client = JSON.parse(answer.result.content[0]!.text) as Client & { agents: unknown };
+    expect(client).toMatchObject({ stage: "active", slug: "pine-post", crmContact: "ctc_pine", agents: null });
+    expect(client.onboardedAt).toBeDefined();
     expect(store.read().clients).toHaveLength(before + 1);
-    expect(store.read().clients.at(-1)?.id).toBe(lead.id);
+    expect(store.read().clients.at(-1)?.id).toBe(client.id);
+    expect(store.read().clients.at(-1)).not.toHaveProperty("agents");
+    // The same won deal again is the same client, and a crm_contact must be a CRM contact id.
+    const again = JSON.parse(((await handleMcp(call("create_client", { name: "Pine and Post", crm_contact: "ctc_pine" }), store, null)) as CallResult).result.content[0]!.text) as Client;
+    expect(again.id).toBe(client.id);
+    expect(((await handleMcp(call("create_client", { name: "X", crm_contact: "cli_1" }), store, null)) as CallResult).result.isError).toBe(true);
   });
 
-  it("create_lead needs only a name: the agency's own record is filed without a contact to ask for", async () => {
+  it("create_client onboards the won client's crew on the platform in the same call", async () => {
+    const upstream = vi.fn().mockImplementation(async (url: string, init?: RequestInit) =>
+      url.includes("/v1/agents?") ? new Response(JSON.stringify({ data: [], has_more: false }), { status: 200 })
+        : new Response(JSON.stringify({ id: `agt_${Math.random().toString(16).slice(2)}`, current_version: 1, method: init?.method }), { status: 200 }));
+    vi.stubGlobal("fetch", upstream);
+    try {
+      const config = { baseUrl: "https://api.example", apiKey: "secret", identityId: null, project: "agency" };
+      const answer = (await handleMcp(call("create_client", { name: "Won Co", domain: "won.example", crm_contact: "ctc_won" }), freshStore(), config)) as CallResult;
+      const { agents } = JSON.parse(answer.result.content[0]!.text) as { agents: { name: string; action: string }[] };
+      expect(agents.map((a) => a.name)).toEqual(ACTIVE_TEMPLATE.crew.map((m) => `${m.name}--won-co`));
+      // The agency's own record is not a client: no crew, no platform call.
+      upstream.mockClear();
+      await handleMcp(call("create_client", { name: "Our Agency" }), freshStore(), config);
+      expect(upstream).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("create_client needs only a name: the agency's own record is filed without a contact to ask for", async () => {
     const store = freshStore();
-    const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio" }), store, null)) as CallResult;
-    const lead = JSON.parse(answer.result.content[0]!.text) as { id: string; domain: string; contact: { email: string } };
-    expect(lead.domain).toBe("");
-    expect(lead.contact.email).toBe("");
-    expect(store.read().clients.at(-1)?.id).toBe(lead.id);
+    const answer = (await handleMcp(call("create_client", { name: "Northwind Studio" }), store, null)) as CallResult;
+    const own = JSON.parse(answer.result.content[0]!.text) as Client;
+    expect([own.domain, own.contact.email, own.onboardedAt]).toEqual(["", "", undefined]);
+    expect(store.read().clients.at(-1)?.id).toBe(own.id);
   });
 
-  it("create_lead says when a name alone landed on the agency's own record under another name", async () => {
+  it("create_client says when a name alone landed on the agency's own record under another name", async () => {
     const store = freshStore();
     const file = async (args: Record<string, unknown>) =>
-      JSON.parse(((await handleMcp(call("create_lead", args), store, null)) as CallResult).result.content[0]!.text) as Client & { notice?: string };
+      JSON.parse(((await handleMcp(call("create_client", args), store, null)) as CallResult).result.content[0]!.text) as Client & { notice?: string };
     const own = await file({ name: "Sandline Studio" });
     expect(own.notice).toBeUndefined();
     const client = await file({ name: "Brightfold Home" });
@@ -131,37 +154,22 @@ describe("mcp tools", () => {
     expect([real.id === own.id, real.notice]).toEqual([false, undefined]);
   });
 
-  it("create_lead records where a lead came from: outreach by default, network when said, a referral only from a real client", async () => {
-    const store = freshStore();
-    const file = async (args: Record<string, unknown>) => (await handleMcp(call("create_lead", { contact_email: "a@x.example", ...args }), store, null)) as CallResult;
-    const lead = (answer: CallResult) => JSON.parse(answer.result.content[0]!.text) as Client;
-
-    expect(lead(await file({ name: "Prospect Co", domain: "prospect.example" })).source).toBe("outreach");
-    expect(lead(await file({ name: "Old Boss LLC", domain: "oldboss.example", source: "network" })).source).toBe("network");
-    const referred = lead(await file({ name: "Friend Of Acme", domain: "friend.example", referred_by: anyClient }));
-    expect([referred.source, referred.referredBy]).toEqual(["referral", anyClient]);
-
-    // A referral must name a client that exists, and an agent may not claim a form's source.
-    expect((await file({ name: "Ghost", domain: "ghost.example", source: "referral", referred_by: "cli_nobody" })).result.isError).toBe(true);
-    expect((await file({ name: "Ghost", domain: "ghost.example", source: "referral" })).result.isError).toBe(true);
-    expect((await file({ name: "Sneaky", domain: "sneaky.example", source: "site" })).result.isError).toBe(true);
-    expect((await file({ name: "Mixed", domain: "mixed.example", source: "network", referred_by: anyClient })).result.isError).toBe(true);
-    // A prospect still at the lead stage, or the agency's own record, is not a client who can refer.
-    const prospect = (ACTIVE_TEMPLATE.seed.clients as Client[]).find((c) => c.stage === "lead")!.id;
-    expect((await file({ name: "Via Prospect", domain: "vp.example", referred_by: prospect })).result.isError).toBe(true);
-    const agency = lead(await file({ name: "Our Agency" })).id;
-    expect((await file({ name: "Via Agency", domain: "va.example", referred_by: agency })).result.isError).toBe(true);
+  it("offers no pipeline tool: leads, stages and their notes are the platform CRM's", () => {
+    const names = TOOLS.map((t) => t.name as string);
+    for (const gone of ["create_lead", "advance_pipeline"]) expect(names).not.toContain(gone);
   });
 
   it("get_referral_link gives an active client its own stable link on this site, and refuses anyone else", async () => {
     const store = freshStore();
-    const lead = store.createLead({ name: "Acme Dental", domain: "acmedental.example", contact: { name: "O", email: "o@acmedental.example", role: "" } });
-    const ask = async () => (await handleMcp(call("get_referral_link", { client: lead.id }), store, null, "https://agency.example")) as CallResult;
+    const own = store.createClient({ name: "Our Agency", domain: "", contact: { name: "", email: "", role: "" } });
+    const lead = store.createClient({ name: "Acme Dental", domain: "acmedental.example", contact: { name: "O", email: "o@acmedental.example", role: "" } });
+    const ask = async (client = lead.id) => (await handleMcp(call("get_referral_link", { client }), store, null, "https://agency.example")) as CallResult;
 
-    // A lead is not yet a client the agency works for.
-    expect((await ask()).result.isError).toBe(true);
+    // The agency's own record and a churned client are not clients to ask.
+    expect((await ask(own.id)).result.isError).toBe(true);
+    const churned = (ACTIVE_TEMPLATE.seed.clients as Client[]).find((c) => c.stage === "churned");
+    if (churned) expect((await ask(churned.id)).result.isError).toBe(true);
 
-    store.onboardClient(lead.id);
     const link = JSON.parse((await ask()).result.content[0]!.text) as { code: string; url: string };
     expect(link.url).toBe(`https://agency.example/?ref=${link.code}#contact`);
     // Random, never the slug, and the same every time it is asked for.
@@ -172,8 +180,7 @@ describe("mcp tools", () => {
 
   it("stamps a link for a client onboarded before links existed", async () => {
     const store = freshStore();
-    const lead = store.createLead({ name: "Old Client", domain: "old.example", contact: { name: "O", email: "o@old.example", role: "" } });
-    store.onboardClient(lead.id);
+    const lead = store.createClient({ name: "Old Client", domain: "old.example", contact: { name: "O", email: "o@old.example", role: "" } });
     delete (store.read().clients.find((c) => c.id === lead.id) as Client).referralCode;
     expect(store.referralCode(lead.id)).toMatch(/^[\w-]{12}$/);
   });
@@ -194,7 +201,7 @@ describe("mcp tools", () => {
     });
 
     it.each([
-      ["a lead", client({ stage: "lead" }), happy, /only an active client/],
+      ["the agency's own record", client({ domain: "", contact: { name: "", email: "", role: "" } }), happy, /agency's own record/],
       ["a churned client", client({ stage: "churned" }), happy, /only an active client/],
       ["a client of two weeks", client({ onboardedAt: daysAgo(14) }), happy, /after 30 days/],
       ["one approved piece", client(), [post("approved", 10)], /at least 2 pieces/],
@@ -214,8 +221,7 @@ describe("mcp tools", () => {
 
   it("list_referral_ready names ready clients with their link, and record_referral_ask starts the cooldown", async () => {
     const store = freshStore();
-    const ready = store.createLead({ name: "Happy Co", domain: "happy.example", contact: { name: "H", email: "h@happy.example", role: "" } });
-    store.onboardClient(ready.id);
+    const ready = store.createClient({ name: "Happy Co", domain: "happy.example", contact: { name: "H", email: "h@happy.example", role: "" } });
     const row = store.read().clients.find((c) => c.id === ready.id)!;
     row.onboardedAt = new Date(Date.now() - 40 * 86_400_000).toISOString();
     const today = new Date().toISOString().slice(0, 10);
@@ -236,19 +242,13 @@ describe("mcp tools", () => {
     expect([again.result.isError, again.result.content[0]!.text]).toEqual([true, expect.stringMatching(/less than 90 days ago/)]);
   });
 
-  it("the agency's own name-only record carries no source: it is not a lead", async () => {
-    const store = freshStore();
-    const answer = (await handleMcp(call("create_lead", { name: "Northwind Studio", source: "network" }), store, null)) as CallResult;
-    expect((JSON.parse(answer.result.content[0]!.text) as Client).source).toBeUndefined();
-  });
-
   it("add_client_note files the note verbatim and restates the next action when given", async () => {
     const store = freshStore();
     const answer = (await handleMcp(call("add_client_note", {
-      id: anyClient, note: "Drafted follow-up: are you still weighing the proposal?", next_action: "Reply to follow-up",
+      id: anyClient, note: "Kickoff: four articles a month, first audit by Friday.", next_action: "Reply to follow-up",
     }), store, null)) as CallResult;
     const client = JSON.parse(answer.result.content[0]!.text) as { notes: string[]; nextAction: string };
-    expect(client.notes.at(-1)).toBe("Drafted follow-up: are you still weighing the proposal?");
+    expect(client.notes.at(-1)).toBe("Kickoff: four articles a month, first audit by Friday.");
     expect(client.nextAction).toBe("Reply to follow-up");
     expect(store.read().clients.find((c) => c.id === anyClient)?.nextAction).toBe("Reply to follow-up");
   });

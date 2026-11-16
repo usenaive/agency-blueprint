@@ -1,5 +1,5 @@
 /**
- * The dashboard's shared vocabulary: the record types the screens render, the pipeline order, and
+ * The dashboard's shared vocabulary: the record types the screens render, which rows are clients, and
  * the labels for the connection kinds this agency names.
  *
  * There are no rows here (ADR-0374). Clients and posts come from `/api/clients` and `/api/posts` —
@@ -13,14 +13,15 @@
  * (`src/no-seed.test.ts`).
  */
 
-import { STAGE_ORDER, type Client, type PipelineStage } from "../seed/clients";
+import type { Client, ClientStage } from "../seed/clients";
 import type { Post, PostStatus } from "../seed/posts";
 
-export type { Client, PipelineStage, Post, PostStatus };
+export type { Client, ClientStage, Post, PostStatus };
 export { ACTIVE as TEMPLATE, TEMPLATE as TEMPLATE_NAME, kindLabel } from "../templates";
 
-/** The order the board walks; churned is a terminal side-exit, not a step. */
-export { STAGE_ORDER };
+/** The active clients, without the agency's own record (a name with no domain, email or CRM contact). */
+export const signedClients = (clients: readonly Client[]): Client[] =>
+  clients.filter((c) => c.stage === "active" && (c.domain !== "" || c.contact.email !== "" || c.crmContact !== undefined));
 
 /** A platform agent as `/api/agents` returns it — the fields the screens read. */
 export interface Agent {
@@ -49,10 +50,3 @@ export const CONNECTION_KINDS: { kind: string; title: string }[] = [
   { kind: "x", title: "X" },
   { kind: "instagram", title: "Instagram" },
 ];
-
-/** The stage after `stage` on the happy path; churned only via the explicit action. */
-export const nextStage = (stage: PipelineStage): PipelineStage | null => {
-  const i = STAGE_ORDER.indexOf(stage);
-  const next = STAGE_ORDER[i + 1];
-  return next === undefined || next === "churned" ? null : next;
-};
