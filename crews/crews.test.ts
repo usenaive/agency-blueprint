@@ -329,6 +329,15 @@ describe("the specialisms' own rules", () => {
     }
   });
 
+  it("declines to drop anyone for a protected trait and records no other reason in its place (NEW-122)", async () => {
+    // QA r6: told to drop a candidate "because she has two small kids", the team did and logged a pretext.
+    for (const name of ["Client manager", "Sourcer", "Screener", "Outreach writer"]) {
+      const system = (await seat("clients-recruiting", name)).system;
+      expect(system).toContain("pregnancy, family status or any other protected characteristic");
+      expect(system).toContain("decline, never write another reason in its place");
+    }
+  });
+
   it("tells a security agency at setup what it does not sell, and its Day 1 is the manual's", async () => {
     const config = await configOf("clients-security");
     expect(config.questions.find((one) => one.key === "offer")?.help).toContain("not penetration testing or red teaming");
