@@ -107,9 +107,10 @@ it.each(WITH_CREW)("%s has every working seat refuse a made-up identity or any o
 });
 
 // NEW-64: a Competitor analyst run made 29 web calls (13 searches, 16 fetches) and cost $2.86, against $0.74 for a whole job in round 3.
-it("caps each research analyst's web reading per run, and the teardown at five players", async () => {
+// Round 5: capped per run, it made 20 fetches over three runs on one card, the second re-fetching four of the first's pages.
+it("caps each research analyst's web reading per card, across its runs, and the teardown at five players", async () => {
   for (const name of ["Desk researcher", "Competitor analyst", "Voice-of-customer analyst"]) {
-    expect([name, (await seat("clients-research", name)).system]).toEqual([name, expect.stringContaining("at most 8 web_search and 10 web_fetch calls in a run")]);
+    expect([name, (await seat("clients-research", name)).system]).toEqual([name, expect.stringContaining("at most 8 web_search and 10 web_fetch calls for a card, counted across every run on it (a later run reads the card and your saved file first and fetches no page again)")]);
   }
   expect((await seat("clients-research", "Competitor analyst")).system).toContain("tear down the five players");
 });
