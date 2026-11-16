@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Search and AI visibility</title>
-<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Search and AI visibility from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -33,7 +33,7 @@
 <main id="main">
   <section class="hero" aria-labelledby="h1">
     <div class="hero__text">
-      <p class="eyebrow">Search and AI visibility · {{city}}</p>
+      <p class="eyebrow">Search and AI visibility{{#if city}} · {{city}}{{/if}}</p>
       <h1 id="h1">{{tagline}}</h1>
       <p class="hero__lede">{{intro}}</p>
       <a class="btn" href="#contact"><span>Start the climb</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></a>
@@ -109,7 +109,7 @@
     <h2 id="contact-h" class="contact__h">Start the climb</h2>
     <p class="contact__lede">Tell us your site and the searches you want to be found for. We will tell you which rung you are on and what lifts you next.</p>
     <a class="contact__mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></a>
-    <p class="contact__city">Based in {{city}}</p>
+    {{#if city}}<p class="contact__city">Based in {{city}}</p>{{/if}}
   </section>
 </main>
 

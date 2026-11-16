@@ -34,7 +34,7 @@
 <main id="main">
   <section class="hero wrap" aria-labelledby="h1">
     <div class="hero__text">
-      <p class="kicker">One team, many hands. {{city}}</p>
+      <p class="kicker">One team, many hands{{#if city}}. {{city}}{{/if}}</p>
       <h1 id="h1">{{tagline}}</h1>
       <p class="hero__intro">{{intro}}</p>
       <a class="btn" href="#bring"><span>Bring us in</span></a>
@@ -106,7 +106,7 @@
       <h2 id="bring-h" class="sec-h">Bring us in</h2>
       <p>Tell us what needs doing, and we will tell you which hands it needs, how long it takes and what it costs.</p>
       <a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
-      <p class="bring__where">{{company_name}}, {{city}}</p>
+      <p class="bring__where">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
     </div>
   </section>
 </main>

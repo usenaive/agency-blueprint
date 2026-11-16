@@ -184,7 +184,7 @@
   <section class="audience" aria-labelledby="audience-title">
     <h2 id="audience-title">Who we work with</h2>
     <p class="statement">{{audience}}</p>
-    <p class="based">Based in {{city}}</p>
+    {{#if city}}<p class="based">Based in {{city}}</p>{{/if}}
     <svg class="stray" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#p-spec"/></svg>
   </section>
 
@@ -197,7 +197,7 @@
 </main>
 
 <footer class="foot">
-  <p>&copy; {{year}} {{company_name}}, {{city}}</p>
+  <p>&copy; {{year}} {{company_name}}{{#if city}}, {{city}}{{/if}}</p>
   <a class="tlink" href="#top">Back to top <span aria-hidden="true">&#8593;</span></a>
 </footer>
 </body>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Paid ads</title>
-<meta name="description" content="Paid ads planned in {{city}}. {{tagline}}">
+<meta name="description" content="Paid ads{{#if city}} planned in {{city}}{{/if}}. {{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -36,11 +36,11 @@
 <main id="main">
   <section class="hero" id="top" aria-labelledby="h1">
     <div class="wrap">
-      <div class="fx" aria-hidden="true"><span class="fx__ref">B2</span><span class="fx__fn">fx</span><span class="fx__val">=PLAN(“{{city}}”)</span></div>
+      <div class="fx" aria-hidden="true"><span class="fx__ref">B2</span><span class="fx__fn">fx</span><span class="fx__val">=PLAN({{#if city}}“{{city}}”{{/if}})</span></div>
       <div class="cols" aria-hidden="true"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span><span>K</span><span>L</span></div>
       <div class="hero__grid">
         <div class="rnums" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span></div>
-        <p class="hero__k mono">Paid ads, planned in {{city}}</p>
+        <p class="hero__k mono">Paid ads{{#if city}}, planned in {{city}}{{/if}}</p>
         <h1 id="h1">{{tagline}}</h1>
         <div class="hero__side">
           <p class="lede">{{intro}}</p>
@@ -154,7 +154,7 @@
       <p class="mono k">Last sheet</p>
       <h2 id="contact-h">Send us the brief. We will send back a <em>plan</em>.</h2>
       <a class="cell-link" href="mailto:{{contact_email}}"><span class="mono">Email</span><b>{{contact_email}}</b></a>
-      <p class="contact__city mono">{{company_name}}, {{city}}</p>
+      <p class="contact__city mono">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
     </div>
   </section>
 </main>

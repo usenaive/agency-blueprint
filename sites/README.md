@@ -39,7 +39,7 @@ as-is from the free-site host.
 | `{{company_name}}`, `{{tagline}}`, `{{intro}}` | the agency name and the `about` setup answer |
 | `{{audience}}` | the `markets` answer: locations, levels, industries |
 | `{{pricing_note}}` | the `offer` answer: how it charges, in its own words |
-| `{{city}}`, `{{contact_email}}`, `{{year}}` | the company record |
+| `{{city}}`, `{{contact_email}}`, `{{year}}` | the company record (`city` only when the company gave one: always inside `{{#if city}}`) |
 | `{{services[0].title}}`, `{{services[0].description}}` … `[3]` | four offers |
 | `{{specialties[0]}}` … `[5]` | six short labels (roles, channels, disciplines) |
 | `{{process[0].title}}`, `{{process[0].description}}` … `[2]` | three steps |

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Search and AI visibility</title>
-<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Search and AI visibility from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -39,7 +39,7 @@
       <p class="query__label" id="q-label">Someone near you is searching for</p>
       <div class="box" role="img" aria-labelledby="q-label q-text">
         <svg class="box__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
-        <span class="box__text" id="q-text" data-type>{{specialties[0]}} in {{city}}</span><span class="box__caret" aria-hidden="true"></span>
+        <span class="box__text" id="q-text" data-type>{{specialties[0]}}{{#if city}} in {{city}}{{/if}}</span><span class="box__caret" aria-hidden="true"></span>
       </div>
       <p class="query__note">An illustration of a results page, not a real ranking. The work is making the real one look like this.</p>
     </div>
@@ -108,14 +108,14 @@
         <span class="panel__mark" aria-hidden="true"></span>
         <div>
           <h2 id="contact-h" class="panel__name">{{company_name}}</h2>
-          <p class="panel__kind">Search and AI visibility in {{city}}</p>
+          <p class="panel__kind">Search and AI visibility{{#if city}} in {{city}}{{/if}}</p>
         </div>
       </div>
       <a class="cta" href="mailto:{{contact_email}}"><span>Email us about your site</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       <dl class="facts">
         <div><dt>Works with</dt><dd>{{audience}}</dd></div>
         <div><dt>Fees</dt><dd>{{pricing_note}}</dd></div>
-        <div><dt>Based in</dt><dd>{{city}}</dd></div>
+        {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
         <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
       </dl>
       {{#if logos}}<div class="worked">
@@ -139,7 +139,7 @@
     <a href="#main" aria-current="page">1</a><a href="#asked">2</a><a href="#contact">3</a>
     <a class="pager__next" href="#top"><span>Back to the top</span></a>
   </nav>
-  <p class="foot__copy">&copy; {{year}} {{company_name}} · {{city}}</p>
+  <p class="foot__copy">&copy; {{year}} {{company_name}}{{#if city}} · {{city}}{{/if}}</p>
 </footer>
 </body>
 </html>

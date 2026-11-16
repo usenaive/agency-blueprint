@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Paid ads</title>
-<meta name="description" content="Paid ads from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Paid ads from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -35,7 +35,7 @@
     <span class="stencil" aria-hidden="true">Post no bills</span>
     <div class="hero">
       <div class="poster p-yellow big paste" style="--r:-1.2deg">
-        <p class="poster__k">Paid ads from {{city}}</p>
+        <p class="poster__k">Paid ads{{#if city}} from {{city}}{{/if}}</p>
         <h1 id="h1">{{tagline}}</h1>
         <p class="poster__lede">{{intro}}</p>
         <a class="btn" href="#contact"><span>Book the wall</span><i aria-hidden="true">→</i></a>
@@ -117,7 +117,7 @@
         <p>Tell us what you sell, where, and what you can spend. We will come back with the first campaign we would put up.</p>
         <a class="btn btn--ink" href="mailto:{{contact_email}}"><span>Book the wall</span><i aria-hidden="true">→</i></a>
         <p class="flyer__mail"><a href="mailto:{{contact_email}}">{{contact_email}}</a></p>
-        <p class="flyer__city">{{company_name}}, {{city}}</p>
+        <p class="flyer__city">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
       </div>
       <ul class="tabs" aria-hidden="true">
         <li>Book the wall</li><li>Book the wall</li><li>Book the wall</li><li>Book the wall</li><li>Book the wall</li><li>Book the wall</li><li>Book the wall</li><li>Book the wall</li>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Paid ads</title>
-<meta name="description" content="Paid ads, tested in {{city}}. {{tagline}}">
+<meta name="description" content="Paid ads{{#if city}}, tested in {{city}}{{/if}}. {{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -35,13 +35,13 @@
     <div class="split__stage" style="--x: 50%">
       <div class="variant va">
         <div class="wrap variant__in">
-          <p class="variant__k"><b>Variant A</b> Paid ads, tested in {{city}}</p>
+          <p class="variant__k"><b>Variant A</b> Paid ads{{#if city}}, tested in {{city}}{{/if}}</p>
           <h1 id="h1">{{tagline}}</h1>
         </div>
       </div>
       <div class="variant vb" aria-hidden="true">
         <div class="wrap variant__in">
-          <p class="variant__k"><b>Variant B</b> Paid ads, tested in {{city}}</p>
+          <p class="variant__k"><b>Variant B</b> Paid ads{{#if city}}, tested in {{city}}{{/if}}</p>
           <p class="h1">{{tagline}}</p>
         </div>
       </div>
@@ -140,7 +140,7 @@
       <h2 id="contact-h">What do you want to <em>find out?</em></h2>
       <p class="contact__lede">Send the product, the audience and the question you keep arguing about. We will reply with the first test we would run.</p>
       <a class="btn btn--big" href="mailto:{{contact_email}}"><span>Propose a test</span><i aria-hidden="true">→</i></a>
-      <p class="contact__mail"><a href="mailto:{{contact_email}}">{{contact_email}}</a> <span>{{city}}</span></p>
+      <p class="contact__mail"><a href="mailto:{{contact_email}}">{{contact_email}}</a> {{#if city}}<span>{{city}}</span>{{/if}}</p>
     </div>
   </section>
 </main>

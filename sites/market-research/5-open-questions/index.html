@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Market research</title>
-<meta name="description" content="Market research from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Market research from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -32,7 +32,7 @@
 
 <main id="main">
   <section class="hero wrap" id="top" aria-labelledby="h1">
-    <p class="eyebrow">Market research from {{city}}</p>
+    <p class="eyebrow">Market research{{#if city}} from {{city}}{{/if}}</p>
     <h1 id="h1">{{tagline}}</h1>
     <div class="hero__foot">
       <p class="lede">{{intro}}</p>
@@ -121,7 +121,7 @@
     <a class="cta" href="mailto:{{contact_email}}"><span class="cta__t">Ask us a question</span><span class="cta__q" aria-hidden="true">?</span></a>
     <dl class="meta">
       <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-      <div><dt>Based in</dt><dd>{{city}}</dd></div>
+      {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
     </dl>
   </section>
 </main>

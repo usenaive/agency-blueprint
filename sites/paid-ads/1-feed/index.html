@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Paid ads</title>
-<meta name="description" content="Paid ads from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Paid ads from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -33,7 +33,7 @@
 <main id="main">
   <section class="hero wrap" id="top" aria-labelledby="h1">
     <div class="hero__copy">
-      <p class="tag"><span class="tag__dot" aria-hidden="true"></span>Paid ads from {{city}}</p>
+      <p class="tag"><span class="tag__dot" aria-hidden="true"></span>Paid ads{{#if city}} from {{city}}{{/if}}</p>
       <h1 id="h1">{{tagline}}</h1>
       <p class="lede">{{intro}}</p>
       <div class="hero__cta">
@@ -141,7 +141,7 @@
         <span class="compose__field">Write to {{contact_email}}</span>
         <span class="compose__send"><span>Send a brief</span><i aria-hidden="true">→</i></span>
       </a>
-      <p class="contact__meta">A short note is enough: what you sell, where you sell it and the budget you have in mind. Based in {{city}}.</p>
+      <p class="contact__meta">A short note is enough: what you sell, where you sell it and the budget you have in mind.{{#if city}} Based in {{city}}.{{/if}}</p>
     </div>
   </section>
 </main>

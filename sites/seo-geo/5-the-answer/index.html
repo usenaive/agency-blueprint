@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Search and AI visibility</title>
-<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Search and AI visibility from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -109,7 +109,7 @@
     <h2 id="contact-h" class="contact__h"><span class="rewrite"><del>Fill in our form.</del></span> <ins>Ask us anything.</ins></h2>
     <p class="contact__lede">Send us your site and the question you most want to be the answer to. We will reply with what stands in the way.</p>
     <a class="contact__mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
-    <p class="contact__city">{{company_name}}, {{city}}</p>
+    <p class="contact__city">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
   </section>
 </main>
 

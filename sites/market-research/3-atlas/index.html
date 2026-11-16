@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Market research</title>
-<meta name="description" content="Market maps and research from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Market maps and research from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -43,7 +43,7 @@
   <section class="hero wrap" id="top" aria-labelledby="h1">
     <div class="cartouche">
       <p class="plate">Plate I</p>
-      <p class="caps">Market research from {{city}}</p>
+      <p class="caps">Market research{{#if city}} from {{city}}{{/if}}</p>
       <h1 id="h1">{{tagline}}</h1>
       <p class="lede">{{intro}}</p>
       <a class="btn" href="mailto:{{contact_email}}"><svg class="btn__pin" viewBox="0 0 16 22" aria-hidden="true"><path d="M8 21 C 8 21 1 12 1 8 a 7 7 0 0 1 14 0 c 0 4 -7 13 -7 13 Z"/><circle cx="8" cy="8" r="2.6"/></svg><span>Map your market</span></a>
@@ -174,7 +174,7 @@
     <a class="btn btn--big" href="mailto:{{contact_email}}"><svg class="btn__pin" viewBox="0 0 16 22" aria-hidden="true"><path d="M8 21 C 8 21 1 12 1 8 a 7 7 0 0 1 14 0 c 0 4 -7 13 -7 13 Z"/><circle cx="8" cy="8" r="2.6"/></svg><span>Map your market</span></a>
     <dl class="coords">
       <div><dt>Write to</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-      <div><dt>Based in</dt><dd>{{city}}</dd></div>
+      {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
     </dl>
   </section>
 </main>

@@ -42,7 +42,7 @@
     <p class="side side-a"><span class="side-k">For companies</span> a role worth filling</p>
     <p class="side side-b"><span class="side-k">For people</span> work worth doing</p>
     <div class="lens">
-      <p class="kicker">Recruiters based in {{city}}</p>
+      {{#if city}}<p class="kicker">Recruiters based in {{city}}</p>{{/if}}
       <h1 id="hero-title">{{tagline}}</h1>
       <p class="intro">{{intro}}</p>
       <div class="ctas">
@@ -141,14 +141,14 @@
       <p class="salute">Dear reader,</p>
       <p>Tell us about the role you need to fill, or about the work you want to do next. A few honest lines are the best way to start an introduction.</p>
       <a class="email" href="mailto:{{contact_email}}">{{contact_email}}</a>
-      <p class="sign">Warmly,<br><span class="sign-name">{{company_name}}</span><br>{{city}}</p>
+      <p class="sign">Warmly,<br><span class="sign-name">{{company_name}}</span>{{#if city}}<br>{{city}}{{/if}}</p>
     </div>
   </section>
 </main>
 
 <footer class="foot wrap">
   <p>&copy; {{year}} {{company_name}}</p>
-  <p>{{city}}</p>
+  {{#if city}}<p>{{city}}</p>{{/if}}
   <p><a class="link" href="mailto:{{contact_email}}">Write to us</a></p>
 </footer>
 

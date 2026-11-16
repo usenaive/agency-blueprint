@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{company_name}} | Recruiting</title>
-<meta name="description" content="{{tagline}}. Recruiting from {{city}}.">
+<meta name="description" content="{{tagline}}.{{#if city}} Recruiting from {{city}}.{{/if}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -33,7 +33,7 @@
 
 <main id="main" tabindex="-1">
   <section class="hero" aria-labelledby="hero-title">
-    <p class="strip"><span>Departures from {{city}}</span><span class="strip__status">Open for briefs</span></p>
+    <p class="strip">{{#if city}}<span>Departures from {{city}}</span>{{/if}}<span class="strip__status">Open for briefs</span></p>
     <h1 id="hero-title" class="hero__name" data-fit>{{company_name}}</h1>
     <p class="hero__tag">{{tagline}}</p>
 
@@ -156,7 +156,7 @@
 
 <footer class="foot">
   <p>&copy; {{year}} {{company_name}}</p>
-  <p>{{city}}</p>
+  {{#if city}}<p>{{city}}</p>{{/if}}
   <a href="#main">Back to the top</a>
 </footer>
 </body>

@@ -35,7 +35,7 @@
 
 <main id="main">
   <section class="hero grid" aria-labelledby="h1">
-    <p class="kicker"><span>Client services</span><span>{{city}}</span></p>
+    <p class="kicker"><span>Client services</span>{{#if city}}<span>{{city}}</span>{{/if}}</p>
     <h1 id="h1">{{tagline}}</h1>
     <p class="hero__intro">{{intro}}</p>
     <a class="cta hero__cta" href="#contact"><span>Start a conversation</span><i aria-hidden="true"></i></a>
@@ -114,7 +114,7 @@
 
 <footer class="foot grid">
   <p class="foot__name">&copy; {{year}} {{company_name}}</p>
-  <p class="foot__city">{{city}}</p>
+  {{#if city}}<p class="foot__city">{{city}}</p>{{/if}}
   <a class="foot__up" href="#top"><span>Back to top</span></a>
 </footer>
 </body>

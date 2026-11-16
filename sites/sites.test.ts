@@ -74,6 +74,9 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     expect([...used].sort()).toEqual([...manifest.placeholders].sort());
     for (const key of used) expect(KEYS.has(key) || OPTIONAL.has(key), key).toBe(true);
     for (const f of html) for (const key of unguarded(readFileSync(join(dir, f), "utf8"))) expect(OPTIONAL.has(key), `${f}: ${key} outside {{#if}}`).toBe(false);
+    // The platform fills city only from what the company said (never its time zone), so most sites have none:
+    // a city is always inside {{#if city}}, or the page reads "Based in ." (vetta-mono #1788 review).
+    for (const f of html) expect(unguarded(readFileSync(join(dir, f), "utf8")), `${f}: city outside {{#if city}}`).not.toContain("city");
     for (const f of text.filter((f) => !f.endsWith(".html"))) expect(placeholdersIn(readFileSync(join(dir, f), "utf8")), f).toEqual([]);
   });
 

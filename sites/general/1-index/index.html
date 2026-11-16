@@ -33,7 +33,7 @@
 
 <main id="main">
   <section class="title wrap" aria-labelledby="h1">
-    <p class="runhead"><span>Index of capabilities</span><span>{{city}}</span></p>
+    <p class="runhead"><span>Index of capabilities</span>{{#if city}}<span>{{city}}</span>{{/if}}</p>
     <h1 id="h1">{{tagline}}</h1>
     <p class="title__intro">{{intro}}</p>
   </section>
@@ -138,7 +138,7 @@
     <h2 id="write-h" class="shead"><span class="shead__n">5</span><span>Write to us</span></h2>
     <p class="write__lede">Tell us what needs doing and by when. We reply with what we would take on, how we would run it and what it would cost.</p>
     <a class="mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span></a>
-    <p class="write__where">{{company_name}}, {{city}}</p>
+    <p class="write__where">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
   </section>
 </main>
 

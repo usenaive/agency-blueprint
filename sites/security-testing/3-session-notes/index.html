@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Exploratory testing</title>
-<meta name="description" content="Exploratory and journey testing from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Exploratory and journey testing from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -39,7 +39,7 @@
       <p class="margin" aria-hidden="true"><span>Session sheet</span></p>
       <div class="hero__grid">
         <div class="hero__text">
-          <p class="typed small">Exploratory testing from {{city}}</p>
+          <p class="typed small">Exploratory testing{{#if city}} from {{city}}{{/if}}</p>
           <h1>{{tagline}}</h1>
           <p class="typed lede">{{intro}}</p>
           <div class="ctas">
@@ -155,7 +155,7 @@
       <p class="typed contact__lede">Write to us with what your product does, who uses it and what you are worried about. We will reply with a first charter.</p>
       <dl class="meta typed">
         <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-        <div><dt>Based in</dt><dd>{{city}}</dd></div>
+        {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
       </dl>
     </div>
   </section>

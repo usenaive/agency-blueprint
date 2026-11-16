@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Customer research</title>
-<meta name="description" content="Customer research from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Customer research from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -38,7 +38,7 @@
 <main id="main">
   <section class="hero wrap" id="top" aria-labelledby="h1">
     <div class="hero__text">
-      <p class="hand hero__kicker">Customer research from {{city}}</p>
+      <p class="hand hero__kicker">Customer research{{#if city}} from {{city}}{{/if}}</p>
       <h1 id="h1">{{tagline}}</h1>
       <p class="lede">{{intro}}</p>
       <a class="btn" href="mailto:{{contact_email}}"><span>Start a study</span></a>
@@ -112,7 +112,7 @@
     <a class="btn btn--big" href="mailto:{{contact_email}}"><span>Start a study</span></a>
     <dl class="meta">
       <div><dt class="hand">Write to</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-      <div><dt class="hand">Find us in</dt><dd>{{city}}</dd></div>
+      {{#if city}}<div><dt class="hand">Find us in</dt><dd>{{city}}</dd></div>{{/if}}
     </dl>
   </section>
 </main>

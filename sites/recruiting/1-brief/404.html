@@ -45,6 +45,6 @@ h1 { position: relative; display: inline-block; margin-top: clamp(2.5rem, 6vw, 4
   <p class="lede">This page is not part of the brief, or it moved. The full document starts on the home page.</p>
   <a class="home" href="/">Back to the brief</a>
 </main>
-<footer class="foot doc"><p>&copy; {{year}} {{company_name}}, {{city}}</p></footer>
+<footer class="foot doc"><p>&copy; {{year}} {{company_name}}{{#if city}}, {{city}}{{/if}}</p></footer>
 </body>
 </html>

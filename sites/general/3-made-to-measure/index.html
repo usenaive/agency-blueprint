@@ -34,7 +34,7 @@
 <main id="main">
   <section class="hero wrap" aria-labelledby="h1">
     <div class="hero__text">
-      <p class="eyebrow">A small studio in {{city}}</p>
+      <p class="eyebrow">A small studio{{#if city}} in {{city}}{{/if}}</p>
       <h1 id="h1">{{tagline}}</h1>
       <p class="hero__intro">{{intro}}</p>
       <a class="patch" href="#write"><span>Start a commission</span></a>
@@ -131,7 +131,7 @@
       <h2 id="write-h" class="sec-h">Start a commission</h2>
       <p>Tell us what needs making, fixing or running, and roughly when. We will write back with how we would go about it and what it would cost.</p>
       <a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
-      <p class="write__where">{{company_name}}, {{city}}</p>
+      <p class="write__where">{{company_name}}{{#if city}}, {{city}}{{/if}}</p>
     </div>
   </section>
 </main>

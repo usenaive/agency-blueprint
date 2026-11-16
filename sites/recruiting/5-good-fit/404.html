@@ -58,6 +58,6 @@ footer { background: var(--ink); color: #d6d6d6; padding: 26px var(--gut) 32px; 
     <text x="138" y="86">404</text>
   </svg>
 </main>
-<footer><p>&copy; {{year}} {{company_name}}, {{city}}</p></footer>
+<footer><p>&copy; {{year}} {{company_name}}{{#if city}}, {{city}}{{/if}}</p></footer>
 </body>
 </html>

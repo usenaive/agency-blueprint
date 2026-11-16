@@ -50,7 +50,7 @@ h1 { margin: 24px 0 0 -0.04em; font: 900 clamp(3rem, 1rem + 9vw, 10rem)/0.86 var
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><a class="mark" href="/">{{company_name}}</a></header>
 <main id="main">
-  <p class="strip"><span>Departures from {{city}}</span><b>Not on the board</b></p>
+  <p class="strip">{{#if city}}<span>Departures from {{city}}</span>{{/if}}<b>Not on the board</b></p>
   <h1>This page is not on the board</h1>
   <div class="board" aria-hidden="true">
     <div class="fl"><span class="w"><span class="f">N</span><span class="f">O</span></span><span class="w"><span class="f">S</span><span class="f">U</span><span class="f">C</span><span class="f">H</span></span><span class="w"><span class="f">D</span><span class="f">E</span><span class="f">P</span><span class="f">A</span><span class="f">R</span><span class="f">T</span><span class="f">U</span><span class="f">R</span><span class="f">E</span></span></div>

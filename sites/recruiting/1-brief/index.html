@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{company_name}} | Recruiting</title>
-<meta name="description" content="{{tagline}}. Recruiting from {{city}}.">
+<meta name="description" content="{{tagline}}.{{#if city}} Recruiting from {{city}}.{{/if}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}} | Recruiting">
 <meta property="og:description" content="{{tagline}}">
@@ -39,7 +39,7 @@
   <section class="sec hero" aria-labelledby="title" data-set>
     <dl class="meta">
       <div><dt>Document</dt><dd>Role brief</dd></div>
-      <div><dt>Office</dt><dd>{{city}}</dd></div>
+      {{#if city}}<div><dt>Office</dt><dd>{{city}}</dd></div>{{/if}}
       <div><dt>Issued</dt><dd>{{year}}</dd></div>
       <div><dt>Status</dt><dd>Taking on new searches</dd></div>
     </dl>
@@ -109,7 +109,7 @@
     <p class="r2">Tell us the job, the team it sits in and when you need someone. We will come back with questions, then a draft brief.</p>
     <p class="mail r3"><a id="mail" class="email" data-hm="circle" href="mailto:{{contact_email}}">{{contact_email}}</a></p>
     <p class="note r3" data-arrow-to="mail">a few lines is plenty</p>
-    <p class="sign r4">Prepared by {{company_name}}, {{city}}</p>
+    <p class="sign r4">Prepared by {{company_name}}{{#if city}}, {{city}}{{/if}}</p>
   </section>
 
   {{#if proof}}<section class="sec record" id="record" aria-labelledby="h-record" data-set>
@@ -139,7 +139,7 @@
 <footer class="foot doc">
   <p class="end" aria-hidden="true">End of brief</p>
   <p>&copy; {{year}} {{company_name}}</p>
-  <p>{{city}}</p>
+  {{#if city}}<p>{{city}}</p>{{/if}}
   <p><a data-hm="underline" href="#main">Back to the top</a></p>
 </footer>
 </body>

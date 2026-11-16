@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Recruiting</title>
-<meta name="description" content="Recruiting from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Recruiting from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -38,7 +38,7 @@
   <section class="sec hero" id="top" data-connect>
     <div class="page g">
       <div class="hero__text">
-        <div class="head"><span class="node" aria-hidden="true"></span><p class="mono">Recruiting from {{city}}</p></div>
+        <div class="head"><span class="node" aria-hidden="true"></span>{{#if city}}<p class="mono">Recruiting from {{city}}</p>{{/if}}</div>
         <h1>{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
         <div class="ctas">
@@ -138,7 +138,7 @@
         <p class="contact__lede">Tell us the seat, who it reports to and when you need someone in it. We will come back with how we would run the search.</p>
         <dl class="contact__meta">
           <div><dt class="mono">Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-          <div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>
+          {{#if city}}<div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>{{/if}}
         </dl>
       </div>
     </div>

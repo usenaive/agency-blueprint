@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Search and AI visibility</title>
-<meta name="description" content="Search and AI visibility from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Search and AI visibility from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -107,7 +107,7 @@
     <dl class="meta">
       <div><dt>who-we-work-with</dt><dd>{{audience}}</dd></div>
       <div><dt>how-we-charge</dt><dd>{{pricing_note}}</dd></div>
-      <div><dt>based-in</dt><dd>{{city}}</dd></div>
+      {{#if city}}<div><dt>based-in</dt><dd>{{city}}</dd></div>{{/if}}
     </dl>
   </section>
 
@@ -145,7 +145,7 @@
 </main>
 
 <footer class="foot">
-  <p>&copy; {{year}} {{company_name}} · {{city}}</p>
+  <p>&copy; {{year}} {{company_name}}{{#if city}} · {{city}}{{/if}}</p>
   <a class="link" href="#top">Back to /</a>
 </footer>
 </body>

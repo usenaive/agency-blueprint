@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Market research</title>
-<meta name="description" content="Market research from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Market research from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -37,7 +37,7 @@
 <main id="main">
   <section class="dash dash--hero" id="top" aria-labelledby="h1">
     <div class="panel brief">
-      <p class="ptitle"><span>Brief</span><span class="live">Desk open in {{city}}</span></p>
+      <p class="ptitle"><span>Brief</span><span class="live">Desk{{#if city}} open in {{city}}{{/if}}</span></p>
       <div class="brief__body">
         <h1 id="h1">{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
@@ -153,7 +153,7 @@
       <a class="key-btn" href="mailto:{{contact_email}}"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>
       <dl class="kv">
         <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-        <div><dt>Desk</dt><dd>{{city}}</dd></div>
+        {{#if city}}<div><dt>Desk</dt><dd>{{city}}</dd></div>{{/if}}
       </dl>
     </div>
   </section>

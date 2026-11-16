@@ -36,7 +36,7 @@
 <main id="main">
   <section class="hero band" aria-labelledby="h1">
     <div class="wrap">
-    <p class="kicker">Client services, {{city}}</p>
+    <p class="kicker">Client services{{#if city}}, {{city}}{{/if}}</p>
     <h1 id="h1">{{tagline}}</h1>
     <p class="hero__intro">{{intro}}</p>
     <h2 class="visually-hidden">What we do</h2>
@@ -109,7 +109,7 @@
 <footer class="foot band">
   <div class="wrap foot__in">
     <p>&copy; {{year}} {{company_name}}</p>
-    <p>{{city}}</p>
+    {{#if city}}<p>{{city}}</p>{{/if}}
     <a class="up" href="#top">Back to the top</a>
   </div>
 </footer>

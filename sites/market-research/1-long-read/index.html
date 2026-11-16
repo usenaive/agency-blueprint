@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Market research</title>
-<meta name="description" content="Market research from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Market research from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -39,10 +39,10 @@
     <section class="hero wrap grid" id="top" aria-labelledby="h1">
       <p class="kicker side">Feature</p>
       <div class="col">
-        <p class="kicker kicker--inline">Market research from {{city}}</p>
+        <p class="kicker kicker--inline">Market research{{#if city}} from {{city}}{{/if}}</p>
         <h1 id="h1">{{tagline}}</h1>
         <p class="standfirst">{{intro}}</p>
-        <p class="byline"><span>Words and figures by <b>{{company_name}}</b></span><span>Filed from {{city}}</span></p>
+        <p class="byline"><span>Words and figures by <b>{{company_name}}</b></span>{{#if city}}<span>Filed from {{city}}</span>{{/if}}</p>
       </div>
       <figure class="fig fig--waffle margin" aria-labelledby="f1">
         <div class="waffle" aria-hidden="true"><i class="w" style="--i:0"></i><i class="w" style="--i:1"></i><i class="w" style="--i:2"></i><i class="w" style="--i:3"></i><i class="w" style="--i:4"></i><i class="w" style="--i:5"></i><i class="w" style="--i:6"></i><i class="w" style="--i:7"></i><i class="r" style="--i:8"></i><i class="r" style="--i:9"></i><i class="r" style="--i:10"></i><i class="r" style="--i:11"></i><i class="r" style="--i:12"></i><i class="r" style="--i:13"></i><i class="r" style="--i:14"></i><i class="r" style="--i:15"></i><i class="r" style="--i:16"></i><i class="r" style="--i:17"></i><i class="r" style="--i:18"></i><i class="r" style="--i:19"></i><i class="r" style="--i:20"></i><i class="r" style="--i:21"></i><i class="r" style="--i:22"></i><i class="r" style="--i:23"></i><i class="r" style="--i:24"></i><i class="r" style="--i:25"></i><i class="r" style="--i:26"></i><i class="r" style="--i:27"></i><i class="r" style="--i:28"></i><i class="r" style="--i:29"></i><i class="t" style="--i:30"></i><i class="t" style="--i:31"></i><i class="t" style="--i:32"></i><i class="t" style="--i:33"></i><i class="t" style="--i:34"></i><i class="t" style="--i:35"></i><i class="t" style="--i:36"></i><i class="t" style="--i:37"></i><i class="t" style="--i:38"></i><i class="t" style="--i:39"></i><i class="t" style="--i:40"></i><i class="t" style="--i:41"></i><i class="t" style="--i:42"></i><i class="t" style="--i:43"></i><i class="t" style="--i:44"></i><i class="t" style="--i:45"></i><i class="t" style="--i:46"></i><i class="t" style="--i:47"></i><i class="t" style="--i:48"></i><i class="t" style="--i:49"></i><i class="t" style="--i:50"></i><i class="t" style="--i:51"></i><i class="t" style="--i:52"></i><i class="t" style="--i:53"></i><i class="t" style="--i:54"></i><i class="t" style="--i:55"></i><i class="t" style="--i:56"></i><i class="t" style="--i:57"></i><i class="t" style="--i:58"></i><i class="t" style="--i:59"></i><i class="t" style="--i:60"></i><i class="t" style="--i:61"></i><i class="t" style="--i:62"></i><i class="t" style="--i:63"></i><i class="t" style="--i:64"></i><i class="t" style="--i:65"></i><i class="t" style="--i:66"></i><i class="t" style="--i:67"></i><i class="t" style="--i:68"></i><i class="t" style="--i:69"></i><i class="t" style="--i:70"></i><i class="t" style="--i:71"></i><i class="t" style="--i:72"></i><i class="t" style="--i:73"></i><i class="t" style="--i:74"></i><i class="t" style="--i:75"></i><i class="t" style="--i:76"></i><i class="t" style="--i:77"></i><i class="t" style="--i:78"></i><i class="t" style="--i:79"></i><i class="t" style="--i:80"></i><i class="t" style="--i:81"></i><i class="t" style="--i:82"></i><i class="t" style="--i:83"></i><i class="t" style="--i:84"></i><i class="t" style="--i:85"></i><i class="t" style="--i:86"></i><i class="t" style="--i:87"></i><i class="t" style="--i:88"></i><i class="t" style="--i:89"></i><i class="t" style="--i:90"></i><i class="t" style="--i:91"></i><i class="t" style="--i:92"></i><i class="t" style="--i:93"></i><i class="t" style="--i:94"></i><i class="t" style="--i:95"></i><i class="t" style="--i:96"></i><i class="t" style="--i:97"></i><i class="t" style="--i:98"></i><i class="t" style="--i:99"></i></div>
@@ -160,7 +160,7 @@
         <a class="cta" href="mailto:{{contact_email}}"><span>Commission a study</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M9 3l5 5-5 5"/></svg></a>
         <dl class="meta">
           <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-          <div><dt>Desk</dt><dd>{{city}}</dd></div>
+          {{#if city}}<div><dt>Desk</dt><dd>{{city}}</dd></div>{{/if}}
         </dl>
       </div>
     </section>

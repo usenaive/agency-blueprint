@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Release and journey testing</title>
-<meta name="description" content="Release and journey testing from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Release and journey testing from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -38,7 +38,7 @@
   <section class="hero" id="top">
     <div class="wrap hero__grid">
       <div class="hero__text">
-        <p class="eyebrow">Release and journey testing, {{city}}</p>
+        <p class="eyebrow">Release and journey testing{{#if city}}, {{city}}{{/if}}</p>
         <h1>{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
         <div class="ctas">
@@ -166,7 +166,7 @@
         <a class="btn btn--brass btn--big" href="mailto:{{contact_email}}"><span>Plan your next release</span></a>
         <dl class="meta">
           <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-          <div><dt>Office</dt><dd>{{city}}</dd></div>
+          {{#if city}}<div><dt>Office</dt><dd>{{city}}</dd></div>{{/if}}
         </dl>
       </div>
     </div>

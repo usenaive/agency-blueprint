@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | QA and journey testing</title>
-<meta name="description" content="Journey testing from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}Journey testing from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -38,7 +38,7 @@
   <section class="hero" id="top">
     <div class="wrap hero__grid">
       <div class="hero__text">
-        <p class="label"><span class="pill pill--pass">Passing</span> Journey testing from {{city}}</p>
+        <p class="label"><span class="pill pill--pass">Passing</span> Journey testing{{#if city}} from {{city}}{{/if}}</p>
         <h1>{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
         <div class="ctas">
@@ -158,7 +158,7 @@
         <p class="contact__lede">Send us your product, the journeys that matter most and your release date. We will reply with the runs we would set up.</p>
         <dl class="meta">
           <div><dt class="mono">Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-          <div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>
+          {{#if city}}<div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>{{/if}}
         </dl>
       </div>
     </div>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | App and journey testing</title>
-<meta name="description" content="App and journey testing from {{city}}. {{tagline}}">
+<meta name="description" content="{{#if city}}App and journey testing from {{city}}. {{/if}}{{tagline}}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
 <meta property="og:description" content="{{tagline}}">
@@ -37,7 +37,7 @@
   <section class="hero" id="top">
     <div class="wrap hero__grid">
       <div class="hero__text">
-        <p class="hello">Hello from {{city}}</p>
+        <p class="hello">Hello{{#if city}} from {{city}}{{/if}}</p>
         <h1>{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
         <div class="ctas">
@@ -178,7 +178,7 @@
       <p class="contact__lede">A link to your app or site, what it is for, and when you want it tested. We will reply with a plan and a price.</p>
       <dl class="meta">
         <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
-        <div><dt>Based in</dt><dd>{{city}}</dd></div>
+        {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
       </dl>
     </div>
   </section>
