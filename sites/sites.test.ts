@@ -11,6 +11,8 @@ const vocabulary: {
   lists: Record<string, { length: number; maxLength?: number; item?: Record<string, Limit> }>;
   optional: Record<string, { maxItems: number; maxLength?: number; item?: Record<string, Limit> }>;
 } = JSON.parse(readFileSync(join(ROOT, "placeholders.json"), "utf8"));
+/** The shared contact form block, copied verbatim into every design's `index.html`. */
+const FORM = readFileSync(join(ROOT, "form.html"), "utf8").trimEnd();
 const AGENCY_TYPES = ["recruiting", "security-testing", "market-research", "paid-ads", "seo-geo", "general"];
 const ALLOWED_HOSTS = ["www.w3.org"]; // the SVG namespace, never fetched
 
@@ -97,6 +99,13 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     expect(files(out)).not.toContain("manifest.json");
   });
 
+  it("carries the one shared contact form beside its email links, so a lead reaches the CRM", () => {
+    const page = readFileSync(join(dir, "index.html"), "utf8");
+    expect(page.split(FORM)).toHaveLength(2);
+    // The mailto: links stay: the fallback when the platform fills no form address.
+    expect(page.replace(FORM, "")).toContain("mailto:{{contact_email}}");
+  });
+
   it("leaves the host its head marker and never scrolls smoothly", () => {
     for (const f of html) expect(readFileSync(join(dir, f), "utf8"), f).toContain("<!--host-head-->");
     for (const f of text) expect(readFileSync(join(dir, f), "utf8"), f).not.toMatch(/scroll-behavior:\s*smooth|behavior:\s*["']smooth/);
@@ -110,8 +119,8 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
   });
 });
 
-/** The platform fills these four from the company; `defaults.json` carries every other required key. */
-const FROM_COMPANY = ["company_name", "city", "contact_email", "year"];
+/** The platform fills these from the company and its site; `defaults.json` carries every other required key. */
+const FROM_COMPANY = ["company_name", "city", "contact_email", "year", "form_action"];
 const defaults: Record<string, Record<string, unknown>> = JSON.parse(readFileSync(join(ROOT, "defaults.json"), "utf8"));
 
 it.each(AGENCY_TYPES)("has defaults for %s: every required key but the company's, within limits, no proof", (type) => {

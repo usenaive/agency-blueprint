@@ -5,7 +5,7 @@
   "audience": "Founders, finance and strategy leads at B2B software companies selling across Singapore, Indonesia, Vietnam and the Philippines, plus the funds that back them.",
   "pricing_note": "Fixed-fee studies scoped in a one-page brief, or a monthly desk retainer for teams that need answers every week. Half up front, half on delivery.",
   "city": "Singapore",
-  "contact_email": "desk@quantile.sg",
+  "contact_email": "desk@quantile.sg", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "Market sizing models", "description": "A spreadsheet model built bottom-up from buyer counts and spend, cross-checked top-down, with every input sourced and every assumption in one tab you can change." },

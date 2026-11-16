@@ -5,7 +5,7 @@
   "audience": "UK online shops and service brands with a site that works but is rarely found, usually with a small in-house team and no one dedicated to search yet.",
   "pricing_note": "A monthly retainer in three sizes, set by how much content and development you need. Six months to start, because climbing takes time, then rolling monthly.",
   "city": "Manchester",
-  "contact_email": "climb@upwardsearch.co.uk",
+  "contact_email": "climb@upwardsearch.co.uk", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "Foundations", "description": "Speed, crawling, indexing and site structure fixed first, because nothing else lifts you while search engines and AI crawlers cannot read the site properly." },
