@@ -105,7 +105,7 @@
     <div class="bring__body">
       <h2 id="bring-h" class="sec-h">Bring us in</h2>
       <p>Tell us what needs doing, and we will tell you which hands it needs, how long it takes and what it costs.</p>
-      <a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a>
+      {{#if contact_email}}<a class="mail" href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}
       {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
 <style>
 .vf{display:inline-grid;vertical-align:top;gap:12px;width:100%;max-width:34rem;margin:32px 0 0;font:inherit;color:inherit;text-align:left;position:relative}
@@ -119,7 +119,7 @@
 .vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 <p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
-<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please email <a href="mailto:{{contact_email}}">{{contact_email}}</a> instead.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
 <label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
 <label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
 <label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>

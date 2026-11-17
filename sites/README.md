@@ -40,6 +40,11 @@ address the block is removed and the `mailto:` links stay. It needs no script: i
 form, and the platform sends the browser back to `#contact-sent` or `#contact-failed` (which
 offers the email link). Change the block in `form.html`, then replace every copy.
 
+The email is optional too: the platform fills `contact_email` with `""` until the owner chooses
+to show one. Every email link and sentence sits inside `{{#if contact_email}}`, and a button
+outside the contact section goes to that section (`#contact`, or the design's own id) instead of
+`mailto:`, so it works either way.
+
 ## Placeholders
 
 `{{key}}`, with no spaces. Keys come only from `placeholders.json`:
@@ -49,7 +54,7 @@ offers the email link). Change the block in `form.html`, then replace every copy
 | `{{company_name}}`, `{{tagline}}`, `{{intro}}` | the agency name and the `about` setup answer |
 | `{{audience}}` | the `markets` answer: locations, levels, industries |
 | `{{pricing_note}}` | the `offer` answer: how it charges, in its own words |
-| `{{city}}`, `{{contact_email}}`, `{{year}}`, `{{form_action}}` | the company record (`city` only when the company gave one: always inside `{{#if city}}`) |
+| `{{city}}`, `{{contact_email}}`, `{{year}}`, `{{form_action}}` | the company record (`city` and `contact_email` only when the company gave them: always inside their own `{{#if}}`) |
 | `{{services[0].title}}`, `{{services[0].description}}` … `[3]` | four offers |
 | `{{specialties[0]}}` … `[5]` | six short labels (roles, channels, disciplines) |
 | `{{process[0].title}}`, `{{process[0].description}}` … `[2]` | three steps |

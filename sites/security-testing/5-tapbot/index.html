@@ -29,7 +29,7 @@
         <li><a href="#contact">Contact</a></li>
       </ul>
     </nav>
-    <a class="btn btn--lime top__cta" href="mailto:{{contact_email}}">Send us your app</a>
+    <a class="btn btn--lime top__cta" href="#contact">Send us your app</a>
   </div>
 </header>
 
@@ -41,7 +41,7 @@
         <h1>{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
         <div class="ctas">
-          <a class="btn btn--lime" href="mailto:{{contact_email}}">Send us your app</a>
+          <a class="btn btn--lime" href="#contact">Send us your app</a>
           <a class="btn btn--plum" href="#process">How it works</a>
         </div>
       </div>
@@ -174,10 +174,10 @@
   <section class="sec contact" id="contact" aria-labelledby="contact-h">
     <div class="wrap contact__in">
       <h2 id="contact-h" class="h2">Contact</h2>
-      <a class="big" href="mailto:{{contact_email}}">Send us your app</a>
+      <a class="big"{{#if contact_email}} href="mailto:{{contact_email}}"{{/if}}>Send us your app</a>
       <p class="contact__lede">A link to your app or site, what it is for, and when you want it tested. We will reply with a plan and a price.</p>
       <dl class="meta">
-        <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+        {{#if contact_email}}<div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>{{/if}}
         {{#if city}}<div><dt>Based in</dt><dd>{{city}}</dd></div>{{/if}}
       </dl>
       {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
@@ -193,7 +193,7 @@
 .vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 <p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
-<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please email <a href="mailto:{{contact_email}}">{{contact_email}}</a> instead.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
 <label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
 <label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
 <label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>

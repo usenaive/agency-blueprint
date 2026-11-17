@@ -77,7 +77,7 @@
         {{#if logos[5]}}<li>{{logos[5]}}</li>{{/if}}
       </ul>{{/if}}
 
-      <p class="closing">To start, email them at <a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a>. <a class="cite" href="#src-4" data-src="4" aria-label="Source 4">4</a></p>
+      {{#if contact_email}}<p class="closing">To start, email them at <a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a>. <a class="cite" href="#src-4" data-src="4" aria-label="Source 4">4</a></p>{{/if}}
     </article>
   </div>
 
@@ -96,11 +96,11 @@
 <footer class="foot" id="ask">
   <div class="composer">
     <h2 class="composer__h">Ask us directly</h2>
-    <a class="composer__box" href="mailto:{{contact_email}}">
+    {{#if contact_email}}<a class="composer__box" href="mailto:{{contact_email}}">
       <span class="composer__ph">Tell us your site and what you want to be found for…</span>
       <span class="composer__send" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
-    </a>
-    <p class="composer__meta">Opens your email to {{contact_email}}{{#if city}} · {{city}}{{/if}}</p>
+    </a>{{/if}}
+    {{#if contact_email}}<p class="composer__meta">Opens your email to {{contact_email}}{{#if city}} · {{city}}{{/if}}</p>{{/if}}
     {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
 <style>
 .vf{display:inline-grid;vertical-align:top;gap:12px;width:100%;max-width:34rem;margin:32px 0 0;font:inherit;color:inherit;text-align:left;position:relative}
@@ -114,7 +114,7 @@
 .vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 <p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
-<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please email <a href="mailto:{{contact_email}}">{{contact_email}}</a> instead.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
 <label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
 <label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
 <label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>
