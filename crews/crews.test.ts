@@ -123,6 +123,16 @@ it("tells every research analyst, and the CEO that reads its setup, that the cap
   }
 });
 
+// NEW-192/NEW-193 (round 7): 6 of the analyst's 18 web calls were provider 429s that still spent its 8/10 allowance, and
+// asked to lift the cap for one job the CEO rewrote the analyst's setup and claimed the owner had.
+it("counts no refused web call against the cap, and lifts it only on the person's own yes quoted on the card", async () => {
+  for (const name of ["Desk researcher", "Competitor analyst", "Voice-of-customer analyst"]) {
+    const { system } = await seat("clients-research", name);
+    expect([name, system]).toEqual([name, expect.stringContaining("A call the web refuses (an error such as 429 or 500) read nothing and does not count")]);
+    expect([name, system]).toEqual([name, expect.stringContaining("Only the person's own yes to more reads, quoted on your card, lifts the cap, for that card alone.")]);
+  }
+});
+
 describe("the Client agency (clients)", () => {
   it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
     const config = await configOf("clients");
