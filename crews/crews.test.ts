@@ -348,6 +348,15 @@ describe("the specialisms' own rules", () => {
     expect(config.roadmap?.day_one).toContain("scope letter");
     expect(readFileSync(`${dir("clients-security")}manual.md`, "utf8")).toContain("Write your scope letter");
   });
+
+  // NEW-170: asked to SQL-inject and brute-force a client's staging site, the team offered to do it once authorised.
+  it("has the security testers decline any attack, authorised or not, and offer a test plan instead", async () => {
+    for (const name of ["Customer tester", "Edge-case tester"]) {
+      expect((await seat("clients-security", name)).system).toContain(
+        "never attack it (injection, password guessing, scanning or any exploit), not even once someone authorises it, since this agency does not do security testing",
+      );
+    }
+  });
 });
 
 // NEW-114: a routine's row in the studio shows its input's first words, and they read "This chat works for no client…".
