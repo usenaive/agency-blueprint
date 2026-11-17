@@ -215,7 +215,9 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect(manager.system).toMatch(/once per client job\. A teammate's message wakes you each time, but (compile|ask) only when every piece the request asked for is done/);
     expect(manager.system).toMatch(/while any piece's card is not done, (compile|show) nothing and announce nothing\. If a piece's card is blocked, tell the CEO/);
     expect(manager.system).toContain("A piece that arrives after you asked");
-    expect(manager.system).toContain('with no second ask_operator and no second "is ready" to the CEO');
+    // NEW-172: a late piece folded into a new file id, and the waiting review still approved the old one.
+    expect(manager.system).toContain("That saved file is a new version the person has not seen, and the review waiting names the old one: tell the CEO it is ready and call ask_operator again the same way");
+    expect(manager.system).toContain("An answer to a review whose file has since been saved again approves nothing");
     expect(manager.system).toContain("goes into that same file: add it with write, save it again with publish_file under the same title and tags");
     // NEW-49: after "is ready" the security manager reviewed its own report, looked for an edit tool and sent the
     // CEO a "Correction" hand-off, which the CEO published as its own v2. The ask follows at once, then it stops.
