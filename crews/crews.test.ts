@@ -13,13 +13,15 @@ import { BLUEPRINTS, loadConfig } from "@usenaive-sdk/blueprints";
 type Config = Extract<Awaited<ReturnType<typeof loadConfig>>, { ok: true }>["config"];
 type Agent = Config["agents"][number];
 
-const CREWS = ["clients", "clients-advertising", "clients-blank", "clients-recruiting", "clients-research", "clients-security"];
-/** The Client agency's specialisms: a fixed crew where Delivery was. The SEO & GEO agency is `templates/seo-geo.ts`. */
+const CREWS = ["clients", "clients-advertising", "clients-blank", "clients-product-design", "clients-recruiting", "clients-research", "clients-security", "clients-seo-geo"];
+/** The Client agency's specialisms: a fixed crew where Delivery was, each a team a company adds beside its others. */
 const SPECIALISMS: [string, string[]][] = [
   ["clients-research", ["Desk researcher", "Competitor analyst", "Voice-of-customer analyst"]],
   ["clients-advertising", ["Media planner", "Creative director", "Copywriter", "Designer", "Video producer", "Performance analyst"]],
   ["clients-security", ["Customer tester", "Edge-case tester"]],
   ["clients-recruiting", ["Sourcer", "Screener", "Outreach writer"]],
+  ["clients-seo-geo", ["Audit runner", "SEO writer", "GEO optimizer"]],
+  ["clients-product-design", ["Designer", "Engineer", "Visualizer"]],
 ];
 const WITH_CREW = CREWS.filter((name) => name !== "clients-blank");
 
@@ -142,7 +144,7 @@ describe("the Client agency (clients)", () => {
   });
 
   // QA NEW-53: a draft "awaiting your approval" in a done card's note raised nothing in Needs you.
-  it.each(["clients", "clients-advertising", "clients-recruiting", "clients-research", "clients-security"])("has %s's Marketing ask for a yes on every piece, not leave it in a card note", async (crew) => {
+  it.each(["clients", "clients-advertising", "clients-recruiting", "clients-research", "clients-security", "clients-seo-geo", "clients-product-design"])("has %s's Marketing ask for a yes on every piece, not leave it in a card note", async (crew) => {
     const marketing = await seat(crew, "Marketing");
     expect(permission(marketing, "ask_operator")).toBe("allow");
     expect(marketing.system).toContain('call ask_operator once with the prompt "Ready to post: <its title>. Approve before it goes out."');
@@ -242,7 +244,7 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
 });
 
 describe("the specialisms' own rules", () => {
-  it.each(["clients-research", "clients-recruiting", "clients-advertising", "clients-security"])("lets the %s Client manager compile the pieces into one file, with file tools and no shell", async (blueprint) => {
+  it.each(["clients-research", "clients-recruiting", "clients-advertising", "clients-security", "clients-seo-geo", "clients-product-design"])("lets the %s Client manager compile the pieces into one file, with file tools and no shell", async (blueprint) => {
     const manager = await seat(blueprint, "Client manager");
     for (const tool of ["find_files", "fetch_file", "read", "write", "publish_file"]) expect([tool, permission(manager, tool)]).toEqual([tool, "allow"]);
     expect(manager.system).toContain("fetch_file and dir clients/<the client's ctc_ id>");
@@ -347,6 +349,35 @@ describe("the specialisms' own rules", () => {
     expect(config.description).toContain("This is not penetration testing or red teaming.");
     expect(config.roadmap?.day_one).toContain("scope letter");
     expect(readFileSync(`${dir("clients-security")}manual.md`, "utf8")).toContain("Write your scope letter");
+  });
+
+  // Owner, 2026-11-17: the SEO & GEO agency template became this team, beside any other in one company.
+  it("has the SEO & GEO team read lean, tag every piece for the SEO & GEO app, and read the client's own search accounts as the agency", async () => {
+    for (const name of ["Audit runner", "SEO writer", "GEO optimizer"]) {
+      const agent = await seat("clients-seo-geo", name);
+      expect(agent.system).toContain("at most 8 web_search and 10 web_fetch calls for a card, counted across every run on it");
+      expect(agent.system).toContain("The cap is the owner's fixed cost policy");
+      expect(agent.system).toContain("plus the tag seo, so it shows in the SEO & GEO app; leave the stage off and never change it");
+      expect(permission(agent, "google_search_console.search_analytics_query")).toBe("allow");
+      expect(agent.identity).toBe("Agency");
+    }
+    expect((await seat("clients-seo-geo", "Audit runner")).system).toContain("A number you did not read yourself, from the client's account or a page, is a number you may not report");
+    expect((await seat("clients-seo-geo", "Client manager")).system).toContain("Each piece also shows in the SEO & GEO app: compile it all the same, and never change its stage.");
+    expect((await configOf("clients-seo-geo")).questions.map((one) => one.key)).toEqual(["about", "offer", "competitors"]);
+  });
+
+  // Owner, 2026-11-17: the Product design studio template became this team; its four seats are the Client manager and three makers.
+  it("has the product design team keep its studio's rules: one mesh per look, parts to 0.5 mm, a video only when asked and approved", async () => {
+    const [designer, engineer, visualizer] = [await seat("clients-product-design", "Designer"), await seat("clients-product-design", "Engineer"), await seat("clients-product-design", "Visualizer")];
+    expect(designer.system).toContain("Make ONE generate_3d_model per brief");
+    expect([permission(designer, "generate_3d_model"), permission(designer, "build_3d")]).toEqual(["allow", "deny"]);
+    expect(engineer.system).toContain("every bbox_mm edge is within 0.5 mm of the brief");
+    expect([permission(engineer, "build_3d"), permission(engineer, "generate_3d_model")]).toEqual(["allow", "deny"]);
+    expect(visualizer.system).toContain("The still is a render of THAT mesh, never a picture drawn from the brief's words");
+    expect(permission(visualizer, "generate_video")).toBe("ask");
+    for (const agent of [designer, engineer, visualizer]) expect(agent.skills).toContain("naive/product-design");
+    expect((await seat("clients-product-design", "Client manager")).system).toContain("a brief that names sizes in millimetres is a part, for Engineer");
+    expect((await configOf("clients-product-design")).questions.map((one) => one.key)).toEqual(["about", "offer", "buildable"]);
   });
 
   // NEW-170: asked to SQL-inject and brute-force a client's staging site, the team offered to do it once authorised.

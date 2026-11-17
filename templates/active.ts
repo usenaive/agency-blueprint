@@ -9,10 +9,8 @@
  */
 import { blank, type AgencyTemplate } from "./blank.ts";
 import { TEMPLATE, type TemplateName } from "./index.ts";
-import { productDesign } from "./product-design.ts";
-import { seoGeo } from "./seo-geo.ts";
 
-/** All of them, not just the chosen one: `defineProject` refuses a repo that carries only some. */
-export const TEMPLATES: Record<TemplateName, AgencyTemplate> = { blank, "seo-geo": seoGeo, "product-design": productDesign };
+/** Every template this repository carries: `blank` alone (ADR-3010). */
+export const TEMPLATES: Record<TemplateName, AgencyTemplate> = { blank };
 
 export const ACTIVE_TEMPLATE: AgencyTemplate = TEMPLATES[TEMPLATE];

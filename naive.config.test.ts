@@ -2,8 +2,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { BLUEPRINTS, loadConfig } from "@usenaive-sdk/blueprints";
+import { describe, expect, it } from "vitest";
+import { loadConfig } from "@usenaive-sdk/blueprints";
 import { TEMPLATES } from "./templates/active.ts";
 import { AGENCY_IDENTITY, AGENCY_TIMEZONE } from "./templates/blank.ts";
 import { TEMPLATE } from "./templates/index.ts";
@@ -11,8 +11,6 @@ import { TEMPLATE } from "./templates/index.ts";
 /** Loaded once: jiti compiles the config cold, and every test below reads the same apply. */
 const loaded = loadConfig(dirname(fileURLToPath(import.meta.url)));
 
-/** What only `seo-geo` adds to the applied config; `templates/templates.test.ts` covers it directly for both. */
-const SEO = TEMPLATE === "seo-geo";
 
 /** The tools a connected account contributes to a turn — `<connector>.<tool>`, and never the dashboard's own. */
 const connectionTools = (agent: { tools?: { configs: Record<string, unknown> } }) =>
@@ -33,9 +31,8 @@ describe("naive.config.ts", () => {
     expect(result.config.description).toBe(TEMPLATES[TEMPLATE].description);
     expect(result.config.roadmap).toEqual(TEMPLATES[TEMPLATE].roadmap);
     expect(result.config.agents.flatMap((a) => a.schedules ?? []).every((s) => (s.summary ?? "") !== "")).toBe(true);
-    // One repo carries every template of its blueprint — that is what makes a switch an edit and
-    // never a re-clone, and `defineProject` refuses a repo that carries only some.
-    expect(Object.keys(TEMPLATES).sort()).toEqual(["blank", "product-design", "seo-geo"]);
+    // `blank` alone: SEO & GEO and Product design are teams in `crews/` (ADR-3010 in usenaive/vetta-mono).
+    expect(Object.keys(TEMPLATES)).toEqual(["blank"]);
     // One app: the public site at `/` and the operator UI under `/app` share a server, so the
     // site's read of its own copy (`/api/site`) is same-origin. The app is what the crew files into
     // and the operator approves on, so an install cannot leave it out.
@@ -67,12 +64,10 @@ describe("naive.config.ts", () => {
     // production base URL with no persona.
     expect(result.config.apps[0].env).not.toHaveProperty("NAIVE_API_URL");
     expect(result.config.apps[0].env).not.toHaveProperty("NAIVE_IDENTITY_ID");
-    // The agents are the chosen template's, folded in by `defineProject` — the config declares none
-    // of its own, so switching template is the only thing that changes this list.
+    // The agents are the template's, declared as they stand.
     expect(result.config.agents.map((a) => a.name)).toEqual(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
     expect(result.config.agents.map((a) => a.name)).toEqual([
       "site-builder", "sales", "client-manager", "content-writer", "content-reviser", "gap-researcher", "proposal-writer",
-      ...(SEO ? ["paid-media-planner"] : []),
     ]);
     for (const agent of result.config.agents) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
@@ -95,16 +90,8 @@ describe("naive.config.ts", () => {
         expect(agent.tools?.configs["email.read"]).toEqual({ enabled: true, permission: "allow" });
         expect(agent.tools?.configs["email.send"]).toEqual({ enabled: true, permission: "ask" });
         expect(agent.system).toMatch(/email\.read is not among your tools, request it with request_tools/);
-      } else if (agent.name !== "paid-media-planner") {
-        const measurement: Record<string, string[]> = {
-          "content-writer": ["google_search_console.search_analytics_query"],
-          "content-reviser": ["google_search_console.search_analytics_query", "google_analytics.run_report"],
-          "gap-researcher": [
-            "google_search_console.search_analytics_query", "google_search_console.list_sites",
-            "google_search_console.inspect_url", "google_analytics.run_report",
-          ],
-        };
-        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, (SEO && measurement[agent.name]) || []]);
+      } else {
+        expect([agent.name, connectionTools(agent)]).toEqual([agent.name, []]);
       }
       expect(Object.keys(agent.tools?.configs ?? {}).filter((name) => name.startsWith("gmail."))).toEqual([]);
       // The sanctioned way to ask for a tool it lacks. `ask_operator` cannot be `allow` (the tool is
@@ -128,21 +115,8 @@ describe("naive.config.ts", () => {
     // and its one write is `ask`, so the change is live when the operator approves and not before.
     expect(byName["site-builder"]?.tools?.configs["dashboard.get_site"]).toEqual({ enabled: true, permission: "allow" });
     expect(byName["site-builder"]?.tools?.configs["dashboard.update_site"]).toEqual({ enabled: true, permission: "ask" });
-    // `blank` and `seo-geo` declare the same seven, so between them a switch narrows nothing. What
-    // `kept` holds is every seat only a sibling template declares — on an engine that lists
-    // `product-design`, its four studio seats: a switch away from the studio leaves them standing
-    // rather than deleting them. On an engine that does not list it, nothing. The per-client crew is
-    // `server/proxy.ts`'s, because its names carry a client slug and cannot be declared statically.
-    const listed = BLUEPRINTS.agency?.templates ?? [];
-    const mine = new Set(TEMPLATES[TEMPLATE].agents.map((a) => a.name));
-    const siblingsOnly = [...new Set(Object.values(TEMPLATES)
-      .filter((t) => listed.includes(t.name) && t.name !== TEMPLATE)
-      .flatMap((t) => t.agents.map((a) => a.name)))].filter((name) => !mine.has(name));
-    expect(result.config.kept.agents).toEqual(siblingsOnly);
-    // Pinned for seo-geo: blank also keeps seo-geo's paid-media planner, so its list differs.
-    if (TEMPLATE === "seo-geo") {
-      expect(siblingsOnly).toEqual(listed.includes("product-design") ? ["account-manager", "designer", "engineer", "visualizer"] : []);
-    }
+    // One template, so nothing is kept for a switch.
+    expect(result.config.kept.agents).toEqual([]);
     // jiti compiles the config cold on a fresh CI runner; the default 5s is not enough.
   }, 30_000);
 
@@ -178,7 +152,7 @@ describe("the agency persona", () => {
       expect([agent.name, agent.identity]).toEqual([agent.name, AGENCY_IDENTITY]);
     }
     expect(result.config.agents.filter((agent) => connectionTools(agent).length > 0).map((a) => a.name)).toEqual([
-      "sales", "client-manager", ...(SEO ? ["content-writer", "content-reviser", "gap-researcher", "paid-media-planner"] : []),
+      "sales", "client-manager",
     ]);
   }, 30_000);
 
@@ -204,45 +178,3 @@ describe("the agency persona", () => {
   }, 30_000);
 });
 
-/**
- * `product-design` is carried ahead of the engine that lists it (`@usenaive-sdk/blueprints` 0.17.0):
- * `defineProject` refuses a repo whose list is not exactly the engine's, so the config filters to the
- * installed engine's list and says what it left out. On the committed engine (0.11.4) it is skipped
- * with a warning and choosing it is a clear error; on 0.17.0 it is carried and installs its four.
- */
-describe("the installed engine's template list", () => {
-  const listed = BLUEPRINTS.agency?.templates ?? [];
-  const original = process.env["NAIVE_TEMPLATE"];
-  afterEach(() => {
-    if (original === undefined) delete process.env["NAIVE_TEMPLATE"];
-    else process.env["NAIVE_TEMPLATE"] = original;
-    vi.restoreAllMocks();
-    vi.resetModules();
-  });
-
-  it("carries product-design exactly when the engine lists it, and says so out loud when it does not", async () => {
-    vi.resetModules();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await import("./naive.config.ts");
-    const said = warn.mock.calls.map((call) => String(call[0])).join("\n");
-    if (listed.includes("product-design")) expect(said).not.toMatch(/does not list/);
-    else expect(said).toMatch(/does not list product-design; left out until an engine that lists them is installed/);
-  }, 30_000);
-
-  it("installs the studio of four on an engine that lists it, and refuses by name on one that does not", async () => {
-    vi.resetModules();
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    process.env["NAIVE_TEMPLATE"] = "product-design";
-    const load = import("./naive.config.ts");
-    if (listed.includes("product-design")) {
-      const config = (await load).default;
-      expect(config.template).toBe("product-design");
-      expect(config.agents.map((a) => a.name)).toEqual(["account-manager", "designer", "engineer", "visualizer"]);
-      expect(config.questions.map((q) => q.key)).toEqual(["products", "audience", "manufacturable", "done"]);
-      expect(config.crew_per_client ?? []).toEqual([]);
-      expect(config.mini_apps?.map((a) => a.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
-    } else {
-      await expect(load).rejects.toThrow(/product-design template needs @usenaive-sdk\/blueprints >= 0\.16\.0/);
-    }
-  }, 30_000);
-});

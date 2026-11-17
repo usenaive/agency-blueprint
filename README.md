@@ -16,10 +16,11 @@ signed clients' workspaces) — plus an MCP server that lets any agent operate
 the agency, and a crew of seven agents that read the three answers you give at install and
 start work the same day.
 
-It comes in **three templates**: `blank`, a working agency with no specialism; `seo-geo`,
-the same agency specialised in search and answer-engine work; and `product-design`, a studio
-for physical products run by four seats of its own. One repo carries all three — see
-[The templates](#-the-templates) and [The product design studio](#-the-product-design-studio).
+The agency is **one template**, `blank`: a working agency with no specialism. A specialism is a
+**team** in [`crews/`](#-the-client-agency-teams) — SEO & GEO, Product design, Advertising,
+Recruiting, Market research, Security testing — that a company adds beside its agency, several
+side by side. The `seo-geo` and `product-design` templates this repository used to carry are
+those teams now; the companies that installed them keep running the release they installed.
 
 The engine is [`@usenaive-sdk/blueprints`](https://www.npmjs.com/package/@usenaive-sdk/blueprints),
 installed from the public npm registry like any other dependency. Nothing here resolves out
@@ -65,14 +66,12 @@ platform's default and 08:00 UTC is nobody's Monday morning.
 
 A template may also declare a **per-client crew**, provisioned by the dashboard server when
 you onboard a client — their names carry the client's slug, so they are per-client resources
-and cannot be declared in `naive.config.ts`. `seo-geo` declares four (`seo-writer--<slug>`,
-`geo-optimizer--<slug>`, `audit-runner--<slug>`, `client-lead--<slug>`), published to the studio as `crew_per_client`;
-`blank` declares none and runs every client through the agency's own seven.
+and cannot be declared in `naive.config.ts`. `blank` declares none and runs every client through
+the agency's own seven.
 
 ## 👥 The crew
 
-Both templates share the core seven; `seo-geo` adds a read-only paid-media planner, appends a
-sentence of search focus to each shared prompt, and adds search skills to the relevant lists. Every prompt opens
+Every prompt opens
 with the same paragraph: read `project_context` before anything else — it holds your setup
 answers in your own words — and treat those answers as the client's, never yours to invent.
 Tools marked `*` are held at `ask` and land on **Approvals** before they run.
@@ -82,11 +81,10 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 | `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
 | `sales` | Pipeline | `web_search`, `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, added to the CRM as leads with a why-now; openers drafted (not sent) for the best three. |
 | `client-manager` | Delivery | `crm.read`, `crm.write`, `dashboard.{list_clients, get_client, create_client, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
-| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_client, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` (+ `naive/geo-answer-blocks` in `seo-geo`) | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
+| `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_client, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
 | `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_client, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
-| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_client, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` (+ `naive/geo-answer-blocks` in `seo-geo`) | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
-| `proposal-writer` | Proposals | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers — priced from the pricing answer when the template asked one (`blank`); `seo-geo` asks competitors instead, so its tiers are scoped without prices until the operator answers `ask_operator`. |
-| `paid-media-planner` (`seo-geo`) | Paid media | `web_search`, `web_fetch`, dashboard reads/writes, read-only Google/Meta Ads tools | `naive/proposal-writing` | — | A zero-baseline plan with operator-selectable budget scenarios, integration-aware channels, measurement and stop rules. It cannot mutate campaigns or spend. |
+| `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_client, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
+| `proposal-writer` | Proposals | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers, priced from the pricing answer; with none, scoped without prices until the operator answers `ask_operator`. |
 
 Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
 `ask_operator*` and `request_tools*`. No agent holds `approve_post`, `start_agent_session` or
@@ -98,23 +96,19 @@ A template asks at most four questions before anything is provisioned, and the a
 the project's context — what every agent reads first, and
 what the dashboard's home screen shows.
 
-| | `blank` | `seo-geo` |
-|---|---|---|
-| public identity | — | Agency name, verified public inbox, and whether pricing is custom-scoped or hidden. |
-| `offer` | What does your agency sell, and to whom? | What does your agency sell, and to whom? (search and answer-engine work) |
-| `ideal_client` | Who is your ideal client — industry, size, geography? | same |
-| third | `pricing` — How do you price — retainer / project / hourly — and your typical range? | `competitors` — Which three competitors do your clients lose to in search? |
-| `network` (optional) | Who do you already know who might need this, or know someone who does? | — (four is the limit: `sales` asks this in its first session with `ask_operator`) |
+| | `blank` |
+|---|---|
+| `offer` | What does your agency sell, and to whom? |
+| `ideal_client` | Who is your ideal client — industry, size, geography? |
+| `pricing` | How do you price — retainer / project / hourly — and your typical range? |
+| `network` (optional) | Who do you already know who might need this, or know someone who does? |
 
 The network answer is for the first client, when there's nobody yet to ask for a referral. On
 day one `sales` adds each person named to the CRM as a `network` contact and drafts a short
 personal note on their timeline for approval. An empty answer skips it, and no contact is ever invented.
 
-Cold openers show the work. In both templates `sales` reads the prospect's own site first and
-names one specific thing it read there. In `seo-geo` it runs a short public audit before each
-opener: what the prospect ranks for, whether AI answers cite it, and two or three concrete
-fixes, logged on the contact's CRM timeline, with the opener quoting one finding. It reports no ranking,
-citation or traffic figure it didn't see.
+Cold openers show the work: `sales` reads the prospect's own site first and names one specific
+thing it read there.
 
 Edit an answer later through the platform (`PATCH /v1/blueprints/installs/{id}`); the crew
 reads the new value on its next turn, no re-apply needed.
@@ -152,9 +146,6 @@ granted the two platform tools, `send_to_agent` and `list_agents`:
 | `gap-researcher` | `["content-writer"]` | once the gap report is filed (day one, then every Friday) | the agency record's `cli_` id and the ten gaps |
 | `sales` | `["proposal-writer"]` | when a contact is moved to `proposal` | that contact's `ctc_` id, as `handoff_key` too, so a contact is handed once |
 | `client-manager` | `["sales"]` | an upsell; the list is what offers it `send_to_agent` for its Monday fan-out | the client's `ctc_` id |
-| `audit-runner--<slug>` | `["seo-writer", "client-lead"]` | once a client audit is filed, to the writer only if pages were asked for (`seo-geo`) | the audit's `post_` id, the pages it found missing, what the request asked for |
-| `seo-writer--<slug>` | `["geo-optimizer", "client-lead"]` | once the pages are drafted, to the optimizer only if answer-engine work was asked for (`seo-geo`) | the new drafts' `post_` ids and what the request asked for |
-| `geo-optimizer--<slug>` | `["client-lead"]` | once its drafts are filed (`seo-geo`) | the drafts' `post_` ids and what the request asked for |
 
 Every other seat declares `handoffs: false` and holds neither tool. A handoff is
 `send_to_agent` with `wait: false`: it opens an ordinary session on the receiver, at the
@@ -168,11 +159,11 @@ its `ctc_` id, `handoff_key` `followup:<ctc_>` or `week:<ctc_>`). The timers sta
 fallback — the content writer's Tuesday/Thursday run takes the next title from the calendar the
 handoff wrote, and files nothing while no calendar exists yet.
 
-The per-client crew's `handoffs` name the seat (`"seo-writer"`); the dashboard server slugs each
-entry like the agent's own name when it provisions the crew, so `audit-runner--acme` may reach
-`seo-writer--acme` and no other client's writer. A crew whose list names a seat outside the crew is
+A per-client crew's `handoffs` name the seat (`"writer"`); the dashboard server slugs each
+entry like the agent's own name when it provisions the crew, so `writer--acme` reaches no other
+client's seat. A crew whose list names a seat outside the crew is
 refused before anything is written: a seat every client shares would know the client only from the
-message. The `client-lead--<slug>` compiles each finished job into one file and asks the operator once. Provisioning a client whose crew already exists
+message. Provisioning a client whose crew already exists
 patches the declaration onto each seat (the platform mints a version only where something
 differs), so a crew provisioned before this field existed gains the chain. A seat the active
 template no longer declares is kept as it stands (widen, never narrow).
@@ -181,7 +172,7 @@ template no longer declares is kept as it stands (widen, never narrow).
 
 Leads, talks, proposals and their notes live in the platform CRM (`crm.read`, `crm.write`; the
 `crm` mini app every template carries) and nowhere else. The dashboard keeps **signed clients**
-only — their workspaces, crews, content queue, approvals and Studio.
+only — their workspaces, crews, content queue and approvals.
 
 Won becomes a client with no click: the agent that moves a contact to `won` calls the dashboard's
 `create_client` in the same step, with the contact's `ctc_` id as `crm_contact`. That files the
@@ -209,15 +200,14 @@ The Monday check-in asks ready clients for an introduction. `list_referral_ready
 is ready, in code rather than in the agent's judgment: active for 30 days, at least two pieces
 approved or posted in the last 60, nothing turned down since, and not asked in the last 90. For
 each, `client-manager` proposes one short email (held for approval like every send) with the
-client's referral link, offering no reward, then `record_referral_ask` starts the cooldown. In
-`seo-geo` the ask leads with the gain the latest posted SERP report shows, and only that.
+client's referral link, offering no reward, then `record_referral_ask` starts the cooldown.
 
 ### The skills
 
 Skills are the platform's, referenced as `naive/<slug>` and resolved from the catalogue at
 session start: `landing-page-copy`, `cold-outreach-drafting`, `crm-hygiene`,
 `client-onboarding`, `seo-content-brief`, `content-revision`, `keyword-gap-analysis`,
-`proposal-writing`, and — in `seo-geo` — `geo-answer-blocks`. Pin a version with
+and `proposal-writing`. Pin a version with
 `naive/<slug>@N`; unpinned reads the newest.
 
 ## 🚀 Get started
@@ -319,105 +309,48 @@ secret is in it.
 `/mcp` is untouched by all of this: agents carry their own bearer, which is not yours and
 does not open `/api/*`.
 
-## 🧩 The templates
+## 🧩 The template, and the teams beside it
 
 A **blueprint** is the machine, and it is shared: the screens, `/api/*`, `/mcp`, the store,
 the operator gate, the build and deploy, the approval flow. A **template** is data: the
 agents and their prompts, their tool allow-lists, the deliverable kinds, the schedules, the
-demo seed, the words the screens print.
+demo seed, the words the screens print. This repository's one template is `blank` — the seven,
+generic, filing posts, pages, reports and audits — and the dashboard shows it on **Settings**.
 
-| Template | The agency it runs | Deliverable kinds | Per-client crew |
-|---|---|---|---|
-| `blank` | No specialism — the seven, generic | post, page, report, audit | none |
-| `seo-geo` | Search: audits, SERP work, answer-engine optimization | article, landing page, answer block, SERP report, audit | `seo-writer`, `geo-optimizer`, `audit-runner` |
-| `product-design` | A product studio: concept meshes, dimensioned parts, studio stills, product video on request — its own four seats, not the seven | concept mesh, studio still, dimensioned part, product video | none |
+A specialism is not a second template of the agency: it is a **team** (below) a company adds from
+the Marketplace beside its agency, and several teams can sit side by side in one company. The
+`seo-geo` and `product-design` templates became the SEO & GEO and Product design teams (owner,
+2026-11-17; ADR-3010 in usenaive/vetta-mono). A company that installed either keeps running it
+from the release it installed, and the platform takes no new install of them.
 
-This repo carries **all three**, so switching is a re-build and a re-apply — never a re-clone, and
-never a new app. `templates/index.ts` reads the template from `NAIVE_TEMPLATE`; unset (or any
-other value) it is `blank`, the default. `naive.config.ts` reads the same value, so set it for
-both the build and the apply:
+## 🗂 The Client agency teams
 
-```sh
-NAIVE_TEMPLATE=seo-geo pnpm build && NAIVE_TEMPLATE=seo-geo naive up
-```
-
-Every later build and apply needs it too: a build with `NAIVE_TEMPLATE` unset goes back to `blank`.
-
-**Switching widens, and never narrows.** Agents the new template declares are created. Agents
-only the old one declared are *reported* and left standing — `naive up` lists them, and the
-dashboard lists any per-client crew it did not provision on that client's Agents tab. Nothing
-is deleted by a switch: deleting an agent takes an explicit `removed:` tombstone in
-`naive.config.ts`. Your own rows are never touched — clients, deliverables, connections, the
-app, its URL and its MCP token all survive a switch, and a deliverable filed under the old
-template keeps its kind.
-
-The dashboard shows which template is active on **Settings**, and does not offer a switcher:
-a template is data compiled into the app *and* its config, so switching is the build above
-plus a re-apply, and a button could not honestly do it.
-
-**`product-design` needs `@usenaive-sdk/blueprints` 0.17.0.** The engine refuses a repo whose
-template list is not exactly its own, so `naive.config.ts` carries only the templates the
-installed engine lists and warns about the rest (`agency: the installed
-@usenaive-sdk/blueprints does not list product-design; …`). On an older engine `blank` and
-`seo-geo` work as before; choosing `product-design` there fails with that version in the
-error, and `pnpm up @usenaive-sdk/blueprints@^0.17.0` is the fix.
-
-## 🗂 The Client agency crews
-
-`crews/` holds the Client agency and its specialisms: data-only crews with no app of their own.
-Their CRM, Calendar, Ads and SEO & GEO are the platform's built-in apps. Each is its own
-blueprint on the platform, always with the template `agency`, so the ids companies already hold
-are unchanged:
+`crews/` holds the Client agency and its teams: data-only crews with no app of their own.
+Their CRM, Calendar, Ads and SEO & GEO are the platform's built-in apps, shared by every team
+in a company. Each is its own blueprint on the platform, always with the template `agency`, so
+the ids companies already hold are unchanged:
 
 | Directory | Installs as | What it is |
 | --- | --- | --- |
 | `crews/clients/` | `clients/agency` | Client agency: Sales, Client manager, Delivery, Marketing |
 | `crews/clients-blank/` | `clients-blank/agency` | The same apps with no crew |
-| `crews/clients-advertising/` | `clients-advertising/agency` | Advertising agency |
-| `crews/clients-recruiting/` | `clients-recruiting/agency` | Recruiting agency |
-| `crews/clients-research/` | `clients-research/agency` | Market research agency |
-| `crews/clients-security/` | `clients-security/agency` | Security testing agency |
+| `crews/clients-advertising/` | `clients-advertising/agency` | Advertising team |
+| `crews/clients-recruiting/` | `clients-recruiting/agency` | Recruiting team |
+| `crews/clients-research/` | `clients-research/agency` | Market research team |
+| `crews/clients-security/` | `clients-security/agency` | Security testing team |
+| `crews/clients-seo-geo/` | `clients-seo-geo/agency` | SEO & GEO team: Audit runner, SEO writer, GEO optimizer |
+| `crews/clients-product-design/` | `clients-product-design/agency` | Product design team: Designer, Engineer, Visualizer |
+
+Every team is Sales, a Client manager, its specialists and Marketing. A specialist works one
+client per chat, saves each piece as a file tagged `client:<ctc_ id>` and `kind:<kind>` (SEO &
+GEO pieces also `seo`, so they show in the SEO & GEO app), and hands it to the Client manager,
+which puts each job in front of you once, in one review. No seat makes up an identity or
+deceives a real person or company.
 
 Each directory is a `naive.config.json` and its Operator's Manual (`manual.md`); `crews/crews.test.ts`
-loads every one through the engine's own loader. The SEO & GEO agency is not here: it is this
-repository's `seo-geo` template (`agency/seo-geo`). To run one yourself, copy its directory and run
+loads every one through the engine's own loader. To run one yourself, copy its directory and run
 `naive up` in it. The platform publishes them from a tag of this repository, with the same `--tag`
-as the dashboard's templates.
-
-## 🧪 The product design studio
-
-`product-design` runs the same machine — clients, public site, approvals, `/mcp` — as a studio for
-physical products. Its crew is four seats, not the seven:
-
-| Agent | Role | What it holds (besides `project_context`, `read_skill`, `ask_operator`, `request_tools`) | Skills | Timer | Day one |
-|---|---|---|---|---|---|
-| `account-manager` | Studio lead | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, get_client, create_client, add_client_note, list_posts, schedule_post}`, mailbox reads, `send_to_agent`, `list_agents`; `email.send` at **ask** | `naive/product-design`, `naive/client-onboarding` | Mon 09:00 studio check-in | Writes the **STUDIO NOTE** from your four answers before anything is made, then hands one first brief to `designer`. |
-| `designer` | Concept meshes | `generate_3d_model`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `send_to_agent` | `naive/product-design`, `naive/3d-modeling` | — | Waits for a brief. |
-| `engineer` | Dimensioned parts | `build_3d`, `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`, `send_to_agent` | `naive/product-design`, `naive/cad-parts` | — | Waits for a brief. |
-| `visualizer` | Stills & video | `build_3d` (Blender render of the GLB as the still), `view_image`, `fetch_file`, `publish_file`, CRM reads, `create_draft_post`; `generate_video` at **ask** | `naive/product-design`, `naive/product-video-3d` | — | Waits for a brief. |
-
-The engine also gives every template crew the file tools (`bash`, read/write/edit) and `apps`
-at ask; `build_3d` runs on the session's computer.
-
-**The four setup questions are the studio questions:** what physical products the studio
-designs; who the work is for; which materials, sizes and features must be manufacturable and
-which are looks only; and what done means for a typical brief. The account manager writes
-them into the studio note — a note titled `STUDIO NOTE` on the agency's own CRM record — and
-every seat reads that note before it makes anything.
-
-**A look is not a part.** A brief with no sizes is a *look*: the designer makes one textured
-concept mesh with `generate_3d_model` (a GLB with no units — never claimed to fit anything),
-and the visualizer makes one studio still. A brief that names millimetres is a *part*: the
-engineer builds it with `build_3d` (`engine: "cad"`) and files it only when it is a watertight
-solid within 0.5 mm of the brief, as STEP + STL + a preview with its bounding box and volume.
-A product video is made only when the brief asks, and `generate_video` waits for your approval.
-
-**Studio** (`/app/studio`, in the rail under this template only) is where the files land: each
-deliverable filed on the `studio` channel, newest first, with the still as an image, the mesh
-turning in `<model-viewer>`, and STEP/STL as downloads. The screen reads files through
-`GET /api/files/:id`, which proxies the platform's file read with the dashboard's key — only for
-an id a deliverable names, behind the same gate as the queue. Approving a studio deliverable
-only marks it approved: nothing is posted, emailed or sent to a manufacturer.
+as the agency.
 
 ## 🖥 Operating the agency
 
@@ -472,11 +405,10 @@ plus a re-apply.
 
 | To change… | Edit | Then |
 |---|---|---|
-| which template runs | `NAIVE_TEMPLATE` (read in [`templates/index.ts`](templates/index.ts); unset is `blank`) | `NAIVE_TEMPLATE=seo-geo pnpm build && NAIVE_TEMPLATE=seo-geo naive up` |
-| an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) — both templates share the seven, `seo-geo` only appends focus, search skills and search work (`WORK`) to an intake or timer | `naive up` |
+| an agent's prompt, role, skills, model or budget | [`templates/agents.ts`](templates/agents.ts) | `naive up` |
 | add an agent to the crew | the `roster` in [`templates/agents.ts`](templates/agents.ts) | `naive up` |
-| the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) / [`templates/seo-geo.ts`](templates/seo-geo.ts) — at most four | `naive up` |
-| the per-client crew | `crew` in [`templates/seo-geo.ts`](templates/seo-geo.ts) | onboard a client |
+| the setup questions | `questions` in [`templates/blank.ts`](templates/blank.ts) — at most four | `naive up` |
+| a team's seats | its `crews/<team>/naive.config.json` | publish from a tag |
 | what a tool may do | the `tools(allow, ask)` call on that agent — reads go in `allow`, anything that sends, posts or deletes goes in `ask` | `naive up` |
 | when a schedule fires | the `schedules` on that agent, and `AGENCY_TIMEZONE` for the zone all of them use | `naive up` |
 | the deliverable kinds, and the words the screens print | `VOCABULARY` in [`templates/index.ts`](templates/index.ts) | `pnpm build && naive up` |
@@ -496,10 +428,8 @@ Two rules worth knowing before your first edit:
   `schedules` key at all owns nothing and deletes nothing — it is a *partial* set that is
   destructive.)
 
-Adding a template is the same shape: a module beside `blank.ts`, `seo-geo.ts` and `product-design.ts` exporting an
-`AgencyTemplate`, its vocabulary in `templates/index.ts`, and its name in the `TemplateName`
-union. `templates/templates.test.ts` and `templates/bundle.test.ts` will tell you what you
-missed.
+A new specialism is a team, not a template: a directory in `crews/` shaped like the others,
+listed in `crews/crews.test.ts`, and a blueprint id the platform's engine lists.
 
 ## 🔌 The MCP server
 
@@ -546,8 +476,7 @@ runs `session → agent → identity → {inboxes, connected accounts}`, so an a
 persona is offered none of these tools however carefully its allow-list reads. This blueprint
 declares one persona (`agency`) and names it on every agent and every schedule; the per-client
 crew is granted it at onboarding by the dashboard server, since `POST /v1/agents` has no
-identity field and the grant is a call of its own. The `seo-geo` crew reads the client's own
-search and analytics accounts and writes to neither.
+identity field and the grant is a call of its own.
 
 Outside clients keep using tokens minted from a local server's Settings screen. The platform
 token is never shown in the dashboard and cannot be revoked from it; drop `mcp` from the
@@ -610,14 +539,14 @@ function) are thin adapters over it.
 
 ```ts
 import { defineProject } from "@usenaive-sdk/blueprints";
-import { TEMPLATES } from "./templates/active.ts";
+import { ACTIVE_TEMPLATE } from "./templates/active.ts";
 import { TEMPLATE } from "./templates/index.ts";
 
 export default defineProject({
   name: "agency",
   blueprint: "agency",
-  template: TEMPLATE,                    // chosen in templates/index.ts
-  templates: Object.values(TEMPLATES),   // every template this repo carries
+  template: TEMPLATE,                    // "blank", from templates/index.ts
+  agents: ACTIVE_TEMPLATE.agents,        // the template's seven
   questions: ACTIVE_TEMPLATE.questions,   // the three, from the template
   crew_per_client: ACTIVE_TEMPLATE.crew.map(({ name, role, description }) => ({ name, role, description })),
   identities: [{ name: "agency", description: "The agency itself — …" }],
@@ -635,7 +564,6 @@ export default defineProject({
       },
     },
   ],
-  // No `agents:` — they are the template's.
 });
 ```
 
@@ -648,8 +576,7 @@ The config can declare more than this template uses:
 
 | Key | What it provisions |
 |---|---|
-| `blueprint` / `template` | which machine, and which data fills it (`agency` / `blank` \| `seo-geo` \| `product-design`) |
-| `templates[]` | every template this repo carries; the chosen one's agents become the project's crew, the others' become `kept` |
+| `blueprint` / `template` | which machine, and which data fills it (`agency` / `blank`) |
 | `questions[]` | at most three, `text` or `choice`; the answers become the project's context |
 | `apps[]` | `name`, `type`, `description`, `deploy_dir`, `mcp` (the app's own MCP endpoint path, fullstack only), `required`, and `env` — literals, `{ from_env }` or `{ generate: true }`, written as the app's secrets |
 | `agents[]` | `role`, `description`, `model`, `budget`, `system`, `tools`, `skills` (`naive/<slug>` or your own), `mcp_servers`, `allowed_apps`, `identity`, `handoffs`, `required`, `schedules`, `intake` |

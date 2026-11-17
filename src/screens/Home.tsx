@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { useApi } from "../api";
 import { PageHeader } from "../components/kit";
-import { kindLabel, TEMPLATE, TEMPLATE_NAME, type Agent, type Post } from "../data";
+import { TEMPLATE, type Agent } from "../data";
 import { STOP_REASON, waitingOn, type PlatformSession } from "../platform";
 
 /** `GET /api/context`: the project context (canonical-spec §31.8) plus the install's team and intake report. */
@@ -69,30 +69,6 @@ function Card({ title, to, children }: { title: string; to?: string; children: R
 }
 
 const Absent = ({ children }: { children: ReactNode }) => <p className="text-xs text-ink-3">{children}</p>;
-
-/** Under product-design only: how many studio deliverables wait on the operator, and the way to them. */
-function StudioCard() {
-  const { data: posts, error } = useApi<Post[]>("/posts");
-  const pending = (posts ?? []).filter((p) => p.channel === "studio" && (p.status === "pending" || p.status === "ready"));
-  return (
-    <Card title="Studio" to="/studio">
-      {posts === null ? (
-        <Absent>{error ?? "Reading the studio…"}</Absent>
-      ) : pending.length === 0 ? (
-        <Absent>No studio deliverable is waiting on you.</Absent>
-      ) : (
-        <ul className="space-y-1.5 text-sm">
-          {pending.map((p) => (
-            <li key={p.id} className="flex items-baseline justify-between gap-3">
-              <span className="truncate font-medium">{p.title}</span>
-              <span className="text-xs text-ink-2">{kindLabel(p.kind)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
 
 /**
  * The first screen under `/app`: what this agency told the platform about itself, what the crew did
@@ -213,7 +189,6 @@ export function Home() {
           )}
         </Card>
 
-        {TEMPLATE_NAME === "product-design" ? <StudioCard /> : null}
       </div>
     </div>
   );
