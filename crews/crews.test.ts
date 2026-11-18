@@ -231,6 +231,8 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     // revised report never came back to Needs you; and the review had no box for what to change.
     expect(manager.system).toContain("Approve or Changes needed, and an optional text field, What to change.");
     expect(manager.system).toContain("The revised file is a new version for the person, not a late piece: once it is saved under the same title and tags, tell the CEO it is ready and call ask_operator again the same way, as for the first.");
+    // NEW-261: the SEO & GEO Client manager found one piece, said "nothing to compile" and raised no review.
+    expect(manager.system).toMatch(/A job of one piece needs no compiling: that piece is the (report|deliverable), and it still gets the review below, so "nothing to compile" never ends a job\./);
   });
 
   it("widens no job", async () => {
