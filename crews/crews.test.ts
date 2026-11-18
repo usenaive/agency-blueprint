@@ -221,6 +221,8 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect(manager.system).toContain("That saved file is a new version the person has not seen, and the review waiting names the old one: tell the CEO it is ready and call ask_operator again the same way");
     expect(manager.system).toContain("An answer to a review whose file has since been saved again approves nothing");
     expect(manager.system).toContain("goes into that same file: add it with write, save it again with publish_file under the same title and tags");
+    // QA r9 NEW-298: a headline swap re-issued the ads package as a second file, and the waiting review kept the old one.
+    if (blueprint === "clients-advertising") expect(manager.system).toContain("or a change to a piece in it (a new headline, a swapped picture: never a second file), goes into that same file");
     // NEW-49: after "is ready" the security manager reviewed its own report, looked for an edit tool and sent the
     // CEO a "Correction" hand-off, which the CEO published as its own v2. The ask follows at once, then it stops.
     expect(manager.system).toMatch(/is ready.*Right after it, with nothing between, call ask_operator once/s);
