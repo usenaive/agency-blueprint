@@ -4,7 +4,6 @@
  * function. This runs the real script into a temp `dist/` copy of the blueprint's own tree.
  */
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -15,7 +14,6 @@ const root = dirname(fileURLToPath(import.meta.url));
 let dist = "";
 let work = "";
 let blank = "";
-let seoGeo = "";
 
 /** One run of the real script, and the function it emitted. `NAIVE_TEMPLATE` is the override. */
 function buildApi(template?: string): string {
@@ -39,7 +37,6 @@ beforeAll(() => {
   writeFileSync(join(dist, "index.html"), '<!doctype html><html><head><title>Agency services</title><meta name="description" content="generic"></head><body><div id="root"></div><script type="module" src="/assets/site.js"></script></body></html>');
   writeFileSync(join(dist, "api", "mcp.js"), "stale");
   blank = buildApi("blank");
-  seoGeo = buildApi("seo-geo");
   // The default build last, so every assertion below reads the tree `pnpm build` leaves behind.
   buildApi();
 }, 120_000);
@@ -84,22 +81,7 @@ describe("build-api.mjs", () => {
     // seed. On the deployed host `NAIVE_TEMPLATE` is not in the environment, so a runtime read
     // there answers with this repository's default while the screens beside it show the built one
     // — two halves of one deployment disagreeing about which template is running.
-    const digest = (code: string) => createHash("sha256").update(code).digest("hex");
-    expect(digest(blank)).not.toEqual(digest(seoGeo));
     expect(blank).not.toContain("NAIVE_TEMPLATE");
-  });
-
-  it("compiles the server half for the template the screens' build named in dist/.naive-template", () => {
-    const digest = (code: string) => createHash("sha256").update(code).digest("hex");
-    const studio = buildApi("product-design");
-    writeFileSync(join(dist, ".naive-template"), "product-design\n");
-    try {
-      // The environment disagrees and loses: the two halves of one dist cannot name two templates.
-      expect(digest(buildApi("blank"))).toEqual(digest(studio));
-    } finally {
-      rmSync(join(dist, ".naive-template"));
-      buildApi();
-    }
   });
 
   it("bundles the whole route table, not just /mcp", () => {

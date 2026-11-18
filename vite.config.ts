@@ -65,9 +65,6 @@ export default defineConfig(({ mode }) => {
   appType: "mpa",
   build: {
     rollupOptions: { input: { site: entry("index.html"), app: entry("app/index.html") } },
-    // The one chunk over the default limit is `@google/model-viewer` (three.js, ~1 MB), emitted only
-    // in a product-design build and fetched only when the Studio screen shows a mesh.
-    chunkSizeWarningLimit: 1_100,
   },
   /**
    * *** THE ONE WAY THE BROWSER LEARNS WHICH TEMPLATE THIS BUILD IS. ***
@@ -92,13 +89,6 @@ export default defineConfig(({ mode }) => {
    */
   define: {
     "process.env.NAIVE_TEMPLATE": JSON.stringify(process.env["NAIVE_TEMPLATE"] ?? ""),
-    /**
-     * Whether this build is the product-design studio — read from `templates/index.ts` itself, so an
-     * operator who switched by editing that file's line gets it as surely as the publisher's
-     * `NAIVE_TEMPLATE`. A literal, so the bundler drops the `@google/model-viewer` import (three.js,
-     * ~1 MB) from every other template's build instead of emitting a chunk nobody fetches.
-     */
-    __AGENCY_STUDIO__: JSON.stringify(TEMPLATE === "product-design"),
   },
   /**
    * `pnpm dev` keeps its demo without compiling a single seed row into the bundle: the screens

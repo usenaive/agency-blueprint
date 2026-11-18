@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ACTIVE_TEMPLATE, TEMPLATES } from "../templates/active";
-import { AGENCY_IDENTITY } from "../templates/blank";
+import type { AgentDecl } from "@usenaive-sdk/blueprints";
+import { AGENCY_IDENTITY, budget, gate, model, OPERATOR, tools } from "../templates/blank";
 import { collect, configFromEnv, listAgents, provisionClientAgents, proxyFetch, upstreamFor } from "./proxy";
 
 describe("upstreamFor", () => {
@@ -127,8 +128,19 @@ describe("listAgents", () => {
 describe("provisionClientAgents", () => {
   const config = { apiKey: "k", baseUrl: "https://x.test", identityId: null, project: "agency" };
   const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
-  /** Named, not "the active one": the mechanism is the blueprint's and must hold for either template. */
-  const crew = TEMPLATES["seo-geo"].crew;
+  /**
+   * Named, not "the active one": the mechanism is the blueprint's, and `blank` declares no crew. The
+   * shape of the retired `seo-geo` trio and its lead (ADR-3010 in usenaive/vetta-mono), as a fixture.
+   */
+  const seat = (name: string, handoffs: AgentDecl["handoffs"]): AgentDecl => ({
+    name, role: name, model, budget, system: `${gate} You are this client's ${name}.`, tools: tools(["web_search"], OPERATOR), handoffs, identity: AGENCY_IDENTITY,
+  });
+  const crew: AgentDecl[] = [
+    seat("seo-writer", ["geo-optimizer", "client-lead"]),
+    seat("geo-optimizer", ["client-lead"]),
+    seat("audit-runner", ["seo-writer", "client-lead"]),
+    seat("client-lead", false),
+  ];
   type Call = [url: URL | RequestInfo, init?: RequestInit | undefined];
   const posted = (impl: { mock: { calls: Call[] } }, match: RegExp) =>
     impl.mock.calls.filter(([url, init]) => init?.method === "POST" && match.test(String(url)));

@@ -60,24 +60,14 @@ export function Settings() {
       />
 
       <div className="list max-w-xl">
-        {/*
-          Which template this dashboard is running, and how to change it — not a switcher. A
-          template is data compiled into this app and its config: switching means editing
-          `templates/index.ts` and running `naive up`, which widens the org (new agents created,
-          old ones left standing) and rebuilds the app. A control here would have to pretend it
-          could do that from the browser, and it cannot.
-        */}
+        {/* Which template this dashboard is running. A specialism is a team added from the Marketplace, not a switch here. */}
         <div className="px-3 py-2.5">
           <div className="font-medium">
             Template <span className="chip chip-plain font-mono">{TEMPLATE_NAME}</span>
           </div>
           <p className="mt-0.5 text-xs text-ink-2">
-            {TEMPLATE.description} It files{" "}
-            {TEMPLATE.kinds.map((k) => k.label.toLowerCase()).join(", ")}. To switch, edit{" "}
-            <span className="font-mono">TEMPLATE</span> in <span className="font-mono">templates/index.ts</span> and run{" "}
-            <span className="font-mono">naive up</span>. Switching only widens: agents the new template declares are
-            created, agents only the old one declared are reported and left alone, and your clients, deliverables and
-            connections are untouched.
+            {TEMPLATE.description} It files {TEMPLATE.kinds.map((k) => k.label.toLowerCase()).join(", ")}. For a specialism, add
+            its team from the Marketplace beside this agency.
           </p>
         </div>
         <div className="px-3 py-2.5">
