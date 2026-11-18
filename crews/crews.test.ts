@@ -319,3 +319,11 @@ describe("the specialisms' own rules", () => {
     expect(readFileSync(`${dir("clients-security")}manual.md`, "utf8")).toContain("Write your scope letter");
   });
 });
+
+// NEW-114: a routine's row in the studio shows its input's first words, and they read "This chat works for no client…".
+it.each(WITH_CREW)("%s opens every routine's input with its work, not the chat's client rule", async (blueprint) => {
+  for (const agent of await seats(blueprint)) {
+    // The row shows about the first 60 characters: at least 40 of them say what the routine does.
+    for (const schedule of agent.schedules ?? []) expect([agent.name, schedule.input.indexOf("This chat works") === -1 || schedule.input.indexOf("This chat works") >= 40]).toEqual([agent.name, true]);
+  }
+});

@@ -237,7 +237,7 @@
           "summary": "Morning pipeline pass",
           "identity": "Agency",
           "budget_micro_usd": 2000000,
-          "input": "Morning pass. This chat works for no client and keeps it that way: it sees the list of contacts and who wrote, not any client's record or mail, so open no contact here. Read your open contacts (each shows when its next step is due) and the new mail. Give each contact whose next step is due, or who wrote, a follow-up chat of its own that says what is due; there you read their timeline and draft the email. Add anyone who wrote and is not on file to the CRM, then give their reply a chat the same way. If fewer than ten are open, find new leads, add each to the CRM, and give each one's first email a chat the same way. Start at most eight chats, the most overdue first."
+          "input": "Morning pass: read your open contacts (each shows when its next step is due) and the new mail. This chat works for no client and keeps it that way: it sees the list of contacts and who wrote, not any client's record or mail, so open no contact here. Give each contact whose next step is due, or who wrote, a follow-up chat of its own that says what is due; there you read their timeline and draft the email. Add anyone who wrote and is not on file to the CRM, then give their reply a chat the same way. If fewer than ten are open, find new leads, add each to the CRM, and give each one's first email a chat the same way. Start at most eight chats, the most overdue first."
         }
       ],
       "handoffs": true
@@ -308,7 +308,7 @@
           "summary": "Monday week ahead",
           "identity": "Agency",
           "budget_micro_usd": 2000000,
-          "input": "Monday. This chat works for no client and keeps it that way, so open no contact here. Read this week's Calendar and your won clients. Give each won client a week chat of its own, where you book what is missing, ask Delivery for what is due this week, and draft the client's weekly update. Start at most eight chats, the clients with the least booked first."
+          "input": "Monday: read this week's Calendar and your won clients. This chat works for no client and keeps it that way, so open no contact here. Give each won client a week chat of its own, where you book what is missing, ask Delivery for what is due this week, and draft the client's weekly update. Start at most eight chats, the clients with the least booked first."
         }
       ],
       "handoffs": true
