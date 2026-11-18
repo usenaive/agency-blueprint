@@ -26,11 +26,7 @@
   "identities": [
     {
       "name": "Client team",
-      "description": "The client team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "clients",
-        "agent": "Client lead"
-      }
+      "description": "The client team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [

@@ -26,16 +26,16 @@ const SPECIALISMS: [string, string[]][] = [
 /**
  * Owner, 2026-11-17 (ADR-3130 in usenaive/vetta-mono): the agency is the company, and its sales serves
  * every team, so a team has no Sales or Marketing of its own. Each keeps one lead named for it, which
- * runs the clients, compiles and asks the one review, and a persona of its own named for the team.
+ * runs the clients, compiles and asks the one review, and a persona of its own named for the team with no inbox.
  */
-const LEADS: Record<string, { title: string; lead: string; inbox: string }> = {
-  clients: { title: "Client team", lead: "Client lead", inbox: "clients" },
-  "clients-advertising": { title: "Advertising team", lead: "Ads lead", inbox: "ads" },
-  "clients-product-design": { title: "Product design team", lead: "Product design lead", inbox: "design" },
-  "clients-recruiting": { title: "Recruiting team", lead: "Recruiting lead", inbox: "recruiting" },
-  "clients-research": { title: "Market research team", lead: "Research lead", inbox: "research" },
-  "clients-security": { title: "Security team", lead: "Security lead", inbox: "security" },
-  "clients-seo-geo": { title: "SEO & GEO team", lead: "SEO & GEO lead", inbox: "seo" },
+const LEADS: Record<string, { title: string; lead: string }> = {
+  clients: { title: "Client team", lead: "Client lead" },
+  "clients-advertising": { title: "Advertising team", lead: "Ads lead" },
+  "clients-product-design": { title: "Product design team", lead: "Product design lead" },
+  "clients-recruiting": { title: "Recruiting team", lead: "Recruiting lead" },
+  "clients-research": { title: "Market research team", lead: "Research lead" },
+  "clients-security": { title: "Security team", lead: "Security lead" },
+  "clients-seo-geo": { title: "SEO & GEO team", lead: "SEO & GEO lead" },
 };
 const leadOf = (blueprint: string) => LEADS[blueprint]!.lead;
 const WITH_CREW = CREWS.filter((name) => name !== "clients-blank");
@@ -82,12 +82,15 @@ describe("every crew", () => {
 
   it.each(WITH_CREW)("%s has no Sales or Marketing, one lead named for the team, and a persona of its own", async (blueprint) => {
     const config = await configOf(blueprint);
-    const { title, lead: name, inbox } = LEADS[blueprint]!;
+    const { title, lead: name } = LEADS[blueprint]!;
     const names = config.agents.map((agent) => agent.name);
     expect(names[0]).toBe(name);
     for (const gone of ["Sales", "Marketing", "Client manager"]) expect(names).not.toContain(gone);
     expect(config.title).toBe(title);
-    expect(config.identities).toEqual([expect.objectContaining({ name: title, inbox: { localpart: inbox, agent: name } })]);
+    expect(config.identities).toEqual([expect.objectContaining({ name: title })]);
+    // Security review: outside mail must never wake a seat that can read client files. The agency's sales holds the
+    // company's inbox, so a team routes no inbox at all — not to its lead, not to any seat.
+    for (const identity of config.identities) expect([identity.name, identity.inbox, identity.phone]).toEqual([identity.name, undefined, undefined]);
     for (const agent of config.agents) {
       if (agent.identity !== undefined) expect([agent.name, agent.identity]).toEqual([agent.name, title]);
       for (const one of agent.schedules ?? []) expect([agent.name, one.identity]).toEqual([agent.name, title]);
@@ -425,7 +428,7 @@ it.each(WITH_CREW)("%s opens every routine's input with its work, not the chat's
  * in the company: the team's Sales against the agency's `sales`, its persona "Agency" against `agency`, and a second
  * team's seats against the first's. So no name is declared twice across the agency and its teams.
  */
-it("declares no agent, persona or inbox name that the agency or another team declares", async () => {
+it("declares no agent or persona name that the agency or another team declares", async () => {
   const agency = await loadConfig(fileURLToPath(new URL("..", import.meta.url)));
   if (!agency.ok) throw new Error(agency.message);
   const named = (config: Config) => [
@@ -435,17 +438,11 @@ it("declares no agent, persona or inbox name that the agency or another team dec
     ...config.kept.agents,
   ];
   const holder = new Map(named(agency.config).map((name) => [name.toLowerCase(), "agency"]));
-  const inboxes = new Map<string, string>();
   for (const blueprint of WITH_CREW) {
     const config = await configOf(blueprint);
     for (const name of named(config)) {
       expect([blueprint, name, holder.get(name.toLowerCase())]).toEqual([blueprint, name, undefined]);
       holder.set(name.toLowerCase(), blueprint);
-    }
-    for (const { inbox } of config.identities) {
-      if (inbox === undefined) continue;
-      expect([blueprint, inbox.localpart, inboxes.get(inbox.localpart)]).toEqual([blueprint, inbox.localpart, undefined]);
-      inboxes.set(inbox.localpart, blueprint);
     }
   }
 });

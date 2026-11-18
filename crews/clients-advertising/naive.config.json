@@ -33,11 +33,7 @@
   "identities": [
     {
       "name": "Advertising team",
-      "description": "The advertising team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "ads",
-        "agent": "Ads lead"
-      }
+      "description": "The advertising team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [

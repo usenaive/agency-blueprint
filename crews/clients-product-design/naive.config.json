@@ -33,11 +33,7 @@
   "identities": [
     {
       "name": "Product design team",
-      "description": "The product design team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "design",
-        "agent": "Product design lead"
-      }
+      "description": "The product design team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [

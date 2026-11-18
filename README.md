@@ -343,8 +343,8 @@ the ids companies already hold are unchanged:
 
 The agency is the company and its sales serves every team, so a team has no Sales or Marketing
 of its own (owner, 2026-11-17; ADR-3130 in usenaive/vetta-mono). Every team is one lead named for
-it ("Recruiting lead", "SEO & GEO lead", "Client lead", …) and its specialists, with a persona and
-an inbox of its own named for the team. A specialist works one
+it ("Recruiting lead", "SEO & GEO lead", "Client lead", …) and its specialists, with a persona named for
+the team and no inbox: outside mail reaches the agency's sales, never a seat that reads client files. A specialist works one
 client per chat, saves each piece as a file tagged `client:<ctc_ id>` and `kind:<kind>` (SEO &
 GEO pieces also `seo`, so they show in the SEO & GEO app), and hands it to the team's lead,
 which puts each job in front of you once, in one review. No team declares a name the agency or

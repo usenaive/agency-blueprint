@@ -33,11 +33,7 @@
   "identities": [
     {
       "name": "SEO & GEO team",
-      "description": "The sEO & GEO team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "seo",
-        "agent": "SEO & GEO lead"
-      }
+      "description": "The sEO & GEO team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [

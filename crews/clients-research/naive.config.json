@@ -33,11 +33,7 @@
   "identities": [
     {
       "name": "Market research team",
-      "description": "The market research team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "research",
-        "agent": "Research lead"
-      }
+      "description": "The market research team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [

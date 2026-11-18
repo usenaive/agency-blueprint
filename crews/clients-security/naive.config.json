@@ -34,11 +34,7 @@
   "identities": [
     {
       "name": "Security team",
-      "description": "The security team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "security",
-        "agent": "Security lead"
-      }
+      "description": "The security team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [

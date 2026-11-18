@@ -33,11 +33,7 @@
   "identities": [
     {
       "name": "Recruiting team",
-      "description": "The recruiting team: who its clients hear from. New business is the agency's.",
-      "inbox": {
-        "localpart": "recruiting",
-        "agent": "Recruiting lead"
-      }
+      "description": "The recruiting team: who its clients hear from. New business is the agency's."
     }
   ],
   "mini_apps": [
