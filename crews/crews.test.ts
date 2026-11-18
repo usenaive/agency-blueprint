@@ -96,6 +96,15 @@ describe("every crew", () => {
       for (const one of agent.schedules ?? []) expect([agent.name, one.identity]).toEqual([agent.name, title]);
     }
     expect(JSON.stringify(config.agents)).not.toMatch(/\b(Client manager|Sales|Marketing)\b/);
+    // ADR-3134: leads draft, the agency sends. A lead holds no mail tool (its persona has no inbox) and hands each
+    // draft to the agency's `inbox` seat, the one seat with the company's address; that send always asks.
+    const head = config.agents.find((agent) => agent.name === name)!;
+    for (const tool of ["email.inboxes", "email.read", "email.send"]) expect([name, tool, head.tools?.configs[tool]]).toEqual([name, tool, undefined]);
+    expect(head.system).toContain("You send no email yourself: the agency's inbox seat sends from the company's address.");
+    expect(head.system).toContain("hand it to inbox with send_to_agent");
+    // The engine refuses a handoffs list naming a seat outside this project, so the lead's reach is the company's.
+    expect(head.handoffs).toBe(true);
+    for (const agent of config.agents) expect([agent.name, agent.tools?.configs["email.read"]]).toEqual([agent.name, undefined]);
   });
 
   /** §64. A shell is a way out no card can read, so a seat that handles people's data holds none. */

@@ -69,7 +69,7 @@ export interface TemplateVocabulary {
 }
 
 const blank: TemplateVocabulary = {
-  description: "A working agency with no specialism: seven agents — site, sales, delivery, content, revisions, research, proposals — and generic deliverables.",
+  description: "A working agency with no specialism: eight agents — site, sales, delivery, content, revisions, research, proposals, inbox — and generic deliverables.",
   kinds: [
     { id: "post", label: "Post", description: "A published piece — blog, newsletter or social." },
     { id: "page", label: "Page", description: "A page on the client's own site — landing, service or product." },
@@ -82,7 +82,7 @@ const blank: TemplateVocabulary = {
     noActiveClients: "No clients yet — a deal marked won on the CRM becomes one, onboarded with its workspace and team.",
     agentsSubtitle: "Every agent working for this agency.",
     noCrew:
-      "No agents of this client's own. This template runs every client through the agency's own seven; a template with a per-client team provisions one at onboarding.",
+      "No agents of this client's own. This template runs every client through the agency's own eight; a template with a per-client team provisions one at onboarding.",
   },
   site: {
     tagline: "The work, planned and shown before it ships.",

@@ -24,6 +24,7 @@ const ROSTER = [
   ["content-reviser", "Revisions"],
   ["gap-researcher", "Research"],
   ["proposal-writer", "Proposals"],
+  ["inbox", "Mail"],
 ];
 
 const all = Object.values(TEMPLATES);
@@ -50,7 +51,7 @@ describe("every template of this blueprint", () => {
     expect(TEMPLATES[TEMPLATE].name).toBe(TEMPLATE);
   });
 
-  it.each(all)("$name declares the seven that run an agency, with the gate in every prompt", (template) => {
+  it.each(all)("$name declares the eight that run an agency, with the gate in every prompt", (template) => {
     expect(template.agents.map((a) => [a.name, a.role])).toEqual(ROSTER);
     for (const agent of [...template.agents, ...template.crew]) {
       expect(agent.system).toMatch(/never send or publish anything yourself/);
@@ -64,7 +65,7 @@ describe("every template of this blueprint", () => {
    * the answers are the client's), a two-sentence public description, a private prompt of 150–400
    * words, skills from the platform catalogue only, and a day-one intake capped at $2.
    */
-  it.each(all)("$name writes each of the seven to the plan's shape", (template) => {
+  it.each(all)("$name writes each of the eight to the plan's shape", (template) => {
     for (const agent of template.agents) {
       const at = agent.name;
       expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
@@ -97,7 +98,7 @@ describe("every template of this blueprint", () => {
     expect(intake.indexOf("fifteen prospects")).toBeLessThan(intake.indexOf("ask_operator"));
     expect(intake).toMatch(/crm\.write add \(stage lead, source outreach/);
     expect(intake).toMatch(/ask for advice or an introduction rather than pitching; never claim a result/);
-    // The daily inbox pass files each new reply with where it came from.
+    // The daily pass gives each reply the inbox seat logged the source it came from.
     const inbox = sales.schedules?.[0]?.input ?? "";
     expect(inbox).toMatch(/source referral when an existing client.*"Referred by <client name> \(<cli_ id>\)".*source network.*otherwise outreach/);
     // A deal that signs becomes a client in the same step, never by a later click.
@@ -150,9 +151,9 @@ describe("connected accounts", () => {
     Object.entries(agent.tools?.configs ?? {}).filter(([name]) => name.includes(".") && !name.startsWith("dashboard.") && !name.startsWith("crm."));
 
   it.each(all)("$name grants connected accounts only to agents that consume them", (template) => {
-    // Only the mailbox-facing seats.
+    // Only the mail seats: the inbox reads and sends, sales and the client manager only send.
     for (const agent of template.agents) {
-      const outward = agent.name === "sales" || agent.name === "client-manager";
+      const outward = ["sales", "client-manager", "inbox"].includes(agent.name);
       expect([agent.name, connectionTools(agent).length > 0]).toEqual([agent.name, outward]);
     }
   });
@@ -253,9 +254,9 @@ describe("blank", () => {
     expect(prose(blank)).not.toMatch(/\bSEO\b|\bGEO\b|search engine|generative-engine|SERP|schema|llms\.txt|citation/i);
   });
 
-  it("declares no per-client crew — the agency's own seven run every client", () => {
+  it("declares no per-client crew — the agency's own eight run every client", () => {
     expect(blank.crew).toEqual([]);
-    expect(blank.words.noCrew).toMatch(/agency's own seven/);
+    expect(blank.words.noCrew).toMatch(/agency's own eight/);
   });
 
   it("files generic deliverable kinds", () => {
@@ -300,7 +301,7 @@ describe("schedules", () => {
   });
   it.each(all)("$name says what every fire comes to, in a few plain words for the launch card", (template) => {
     expect(declared(template).map(([agent, schedule]) => [agent, schedule.summary])).toEqual([
-      ["sales", "Inbox and new leads"],
+      ["sales", "Replies and new leads"],
       ["client-manager", "Client check-in"],
       ["content-writer", "New blog post"],
       ["content-reviser", "Fix weak pages"],

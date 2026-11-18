@@ -2,10 +2,10 @@
  * `blank` — a working agency with no specialism, and the core every other template of this
  * blueprint is a delta on.
  *
- * Everything here is data: the seven-agent crew of `templates/agents.ts` with generic prompts,
+ * Everything here is data: the eight-agent crew of `templates/agents.ts` with generic prompts,
  * generic deliverable kinds, the setup questions whose answers the crew reads first, and a
  * demo seed that is plainly a demo. There is no per-client crew: this agency runs every client
- * through its own seven, which is a complete agency and the safe thing to get by accident
+ * through its own eight, which is a complete agency and the safe thing to get by accident
  * (`BLUEPRINTS.agency.default`).
  *
  * The demo rows live in this module and never reach the browser bundle (`src/no-seed.test.ts`): a
