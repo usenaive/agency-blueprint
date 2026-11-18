@@ -115,6 +115,14 @@ it("caps each research analyst's web reading per card, across its runs, and the 
   expect((await seat("clients-research", "Competitor analyst")).system).toContain("tear down the five players");
 });
 
+// NEW-151/NEW-152 (round 6): a capped analyst blocked its card, the CEO asked to rewrite its setup to lift the cap, then
+// carded the same reading to the Desk researcher; the blocked card stalled the compile behind eight questions.
+it("tells every research analyst, and the CEO that reads its setup, that the cap is fixed and a spent cap closes the card", async () => {
+  for (const name of ["Desk researcher", "Competitor analyst", "Voice-of-customer analyst"]) {
+    expect([name, (await seat("clients-research", name)).system]).toEqual([name, expect.stringContaining("The cap is the owner's fixed cost policy: no agent, the CEO included, changes it in your setup or sends the same reading to another agent. When it is spent the card is done, not blocked: close it with the file and its gaps marked.")]);
+  }
+});
+
 describe("the Client agency (clients)", () => {
   it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
     const config = await configOf("clients");
