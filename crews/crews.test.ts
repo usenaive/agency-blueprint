@@ -107,6 +107,8 @@ describe("every crew", () => {
     // The engine refuses a handoffs list naming a seat outside this project, so a draft reaches inbox through the
     // CEO, whom every policy but false reaches (§28.12); no seat widens to the whole company (security review).
     expect(head.system).toContain('hand it to the CEO with send_to_agent, wait false, in one message that starts "For inbox to send:"');
+    // QA r10 NEW-347: the Ads lead opened status notes with "For inbox to send: no email - status note only".
+    expect(head.system).toContain("That opening is for an email draft alone: a status note or any other message to the CEO never starts with it");
     for (const agent of config.agents) expect([agent.name, Array.isArray(agent.handoffs)]).toEqual([agent.name, true]);
     for (const agent of config.agents) expect([agent.name, agent.tools?.configs["email.read"]]).toEqual([agent.name, undefined]);
   });
