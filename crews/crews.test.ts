@@ -156,6 +156,14 @@ it.each(WITH_CREW)("%s lead re-reads the cards each wake, has no saved piece red
   expect(system).toContain("so save the file, ask the review below, and only then move the card to done");
 });
 
+// QA r11 NEW-388: the Ads lead, with no shell, wrote merge.py and merge.sh until it ran out of steps.
+it.each(WITH_CREW)("%s lead compiles with read and write, since it holds no shell", async (blueprint) => {
+  const head = await lead(blueprint);
+  expect(permission(head, "bash")).toBe("deny");
+  expect(head.system).toContain("You hold no shell, so write no script to merge them");
+  expect(head.system).toContain("read each piece with read and write the whole file yourself with write.");
+});
+
 // QA r10 NEW-349: the Designer, with no shell, wrote the same ImageMagick script 16 times, then paid for an image edit.
 it("has the ads Designer put a headline in the image prompt, since it holds no shell", async () => {
   const designer = await seat("clients-advertising", "Designer");
