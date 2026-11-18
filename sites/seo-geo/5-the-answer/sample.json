@@ -5,7 +5,7 @@
   "audience": "Professional and specialist service firms in Toronto and across Ontario: clinics, consultancies, engineering and design studios, with one office or several.",
   "pricing_note": "One flat monthly fee, agreed after a free review of your site and how AI assistants describe you today. Month to month after the first three; you can stop whenever you like.",
   "city": "Toronto",
-  "contact_email": "ask@answerable.ca",
+  "contact_email": "ask@answerable.ca", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "Answer pages", "description": "Pages that answer the questions your clients actually ask, in your voice, with the specifics an AI assistant needs to quote you accurately." },

@@ -32,6 +32,10 @@
     "year": {
       "maxLength": 4,
       "description": "Copyright year, four digits."
+    },
+    "form_action": {
+      "maxLength": 200,
+      "description": "Where the shared contact form (`form.html`) posts: the platform's form address for the live site, or empty for no form (the mailto: links stay). Only ever inside {{#if form_action}}."
     }
   },
   "lists": {

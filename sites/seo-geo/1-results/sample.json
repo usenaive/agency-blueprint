@@ -5,7 +5,7 @@
   "audience": "Plumbers, dentists, physios, law firms and other local service businesses across Colorado and the Mountain West, usually with one to five locations.",
   "pricing_note": "A flat monthly fee agreed after a free site check, with a three-month minimum. The first month is the audit and the fixes; content and reporting follow every month after.",
   "city": "Denver",
-  "contact_email": "hello@plainviewsearch.com",
+  "contact_email": "hello@plainviewsearch.com", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "Technical fixes", "description": "Crawl errors, slow pages, broken links, missing titles and confused site structure, found and fixed so every page you want seen can be read and indexed." },

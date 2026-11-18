@@ -5,7 +5,7 @@
   "audience": "Independent professional firms in Scotland and the north of England: accountants, architects, solicitors, surveyors and specialist consultancies with five to fifty staff.",
   "pricing_note": "A fixed monthly fee, quoted after a one-hour review of your site and how AI assistants describe you today. No long contract: three months to start, then monthly.",
   "city": "Edinburgh",
-  "contact_email": "ask@footnotesearch.co.uk",
+  "contact_email": "ask@footnotesearch.co.uk", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "AI answer check", "description": "We ask the major AI assistants the questions your buyers ask, record what they say about you and your competitors, and show you where you are missing or misdescribed." },
