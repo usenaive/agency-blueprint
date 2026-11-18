@@ -1,6 +1,6 @@
-# 📖 Recruiting agency: Operator's Manual
+# 📖 Recruiting team: Operator's Manual
 
-> 👋 This is how you run your recruiting agency with its team. Start with Setup: three answers, then four things on day one.
+> 👋 This is how you run your recruiting team. Start with Setup: three answers, then three things on day one.
 
 ## 🧭 Overview
 
@@ -10,7 +10,7 @@ Nothing reaches a candidate without your yes. Every email to a client, a lead or
 
 **You:** say what you recruit for, where, and how you charge. Approve every message and every shortlist that goes to a client. Run the interviews and close the hire.
 
-**The team:** works the client pipeline each weekday morning, plans each client's week every Monday, and writes role briefs, sources, screens and drafts outreach for each open role.
+**The team:** plans each client's week every Monday, and writes role briefs, sources, screens and drafts outreach for each open role.
 
 ## 🛠️ Setup
 
@@ -23,7 +23,6 @@ You answer three questions. Every agent reads them before each run.
 On day one:
 
 - [ ] Connect your email domain, so the team writes from your address.
-- [ ] Read the first ten client leads. Mark the good ones and say why the others miss.
 - [ ] Add each client you already have and their open roles to the CRM.
 - [ ] Read the first role brief before any sourcing starts. Correct it.
 
@@ -31,27 +30,25 @@ On day one:
 
 ## 🤝 Agent team configuration
 
-- **Sales** finds companies that are hiring for roles you fill, writes a short first email and books the first call. Every email waits for your yes.
-- **Client manager** runs each client: the kickoff, the weekly update on each role and the renewal. It drafts and asks before it sends.
+- **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the recruiting lead.
+- **Recruiting lead** runs each client: the kickoff, the weekly update on each role and the renewal. It drafts and asks before it sends.
 - **Sourcer** turns each open role into a brief, then finds people who already do that work. It records where it found each person.
 - **Screener** scores each shortlist against the brief, the same way for everyone, and writes the interview kit: the questions and what a strong answer sounds like.
 - **Outreach writer** drafts a first message and two follow-ups for each person the screener put forward. Each one is personal to the person's work. Each waits for your yes.
-- **Marketing** writes your posts and case studies. Give it a real placement with the client's yes. It never invents one.
 
 ## 🗓️ Scheduling & automation
 
-- **Each weekday morning:** the pipeline pass. Sales finds hiring companies, writes follow-ups and moves leads in the CRM.
-- **Every Monday:** the week ahead. The client manager plans each client's week and drafts the role updates.
+- **Every Monday:** the week ahead. The recruiting lead plans each client's week and drafts the role updates.
 
 Role work runs when a card asks for it. For each open role:
 
-1. You or the client manager open a card: the role, the client and the deadline.
+1. You or the recruiting lead open a card: the role, the client and the deadline.
 2. The sourcer writes the brief. You approve it.
 3. The sourcer finds people and files the list.
 4. The screener scores them and files the shortlist and the interview kit.
 5. The outreach writer drafts messages for the people you approve.
 
-The client manager compiles the finished brief, shortlist, kit and sequence into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The team does only the steps the card asks for.
+The recruiting lead compiles the finished brief, shortlist, kit and sequence into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The team does only the steps the card asks for.
 
 Each timer and each task has a cap. A run that would cost more stops instead.
 
@@ -90,7 +87,7 @@ Write a clear rule for a hire who leaves early, such as a free replacement withi
 
 1. **Own one niche.** One kind of role in one market. Briefs and shortlists get faster each time.
 2. **Keep a bench.** With their yes, keep strong candidates you didn't place in the CRM for the next role.
-3. **Ask for the next role.** After each hire, the client manager asks what the client hires next.
+3. **Ask for the next role.** After each hire, the recruiting lead asks what the client hires next.
 4. **Write case studies** with the client's yes.
 5. **Add a market or a level** only once the first one runs steadily.
 

@@ -1,6 +1,6 @@
-# 📖 Product testing agency: Operator's Manual
+# 📖 Product testing team: Operator's Manual
 
-> 👋 This is how you run your testing agency with its team. Start with Setup: three answers, then three things on day one.
+> 👋 This is how you run your product testing team. Start with Setup: three answers, then two things on day one.
 
 ## 🧭 Overview
 
@@ -10,7 +10,7 @@ Every browser session waits for your yes, with the address on its card. Every em
 
 **You:** say what kinds of products your clients ship and which journeys matter. Get written permission and scope from each client. Approve each test session and each report.
 
-**The team:** works the pipeline each weekday morning, plans each client's week every Monday, walks each journey as a new customer and then tries the odd paths, and writes each gap with steps, what happened and what should have.
+**The team:** plans each client's week every Monday, walks each journey as a new customer and then tries the odd paths, and writes each gap with steps, what happened and what should have.
 
 ## 🛠️ Setup
 
@@ -24,29 +24,27 @@ On day one:
 
 - [ ] Connect your email domain.
 - [ ] Write your scope letter: what you test, where, when, with which test accounts, and what you never do.
-- [ ] Read the first ten leads Sales finds. Mark the good ones.
 
 > ⚠️ Never test a product without the owner's written permission and an agreed scope. Use test accounts the client gives you. Never try to reach other people's data, never overload a service, and stop at once if you find something that harms real users. Report it to the client first.
 
 ## 🤝 Agent team configuration
 
-- **Sales and Client manager.** Sales finds companies with journeys worth testing and books calls. The client manager runs each client, compiles each job's pieces into one report for your review, sends it after your yes and books the retest. It books a call with a client only when you or the CEO ask for one. Both ask before any email.
+- **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the security lead.
+- **Security lead.** It runs each client, compiles each job's pieces into one report for your review, sends it after your yes and books the retest. It books a call with a client only when you or the CEO ask for one. It asks before any email goes out.
 - **Customer tester** uses the product the way a new customer would, step by step, and reports where it gets hard: unclear words, dead ends, slow steps, broken pages. Each session asks you first.
 - **Edge-case tester** pushes on the journeys the customer tester walked: odd inputs, odd orders, back buttons, broken states. It stays inside the scope letter. Each session asks you first.
-- **Marketing** writes your agency's own posts. Never name a client's gap in public.
 
 ## 🗓️ Scheduling & automation
 
-- **Each weekday morning:** the pipeline pass. Sales works the leads.
-- **Every Monday:** the week ahead. The client manager plans each client's week.
+- **Every Monday:** the week ahead. The security lead plans each client's week.
 
 Testing runs when a card asks for it, and each browser session waits for your yes. For each journey:
 
 1. You write the journey and the scope on a card.
 2. The customer tester walks it and files what it found.
 3. The edge-case tester pushes on the same journey, when the card asks for edge cases.
-4. The client manager compiles the job's pieces into one report once every card is done. You review that report. It waits in Needs you, and the CEO tells you in your chat.
-5. The client manager sends it and books a retest.
+4. The security lead compiles the job's pieces into one report once every card is done. You review that report. It waits in Needs you, and the CEO tells you in your chat.
+5. The security lead sends it and books a retest.
 
 The team never tests on its own. There is no timer for testing, so nothing touches a client's product unless a card asks for it and you approve the session.
 
