@@ -376,11 +376,17 @@
           },
           "web_search": {
             "enabled": true,
-            "permission": "allow"
+            "permission": "allow",
+            "config": {
+              "max_per_card": 8
+            }
           },
           "web_fetch": {
             "enabled": true,
-            "permission": "allow"
+            "permission": "allow",
+            "config": {
+              "max_per_card": 10
+            }
           },
           "crm.read": {
             "enabled": true,
@@ -472,11 +478,17 @@
           },
           "web_search": {
             "enabled": true,
-            "permission": "allow"
+            "permission": "allow",
+            "config": {
+              "max_per_card": 8
+            }
           },
           "web_fetch": {
             "enabled": true,
-            "permission": "allow"
+            "permission": "allow",
+            "config": {
+              "max_per_card": 10
+            }
           },
           "crm.read": {
             "enabled": true,
@@ -568,11 +580,17 @@
           },
           "web_search": {
             "enabled": true,
-            "permission": "allow"
+            "permission": "allow",
+            "config": {
+              "max_per_card": 8
+            }
           },
           "web_fetch": {
             "enabled": true,
-            "permission": "allow"
+            "permission": "allow",
+            "config": {
+              "max_per_card": 10
+            }
           },
           "crm.read": {
             "enabled": true,

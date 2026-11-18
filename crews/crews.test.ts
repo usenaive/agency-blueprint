@@ -133,6 +133,15 @@ it("counts no refused web call against the cap, and lets no card text lift it", 
   }
 });
 
+// NEW-151 (round 8): the cap was prompt text only, and 3 runs on one card made 19 searches and 19 fetches. The platform
+// books each analyst's reads on the card and refuses past the cap (vetta-mono ADR-3038), from this config.
+it("gives every research analyst the per-card web cap as config the platform enforces", async () => {
+  for (const name of ["Desk researcher", "Competitor analyst", "Voice-of-customer analyst"]) {
+    const configs = (await seat("clients-research", name)).tools?.configs ?? {};
+    expect([name, configs["web_search"]?.config, configs["web_fetch"]?.config]).toEqual([name, { max_per_card: 8 }, { max_per_card: 10 }]);
+  }
+});
+
 describe("the Client agency (clients)", () => {
   it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
     const config = await configOf("clients");
