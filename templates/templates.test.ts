@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
 import { TEMPLATES } from "./active.ts";
-import { AGENCY_IDENTITY, AGENCY_TIMEZONE, PREAMBLE } from "./agents.ts";
+import { AGENCY_IDENTITY, AGENCY_TIMEZONE, NOT_A_CONTACT, PREAMBLE } from "./agents.ts";
 import { blank } from "./blank.ts";
 import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 
@@ -128,6 +128,15 @@ describe("every template of this blueprint", () => {
     expect(writer.tools?.configs["publish_file"]).toEqual({ enabled: true, permission: "allow" });
     expect(writer.tools?.configs["ask_operator"]).toEqual({ enabled: true, permission: "ask" });
     expect(writer.system).toMatch(/publish_file, its whole text as content.*client:<its ctc_ id> and kind:proposal.*call ask_operator once.*Approve or Changes needed.*One file and one ask per proposal, then stop/);
+  });
+
+  // NEW-319: two day-one seats each added the agency itself to the CRM while filing on its own record.
+  it.each(all)("$name never makes the agency a CRM contact where it files on its own record", (template) => {
+    for (const agent of template.agents) {
+      const writesCrm = agent.tools?.configs["crm.write"] !== undefined;
+      const ownRecord = /agency's own record/.test(`${agent.system} ${agent.intake?.message ?? ""}`);
+      if (writesCrm && ownRecord) expect([agent.name, `${agent.system} ${agent.intake?.message}`]).toEqual([agent.name, expect.stringContaining(NOT_A_CONTACT)]);
+    }
   });
 
   it.each(all)("$name seeds a demo that says it is one, and files only kinds it declares", (template) => {
