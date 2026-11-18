@@ -40,6 +40,7 @@ To change a seat's job, tell the CEO in plain words. To change what a seat may d
 
 The team works on timers. Between them, nothing runs and nothing spends.
 
+- **When you add the team:** the client lead meets your clients. It books a kickoff for each client already in the CRM, or asks you once which clients you already have.
 - **Every Monday:** the week ahead. The client lead plans each client's week and drafts the updates.
 
 Only when you ask:

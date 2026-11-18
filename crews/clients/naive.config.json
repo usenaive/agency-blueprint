@@ -312,7 +312,14 @@
       ]
     }
   ],
-  "tasks": [],
+  "tasks": [
+    {
+      "key": "meet-your-clients",
+      "title": "Meet your clients",
+      "assignee": "Client lead",
+      "body": "Read project_context, then the CRM's won contacts (crm.read stage won). This card works for no client, so open no contact here. For each won client with no kickoff on the Calendar, start a chat of its own (send_to_agent to self, wait false, client its ctc_ id, handoff_key kickoff:<that ctc_ id>) that books the kickoff and writes on its timeline what was promised. If the CRM holds no won client yet, turn the panel to the CRM with open_panel and ask the person once with ask_operator for the clients they already have: name, company, email, and what the agency does for them. Add each one named with crm.write add at stage won and give it its own chat the same way. If they have none, say in one line that new clients come from the agency's sales, and find no leads yourself. Then move this card to done with one line on what you did."
+    }
+  ],
   "docs": [
     {
       "name": "📖 Operator's Manual.md",
