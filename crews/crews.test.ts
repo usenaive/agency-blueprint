@@ -101,9 +101,10 @@ describe("every crew", () => {
     const head = config.agents.find((agent) => agent.name === name)!;
     for (const tool of ["email.inboxes", "email.read", "email.send"]) expect([name, tool, head.tools?.configs[tool]]).toEqual([name, tool, undefined]);
     expect(head.system).toContain("You send no email yourself: the agency's inbox seat sends from the company's address.");
-    expect(head.system).toContain("hand it to inbox with send_to_agent");
-    // The engine refuses a handoffs list naming a seat outside this project, so the lead's reach is the company's.
-    expect(head.handoffs).toBe(true);
+    // The engine refuses a handoffs list naming a seat outside this project, so a draft reaches inbox through the
+    // CEO, whom every policy but false reaches (§28.12); no seat widens to the whole company (security review).
+    expect(head.system).toContain('hand it to the CEO with send_to_agent, wait false, in one message that starts "For inbox to send:"');
+    for (const agent of config.agents) expect([agent.name, Array.isArray(agent.handoffs)]).toEqual([agent.name, true]);
     for (const agent of config.agents) expect([agent.name, agent.tools?.configs["email.read"]]).toEqual([agent.name, undefined]);
   });
 
@@ -132,8 +133,8 @@ describe("every crew", () => {
     const all = await seats(blueprint);
     const names = new Set(all.map((agent) => agent.name));
     for (const agent of all) {
-      // `true` is the whole crew (the Client agency's four); a list names the seats a specialism's chain reaches.
-      expect([agent.name, agent.handoffs === true || Array.isArray(agent.handoffs)]).toEqual([agent.name, true]);
+      // A list names the seats a team's chain reaches; never `true`, the whole company (security review, ADR-3134).
+      expect([agent.name, Array.isArray(agent.handoffs)]).toEqual([agent.name, true]);
       for (const name of Array.isArray(agent.handoffs) ? agent.handoffs : []) expect([agent.name, names.has(name)]).toEqual([agent.name, true]);
       for (const ref of agent.skills ?? []) expect(ref).toMatch(/^naive\/[a-z0-9-]+$/);
     }

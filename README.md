@@ -85,9 +85,9 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 | `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_client, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
 | `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_client, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
 | `proposal-writer` | Proposals | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers, priced from the pricing answer; with none, scoped without prices until the operator answers `ask_operator`. |
-| `inbox` | Mail | `email.inboxes`, `email.read`, `crm.write*`, `email.send*` | `naive/crm-hygiene` | — (woken by each email to `hello@`) | Logs any mail already in the inbox on its senders' CRM timelines. Owns `hello@`, so a stranger's email wakes a seat with no CRM read, dashboard read, web, hand-off or file tool; sales and the client manager read the replies it logs. Sends a team lead's draft only on your yes (ADR-3134). |
+| `inbox` | Mail | `email.inboxes`, `email.read`, `crm.write*`, `email.send*` (and nothing else) | — | — (woken by each email to `hello@`) | Logs any mail already in the inbox on its senders' CRM timelines. Owns `hello@`, so a stranger's email wakes a seat with no setup answers, skill, CRM or dashboard read, web, hand-off, file tool or door to more tools; sales and the client manager read the replies it logs. Sends only a team lead's draft the CEO passes it, on your yes (ADR-3134). |
 
-Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
+Every agent but `inbox` also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
 `ask_operator*` and `request_tools*`. No agent holds `approve_post`, `start_agent_session` or
 `social.post`: approving, spending and publishing stay with you.
 

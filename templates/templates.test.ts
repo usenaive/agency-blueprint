@@ -68,11 +68,13 @@ describe("every template of this blueprint", () => {
   it.each(all)("$name writes each of the eight to the plan's shape", (template) => {
     for (const agent of template.agents) {
       const at = agent.name;
-      expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, true]);
+      // The inbox seat reads no setup answers and no skill (ADR-3134): mail is a stranger's, so it holds nothing else to read.
+      const inbox = at === "inbox";
+      expect([at, agent.system?.startsWith(PREAMBLE)]).toEqual([at, !inbox]);
       expect([at, agent.description?.match(/[.!?](\s|$)/g)?.length]).toEqual([at, 2]);
       const n = words(agent.system ?? "");
       expect([at, n >= 150 && n <= 400]).toEqual([at, true]);
-      expect([at, (agent.skills ?? []).length > 0]).toEqual([at, true]);
+      expect([at, (agent.skills ?? []).length > 0]).toEqual([at, !inbox]);
       for (const ref of agent.skills ?? []) expect([at, ref]).toEqual([at, expect.stringMatching(/^naive\/[a-z0-9-]+(@\d+)?$/)]);
       expect([at, agent.intake?.budget_micro_usd]).toEqual([at, 20_000_000]);
       for (const schedule of agent.schedules ?? []) expect([at, Number.isInteger(schedule.budget_micro_usd)]).toEqual([at, true]);
