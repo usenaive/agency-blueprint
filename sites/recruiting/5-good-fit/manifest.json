@@ -59,8 +59,8 @@
     "specialties[3]",
     "specialties[4]",
     "specialties[5]",
-    "tagline",
-    "year", "form_action"
+    "year",
+    "form_action"
   ],
   "jury": {
     "critic": {
