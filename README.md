@@ -332,19 +332,23 @@ the ids companies already hold are unchanged:
 
 | Directory | Installs as | What it is |
 | --- | --- | --- |
-| `crews/clients/` | `clients/agency` | Client agency: Sales, Client manager, Delivery, Marketing |
+| `crews/clients/` | `clients/agency` | Client team: Client lead, Delivery |
 | `crews/clients-blank/` | `clients-blank/agency` | The same apps with no crew |
 | `crews/clients-advertising/` | `clients-advertising/agency` | Advertising team |
 | `crews/clients-recruiting/` | `clients-recruiting/agency` | Recruiting team |
 | `crews/clients-research/` | `clients-research/agency` | Market research team |
 | `crews/clients-security/` | `clients-security/agency` | Security testing team |
 | `crews/clients-seo-geo/` | `clients-seo-geo/agency` | SEO & GEO team: Audit runner, SEO writer, GEO optimizer |
-| `crews/clients-product-design/` | `clients-product-design/agency` | Product design team: Designer, Engineer, Visualizer |
+| `crews/clients-product-design/` | `clients-product-design/agency` | Product design team: Product designer, Engineer, Visualizer |
 
-Every team is Sales, a Client manager, its specialists and Marketing. A specialist works one
+The agency is the company and its sales serves every team, so a team has no Sales or Marketing
+of its own (owner, 2026-11-17; ADR-3130 in usenaive/vetta-mono). Every team is one lead named for
+it ("Recruiting lead", "SEO & GEO lead", "Client lead", …) and its specialists, with a persona named for
+the team and no inbox: outside mail reaches the agency's sales, never a seat that reads client files. A specialist works one
 client per chat, saves each piece as a file tagged `client:<ctc_ id>` and `kind:<kind>` (SEO &
-GEO pieces also `seo`, so they show in the SEO & GEO app), and hands it to the Client manager,
-which puts each job in front of you once, in one review. No seat makes up an identity or
+GEO pieces also `seo`, so they show in the SEO & GEO app), and hands it to the team's lead,
+which puts each job in front of you once, in one review. No team declares a name the agency or
+another team declares, so a company adds any of them beside the agency with no name prefix. No seat makes up an identity or
 deceives a real person or company.
 
 Each directory is a `naive.config.json` and its Operator's Manual (`manual.md`); `crews/crews.test.ts`

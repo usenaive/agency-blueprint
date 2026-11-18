@@ -1,6 +1,6 @@
 # 📖 Product design team: Operator's Manual
 
-> 👋 This is how you run product design work with this team. Start with Setup: three answers, then three things on day one.
+> 👋 This is how you run product design work with this team. Start with Setup: three answers, then two things on day one.
 
 ## 🧭 Overview
 
@@ -8,11 +8,11 @@ This team designs physical products for your clients. It turns a brief into file
 
 You add it to a company you already have, beside any other team. The CRM, the Calendar, the Ads app and the SEO & GEO app are shared with every other team in the company.
 
-Every email waits for your yes. Every job reaches you once, in one review from the Client manager, before a client sees it. Every video waits for your yes before it is made.
+Every email waits for your yes. Every job reaches you once, in one review from the Product design lead, before a client sees it. Every video waits for your yes before it is made.
 
 **You:** say what you design, for whom, and what must be buildable. Send briefs. Approve each job before a client sees it.
 
-**The team:** works the pipeline each weekday morning, plans each client's week every Monday, and makes looks, parts, pictures and videos.
+**The team:** plans each client's week every Monday, and makes looks, parts, pictures and videos.
 
 > 💡 A brief with sizes in millimetres becomes a part. A brief without them becomes a look. Write briefs with that in mind.
 
@@ -27,31 +27,29 @@ You answer three questions. Every agent reads them before each run.
 On day one:
 
 - [ ] Connect your email domain.
-- [ ] Read the first ten leads Sales finds. Mark the good ones.
 - [ ] Add each client you already have to the CRM, with what they make.
 
 ## 🤝 Agent team configuration
 
 Each seat does one job. Each chat works for one client.
 
-- **Sales and Client manager.** Sales finds brands that make physical products, writes to them and books calls. The client manager runs each client, sends each brief to the right seat, and drafts each update. Both ask before any email goes out.
-- **Designer** turns a look brief into one textured 3D concept. A concept has no units, so it never claims a size or that the object can be made.
+- **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the product design lead.
+- **Product design lead.** It runs each client, sends each brief to the right seat, and drafts each update. It asks before any email goes out.
+- **Product designer** turns a look brief into one textured 3D concept. A concept has no units, so it never claims a size or that the object can be made.
 - **Engineer** builds a part to the millimetres a brief names and checks it is a closed solid of the right size. It saves a part only when every edge is within half a millimetre of the brief. Otherwise it stops and logs both sizes on the client.
 - **Visualizer** renders one studio picture of a concept, from the concept file itself, never from the brief's words. It makes a product video only when the brief asks, and only after you approve it.
-- **Marketing** writes your own posts, with work a client has cleared for sharing.
 
 No seat makes an account under a made-up name or deceives a real person or company.
 
 ## 🗓️ Scheduling & automation
 
-- **Each weekday morning:** the pipeline pass. Sales works the leads.
-- **Every Monday:** the week ahead. The client manager plans each client's week.
+- **Every Monday:** the week ahead. The product design lead plans each client's week.
 
 Design work runs when a card asks for it:
 
-1. The client manager reads the brief and sends it to the designer (a look) or the engineer (a part).
+1. The product design lead reads the brief and sends it to the product designer (a look) or the engineer (a part).
 2. If the brief also asks for a picture or a video, the visualizer makes it from that file.
-3. The client manager writes one delivery note naming every file. It waits in Needs you for your yes, and the CEO tells you in your chat.
+3. The product design lead writes one delivery note naming every file. It waits in Needs you for your yes, and the CEO tells you in your chat.
 
 The team does only the pieces the card asks for. Each task has a cap. A run that would cost more stops instead.
 

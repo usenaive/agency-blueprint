@@ -1,6 +1,6 @@
-# 📖 Advertising agency: Operator's Manual
+# 📖 Advertising team: Operator's Manual
 
-> 👋 This is how you run your ads agency with its team. Start with Setup: three answers, then four things on day one.
+> 👋 This is how you run your advertising team. Start with Setup: three answers, then three things on day one.
 
 ## 🧭 Overview
 
@@ -10,7 +10,7 @@ The team proposes every spend change and makes none. It reads ad accounts. It ne
 
 **You:** say what you sell, to whom, and which ad platforms and formats you run. Approve emails, plans and every ad. Make the spend changes the plan proposes.
 
-**The team:** works the pipeline each weekday morning, plans each client's week every Monday, audits, plans, writes, designs and edits video for each client, and reports each client's week with the one decision needed.
+**The team:** plans each client's week every Monday, audits, plans, writes, designs and edits video for each client, and reports each client's week with the one decision needed.
 
 ## 🛠️ Setup
 
@@ -23,7 +23,6 @@ You answer three questions. Every agent reads them before each run.
 On day one:
 
 - [ ] Connect your email domain.
-- [ ] Read the first ten leads Sales finds. Mark the good ones.
 - [ ] For each client you already have, add their goals, budget and brand notes to the CRM.
 - [ ] Give the media planner read access to each client's ad accounts.
 
@@ -31,19 +30,18 @@ On day one:
 
 ## 🤝 Agent team configuration
 
-- **Sales and Client manager.** Sales finds brands that fit, writes to them and books calls. The client manager runs each client: kickoff, calls, weekly update and renewal. Both ask before any email goes out.
+- **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the ads lead.
+- **Ads lead.** It runs each client: kickoff, calls, weekly update and renewal. It asks before any email goes out.
 - **Media planner** audits each client's ad accounts, read only, and writes the campaign plan the creative is made for: audience, offer, budget split and what to test.
 - **Creative director** writes each client's creative brief and three campaign concepts from the client's goals, brand and past ads.
 - **Copywriter** writes headlines, body copy and scripts for each concept, for each placement. Each copy set lands in the Ads app for review.
 - **Designer** makes the static ads for each concept in every size the brief names. Each lands in the Ads app for review.
 - **Video producer** makes short video ads from the scripts, with voice-over and music. Every render waits for your yes, because renders cost the most.
 - **Performance analyst** reports each week on each client's spend, results and cost against the plan, and names the one decision needed.
-- **Marketing** writes your agency's own posts and case studies, with real results only.
 
 ## 🗓️ Scheduling & automation
 
-- **Each weekday morning:** the pipeline pass. Sales works the leads.
-- **Every Monday:** the week ahead. The client manager plans each client's week.
+- **Every Monday:** the week ahead. The ads lead plans each client's week.
 
 Client work runs when a card asks for it. For a new campaign:
 
@@ -56,7 +54,7 @@ Client work runs when a card asks for it. For a new campaign:
 
 The team does only the pieces the card asks for. Ask for a plan alone and no creative is made. Ask for copy alone and no pictures or videos are made; the copy still waits in the Ads app.
 
-The client manager compiles the written pieces, such as the plan, the brief and the copy, into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The ads themselves are approved in the Ads app only, not asked twice. Copy is in both: in that file, for the client, and in the Ads app, where its stage says whether it may run.
+The ads lead compiles the written pieces, such as the plan, the brief and the copy, into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The ads themselves are approved in the Ads app only, not asked twice. Copy is in both: in that file, for the client, and in the Ads app, where its stage says whether it may run.
 
 Once a campaign is live, ask the CEO to add a weekly timer for the performance analyst.
 

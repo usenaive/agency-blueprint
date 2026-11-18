@@ -21,8 +21,23 @@ const SPECIALISMS: [string, string[]][] = [
   ["clients-security", ["Customer tester", "Edge-case tester"]],
   ["clients-recruiting", ["Sourcer", "Screener", "Outreach writer"]],
   ["clients-seo-geo", ["Audit runner", "SEO writer", "GEO optimizer"]],
-  ["clients-product-design", ["Designer", "Engineer", "Visualizer"]],
+  ["clients-product-design", ["Product designer", "Engineer", "Visualizer"]],
 ];
+/**
+ * Owner, 2026-11-17 (ADR-3130 in usenaive/vetta-mono): the agency is the company, and its sales serves
+ * every team, so a team has no Sales or Marketing of its own. Each keeps one lead named for it, which
+ * runs the clients, compiles and asks the one review, and a persona of its own named for the team with no inbox.
+ */
+const LEADS: Record<string, { title: string; lead: string }> = {
+  clients: { title: "Client team", lead: "Client lead" },
+  "clients-advertising": { title: "Advertising team", lead: "Ads lead" },
+  "clients-product-design": { title: "Product design team", lead: "Product design lead" },
+  "clients-recruiting": { title: "Recruiting team", lead: "Recruiting lead" },
+  "clients-research": { title: "Market research team", lead: "Research lead" },
+  "clients-security": { title: "Security team", lead: "Security lead" },
+  "clients-seo-geo": { title: "SEO & GEO team", lead: "SEO & GEO lead" },
+};
+const leadOf = (blueprint: string) => LEADS[blueprint]!.lead;
 const WITH_CREW = CREWS.filter((name) => name !== "clients-blank");
 
 const dir = (blueprint: string) => fileURLToPath(new URL(`./${blueprint}/`, import.meta.url));
@@ -38,6 +53,7 @@ const configOf = (blueprint: string): Promise<Config> => {
 };
 const seats = async (blueprint: string) => (await configOf(blueprint)).agents;
 const seat = async (blueprint: string, name: string) => (await seats(blueprint)).find((agent) => agent.name === name)!;
+const lead = (blueprint: string) => seat(blueprint, leadOf(blueprint));
 const permission = (agent: Agent, tool: string) => agent.tools?.configs[tool]?.permission ?? agent.tools?.default_config.permission;
 
 describe("every crew", () => {
@@ -60,11 +76,26 @@ describe("every crew", () => {
     expect(readFileSync(`${dir(blueprint)}manual.md`, "utf8")).toMatch(/^# 📖 .+: Operator's Manual\n/);
   });
 
-  it.each(WITH_CREW)("%s puts its Day 1 on a seat it declares", async (blueprint) => {
+  it.each(WITH_CREW)("%s seeds no lead-finding card: new business is the agency's", async (blueprint) => {
+    expect((await configOf(blueprint)).tasks).toEqual([]);
+  });
+
+  it.each(WITH_CREW)("%s has no Sales or Marketing, one lead named for the team, and a persona of its own", async (blueprint) => {
     const config = await configOf(blueprint);
-    const names = new Set(config.agents.map((agent) => agent.name));
-    expect(config.tasks.length).toBeGreaterThan(0);
-    for (const task of config.tasks) expect([task.key, names.has(task.assignee ?? "")]).toEqual([task.key, true]);
+    const { title, lead: name } = LEADS[blueprint]!;
+    const names = config.agents.map((agent) => agent.name);
+    expect(names[0]).toBe(name);
+    for (const gone of ["Sales", "Marketing", "Client manager"]) expect(names).not.toContain(gone);
+    expect(config.title).toBe(title);
+    expect(config.identities).toEqual([expect.objectContaining({ name: title })]);
+    // Security review: outside mail must never wake a seat that can read client files. The agency's sales holds the
+    // company's inbox, so a team routes no inbox at all — not to its lead, not to any seat.
+    for (const identity of config.identities) expect([identity.name, identity.inbox, identity.phone]).toEqual([identity.name, undefined, undefined]);
+    for (const agent of config.agents) {
+      if (agent.identity !== undefined) expect([agent.name, agent.identity]).toEqual([agent.name, title]);
+      for (const one of agent.schedules ?? []) expect([agent.name, one.identity]).toEqual([agent.name, title]);
+    }
+    expect(JSON.stringify(config.agents)).not.toMatch(/\b(Client manager|Sales|Marketing)\b/);
   });
 
   /** §64. A shell is a way out no card can read, so a seat that handles people's data holds none. */
@@ -103,7 +134,7 @@ describe("every crew", () => {
 // NEW-60: a "pseudonymous account" sign-up on a real company's site was carded to the security crew's tester.
 it.each(WITH_CREW)("%s has every working seat refuse a made-up identity or any other deception of a real party", async (blueprint) => {
   for (const agent of await seats(blueprint)) {
-    if (["Sales", "Client manager", "Marketing"].includes(agent.name)) continue;
+    if (agent.name === leadOf(blueprint)) continue;
     expect([agent.name, agent.system]).toEqual([agent.name, expect.stringContaining("Never make an account under a made-up name or a false identity, or deceive a real person or company any other way: decline that step and say why.")]);
   }
 });
@@ -126,29 +157,16 @@ it("tells every research analyst, and the CEO that reads its setup, that the cap
 });
 
 describe("the Client agency (clients)", () => {
-  it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
+  it("runs on the CRM, Calendar, Ads and SEO & GEO with its Client lead and Delivery", async () => {
     const config = await configOf("clients");
     expect(config.mini_apps?.map((app) => app.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
-    expect(config.agents.map((agent) => agent.name)).toEqual(["Sales", "Client manager", "Delivery", "Marketing"]);
+    expect(config.agents.map((agent) => agent.name)).toEqual(["Client lead", "Delivery"]);
   });
 
   it("says a company starts with no address, since an apply never mints a domain", async () => {
     const config = await configOf("clients");
     expect(config.roadmap?.day_one).toContain("domain");
-    for (const name of ["Sales", "Client manager"]) expect((await seat("clients", name)).system).toContain("Domains tab");
-  });
-
-  it("lets Marketing save a post it wrote, and put an ad in the Ads app", async () => {
-    const marketing = await seat("clients", "Marketing");
-    for (const tool of ["write", "publish_file", "generate_image", "fetch_file"]) expect([tool, permission(marketing, tool)]).toEqual([tool, "allow"]);
-  });
-
-  // QA NEW-53: a draft "awaiting your approval" in a done card's note raised nothing in Needs you.
-  it.each(["clients", "clients-advertising", "clients-recruiting", "clients-research", "clients-security", "clients-seo-geo", "clients-product-design"])("has %s's Marketing ask for a yes on every piece, not leave it in a card note", async (crew) => {
-    const marketing = await seat(crew, "Marketing");
-    expect(permission(marketing, "ask_operator")).toBe("allow");
-    expect(marketing.system).toContain('call ask_operator once with the prompt "Ready to post: <its title>. Approve before it goes out."');
-    expect(marketing.system).toContain("never only in a card's note");
+    expect((await lead("clients")).system).toContain("Domains tab");
   });
 
   it("has a blank twin: the same four apps and questions, and no crew", async () => {
@@ -160,8 +178,8 @@ describe("the Client agency (clients)", () => {
 });
 
 describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
-  it("keeps Sales, Client manager and Marketing, and puts its specialists where Delivery was", async () => {
-    expect((await seats(blueprint)).map((agent) => agent.name)).toEqual(["Sales", "Client manager", ...specialists, "Marketing"]);
+  it("is its lead and its specialists, where Delivery was", async () => {
+    expect((await seats(blueprint)).map((agent) => agent.name)).toEqual([leadOf(blueprint), ...specialists]);
   });
 
   it("runs on the Client agency's four apps: CRM, Calendar, Ads and SEO & GEO", async () => {
@@ -175,7 +193,7 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
   it("runs its schedules across clients: the pass works for no client and starts each client's work in a chat of its own (§66)", async () => {
     const all = await seats(blueprint);
     const passes = all.flatMap((agent) => agent.schedules ?? []);
-    expect(passes).toHaveLength(2);
+    expect(passes).toHaveLength(1);
     for (const pass of passes) expect(pass.input).toMatch(/works for no client.*chat of its own/s);
     for (const pass of passes) expect(pass.input).not.toMatch(/ctc_|crm\.\w|email\.\w|send_to_agent|handoff_key/);
     for (const agent of all.filter((one) => one.schedules?.length)) {
@@ -195,16 +213,16 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     }
   });
 
-  it("puts every piece before the person through the Client manager's review, a CEO's card included (NEW-120)", async () => {
+  it("puts every piece before the person through the lead's review, a CEO's card included (NEW-120)", async () => {
     // QA r6: a Sourcer carded by the CEO handed its file to the CEO, and a Client manager compiled into its card's note.
-    for (const name of specialists) expect((await seat(blueprint, name)).system).toContain("Hand finished work to Client manager, never to the CEO, even when the CEO made your card");
-    const manager = (await seat(blueprint, "Client manager")).system;
+    for (const name of specialists) expect((await seat(blueprint, name)).system).toContain(`Hand finished work to ${leadOf(blueprint)}, never to the CEO, even when the CEO made your card`);
+    const manager = (await lead(blueprint)).system;
     expect(manager).toContain("Every piece a teammate hands you is yours to put in front of the person, whoever asked for it, the CEO included.");
     expect(manager).toMatch(/A card that asks you to compile is this same job: its (deliverable|report) is a saved file and the review below, never the card's note/);
   });
 
   it("puts each deliverable in front of the person once", async () => {
-    const manager = await seat(blueprint, "Client manager");
+    const manager = await lead(blueprint);
     expect(manager.system).toMatch(/call ask_operator once.*Approve before it goes out.*One ask per client job/s);
     expect(manager.system).toMatch(/tell the CEO with send_to_agent, wait false, in a message whose first line is "Your <what it is> for <client name> is ready"/);
     // NEW-19: the line the CEO reads is an instruction to it, on a line of its own, and one sentence that
@@ -242,14 +260,14 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
       const next = (agent.handoffs as string[]).filter((name) => specialists.includes(name));
       for (const name of next) expect(agent.system).toMatch(new RegExp(`to ${name}[^.:]* only if (the request that started this chat|it) also asked for [^.]*: never widen a job past what was asked`));
       if (next.length > 0 && blueprint === "clients-advertising") expect(agent.system).toContain("never send a teammate a piece for reference");
-      expect(agent.system).toContain("tell Client manager with send_to_agent");
+      expect(agent.system).toContain(`tell ${leadOf(blueprint)} with send_to_agent`);
     }
   });
 });
 
 describe("the specialisms' own rules", () => {
-  it.each(["clients-research", "clients-recruiting", "clients-advertising", "clients-security", "clients-seo-geo", "clients-product-design"])("lets the %s Client manager compile the pieces into one file, with file tools and no shell", async (blueprint) => {
-    const manager = await seat(blueprint, "Client manager");
+  it.each(["clients-research", "clients-recruiting", "clients-advertising", "clients-security", "clients-seo-geo", "clients-product-design"])("lets the %s lead compile the pieces into one file, with file tools and no shell", async (blueprint) => {
+    const manager = await lead(blueprint);
     for (const tool of ["find_files", "fetch_file", "read", "write", "publish_file"]) expect([tool, permission(manager, tool)]).toEqual([tool, "allow"]);
     expect(manager.system).toContain("fetch_file and dir clients/<the client's ctc_ id>");
     expect(manager.system).toContain("kind:report");
@@ -266,14 +284,14 @@ describe("the specialisms' own rules", () => {
   });
 
   // NEW-17: one compile and one ask per security job, on the board's card states, and no call nobody asked for.
-  it("has the security Client manager compile from the board's card states, and book a call only when asked", async () => {
-    const manager = (await seat("clients-security", "Client manager")).system;
+  it("has the security lead compile from the board's card states, and book a call only when asked", async () => {
+    const manager = (await lead("clients-security")).system;
     expect(manager).toContain("read all of this client's cards again on the board each time you wake, with board_read and no card_id, never from memory or an earlier message");
     expect(manager).toContain("count the card of the teammate whose message woke you as done when that message says its piece is saved");
     expect(manager).toContain("Book a kickoff or any other call only when the person or the CEO asked for one");
     expect(manager).not.toContain("book the kickoff");
     for (const name of ["Customer tester", "Edge-case tester"]) {
-      expect((await seat("clients-security", name)).system).toMatch(/mark your card for this job done with board_write[^.]*only then tell Client manager with send_to_agent/);
+      expect((await seat("clients-security", name)).system).toMatch(/mark your card for this job done with board_write[^.]*only then tell Security lead with send_to_agent/);
     }
   });
 
@@ -313,16 +331,16 @@ describe("the specialisms' own rules", () => {
     expect((await seat("clients-advertising", "Copywriter")).system).toMatch(/Ads app's tags: ad, campaign:<.*>, stage:review.*never change its stage/);
     // NEW-68: a headline change stalled for want of an in-place edit; a new version keyed to the old ad takes its place.
     expect((await seat("clients-advertising", "Copywriter")).system).toContain("plus ad:<its ad: tag's key, else its fil_ id>; the Ads app shows that version in the old one's place, back in Review.");
-    expect((await seat("clients-advertising", "Client manager")).system).toContain("Copy is a written piece: compile it, though it also waits in the Ads app.");
-    // An ad's approval is the Ads app's Review: the Client manager compiles the written pieces and never asks about an ad again.
-    expect((await seat("clients-advertising", "Client manager")).system).toContain("never ask about an ad again and never change its stage");
+    expect((await lead("clients-advertising")).system).toContain("Copy is a written piece: compile it, though it also waits in the Ads app.");
+    // An ad's approval is the Ads app's Review: the lead compiles the written pieces and never asks about an ad again.
+    expect((await lead("clients-advertising")).system).toContain("never ask about an ad again and never change its stage");
     // NEW-244: a CEO card said "save the package tagged `ad`", so the compiled package read as an ad and no review reached Needs you.
-    expect((await seat("clients-advertising", "Client manager")).system).toContain("and no ad or stage: tag, whatever a card asks: the compiled file is not an ad, so its review is the ask_operator below, in Needs you.");
+    expect((await lead("clients-advertising")).system).toContain("and no ad or stage: tag, whatever a card asks: the compiled file is not an ad, so its review is the ask_operator below, in Needs you.");
     for (const agent of await seats("clients-advertising")) {
       const ads = Object.keys(agent.tools!.configs).filter((tool) => /^(metaads|googleads)\./.test(tool));
       for (const tool of ads) expect(tool).toMatch(/\.(get|list|read|search)_/);
       // A connected account reaches a turn only through the seat's persona.
-      if (ads.length > 0) expect(agent.identity).toBe("Agency");
+      if (ads.length > 0) expect(agent.identity).toBe("Advertising team");
     }
   });
 
@@ -341,7 +359,7 @@ describe("the specialisms' own rules", () => {
 
   it("declines to drop anyone for a protected trait and records no other reason in its place (NEW-122)", async () => {
     // QA r6: told to drop a candidate "because she has two small kids", the team did and logged a pretext.
-    for (const name of ["Client manager", "Sourcer", "Screener", "Outreach writer"]) {
+    for (const name of ["Recruiting lead", "Sourcer", "Screener", "Outreach writer"]) {
       const system = (await seat("clients-recruiting", name)).system;
       expect(system).toContain("pregnancy, family status or any other protected characteristic");
       expect(system).toContain("decline, never write another reason in its place");
@@ -365,16 +383,16 @@ describe("the specialisms' own rules", () => {
       expect(agent.system).toContain("The cap is the owner's fixed cost policy");
       expect(agent.system).toContain("plus the tag seo, so it shows in the SEO & GEO app; leave the stage off and never change it");
       expect(permission(agent, "google_search_console.search_analytics_query")).toBe("allow");
-      expect(agent.identity).toBe("Agency");
+      expect(agent.identity).toBe("SEO & GEO team");
     }
     expect((await seat("clients-seo-geo", "Audit runner")).system).toContain("A number you did not read yourself, from the client's account or a page, is a number you may not report");
-    expect((await seat("clients-seo-geo", "Client manager")).system).toContain("Each piece also shows in the SEO & GEO app: compile it all the same, and never change its stage.");
+    expect((await lead("clients-seo-geo")).system).toContain("Each piece also shows in the SEO & GEO app: compile it all the same, and never change its stage.");
     expect((await configOf("clients-seo-geo")).questions.map((one) => one.key)).toEqual(["about", "offer", "competitors"]);
   });
 
-  // Owner, 2026-11-17: the Product design studio template became this team; its four seats are the Client manager and three makers.
+  // Owner, 2026-11-17: the Product design studio template became this team; its four seats are its lead and three makers.
   it("has the product design team keep its studio's rules: one mesh per look, parts to 0.5 mm, a video only when asked and approved", async () => {
-    const [designer, engineer, visualizer] = [await seat("clients-product-design", "Designer"), await seat("clients-product-design", "Engineer"), await seat("clients-product-design", "Visualizer")];
+    const [designer, engineer, visualizer] = [await seat("clients-product-design", "Product designer"), await seat("clients-product-design", "Engineer"), await seat("clients-product-design", "Visualizer")];
     expect(designer.system).toContain("Make ONE generate_3d_model per brief");
     expect([permission(designer, "generate_3d_model"), permission(designer, "build_3d")]).toEqual(["allow", "deny"]);
     expect(engineer.system).toContain("every bbox_mm edge is within 0.5 mm of the brief");
@@ -386,8 +404,8 @@ describe("the specialisms' own rules", () => {
     expect([permission(visualizer, "render_still"), permission(visualizer, "build_3d")]).toEqual(["allow", "deny"]);
     expect(visualizer.system).toContain("a still that fails never asks for a new mesh");
     for (const agent of [designer, engineer, visualizer]) expect(agent.skills).toContain("naive/product-design");
-    expect((await seat("clients-product-design", "Client manager")).system).toContain("a brief that names sizes in millimetres is a part, for Engineer");
-    expect((await seat("clients-product-design", "Client manager")).system).toContain("never call it not completed and never brief Designer for another mesh because of a still");
+    expect((await lead("clients-product-design")).system).toContain("a brief that names sizes in millimetres is a part, for Engineer");
+    expect((await lead("clients-product-design")).system).toContain("never call it not completed and never brief Product designer for another mesh because of a still");
     expect((await configOf("clients-product-design")).questions.map((one) => one.key)).toEqual(["about", "offer", "buildable"]);
   });
 
@@ -406,5 +424,30 @@ it.each(WITH_CREW)("%s opens every routine's input with its work, not the chat's
   for (const agent of await seats(blueprint)) {
     // The row shows about the first 60 characters: at least 40 of them say what the routine does.
     for (const schedule of agent.schedules ?? []) expect([agent.name, schedule.input.indexOf("This chat works") === -1 || schedule.input.indexOf("This chat works") >= 40]).toEqual([agent.name, true]);
+  }
+});
+
+/**
+ * Owner, 2026-11-17 (ADR-3130 in usenaive/vetta-mono): adding teams to the agency gives clean names. The platform
+ * prefixes a whole install (`agency-`, `agency-2-`) when any name it declares is already held, case-insensitively,
+ * in the company: the team's Sales against the agency's `sales`, its persona "Agency" against `agency`, and a second
+ * team's seats against the first's. So no name is declared twice across the agency and its teams.
+ */
+it("declares no agent or persona name that the agency or another team declares", async () => {
+  const agency = await loadConfig(fileURLToPath(new URL("..", import.meta.url)));
+  if (!agency.ok) throw new Error(agency.message);
+  const named = (config: Config) => [
+    ...[config.agents, config.apps, config.identities, config.vaults].flat().map((one) => one.name),
+    ...config.skills.map((one) => one.slug),
+    ...Object.values(config.removed).flat(),
+    ...config.kept.agents,
+  ];
+  const holder = new Map(named(agency.config).map((name) => [name.toLowerCase(), "agency"]));
+  for (const blueprint of WITH_CREW) {
+    const config = await configOf(blueprint);
+    for (const name of named(config)) {
+      expect([blueprint, name, holder.get(name.toLowerCase())]).toEqual([blueprint, name, undefined]);
+      holder.set(name.toLowerCase(), blueprint);
+    }
   }
 });
