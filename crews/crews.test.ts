@@ -106,6 +106,14 @@ it.each(WITH_CREW)("%s has every working seat refuse a made-up identity or any o
   }
 });
 
+// NEW-64: a Competitor analyst run made 29 web calls (13 searches, 16 fetches) and cost $2.86, against $0.74 for a whole job in round 3.
+it("caps each research analyst's web reading per run, and the teardown at five players", async () => {
+  for (const name of ["Desk researcher", "Competitor analyst", "Voice-of-customer analyst"]) {
+    expect([name, (await seat("clients-research", name)).system]).toEqual([name, expect.stringContaining("at most 8 web_search and 10 web_fetch calls in a run")]);
+  }
+  expect((await seat("clients-research", "Competitor analyst")).system).toContain("tear down the five players");
+});
+
 describe("the Client agency (clients)", () => {
   it("runs on the CRM, Calendar, Ads and SEO & GEO with Sales, Client manager, Delivery and Marketing", async () => {
     const config = await configOf("clients");
