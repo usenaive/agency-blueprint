@@ -136,11 +136,11 @@
   <section class="submit" id="contact" aria-labelledby="contact-h">
     <p class="req"><span class="req__m">POST</span> /contact <span class="ok">202</span></p>
     <h2 id="contact-h" class="submit__h">Send us your site. We will walk it the way a crawler does.</h2>
-    <a class="submit__box" href="mailto:{{contact_email}}">
+    {{#if contact_email}}<a class="submit__box" href="mailto:{{contact_email}}">
       <span class="submit__url">https://your-site</span>
       <span class="btn btn--pink"><span>Request a crawl</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </a>
-    <p class="submit__alt">Or write to <a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></p>
+    </a>{{/if}}
+    {{#if contact_email}}<p class="submit__alt">Or write to <a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></p>{{/if}}
     {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
 <style>
 .vf{display:inline-grid;vertical-align:top;gap:12px;width:100%;max-width:34rem;margin:32px 0 0;font:inherit;color:inherit;text-align:left;position:relative}
@@ -154,7 +154,7 @@
 .vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 <p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
-<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please email <a href="mailto:{{contact_email}}">{{contact_email}}</a> instead.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
 <label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
 <label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
 <label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>

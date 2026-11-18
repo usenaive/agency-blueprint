@@ -75,7 +75,7 @@ footer a:hover, footer a:focus-visible { transform: translateX(.3rem); }
 <footer>
   <p>&copy; {{year}} {{company_name}}</p>
   {{#if city}}<p>{{city}}</p>{{/if}}
-  <p><a href="mailto:{{contact_email}}">{{contact_email}}</a></p>
+  {{#if contact_email}}<p><a href="mailto:{{contact_email}}">{{contact_email}}</a></p>{{/if}}
 </footer>
 </body>
 </html>

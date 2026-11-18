@@ -41,7 +41,7 @@
       <div class="brief__body">
         <h1 id="h1">{{tagline}}</h1>
         <p class="lede">{{intro}}</p>
-        <a class="key-btn" href="mailto:{{contact_email}}"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>
+        <a class="key-btn" href="#contact"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>
       </div>
     </div>
 
@@ -150,9 +150,9 @@
       <p class="contact__cmd" aria-hidden="true">&gt; new study --question "<span>your question here</span>"</p>
       <h2 id="contact-h" class="contact__h">Bring us the question your team cannot settle</h2>
       <p class="contact__lede">Tell us the market, the decision and the deadline. We reply with the queries we would run and a fixed fee.</p>
-      <a class="key-btn" href="mailto:{{contact_email}}"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>
+      {{#if contact_email}}<a class="key-btn" href="mailto:{{contact_email}}"><span>Open a study</span><kbd aria-hidden="true">Enter</kbd></a>{{/if}}
       <dl class="kv">
-        <div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+        {{#if contact_email}}<div><dt>Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>{{/if}}
         {{#if city}}<div><dt>Desk</dt><dd>{{city}}</dd></div>{{/if}}
       </dl>
       {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
@@ -168,7 +168,7 @@
 .vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 <p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
-<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please email <a href="mailto:{{contact_email}}">{{contact_email}}</a> instead.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
 <label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
 <label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
 <label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>

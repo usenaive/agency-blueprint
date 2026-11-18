@@ -137,7 +137,7 @@
   <section class="sec write wrap" id="write" aria-labelledby="write-h">
     <h2 id="write-h" class="shead"><span class="shead__n">5</span><span>Write to us</span></h2>
     <p class="write__lede">Tell us what needs doing and by when. We reply with what we would take on, how we would run it and what it would cost.</p>
-    <a class="mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span></a>
+    {{#if contact_email}}<a class="mail" href="mailto:{{contact_email}}"><span>{{contact_email}}</span></a>{{/if}}
     {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
 <style>
 .vf{display:inline-grid;vertical-align:top;gap:12px;width:100%;max-width:34rem;margin:32px 0 0;font:inherit;color:inherit;text-align:left;position:relative}
@@ -151,7 +151,7 @@
 .vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 <p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
-<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please email <a href="mailto:{{contact_email}}">{{contact_email}}</a> instead.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
 <label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
 <label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
 <label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>

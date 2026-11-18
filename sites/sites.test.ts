@@ -79,6 +79,8 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     // The platform fills city only from what the company said (never its time zone), so most sites have none:
     // a city is always inside {{#if city}}, or the page reads "Based in ." (vetta-mono #1788 review).
     for (const f of html) expect(unguarded(readFileSync(join(dir, f), "utf8")), `${f}: city outside {{#if city}}`).not.toContain("city");
+    // Likewise contact_email is "" until the owner chooses to show it (NEW-164).
+    for (const f of html) expect(unguarded(readFileSync(join(dir, f), "utf8")), `${f}: contact_email outside {{#if contact_email}}`).not.toContain("contact_email");
     for (const f of text.filter((f) => !f.endsWith(".html"))) expect(placeholdersIn(readFileSync(join(dir, f), "utf8")), f).toEqual([]);
   });
 
@@ -104,6 +106,23 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     expect(page.split(FORM)).toHaveLength(2);
     // The mailto: links stay: the fallback when the platform fills no form address.
     expect(page.replace(FORM, "")).toContain("mailto:{{contact_email}}");
+  });
+
+  // Before the owner chooses to show an email the platform fills contact_email with "" (NEW-164):
+  // no sentence ends "email them at .", no button opens an empty mailto, and every in-page link lands.
+  it.each([["with", "#"], ["without", ""]])("reads whole with no email, %s the form", (_, formAction) => {
+    const values = { ...JSON.parse(readFileSync(join(dir, "sample.json"), "utf8")), contact_email: "", form_action: formAction };
+    const scratch = mkdtempSync(join(tmpdir(), "values-"));
+    writeFileSync(join(scratch, "no-email.json"), JSON.stringify(values));
+    const out = mkdtempSync(join(tmpdir(), "site-"));
+    fillSite(dir, out, join(scratch, "no-email.json"));
+    for (const f of html) {
+      const page = readFileSync(join(out, f), "utf8");
+      const body = page.replace(/<(script|style)\b[\s\S]*?<\/\1>/g, "");
+      expect(body, f).not.toMatch(/mailto:["?]|<(a|dd)\b[^>]*>\s*<\/\1>|\b(at|to)\s*<\/(p|dd|li|span|a)>/i);
+      expect(body.replace(/<[^>]+>/g, ""), f).not.toMatch(/\b(at|to)\s+[.·]/);
+      for (const [, id] of page.matchAll(/href="#([\w-]+)"/g)) expect(page, `${f}: #${id}`).toContain(`id="${id}"`);
+    }
   });
 
   it("leaves the host its head marker and never scrolls smoothly", () => {
