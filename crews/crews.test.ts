@@ -420,8 +420,13 @@ describe("the specialisms' own rules", () => {
     expect([permission(engineer, "build_3d"), permission(engineer, "generate_3d_model")]).toEqual(["allow", "deny"]);
     expect(visualizer.system).toContain("The still is a render of THAT mesh, never a picture drawn from the brief's words");
     expect(permission(visualizer, "generate_video")).toBe("ask");
+    // QA r9 NEW-269 (vetta ADR-3135): the Visualizer reads its client first, which refuses build_3d, so it renders with
+    // render_still; a failed still never buys a second mesh.
+    expect([permission(visualizer, "render_still"), permission(visualizer, "build_3d")]).toEqual(["allow", "deny"]);
+    expect(visualizer.system).toContain("a still that fails never asks for a new mesh");
     for (const agent of [designer, engineer, visualizer]) expect(agent.skills).toContain("naive/product-design");
     expect((await lead("clients-product-design")).system).toContain("a brief that names sizes in millimetres is a part, for Engineer");
+    expect((await lead("clients-product-design")).system).toContain("never call it not completed and never brief Product designer for another mesh because of a still");
     expect((await configOf("clients-product-design")).questions.map((one) => one.key)).toEqual(["about", "offer", "buildable"]);
   });
 
