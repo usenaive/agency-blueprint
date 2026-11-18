@@ -1,6 +1,6 @@
-# 📖 Market research agency: Operator's Manual
+# 📖 Market research team: Operator's Manual
 
-> 👋 This is how you run your research agency with its team. Start with Setup: three answers, then three things on day one.
+> 👋 This is how you run your research team. Start with Setup: three answers, then two things on day one.
 
 ## 🧭 Overview
 
@@ -10,7 +10,7 @@ Every email waits for your yes. Every report is filed for your review before a c
 
 **You:** say which markets you cover and which decisions your research supports. Approve emails and review each report. Present findings to the client.
 
-**The team:** works the pipeline each weekday morning, plans each client's week every Monday, and writes market sizing, competitor teardowns and voice-of-customer reports.
+**The team:** plans each client's week every Monday, and writes market sizing, competitor teardowns and voice-of-customer reports.
 
 ## 🛠️ Setup
 
@@ -23,23 +23,21 @@ You answer three questions. Every agent reads them before each run.
 On day one:
 
 - [ ] Connect your email domain.
-- [ ] Read the first ten leads Sales finds. Mark the good ones.
 - [ ] Add each client you already have, with the decision they face, to the CRM.
 
 > ⚠️ A figure with no source doesn't go in a report. If the team can't source a number, it says so. Never fill a gap with a guess dressed as a fact.
 
 ## 🤝 Agent team configuration
 
-- **Sales and Client manager.** Sales finds clients facing a decision you can inform, writes to them and books calls. The client manager runs each client and drafts each update. Both ask before any email goes out.
+- **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the research lead.
+- **Research lead.** It runs each client and drafts each update. It asks before any email goes out.
 - **Desk researcher** frames each client's question as one decision and sizes the market from public sources. It shows the method: top-down, bottom-up, or both, with each input sourced.
 - **Competitor analyst** tears down each competitor in one table: pricing, positioning, product, funding and stack, each cell sourced.
 - **Voice-of-customer analyst** reads what buyers say about the client and its competitors in public reviews and forums, and counts the themes. It quotes, and names where each quote came from.
-- **Marketing** writes your agency's own posts, with real findings you are free to share.
 
 ## 🗓️ Scheduling & automation
 
-- **Each weekday morning:** the pipeline pass. Sales works the leads.
-- **Every Monday:** the week ahead. The client manager plans each client's week.
+- **Every Monday:** the week ahead. The research lead plans each client's week.
 
 Research runs when a card asks for it. For a new project:
 
@@ -47,7 +45,7 @@ Research runs when a card asks for it. For a new project:
 2. The desk researcher frames the question and sizes the market.
 3. The competitor analyst builds the table.
 4. The voice-of-customer analyst counts the themes.
-5. The client manager compiles one report. It waits in Needs you for your yes, and the CEO tells you in your chat.
+5. The research lead compiles one report. It waits in Needs you for your yes, and the CEO tells you in your chat.
 6. You review it and write the recommendation.
 
 The team does only the pieces the card asks for. Ask for a sizing alone and no teardown runs.

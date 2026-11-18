@@ -4,7 +4,7 @@ Thirty finished websites, built once: five designs for each of six agency types 
 `security-testing`, `market-research`, `paid-ads`, `seo-geo`, `general`). When a company
 activates its plan it gets one of its type's five, filled with its own name and setup answers.
 There is no per-company design work. The first fill waits for the owner's approval (preview,
-then Publish), and the Marketing agent edits the copy from there.
+then Publish), and your site builder edits the copy from there.
 
 ## Layout
 
