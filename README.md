@@ -13,7 +13,7 @@ organization.**
 It ships one app with two doors: the agency's public site at `/`, whose copy is data the crew
 edits through approvals, and the operator dashboard under `/app` (home, approvals, agents,
 signed clients' workspaces) — plus an MCP server that lets any agent operate
-the agency, and a crew of seven agents that read the three answers you give at install and
+the agency, and a crew of eight agents that read the three answers you give at install and
 start work the same day.
 
 The agency is **one template**, `blank`: a working agency with no specialism. A specialism is a
@@ -33,7 +33,7 @@ flowchart LR
   repo["this repo<br/>naive.config.ts + templates/"]
   repo -->|naive up| plat["Naive platform"]
   plat --> dash["dashboard app<br/>public site at /, operator UI at /app, /api/* and /mcp"]
-  plat --> crew["seven agents<br/>five timers, seven day-one sessions"]
+  plat --> crew["eight agents<br/>five timers, eight day-one sessions"]
   plat --> idn["agency identity<br/>owns the mailbox, holds the connected accounts"]
 ```
 
@@ -49,7 +49,7 @@ flowchart LR
   form answers `429`, and nothing kept in the app's own store. The page takes a
   served section only in the seed's shape, within its lengths. The old operator paths (`/crm`, `/approvals`,
   …) redirect to `/app/*`.
-- **Seven agents** — the active template's crew, each with a role, a private system prompt,
+- **Eight agents** — the active template's crew, each with a role, a private system prompt,
   a deny-by-default tool allow-list, skills from the platform catalogue, a daily budget, and a
   first message that runs on day one. See [The crew](#-the-crew).
 - **Four mini apps** — the platform's own CRM, Calendar, Ads and SEO & GEO screens, carried by
@@ -67,7 +67,7 @@ platform's default and 08:00 UTC is nobody's Monday morning.
 A template may also declare a **per-client crew**, provisioned by the dashboard server when
 you onboard a client — their names carry the client's slug, so they are per-client resources
 and cannot be declared in `naive.config.ts`. `blank` declares none and runs every client through
-the agency's own seven.
+the agency's own eight.
 
 ## 👥 The crew
 
@@ -79,14 +79,15 @@ Tools marked `*` are held at `ask` and land on **Approvals** before they run.
 | Agent | Role | Tools | Skills | Timer (`America/New_York`) | First message (day one) |
 |---|---|---|---|---|---|
 | `site-builder` | Public site | `web_fetch`, `dashboard.get_site`, `dashboard.update_site*` | `naive/landing-page-copy` | — | Reads the site and rewrites every generic section from the answers; proposes it as one `update_site` call. Invents no case study, testimonial or number. |
-| `sales` | Pipeline | `web_search`, `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, added to the CRM as leads with a why-now; openers drafted (not sent) for the best three. |
-| `client-manager` | Delivery | `crm.read`, `crm.write`, `dashboard.{list_clients, get_client, create_client, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.inboxes`, `email.read`, `email.send*`, `send_to_agent`, `list_agents` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
+| `sales` | Pipeline | `web_search`, `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client}`, `email.send*`, `send_to_agent`, `list_agents` | `naive/cold-outreach-drafting`, `naive/crm-hygiene` | weekdays 08:30 | Fifteen prospects matching the ideal-client answer, added to the CRM as leads with a why-now; openers drafted (not sent) for the best three. |
+| `client-manager` | Delivery | `crm.read`, `crm.write`, `dashboard.{list_clients, get_client, create_client, get_calendar, list_posts, create_draft_post, schedule_post, add_client_note, list_referral_ready, record_referral_ask}`, `email.send*`, `send_to_agent`, `list_agents` | `naive/client-onboarding` | Mon 08:00 | The onboarding checklist and a first-30-days calendar template for the service you sell. |
 | `content-writer` | Content | `web_search`, `web_fetch`, `dashboard.{list_clients, get_client, create_client, list_posts, create_draft_post, add_client_note, get_site}` | `naive/seo-content-brief` | Tue + Thu 07:00 | A note on who the blog is for and its voice. The four-week calendar and first draft are written in the session the gap researcher's handoff opens. |
 | `content-reviser` | Revisions | `web_fetch`, `dashboard.{list_clients, create_client, list_posts, create_draft_post, get_site}` | `naive/content-revision` | Wed 09:00 | Reads the site and every published post; files revisions for the three weakest as pending drafts. |
 | `gap-researcher` | Research | `web_search`, `web_fetch`, `dashboard.{list_clients, create_client, add_client_note, get_site}`, `send_to_agent`, `list_agents` | `naive/keyword-gap-analysis` | Fri 09:00 | Three competitors compared against your site; the ten highest-value misses filed as a gap report, then handed to `content-writer`. |
 | `proposal-writer` | Proposals | `web_fetch`, `crm.read`, `crm.write`, `dashboard.{list_clients, create_client, add_client_note}` | `naive/proposal-writing` | — | The standard proposal skeleton and three package tiers, priced from the pricing answer; with none, scoped without prices until the operator answers `ask_operator`. |
+| `inbox` | Mail | `email.inboxes`, `email.read`, `crm.write*`, `email.send*` (and nothing else) | — | — (woken by each email to `hello@`) | Logs any mail already in the inbox on its senders' CRM timelines. Owns `hello@`, so a stranger's email wakes a seat with no setup answers, skill, CRM or dashboard read, web, hand-off, file tool or door to more tools; sales and the client manager read the replies it logs. Sends only a team lead's draft the CEO passes it, on your yes (ADR-3134). |
 
-Every agent also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
+Every agent but `inbox` also holds `project_context` and `read_skill` (`allow`) and the two doors to you,
 `ask_operator*` and `request_tools*`. No agent holds `approve_post`, `start_agent_session` or
 `social.post`: approving, spending and publishing stay with you.
 
@@ -115,10 +116,10 @@ reads the new value on its next turn, no re-apply needed.
 
 ### Day one
 
-Each of the seven carries an `intake` — a first message the apply starts a session with,
+Each of the eight carries an `intake` — a first message the apply starts a session with,
 capped at **$20** (`20_000_000` µUSD) each. An intake runs *once*, on the apply that creates
-the agent, and never again on a later apply, so seven of them are a one-off ceiling of
-**$140** on install day — not a monthly line.
+the agent, and never again on a later apply, so eight of them are a one-off ceiling of
+**$160** on install day — not a monthly line.
 
 What recurs is the separate per-agent `budget`: **$60** a day each
 (`cap_micro_usd: 60_000_000`, `period: "day"`), no more than $20 of it on any one task. That
@@ -134,7 +135,7 @@ what it is waiting on.
 
 ### Handoffs
 
-The seven intakes open in the same minute, and two of them depend on another's output: the
+The eight intakes open in the same minute, and two of them depend on another's output: the
 content writer's calendar is written from the gap researcher's report, and a proposal is written
 for a contact sales has moved to `proposal`. Where one seat's work is another's input, the first **hands off**
 to the second instead of both reading an empty record at once. Each `AgentDecl` declares the
@@ -314,7 +315,7 @@ does not open `/api/*`.
 A **blueprint** is the machine, and it is shared: the screens, `/api/*`, `/mcp`, the store,
 the operator gate, the build and deploy, the approval flow. A **template** is data: the
 agents and their prompts, their tool allow-lists, the deliverable kinds, the schedules, the
-demo seed, the words the screens print. This repository's one template is `blank` — the seven,
+demo seed, the words the screens print. This repository's one template is `blank` — the eight,
 generic, filing posts, pages, reports and audits — and the dashboard shows it on **Settings**.
 
 A specialism is not a second template of the agency: it is a **team** (below) a company adds from
@@ -550,7 +551,7 @@ export default defineProject({
   name: "agency",
   blueprint: "agency",
   template: TEMPLATE,                    // "blank", from templates/index.ts
-  agents: ACTIVE_TEMPLATE.agents,        // the template's seven
+  agents: ACTIVE_TEMPLATE.agents,        // the template's eight
   questions: ACTIVE_TEMPLATE.questions,   // the three, from the template
   crew_per_client: ACTIVE_TEMPLATE.crew.map(({ name, role, description }) => ({ name, role, description })),
   identities: [{ name: "agency", description: "The agency itself — …" }],

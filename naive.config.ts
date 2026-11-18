@@ -3,7 +3,7 @@
  *
  * This is the file `naive up` reads. A person clones this repo, sets NAIVE_API_KEY, runs
  * `naive up`, and the platform provisions everything below into their organization: the one app
- * (public site at `/`, operator dashboard under `/app`) and the chosen template's seven agents.
+ * (public site at `/`, operator dashboard under `/app`) and the chosen template's eight agents.
  * Re-running is idempotent — resources are keyed by name.
  *
  * The blueprint is the machine and is shared: the screens, `/api/*`, `/mcp`, the store, the
@@ -118,6 +118,12 @@ export default defineProject({
     {
       name: AGENCY_IDENTITY,
       description: "The agency itself — the persona its agents read, draft and connect accounts as.",
+      /**
+       * The company's one inbox (owner, 2026-11-17, ADR-3132 in usenaive/vetta-mono): `hello@` on the company's
+       * domain, its mail waking the `inbox` seat, which reads nothing else and sends only on a yes. Teams declare none, so every
+       * team's mail is this one, and outside mail never wakes a seat that reads client files.
+       */
+      inbox: { localpart: "hello", agent: "inbox" },
     },
   ],
 
