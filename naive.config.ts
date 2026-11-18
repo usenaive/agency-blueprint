@@ -118,6 +118,12 @@ export default defineProject({
     {
       name: AGENCY_IDENTITY,
       description: "The agency itself — the persona its agents read, draft and connect accounts as.",
+      /**
+       * The company's one inbox (owner, 2026-11-17, ADR-3132 in usenaive/vetta-mono): `hello@` on the company's
+       * domain, its mail waking `sales`, which holds no client-file tool. Teams declare no inbox, so every
+       * team's mail is this one, and outside mail never wakes a seat that reads client files.
+       */
+      inbox: { localpart: "hello", agent: "sales" },
     },
   ],
 

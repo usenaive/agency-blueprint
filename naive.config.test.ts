@@ -156,6 +156,20 @@ describe("the agency persona", () => {
     ]);
   }, 30_000);
 
+  // ADR-3132 (vetta-mono): the company's one inbox wakes sales, and no seat that reads its mail holds a client-file tool,
+  // so a stranger's email can steer nothing that reads or publishes a client's files.
+  it("owns the company's one inbox, hello@, woken on sales, and no mail-reading seat holds a client-file tool", async () => {
+    const result = await loaded;
+    if (!result.ok) throw new Error(result.message);
+    expect(result.config.identities[0]!.inbox).toEqual({ localpart: "hello", agent: "sales" });
+    const FILES = ["find_files", "fetch_file", "publish_file", "read", "write", "bash"];
+    const readers = result.config.agents.filter((agent) => agent.tools?.configs["email.read"]?.enabled === true);
+    expect(readers.map((agent) => agent.name)).toContain("sales");
+    for (const agent of readers) {
+      for (const tool of FILES) expect([agent.name, tool, agent.tools?.configs[tool]?.permission ?? agent.tools?.default_config.permission]).toEqual([agent.name, tool, "deny"]);
+    }
+  }, 30_000);
+
   it("speaks for every scheduled fire, in a zone the platform will accept", async () => {
     const result = await loaded;
     expect(result).toMatchObject({ ok: true });
