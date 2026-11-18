@@ -333,6 +333,8 @@ describe("the specialisms' own rules", () => {
     expect((await seat("clients-advertising", "Client manager")).system).toContain("Copy is a written piece: compile it, though it also waits in the Ads app.");
     // An ad's approval is the Ads app's Review: the Client manager compiles the written pieces and never asks about an ad again.
     expect((await seat("clients-advertising", "Client manager")).system).toContain("never ask about an ad again and never change its stage");
+    // NEW-244: a CEO card said "save the package tagged `ad`", so the compiled package read as an ad and no review reached Needs you.
+    expect((await seat("clients-advertising", "Client manager")).system).toContain("and no ad or stage: tag, whatever a card asks: the compiled file is not an ad, so its review is the ask_operator below, in Needs you.");
     for (const agent of await seats("clients-advertising")) {
       const ads = Object.keys(agent.tools!.configs).filter((tool) => /^(metaads|googleads)\./.test(tool));
       for (const tool of ads) expect(tool).toMatch(/\.(get|list|read|search)_/);
