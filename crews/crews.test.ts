@@ -184,6 +184,14 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     }
   });
 
+  it("puts every piece before the person through the Client manager's review, a CEO's card included (NEW-120)", async () => {
+    // QA r6: a Sourcer carded by the CEO handed its file to the CEO, and a Client manager compiled into its card's note.
+    for (const name of specialists) expect((await seat(blueprint, name)).system).toContain("Hand finished work to Client manager, never to the CEO, even when the CEO made your card");
+    const manager = (await seat(blueprint, "Client manager")).system;
+    expect(manager).toContain("Every piece a teammate hands you is yours to put in front of the person, whoever asked for it, the CEO included.");
+    expect(manager).toMatch(/A card that asks you to compile is this same job: its (deliverable|report) is a saved file and the review below, never the card's note/);
+  });
+
   it("puts each deliverable in front of the person once", async () => {
     const manager = await seat(blueprint, "Client manager");
     expect(manager.system).toMatch(/call ask_operator once.*Approve before it goes out.*One ask per client job/s);
