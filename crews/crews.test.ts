@@ -156,6 +156,13 @@ it.each(WITH_CREW)("%s lead re-reads the cards each wake, has no saved piece red
   expect(system).toContain("so save the file, ask the review below, and only then move the card to done");
 });
 
+// QA r10 NEW-349: the Designer, with no shell, wrote the same ImageMagick script 16 times, then paid for an image edit.
+it("has the ads Designer put a headline in the image prompt, since it holds no shell", async () => {
+  const designer = await seat("clients-advertising", "Designer");
+  expect(permission(designer, "bash")).toBe("deny");
+  expect(designer.system).toContain("You hold no shell, so write no script and set no type on a picture yourself: a static ad's headline goes in its generate_image prompt");
+});
+
 // NEW-60: a "pseudonymous account" sign-up on a real company's site was carded to the security crew's tester.
 it.each(WITH_CREW)("%s has every working seat refuse a made-up identity or any other deception of a real party", async (blueprint) => {
   for (const agent of await seats(blueprint)) {
