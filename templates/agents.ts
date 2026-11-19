@@ -143,8 +143,11 @@ export const mailbox =
  * templates and research are the agency's own, so they are filed on one record that stands for the
  * agency itself.
  */
+/** The agency is the dashboard's own record, never a CRM contact: the CRM holds the agency's leads and clients (NEW-319). */
+export const NOT_A_CONTACT = "The agency itself is never a CRM contact: never add it to the CRM.";
+
 export const OWN_RECORD =
-  "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own record in the dashboard: find it with list_clients, or create it once with create_client from the project name alone; never ask for a domain or contact.";
+  "The agency's own work — its site, its blog, its templates, its research — is filed on the agency's own record in the dashboard: find it with list_clients, or create it once with create_client from the project name alone; never ask for a domain or contact. " + NOT_A_CONTACT;
 
 const system = (role: string): string => `${PREAMBLE} ${gate} ${role}`;
 const withCrmMail = (role: string): string => `${PREAMBLE} ${gate} ${mailbox} ${role}`;
@@ -274,7 +277,7 @@ export const roster: AgentDecl[] = [
     ],
     intake: {
       message:
-        "Read project_context. Write the onboarding checklist and a first-30-days calendar template for the service this agency sells, and file both as one note on the agency's own record with add_client_note (list_clients; create it with create_client from the project name if it is not there yet).",
+        "Read project_context. Write the onboarding checklist and a first-30-days calendar template for the service this agency sells, and file both as one note on the agency's own record with add_client_note (list_clients; create it with create_client from the project name if it is not there yet). " + NOT_A_CONTACT,
       budget_micro_usd: DAY_ONE,
     },
   },
@@ -386,7 +389,7 @@ export const roster: AgentDecl[] = [
     schedules: [],
     intake: {
       message:
-        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers: priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price. File it as a note on the agency's own record (list_clients; create it with create_client from the project name if it is not there yet).",
+        "Read project_context. Draft the agency's standard proposal skeleton and three package tiers: priced from the pricing answer when the context holds one; when it does not, scoped only, and ask the operator once with ask_operator how they price. File it as a note on the agency's own record (list_clients; create it with create_client from the project name if it is not there yet). " + NOT_A_CONTACT,
       budget_micro_usd: DAY_ONE,
     },
   },
