@@ -27,7 +27,7 @@
     "@types/pg": "^8.15.6",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@usenaive-sdk/blueprints": "^0.19.2",
+    "@usenaive-sdk/blueprints": "^0.20.0",
     "@usenaive-sdk/cli": "^1.0.0",
     "@vitejs/plugin-react": "^5.1.0",
     "esbuild": "0.28.2",
