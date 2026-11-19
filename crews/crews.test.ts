@@ -408,6 +408,9 @@ describe("the specialisms' own rules", () => {
     // vetta-mono #1781 (NEW-24): a must-have that stated facts clearly imply counts as shown (stated).
     expect((await seat("clients-recruiting", "Screener")).system).toContain("or together clearly imply it, are shown (stated), with the claim quoted, the reasoning in one line when implied");
     expect((await seat("clients-recruiting", "Screener")).system).toContain("read a must-have for what it asks, not its exact words");
+    // QA r10 NEW-344: Airflow work was "Python shown (stated)" for one candidate and "not seen" for the one with an age remark.
+    expect((await seat("clients-recruiting", "Screener")).system).toContain("One test for an implied skill, for everyone alike: work a person states that cannot be done without the skill");
+    expect((await seat("clients-recruiting", "Screener")).system).toContain("so the same kind of evidence gets the same score, and a remark about age, family or any other protected characteristic changes no score.");
   });
 
   it("keeps the recruiting FAIR rule on every recruiting specialist", async () => {
