@@ -178,6 +178,7 @@ describe("connected accounts", () => {
   it.each(all)("$name holds every outward one at `ask`, and nothing else outward", (template) => {
     for (const agent of [...template.agents, ...template.crew]) {
       for (const [name, config] of connectionTools(agent)) {
+        if (config.permission === "deny") continue;
         const outward = /\.(send|post|publish|create|update|delete|write|reply)/.test(name);
         expect([name, config.permission]).toEqual([name, outward ? "ask" : "allow"]);
       }

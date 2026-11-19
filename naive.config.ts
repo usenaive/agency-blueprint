@@ -80,6 +80,12 @@ export default defineProject({
    */
   agents: ACTIVE_TEMPLATE.agents,
   /**
+   * No seat builds or edits an app (ADR-3140 in usenaive/vetta-mono): the site changes through `update_site`,
+   * the rest is filed through the dashboard's tools. Without this the engine gives every seat the computer's
+   * file tools and `apps` deploy on the dashboard, the inbox seat too, as it does any crew that builds apps.
+   */
+  crew_edits_apps: false,
+  /**
    * The ≤4 questions the studio asks before provisioning (plan §4). The answers become the project
    * context every agent reads first (`project_context`, canonical-spec §31.8); no `{ from_env }`
    * reader is needed for an answer to a declared question.
