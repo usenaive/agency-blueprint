@@ -77,7 +77,10 @@ describe("every crew", () => {
   });
 
   it.each(WITH_CREW)("%s seeds no lead-finding card: new business is the agency's", async (blueprint) => {
-    expect((await configOf(blueprint)).tasks).toEqual([]);
+    // The Client team's one first task (NEW-317) meets the clients the company already has, on its lead.
+    const tasks = (await configOf(blueprint)).tasks;
+    expect(tasks.map((task) => [task.key, task.assignee])).toEqual(blueprint === "clients" ? [["meet-your-clients", LEADS[blueprint]!.lead]] : []);
+    for (const task of tasks) expect(task.body).toMatch(/crm\.read stage won.*ask_operator.*find no leads yourself/);
   });
 
   it.each(WITH_CREW)("%s has no Sales or Marketing, one lead named for the team, and a persona of its own", async (blueprint) => {
