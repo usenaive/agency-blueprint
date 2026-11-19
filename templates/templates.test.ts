@@ -121,6 +121,15 @@ describe("every template of this blueprint", () => {
     expect((gap.system ?? "").includes("third setup answer")).toBe(asked.has("competitors"));
   });
 
+  // NEW-312: a proposal reads the CRM, after which the computer's file tools are refused (people data), so it is saved
+  // straight from its text with publish_file and reaches the person as one file plus one review.
+  it.each(all)("$name delivers a proposal as one saved file and one review", (template) => {
+    const writer = template.agents.find((a) => a.name === "proposal-writer")!;
+    expect(writer.tools?.configs["publish_file"]).toEqual({ enabled: true, permission: "allow" });
+    expect(writer.tools?.configs["ask_operator"]).toEqual({ enabled: true, permission: "ask" });
+    expect(writer.system).toMatch(/publish_file, its whole text as content.*client:<its ctc_ id> and kind:proposal.*call ask_operator once.*Approve or Changes needed.*One file and one ask per proposal, then stop/);
+  });
+
   it.each(all)("$name seeds a demo that says it is one, and files only kinds it declares", (template) => {
     const kinds = new Set(template.kinds.map((k) => k.id));
     expect(kinds.size).toBeGreaterThan(0);
