@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{company_name}} | Recruiting</title>
-<meta name="description" content="{{tagline}}">
+<meta name="description" content="Introductions between good companies and the people they need">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}} | Recruiting">
-<meta property="og:description" content="{{tagline}}">
+<meta property="og:description" content="Introductions between good companies and the people they need">
 <meta name="theme-color" content="#f3d9d0">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -43,11 +43,11 @@
     <p class="side side-b"><span class="side-k">For people</span> work worth doing</p>
     <div class="lens">
       {{#if city}}<p class="kicker">Recruiters based in {{city}}</p>{{/if}}
-      <h1 id="hero-title">{{tagline}}</h1>
+      <h1 id="hero-title">Introductions between good companies and the people they need</h1>
       <p class="intro">{{intro}}</p>
       <div class="ctas">
-        <a class="btn btn-solid" href="mailto:{{contact_email}}?subject=A%20role"><span class="dots" aria-hidden="true"><i></i><i></i></span>Send us a role</a>
-        <a class="btn btn-line" href="mailto:{{contact_email}}?subject=Introducing%20myself"><span class="dots" aria-hidden="true"><i></i><i></i></span>Introduce yourself</a>
+        <a class="btn btn-solid" href="#write"><span class="dots" aria-hidden="true"><i></i><i></i></span>Send us a role</a>
+        <a class="btn btn-line" href="#write"><span class="dots" aria-hidden="true"><i></i><i></i></span>Introduce yourself</a>
       </div>
     </div>
   </section>
@@ -140,8 +140,29 @@
       <h2 id="write-title">Write to us</h2>
       <p class="salute">Dear reader,</p>
       <p>Tell us about the role you need to fill, or about the work you want to do next. A few honest lines are the best way to start an introduction.</p>
-      <a class="email" href="mailto:{{contact_email}}">{{contact_email}}</a>
+      {{#if contact_email}}<a class="email" href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}
       <p class="sign">Warmly,<br><span class="sign-name">{{company_name}}</span>{{#if city}}<br>{{city}}{{/if}}</p>
+      {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
+<style>
+.vf{display:inline-grid;vertical-align:top;gap:12px;width:100%;max-width:34rem;margin:32px 0 0;font:inherit;color:inherit;text-align:left;position:relative}
+.vf label{display:grid;gap:4px;font-size:.875em}
+.vf input,.vf textarea{box-sizing:border-box;width:100%;font:inherit;font-size:1rem;color:inherit;background:transparent;border:1px solid currentColor;border-radius:4px;padding:10px 12px}
+.vf textarea{min-height:7em;resize:vertical}
+.vf button{justify-self:start;font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:4px;padding:10px 20px;cursor:pointer}
+.vf :focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.vf__note{display:none;margin:0}
+.vf__note:target{display:block}
+.vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+</style>
+<p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
+<label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
+<label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
+<label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>
+<label>Message<textarea name="note" required maxlength="4000"></textarea></label>
+<div class="vf__trap" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+<button type="submit">Send message</button>
+</form>{{/if}}
     </div>
   </section>
 </main>
@@ -149,7 +170,7 @@
 <footer class="foot wrap">
   <p>&copy; {{year}} {{company_name}}</p>
   {{#if city}}<p>{{city}}</p>{{/if}}
-  <p><a class="link" href="mailto:{{contact_email}}">Write to us</a></p>
+  <p><a class="link" href="#write">Write to us</a></p>
 </footer>
 
 <script src="assets/site.js" defer></script>

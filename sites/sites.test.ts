@@ -11,6 +11,8 @@ const vocabulary: {
   lists: Record<string, { length: number; maxLength?: number; item?: Record<string, Limit> }>;
   optional: Record<string, { maxItems: number; maxLength?: number; item?: Record<string, Limit> }>;
 } = JSON.parse(readFileSync(join(ROOT, "placeholders.json"), "utf8"));
+/** The shared contact form block, copied verbatim into every design's `index.html`. */
+const FORM = readFileSync(join(ROOT, "form.html"), "utf8").trimEnd();
 const AGENCY_TYPES = ["recruiting", "security-testing", "market-research", "paid-ads", "seo-geo", "general"];
 const ALLOWED_HOSTS = ["www.w3.org"]; // the SVG namespace, never fetched
 
@@ -77,6 +79,8 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     // The platform fills city only from what the company said (never its time zone), so most sites have none:
     // a city is always inside {{#if city}}, or the page reads "Based in ." (vetta-mono #1788 review).
     for (const f of html) expect(unguarded(readFileSync(join(dir, f), "utf8")), `${f}: city outside {{#if city}}`).not.toContain("city");
+    // Likewise contact_email is "" until the owner chooses to show it (NEW-164).
+    for (const f of html) expect(unguarded(readFileSync(join(dir, f), "utf8")), `${f}: contact_email outside {{#if contact_email}}`).not.toContain("contact_email");
     for (const f of text.filter((f) => !f.endsWith(".html"))) expect(placeholdersIn(readFileSync(join(dir, f), "utf8")), f).toEqual([]);
   });
 
@@ -97,6 +101,30 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
     expect(files(out)).not.toContain("manifest.json");
   });
 
+  it("carries the one shared contact form beside its email links, so a lead reaches the CRM", () => {
+    const page = readFileSync(join(dir, "index.html"), "utf8");
+    expect(page.split(FORM)).toHaveLength(2);
+    // The mailto: links stay: the fallback when the platform fills no form address.
+    expect(page.replace(FORM, "")).toContain("mailto:{{contact_email}}");
+  });
+
+  // Before the owner chooses to show an email the platform fills contact_email with "" (NEW-164):
+  // no sentence ends "email them at .", no button opens an empty mailto, and every in-page link lands.
+  it.each([["with", "#"], ["without", ""]])("reads whole with no email, %s the form", (_, formAction) => {
+    const values = { ...JSON.parse(readFileSync(join(dir, "sample.json"), "utf8")), contact_email: "", form_action: formAction };
+    const scratch = mkdtempSync(join(tmpdir(), "values-"));
+    writeFileSync(join(scratch, "no-email.json"), JSON.stringify(values));
+    const out = mkdtempSync(join(tmpdir(), "site-"));
+    fillSite(dir, out, join(scratch, "no-email.json"));
+    for (const f of html) {
+      const page = readFileSync(join(out, f), "utf8");
+      const body = page.replace(/<(script|style)\b[\s\S]*?<\/\1>/g, "");
+      expect(body, f).not.toMatch(/mailto:["?]|<(a|dd)\b[^>]*>\s*<\/\1>|\b(at|to)\s*<\/(p|dd|li|span|a)>/i);
+      expect(body.replace(/<[^>]+>/g, ""), f).not.toMatch(/\b(at|to)\s+[.·]/);
+      for (const [, id] of page.matchAll(/href="#([\w-]+)"/g)) expect(page, `${f}: #${id}`).toContain(`id="${id}"`);
+    }
+  });
+
   it("leaves the host its head marker and never scrolls smoothly", () => {
     for (const f of html) expect(readFileSync(join(dir, f), "utf8"), f).toContain("<!--host-head-->");
     for (const f of text) expect(readFileSync(join(dir, f), "utf8"), f).not.toMatch(/scroll-behavior:\s*smooth|behavior:\s*["']smooth/);
@@ -110,8 +138,8 @@ describe.each(sites)("$type/$name", ({ type, name, dir }) => {
   });
 });
 
-/** The platform fills these four from the company; `defaults.json` carries every other required key. */
-const FROM_COMPANY = ["company_name", "city", "contact_email", "year"];
+/** The platform fills these from the company and its site; `defaults.json` carries every other required key. */
+const FROM_COMPANY = ["company_name", "city", "contact_email", "year", "form_action"];
 const defaults: Record<string, Record<string, unknown>> = JSON.parse(readFileSync(join(ROOT, "defaults.json"), "utf8"));
 
 it.each(AGENCY_TYPES)("has defaults for %s: every required key but the company's, within limits, no proof", (type) => {

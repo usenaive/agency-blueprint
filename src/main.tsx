@@ -18,7 +18,6 @@ import { Home } from "./screens/Home";
 import { LaunchReview } from "./screens/LaunchReview";
 import { ProductAudit } from "./screens/ProductAudit";
 import { Settings } from "./screens/Settings";
-import { Studio } from "./screens/Studio";
 
 // The operator dashboard lives under `/app`; `/` is the agency's public site (`site/`). The basename
 // keeps every link in the screens as it was written, and the redirect from the old root paths is
@@ -35,7 +34,6 @@ const router = createBrowserRouter([
       { path: "crm", element: <Navigate to="/clients" replace /> },
       { path: "approvals", Component: Approvals },
       // The product-design studio's files; the rail names it only under that template (`Shell.tsx`).
-      { path: "studio", Component: Studio },
       { path: "agents", Component: AgencyAgents },
       { path: "clients", Component: Clients },
       {

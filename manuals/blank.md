@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is an agency with no fixed specialism. It comes with a public site, a CRM and a calendar for your pipeline, a dashboard for your signed clients and their queue of work, and seven agents. They keep the site true to what you sell, work the pipeline, run each client, write the agency's own blog, fix weak pages, study competitors and draft proposals.
+This company is an agency with no fixed specialism. It comes with a public site, a CRM and a calendar for your pipeline, a dashboard for your signed clients and their queue of work, and eight agents. They keep the site true to what you sell, work the pipeline, run each client, write the agency's own blog, fix weak pages, study competitors, draft proposals and read your mail.
 
 You set the offer and the price, and you decide what goes out. A site change waits for you. Every email waits for your yes. Every post, page and proposal is a draft until you approve it.
 
@@ -38,6 +38,7 @@ Each seat does one job and hands work on. The CEO keeps them pointed at your pla
 
 - **Site builder** keeps the public site in your words: hero, services, who you serve, process, pricing and FAQ. It proposes the whole rewrite as one change, and nothing goes live without you. It never writes a case study, a testimonial or a number you didn't give it.
 - **Sales** finds leads that match your ideal client and adds each to the CRM with a reason to reach out now. It drafts first emails and follow-ups on each contact's timeline and moves them through the pipeline. When a deal is won it becomes a client in the dashboard, with its workspace and team, in the same step. Every email asks first. Tell it who is not a fit.
+- **Inbox** reads your company's mail at hello@ and notes each reply on the sender's CRM timeline, adding new senders as leads. Sales and the client manager work from those notes. It also sends the emails a team's lead drafts, each only once you approve it.
 - **Client manager** owns every signed client: onboarding, the calendar and the weekly check-in. It flags a stall before the client notices. It drafts the check-in, and you send it.
 - **Content writer, content reviser and gap researcher.** The researcher compares your site with named competitors and hands the gaps to the writer. The writer drafts posts for the agency's own blog. The reviser finds thin or stale pages and files a revision for each, at most three a run.
 - **Proposal writer** works when Sales hands over a qualified lead. It writes scope, three package tiers from your pricing answer, and a timeline, on the contact's CRM timeline. It never sends.
@@ -46,7 +47,7 @@ Each seat does one job and hands work on. The CEO keeps them pointed at your pla
 
 The team works on timers. Between them, nothing runs and nothing spends.
 
-- **Each weekday morning:** Sales reads the inbox, finds new leads and drafts follow-ups.
+- **Each weekday morning:** Sales reads the replies the inbox logged, finds new leads and drafts follow-ups.
 - **Monday morning:** the client manager checks every client and drafts the check-ins.
 - **Tuesday and Thursday mornings:** the content writer drafts the next blog post from the calendar.
 - **Wednesday:** the content reviser picks the weakest pages and files revisions.

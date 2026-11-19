@@ -27,11 +27,15 @@
     },
     "contact_email": {
       "maxLength": 80,
-      "description": "The verified public inbox."
+      "description": "The verified public inbox, or empty until the owner chooses to show one: only ever inside {{#if contact_email}}, and buttons that would write to it go to the contact form instead."
     },
     "year": {
       "maxLength": 4,
       "description": "Copyright year, four digits."
+    },
+    "form_action": {
+      "maxLength": 200,
+      "description": "Where the shared contact form (`form.html`) posts: the platform's form address for the live site, or empty for no form (the mailto: links stay). Only ever inside {{#if form_action}}."
     }
   },
   "lists": {

@@ -5,7 +5,7 @@
   "audience": "Online shops, publishers and software companies with large or messy sites, from a few hundred to a few hundred thousand pages, across North America.",
   "pricing_note": "A fixed fee for the first crawl and audit, then a monthly retainer for fixes, content structure and monitoring. We quote both after a short call about your site.",
   "city": "Portland",
-  "contact_email": "crawl@crawlspace.studio",
+  "contact_email": "crawl@crawlspace.studio", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "Full-site crawl and audit", "description": "We walk every page the way a crawler does and list what blocks it: redirects, duplicates, orphaned pages, broken links, slow templates and blocked resources." },

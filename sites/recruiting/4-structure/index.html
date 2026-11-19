@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--host-head-->
 <title>{{company_name}} | Recruiting</title>
-<meta name="description" content="{{#if city}}Recruiting from {{city}}. {{/if}}{{tagline}}">
+<meta name="description" content="{{#if city}}Recruiting from {{city}}. {{/if}}The people your next org chart is missing">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{{company_name}}">
-<meta property="og:description" content="{{tagline}}">
+<meta property="og:description" content="The people your next org chart is missing">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/fonts.css">
@@ -30,7 +30,7 @@
         <li><a class="draw" href="#contact">Contact</a></li>
       </ul>
     </nav>
-    <a class="btn btn--solid top__cta" href="mailto:{{contact_email}}">Send us a role<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+    <a class="btn btn--solid top__cta" href="#contact">Send us a role<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
   </div>
 </header>
 
@@ -39,10 +39,10 @@
     <div class="page g">
       <div class="hero__text">
         <div class="head"><span class="node" aria-hidden="true"></span>{{#if city}}<p class="mono">Recruiting from {{city}}</p>{{/if}}</div>
-        <h1>{{tagline}}</h1>
+        <h1>The people your next org chart is missing</h1>
         <p class="lede">{{intro}}</p>
         <div class="ctas">
-          <a class="btn btn--solid" href="mailto:{{contact_email}}">Send us a role<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+          <a class="btn btn--solid" href="#contact">Send us a role<svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
           <a class="btn" href="#process">How a search runs<svg class="arr arr--down" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
         </div>
       </div>
@@ -134,12 +134,33 @@
     <div class="page g">
       <div class="head"><span class="node node--end" aria-hidden="true"></span><h2 id="contact-h">Contact</h2></div>
       <div class="contact__body">
-        <a class="bigcta" href="mailto:{{contact_email}}"><span class="bigcta__t">Send us a role</span><svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
+        <a class="bigcta"{{#if contact_email}} href="mailto:{{contact_email}}"{{/if}}><span class="bigcta__t">Send us a role</span><svg class="arr" viewBox="0 0 20 10" aria-hidden="true"><path d="M0 5h18M14 1l4 4-4 4"/></svg></a>
         <p class="contact__lede">Tell us the seat, who it reports to and when you need someone in it. We will come back with how we would run the search.</p>
         <dl class="contact__meta">
-          <div><dt class="mono">Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>
+          {{#if contact_email}}<div><dt class="mono">Email</dt><dd><a class="link" href="mailto:{{contact_email}}">{{contact_email}}</a></dd></div>{{/if}}
           {{#if city}}<div><dt class="mono">Based in</dt><dd>{{city}}</dd></div>{{/if}}
         </dl>
+        {{#if form_action}}<form class="vf" action="{{form_action}}" method="post" aria-label="Send us a message">
+<style>
+.vf{display:inline-grid;vertical-align:top;gap:12px;width:100%;max-width:34rem;margin:32px 0 0;font:inherit;color:inherit;text-align:left;position:relative}
+.vf label{display:grid;gap:4px;font-size:.875em}
+.vf input,.vf textarea{box-sizing:border-box;width:100%;font:inherit;font-size:1rem;color:inherit;background:transparent;border:1px solid currentColor;border-radius:4px;padding:10px 12px}
+.vf textarea{min-height:7em;resize:vertical}
+.vf button{justify-self:start;font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:4px;padding:10px 20px;cursor:pointer}
+.vf :focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.vf__note{display:none;margin:0}
+.vf__note:target{display:block}
+.vf__trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+</style>
+<p class="vf__note" id="contact-sent" role="status" tabindex="-1">Thanks, your message is in. We reply by email.</p>
+<p class="vf__note" id="contact-failed" role="alert" tabindex="-1">That didn't go through. Please try again{{#if contact_email}} or email <a href="mailto:{{contact_email}}">{{contact_email}}</a>{{/if}}.</p>
+<label>Name<input name="name" autocomplete="name" required maxlength="200"></label>
+<label>Email<input name="email" type="email" autocomplete="email" required maxlength="320"></label>
+<label>Company (optional)<input name="company" autocomplete="organization" maxlength="200"></label>
+<label>Message<textarea name="note" required maxlength="4000"></textarea></label>
+<div class="vf__trap" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+<button type="submit">Send message</button>
+</form>{{/if}}
       </div>
     </div>
   </section>

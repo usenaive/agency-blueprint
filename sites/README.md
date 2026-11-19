@@ -4,7 +4,7 @@ Thirty finished websites, built once: five designs for each of six agency types 
 `security-testing`, `market-research`, `paid-ads`, `seo-geo`, `general`). When a company
 activates its plan it gets one of its type's five, filled with its own name and setup answers.
 There is no per-company design work. The first fill waits for the owner's approval (preview,
-then Publish), and the Marketing agent edits the copy from there.
+then Publish), and your site builder edits the copy from there.
 
 ## Layout
 
@@ -30,6 +30,21 @@ sites/
 Each site is a self-contained static site with no build step: fill it, then serve the folder
 as-is from the free-site host.
 
+## The contact form
+
+`form.html` is the one contact form every design carries, copied verbatim into its `index.html`
+next to the email links (`sites.test.ts` checks every copy). It sits inside `{{#if form_action}}`:
+the platform fills `form_action` with the live site's own form address, and posts land in the
+company's CRM as a contact at `talking` with the visitor's message on their timeline. With no
+address the block is removed and the `mailto:` links stay. It needs no script: it posts as a plain
+form, and the platform sends the browser back to `#contact-sent` or `#contact-failed` (which
+offers the email link). Change the block in `form.html`, then replace every copy.
+
+The email is optional too: the platform fills `contact_email` with `""` until the owner chooses
+to show one. Every email link and sentence sits inside `{{#if contact_email}}`, and a button
+outside the contact section goes to that section (`#contact`, or the design's own id) instead of
+`mailto:`, so it works either way.
+
 ## Placeholders
 
 `{{key}}`, with no spaces. Keys come only from `placeholders.json`:
@@ -39,7 +54,7 @@ as-is from the free-site host.
 | `{{company_name}}`, `{{tagline}}`, `{{intro}}` | the agency name and the `about` setup answer |
 | `{{audience}}` | the `markets` answer: locations, levels, industries |
 | `{{pricing_note}}` | the `offer` answer: how it charges, in its own words |
-| `{{city}}`, `{{contact_email}}`, `{{year}}` | the company record (`city` only when the company gave one: always inside `{{#if city}}`) |
+| `{{city}}`, `{{contact_email}}`, `{{year}}`, `{{form_action}}` | the company record (`city` and `contact_email` only when the company gave them: always inside their own `{{#if}}`) |
 | `{{services[0].title}}`, `{{services[0].description}}` … `[3]` | four offers |
 | `{{specialties[0]}}` … `[5]` | six short labels (roles, channels, disciplines) |
 | `{{process[0].title}}`, `{{process[0].description}}` … `[2]` | three steps |

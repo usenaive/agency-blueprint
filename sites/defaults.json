@@ -11,7 +11,7 @@
       { "title": "Team builds", "description": "When you need several people at once. One brief, one point of contact, and interviews planned around your team's week." },
       { "title": "Role brief writing", "description": "We turn a loose headcount into a written role brief: scope, level, salary band and interview loop. Yours to keep, whoever you hire through." }
     ],
-    "specialties": ["Engineering", "Product", "Design", "Sales", "Operations", "Leadership"],
+    "specialties": ["First hires", "Senior hires", "Team leads", "Heads of department", "Hard to fill roles", "Whole teams"],
     "process": [
       { "title": "Write the brief", "description": "We write the role up with the hiring manager: the work, the team, the band and the must haves. You sign it off before anyone is approached." },
       { "title": "Search and screen", "description": "We approach people who match the brief, speak to each one ourselves and send a short list with a note on why each person fits." },

@@ -3,19 +3,15 @@
  *
  * This is the file `naive up` reads. A person clones this repo, sets NAIVE_API_KEY, runs
  * `naive up`, and the platform provisions everything below into their organization: the one app
- * (public site at `/`, operator dashboard under `/app`) and the chosen template's seven agents.
+ * (public site at `/`, operator dashboard under `/app`) and the chosen template's eight agents.
  * Re-running is idempotent — resources are keyed by name.
  *
  * The blueprint is the machine and is shared: the screens, `/api/*`, `/mcp`, the store, the
  * operator bearer, the build and the approval flow do not change with the template. The template
- * is data — `templates/blank.ts` and `templates/seo-geo.ts` — and this repo carries **both**, so
- * switching is one edit in `templates/index.ts` plus `naive up`: never a re-clone, never a new app.
- *
- * Switching widens and never narrows. Agents the new template declares are created; agents only
- * the old one declared come back as `kept` and are left standing (deletion needs an explicit
- * `removed:` tombstone), and the operator's own rows — clients, posts, connections, the app, its
- * URL, its MCP token — are untouched. The per-client crew follows the same rule in
- * `server/proxy.ts`.
+ * is data — `templates/blank.ts`, the one this blueprint carries. Its specialisms (SEO & GEO,
+ * Product design, …) are teams in `crews/`, each added to a company beside this agency (ADR-3010
+ * in usenaive/vetta-mono); the retired `seo-geo` and `product-design` templates keep running in the
+ * companies that installed them, from the releases they installed.
  *
  * The dashboard declares its MCP endpoint (`mcp: "/mcp"`), so every agent in the project is
  * offered the dashboard's tools automatically on each turn — no per-agent wiring; the platform
@@ -24,28 +20,10 @@
  * Standalone clones install `@usenaive-sdk/blueprints` from npm; inside the monorepo it resolves
  * via the workspace protocol.
  */
-import { BLUEPRINTS, defineProject, type DefineInput } from "@usenaive-sdk/blueprints";
-import { ACTIVE_TEMPLATE, TEMPLATES } from "./templates/active.ts";
+import { defineProject, type DefineInput } from "@usenaive-sdk/blueprints";
+import { ACTIVE_TEMPLATE } from "./templates/active.ts";
 import { AGENCY_IDENTITY } from "./templates/blank.ts";
 import { PROJECT, TEMPLATE } from "./templates/index.ts";
-
-/**
- * Every template this repo carries that the installed engine admits. `defineProject` refuses a repo
- * whose template list is not exactly its blueprint's (`BLUEPRINTS.agency.templates`), so a template
- * added here ahead of the engine — `product-design` needs `@usenaive-sdk/blueprints` 0.17.0 — is left
- * out with a warning rather than breaking every clone, test and publish on the older engine. The
- * same filter `media-blueprint`'s config has carried since its first sibling template.
- */
-const carried = new Set<string>(BLUEPRINTS.agency?.templates ?? Object.keys(TEMPLATES));
-const templates = Object.values(TEMPLATES).filter((one) => carried.has(one.name));
-/** Said out loud, so a publish against an engine that predates a template never drops it silently. */
-const skipped = Object.keys(TEMPLATES).filter((name) => !carried.has(name));
-if (skipped.length > 0) {
-  console.warn(`agency: the installed @usenaive-sdk/blueprints does not list ${skipped.join(", ")}; left out until an engine that lists them is installed.`);
-}
-if (!carried.has(TEMPLATE)) {
-  throw new Error(`agency: the ${TEMPLATE} template needs @usenaive-sdk/blueprints >= 0.17.0; the installed engine lists only ${[...carried].join(", ")}.`);
-}
 
 /**
  * The platform's four mini apps every agency template carries (the owner's rule: SEO & GEO, Ads,
@@ -95,8 +73,18 @@ export default defineProject({
   title: ACTIVE_TEMPLATE.title,
   description: ACTIVE_TEMPLATE.description,
   roadmap: ACTIVE_TEMPLATE.roadmap,
-  /** Every template this repo carries that the engine lists; the chosen one's agents become this project's crew. */
-  templates,
+  /**
+   * The template's crew. Declared directly, not through `templates`: the engine still lists the retired
+   * `seo-geo` and `product-design` for the companies that run them, and would refuse a repo that carries
+   * fewer templates than it lists (a switch that narrows); with one template there is nothing to switch.
+   */
+  agents: ACTIVE_TEMPLATE.agents,
+  /**
+   * No seat builds or edits an app (ADR-3140 in usenaive/vetta-mono): the site changes through `update_site`,
+   * the rest is filed through the dashboard's tools. Without this the engine gives every seat the computer's
+   * file tools and `apps` deploy on the dashboard, the inbox seat too, as it does any crew that builds apps.
+   */
+  crew_edits_apps: false,
   /**
    * The ≤4 questions the studio asks before provisioning (plan §4). The answers become the project
    * context every agent reads first (`project_context`, canonical-spec §31.8); no `{ from_env }`
@@ -120,9 +108,8 @@ export default defineProject({
    *
    * Connection tools resolve `session → agent → agent_identity → identity → connected accounts`, so
    * an agent holding no identity is offered none of them — which is what every agent of this
-   * blueprint was. The mailbox names in `templates/blank.ts` and the search and analytics names in
-   * `templates/seo-geo.ts` were written, allow-listed and never once offered to a turn, and nothing
-   * reported it: the resolver simply returned an empty list.
+   * blueprint was. The mailbox names in `templates/blank.ts` were written, allow-listed and never
+   * once offered to a turn, and nothing reported it: the resolver simply returned an empty list.
    *
    * Declaring the persona here and naming it on each agent (and on each schedule, which fires with
    * no operator behind it and would otherwise speak as nobody) is the grant. `up` refuses an agent
@@ -137,6 +124,12 @@ export default defineProject({
     {
       name: AGENCY_IDENTITY,
       description: "The agency itself — the persona its agents read, draft and connect accounts as.",
+      /**
+       * The company's one inbox (owner, 2026-11-17, ADR-3132 in usenaive/vetta-mono): `hello@` on the company's
+       * domain, its mail waking the `inbox` seat, which reads nothing else and sends only on a yes. Teams declare none, so every
+       * team's mail is this one, and outside mail never wakes a seat that reads client files.
+       */
+      inbox: { localpart: "hello", agent: "inbox" },
     },
   ],
 
@@ -197,8 +190,4 @@ export default defineProject({
     },
   ],
 
-  // No `agents:` here. They are the template's — `templates/agents.ts` declares the seven every
-  // agency has, `templates/seo-geo.ts` adds its focus to them, and the per-client crew
-  // (`seo-writer--<slug>`, …) is provisioned at onboarding by the dashboard server, since its
-  // names carry a client slug and cannot be declared statically.
 });

@@ -5,7 +5,7 @@
   "audience": "Founders and marketing leads at US direct-to-consumer brands in food, beauty, home and wellness, usually between their first retail listing and their first national campaign.",
   "pricing_note": "Each project is a fixed price, quoted after a free thirty-minute call. Small questions start as a two-week sprint; bigger ones are split into stages you approve one at a time.",
   "city": "Chicago",
-  "contact_email": "questions@askwell.co",
+  "contact_email": "questions@askwell.co", "form_action": "#",
   "year": "2026",
   "services": [
     { "title": "Market sizing", "description": "How many people could buy what you sell, how often and at what price, built from survey data and public sources, with the assumptions spelled out." },
