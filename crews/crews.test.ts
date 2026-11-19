@@ -144,6 +144,16 @@ describe("every crew", () => {
   });
 });
 
+// QA r10 (SEO & GEO): the lead woke on the GEO piece and asked a review of it alone while the audit still ran; asked to
+// compile, it could not see its teammates' cards, had them redo the work, saved the report and asked no review.
+it.each(WITH_CREW)("%s lead re-reads the cards each wake, has no saved piece redone, and asks before it closes a compile card", async (blueprint) => {
+  const { system } = await lead(blueprint);
+  expect(system).toContain("read all of this client's cards again on the board each time you wake, with board_read and no card_id, never from memory or an earlier message");
+  expect(system).toContain("A piece a teammate saved is never made again: when you cannot see its card or file, find_files with the tag client:<the client's ctc_ id> finds it");
+  expect(system).toContain("ask no teammate to redo it.");
+  expect(system).toContain("so save the file, ask the review below, and only then move the card to done");
+});
+
 // NEW-60: a "pseudonymous account" sign-up on a real company's site was carded to the security crew's tester.
 it.each(WITH_CREW)("%s has every working seat refuse a made-up identity or any other deception of a real party", async (blueprint) => {
   for (const agent of await seats(blueprint)) {
