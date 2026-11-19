@@ -81,6 +81,8 @@ describe("every crew", () => {
     const tasks = (await configOf(blueprint)).tasks;
     expect(tasks.map((task) => [task.key, task.assignee])).toEqual(blueprint === "clients" ? [["meet-your-clients", LEADS[blueprint]!.lead]] : []);
     for (const task of tasks) expect(task.body).toMatch(/crm\.read stage won.*ask_operator.*find no leads yourself/);
+    // Review 1119 (ab#85): a re-apply of a long-running Client team books no kickoff for clients it already works with.
+    for (const task of tasks) expect(task.body).toMatch(/only if its timeline has no line yet \(new to the team\).*books nothing/);
   });
 
   it.each(WITH_CREW)("%s has no Sales or Marketing, one lead named for the team, and a persona of its own", async (blueprint) => {
