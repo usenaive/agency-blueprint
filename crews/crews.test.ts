@@ -201,6 +201,21 @@ describe("the Client agency (clients)", () => {
     expect((await lead("clients")).system).toContain("Domains tab");
   });
 
+  // QA r10 (Harrow): the Client lead had no review, so it sent Delivery's benchmark to the CEO, which reviewed it itself;
+  // Delivery's revision chat could not see its own untagged file ("no such file") and searched the web for its id.
+  it("has the Client lead compile and ask the one review, and Delivery tag each piece for its client", async () => {
+    const head = await lead("clients");
+    for (const tool of ["find_files", "fetch_file", "read", "write", "publish_file"]) expect([tool, permission(head, tool)]).toEqual([tool, "allow"]);
+    expect(head.system).toContain("Every piece a teammate hands you is yours to put in front of the person, whoever asked for it, the CEO included.");
+    expect(head.system).toMatch(/call ask_operator once.*Approve before it goes out.*One ask per client job/s);
+    expect(head.system).toContain('A job of one piece needs no compiling: that piece is the report, and it still gets the review below');
+    const delivery = (await seat("clients", "Delivery")).system;
+    expect(delivery).toContain("One chat, one client");
+    expect(delivery).toContain("the tags client:<the client's ctc_ id> and kind:");
+    expect(delivery).toContain("To change a piece already saved, nothing is edited in place and nothing is searched for on the web: find it with find_files");
+    expect(delivery).toContain("Hand finished work to Client lead, never to the CEO, even when the CEO made your card");
+  });
+
   it("has a blank twin: the same four apps and questions, and no crew", async () => {
     const [base, blank] = [await configOf("clients"), await configOf("clients-blank")];
     expect([blank.title, blank.agents]).toEqual(["Blank agency", []]);

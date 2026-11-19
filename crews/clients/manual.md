@@ -31,8 +31,8 @@ On day one:
 Each seat does one job. They hand work on through the board, and the CEO keeps them pointed at your plan.
 
 - **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the client lead.
-- **Client lead** runs each client: the kickoff, the calls, the weekly update and the renewal. It drafts each update and asks before it sends.
-- **Delivery** does the client work: research, drafts, pages and reports. Each piece is filed in Files for your review. Ask it "show me what is waiting for review".
+- **Client lead** runs each client: the kickoff, the calls, the weekly update and the renewal. When Delivery's work for a job is done, it puts it in one file and asks you once to approve it, in Needs you. It drafts each email; your agency sends it once you say yes.
+- **Delivery** does the client work: research, drafts, pages and reports. Each piece is saved in Files and goes to the Client lead, never straight to you.
 
 To change a seat's job, tell the CEO in plain words. To change what a seat may do alone, open the agent and change its tools. Sending email always asks.
 
@@ -58,7 +58,7 @@ Each timer has a cap per run. A run that would cost more stops instead.
 
 - [ ] Open the approval queue. Read each email as the person who gets it.
 - [ ] Approve, edit or hold. Your edits teach the team your voice.
-- [ ] Review any client work Delivery filed.
+- [ ] Review each job waiting in Needs you.
 
 **Every Monday**
 
