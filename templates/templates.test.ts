@@ -92,8 +92,12 @@ describe("every template of this blueprint", () => {
     const sales = template.agents.find((a) => a.name === "sales")!;
     const intake = sales.intake?.message ?? "";
     // On blank the question is optional: a missing answer is a skip, never a second ask.
-    expect(intake).toMatch(/network answer, use it; if it has none and the context's template is blank, the operator skipped that optional setup question: do not ask again, stop there/);
-    expect(intake).toMatch(/on any other template, which asks no network question at setup, ask the operator once with ask_operator/);
+    expect(intake).toMatch(/use the context's network answer; with none on the blank template, they skipped that question: stop there/);
+    expect(intake).toMatch(/on any other, which asks none at setup, ask once with ask_operator/);
+    // Walk w394-agency-pick: with no web search, Sales filed "Austin salon" leads, then asked the owner to rename and
+    // de-duplicate them, and named a "web tools provider" setting that does not exist.
+    expect(intake).toMatch(/each a real company named on a page you read this turn/);
+    expect(intake).toMatch(/No placeholders: with nothing read, add none and say so\. Fix your own CRM entries; never ask the operator to, nor name a setting\./);
     expect(intake).toMatch(/crm\.write add \(source network.*a chat of its own that drafts a short personal note on their timeline — do not send/);
     expect(intake).toMatch(/never invent a contact/);
     // Prospects first, network last: asking parks the session, and the list should not wait on it.
