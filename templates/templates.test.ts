@@ -96,16 +96,19 @@ describe("every template of this blueprint", () => {
     expect(intake).toMatch(/on any other, which asks none at setup, ask once with ask_operator/);
     // Walk w394-agency-pick: with no web search, Sales filed "Austin salon" leads, then asked the owner to rename and
     // de-duplicate them, and named a "web tools provider" setting that does not exist.
-    expect(intake).toMatch(/each a real company named on a page you read this turn/);
-    expect(intake).toMatch(/No placeholders: with nothing read, add none and say so\. Fix your own CRM entries; never ask the operator to, nor name a setting\./);
+    expect(intake).toMatch(/named on a page you read, added with crm\.write add \(it as name and company/);
+    expect(intake).toMatch(/with nothing read, add none/i);
+    expect(intake).toMatch(/never ask the operator to, nor name a setting/);
     expect(intake).toMatch(/crm\.write add \(source network.*a chat of its own that drafts a short personal note on their timeline — do not send/);
     expect(intake).toMatch(/never invent a contact/);
     // Prospects first, network last: asking parks the session, and the list should not wait on it.
     expect(intake.indexOf("fifteen prospects")).toBeLessThan(intake.indexOf("ask_operator"));
-    expect(intake).toMatch(/crm\.write add \(stage lead, source outreach/);
+    expect(intake).toMatch(/crm\.write add \(it as name and company, stage lead, source outreach/);
     expect(intake).toMatch(/ask for advice or an introduction rather than pitching; never claim a result/);
     // The daily pass gives each reply the inbox seat logged the source it came from.
     const inbox = sales.schedules?.[0]?.input ?? "";
+    // Review of #93: the 08:30 run has no one to ask, so its prospects come only from what it read.
+    expect(inbox).toMatch(/up to three fitting prospects, each named on a page you read/);
     expect(inbox).toMatch(/source referral when an existing client.*"Referred by <client name> \(<cli_ id>\)".*source network.*otherwise outreach/);
     // A deal that signs becomes a client in the same step, never by a later click.
     expect(sales.system).toMatch(/won and create_client \(ctc_ id as crm_contact\) in the same step/);
