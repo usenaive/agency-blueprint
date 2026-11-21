@@ -6,7 +6,7 @@
  * specialism at all: SEO & GEO and Product design are teams in `crews/` (ADR-3010 in
  * usenaive/vetta-mono), tested in `crews/crews.test.ts`.
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../seed/clients.ts";
 import type { Post } from "../seed/posts.ts";
@@ -18,7 +18,7 @@ import { TEMPLATE, VOCABULARY, kindLabel } from "./index.ts";
 /** Plan §2.1's roster, name and role, in the order the studio lists them. */
 const ROSTER = [
   ["site-builder", "Public site"],
-  ["sales", "Pipeline"],
+  ["sales", "Sales"],
   ["client-manager", "Delivery"],
   ["content-writer", "Content"],
   ["content-reviser", "Revisions"],
@@ -341,17 +341,23 @@ describe("the launch card's words", () => {
   });
 
   /** Walk w3429 (agency, specialist): "eight agents" and "before every session" after sign-up (owner, 2026-11-21). */
-  it("lists and asks in the person's words: what a person reads of the template says no internal word", () => {
+  it("lists and asks in the person's words: what a person reads of a template or crew says no internal word", () => {
     const BANNED = /\b(?:agents?|crews?|boards?|cards?|sessions?|pipelines?|teammates?|templates?)\b/gi;
-    const SHOWN = new Set(["title", "description", "summary", "label", "help", "placeholder", "day_one", "every_day", "after"]);
-    const said: string[] = [];
-    JSON.stringify(all, (key, value: unknown) => {
-      if (SHOWN.has(key) && typeof value === "string") said.push(value);
-      return value;
-    });
-    said.push(readFileSync(new URL("../manuals/blank.md", import.meta.url), "utf8").split("\n").slice(0, 8).join("\n"));
-    expect(said.length).toBeGreaterThan(20);
-    expect(said.flatMap((line) => line.match(BANNED) ?? [])).toEqual([]);
+    const SHOWN = ["title", "description", "summary", "label", "help", "placeholder", "day_one", "role", "clientsSubtitle", "agentsSubtitle", "noCrew"];
+    const crews = readdirSync(new URL("../crews/", import.meta.url), { withFileTypes: true }).filter((entry) => entry.isDirectory());
+    const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+    const said: [string, string][] = [];
+    for (const source of [all, ...crews.map((crew) => JSON.parse(read(`crews/${crew.name}/naive.config.json`)))]) {
+      JSON.stringify(source, (key, value: unknown) => {
+        if (SHOWN.includes(key) && typeof value === "string") said.push([key, value]);
+        return value;
+      });
+    }
+    // A manual's opening: what the team is and what the person answers (its chapter headings are the platform's).
+    for (const manual of ["manuals/blank.md", ...crews.map((crew) => `crews/${crew.name}/manual.md`)]) said.push(["manual", read(manual).split("\n").slice(0, 20).join("\n")]);
+    // A key that reads nothing guards nothing: every shown key is read at least once.
+    expect(SHOWN.filter((key) => !said.some(([seen]) => seen === key))).toEqual([]);
+    expect(said.flatMap(([, line]) => line.match(BANNED) ?? [])).toEqual([]);
   });
 
   it("says what Day 1 comes to, and claims no every-day line the weekday timers cannot keep", () => {

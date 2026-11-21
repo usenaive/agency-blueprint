@@ -16,7 +16,7 @@ You set the offer and the price, and you decide what goes out. A site change wai
 
 ## 🛠️ Setup
 
-You answer three questions, and a fourth if you like. Every agent reads them before each run.
+You answer three questions, and a fourth if you like. Your team reads them before each job.
 
 - **What does your agency sell, and to whom?** One or two sentences. The site's hero is written from it.
 - **Who is your ideal client?** Industry, size and place. Sales builds its first lead list from it.

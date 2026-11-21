@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is a recruiting agency. A team of agents signs clients who are hiring, turns each open role into a brief, finds people who already do that work, scores them the same way for everyone and drafts the first message to each. A CRM holds every client and lead. A calendar holds every call.
+This company is a recruiting agency. A team signs clients who are hiring, turns each open role into a brief, finds people who already do that work, scores them the same way for everyone and drafts the first message to each. A CRM holds every client and lead. A calendar holds every call.
 
 Nothing reaches a candidate without your yes. Every email to a client, a lead or a candidate waits for your approval.
 
@@ -14,7 +14,7 @@ Nothing reaches a candidate without your yes. Every email to a client, a lead or
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer three questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** "We hire engineers for seed-stage software startups."
 - **What do you sell, and for about how much?** Your fee model in your own words. The team quotes only this.

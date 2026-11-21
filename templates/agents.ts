@@ -217,7 +217,7 @@ export const roster: AgentDecl[] = [
   },
   {
     name: "sales",
-    role: "Pipeline",
+    role: "Sales",
     model,
     budget,
     description:

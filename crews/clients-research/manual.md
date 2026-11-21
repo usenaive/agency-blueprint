@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is a research agency. A team of agents signs clients, frames each client's question, sizes the market from public sources, tears down competitors and counts what buyers say. Every figure carries its source. A CRM holds every lead and client.
+This company is a research agency. A team signs clients, frames each client's question, sizes the market from public sources, tears down competitors and counts what buyers say. Every figure carries its source. A CRM holds every lead and client.
 
 Every email waits for your yes. Every report is filed for your review before a client sees it.
 
@@ -14,7 +14,7 @@ Every email waits for your yes. Every report is filed for your review before a c
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer three questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** "Market research for founders raising a seed round."
 - **What do you sell, and for about how much?** Your packages, as you quote them.

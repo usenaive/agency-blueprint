@@ -6,15 +6,15 @@
 
 This company is an agency that tests clients' live products. Testers use each client's product as a real customer would, push on its edges, and write up every gap with steps to reproduce. A CRM holds every lead and client.
 
-Every browser session waits for your yes, with the address on its card. Every email waits for your yes. Testing happens only on products a client has asked you to test, in writing.
+Every browser run waits for your yes, with the address it will open. Every email waits for your yes. Testing happens only on products a client has asked you to test, in writing.
 
-**You:** say what kinds of products your clients ship and which journeys matter. Get written permission and scope from each client. Approve each test session and each report.
+**You:** say what kinds of products your clients ship and which journeys matter. Get written permission and scope from each client. Approve each test run and each report.
 
 **The team:** plans each client's week every Monday, walks each journey as a new customer and then tries the odd paths, and writes each gap with steps, what happened and what should have.
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer three questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** "We test sign-up and checkout for online stores."
 - **What do you sell, and for about how much?** Your packages, as you quote them.

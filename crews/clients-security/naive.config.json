@@ -4,7 +4,7 @@
   "blueprint": "clients-security",
   "template": "agency",
   "title": "Security team",
-  "description": "A team specialised in product testing: testers use each client's live product as a real customer would, push on its edges, and write up every gap with steps to reproduce. Every browser session waits for your yes. This is not penetration testing or red teaming.",
+  "description": "A team specialised in product testing: testers use each client's live product as a real customer would, push on its edges, and write up every gap with steps to reproduce. Every browser run waits for your yes. This is not penetration testing or red teaming.",
   "roadmap": {
     "day_one": "Connect your email domain and write your scope letter",
     "every_day": "Journey tests · Gap reports"

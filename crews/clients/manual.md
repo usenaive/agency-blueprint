@@ -14,7 +14,7 @@ You bring the trade and the judgement. Every email to a lead or a client waits f
 
 ## 🛠️ Setup
 
-You answer two questions. Every agent reads them before each run.
+You answer two questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** One sentence, with the buyer in it: "We build simple websites for local dental clinics."
 - **What do you sell, and for about how much?** Your main offer and its rough price: "A five-page site at a fixed price, live in three weeks." Use your real price. The team quotes only what you write here.

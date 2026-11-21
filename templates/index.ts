@@ -78,11 +78,11 @@ const blank: TemplateVocabulary = {
   ],
   words: {
     brand: "Northwind Agency",
-    clientsSubtitle: "Every active engagement — open one to see its connections, calendar, agents and deliverables.",
+    clientsSubtitle: "Every active engagement — open one to see its connections, calendar, team and deliverables.",
     noActiveClients: "No clients yet — a deal marked won on the CRM becomes one, onboarded with its workspace and team.",
-    agentsSubtitle: "Every agent working for this agency.",
+    agentsSubtitle: "Everyone working for this agency.",
     noCrew:
-      "No agents of this client's own. This template runs every client through the agency's own eight; a template with a per-client team provisions one at onboarding.",
+      "No team of this client's own: the agency's own eight run every client.",
   },
   site: {
     tagline: "The work, planned and shown before it ships.",
