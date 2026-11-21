@@ -340,9 +340,23 @@ describe("the launch card's words", () => {
     }
   });
 
+  /** Walk w3429 (agency, specialist): "eight agents" and "before every session" after sign-up (owner, 2026-11-21). */
+  it("lists and asks in the person's words: what a person reads of the template says no internal word", () => {
+    const BANNED = /\b(?:agents?|crews?|boards?|cards?|sessions?|pipelines?|teammates?|templates?)\b/gi;
+    const SHOWN = new Set(["title", "description", "summary", "label", "help", "placeholder", "day_one", "every_day", "after"]);
+    const said: string[] = [];
+    JSON.stringify(all, (key, value: unknown) => {
+      if (SHOWN.has(key) && typeof value === "string") said.push(value);
+      return value;
+    });
+    said.push(readFileSync(new URL("../manuals/blank.md", import.meta.url), "utf8").split("\n").slice(0, 8).join("\n"));
+    expect(said.length).toBeGreaterThan(20);
+    expect(said.flatMap((line) => line.match(BANNED) ?? [])).toEqual([]);
+  });
+
   it("says what Day 1 comes to, and claims no every-day line the weekday timers cannot keep", () => {
     expect(all.map((t) => [t.name, t.roadmap])).toEqual([
-      ["blank", { day_one: "Set up your site, pipeline and first drafts" }],
+      ["blank", { day_one: "Set up your site, your first leads and first drafts" }],
     ]);
     // Every timer is weekday-only or weekly, so "every day" would promise weekends that do not run.
     for (const t of all) {

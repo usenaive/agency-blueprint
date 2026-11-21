@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is an agency with no fixed specialism. It comes with a public site, a CRM and a calendar for your pipeline, a dashboard for your signed clients and their queue of work, and eight agents. They keep the site true to what you sell, work the pipeline, run each client, write the agency's own blog, fix weak pages, study competitors, draft proposals and read your mail.
+This company is an agency with no fixed specialism. It comes with a public site, a CRM and a calendar for your leads, a dashboard for your signed clients and their queue of work, and a team of eight. They keep the site true to what you sell, work your leads, run each client, write the agency's own blog, fix weak pages, study competitors, draft proposals and read your mail.
 
 You set the offer and the price, and you decide what goes out. A site change waits for you. Every email waits for your yes. Every post, page and proposal is a draft until you approve it.
 

@@ -73,7 +73,7 @@ export const questions: AgencyTemplate["questions"] = [
     key: "offer",
     type: "text",
     label: "What does your agency sell, and to whom?",
-    help: "One or two sentences. The site-builder writes the hero from this; sales and the writers read it before every session.",
+    help: "One or two sentences. Your site's first lines come from this, and your team reads it before every job.",
     placeholder: "Paid social and landing pages for DTC skincare brands doing $1–10M.",
   },
   {
@@ -131,7 +131,7 @@ export const blank: AgencyTemplate = {
   name: "blank",
   title: "Agency",
   description: VOCABULARY.blank.description,
-  roadmap: { day_one: "Set up your site, pipeline and first drafts" },
+  roadmap: { day_one: "Set up your site, your first leads and first drafts" },
   kinds: VOCABULARY.blank.kinds,
   words: { ...VOCABULARY.blank.words },
   seed: { clients, posts },

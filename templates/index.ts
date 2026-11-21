@@ -69,7 +69,7 @@ export interface TemplateVocabulary {
 }
 
 const blank: TemplateVocabulary = {
-  description: "A working agency with no specialism: eight agents — site, sales, delivery, content, revisions, research, proposals, inbox — and generic deliverables.",
+  description: "A working agency with no specialism: a team of eight — site, sales, delivery, content, revisions, research, proposals, inbox — and generic deliverables.",
   kinds: [
     { id: "post", label: "Post", description: "A published piece — blog, newsletter or social." },
     { id: "page", label: "Page", description: "A page on the client's own site — landing, service or product." },
