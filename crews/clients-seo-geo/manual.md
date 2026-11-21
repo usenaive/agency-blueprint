@@ -16,7 +16,7 @@ Every email waits for your yes. Every piece of client work reaches you once, in 
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer three questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** Name the buyer: "Search for dental clinics in the UK."
 - **What do you sell, and for about how much?** Your offer and its rough price, as you would quote it. The team quotes only this.

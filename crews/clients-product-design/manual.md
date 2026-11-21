@@ -18,7 +18,7 @@ Every email waits for your yes. Every job reaches you once, in one review from t
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer three questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** "Concepts and parts for independent homeware brands."
 - **What do you sell, and for about how much?** Your packages, as you quote them.

@@ -4,19 +4,19 @@
 
 ## 🧭 Overview
 
-This company is a client services agency that starts with no team. You get a CRM that holds every lead and client, a calendar that holds every call and follow-up, an Ads app for ads and an SEO & GEO app for search work. You tell your CEO what you sell, and it hires the agents you need.
+This company is a client services agency that starts with no team. You get a CRM that holds every lead and client, a calendar that holds every call and follow-up, an Ads app for ads and an SEO & GEO app for search work. You tell your CEO what you sell, and it hires the team you need.
 
 Start here if you know your trade and want to choose who does what. If you'd rather start with a full team, the Client team in the Marketplace comes with a client lead and Delivery already hired.
 
 **You:** say what you sell, to whom, and for about how much. Tell the CEO which jobs you want done. Approve what the team you hire sends and makes.
 
-**The CEO:** reads your answers and proposes a team, hires each agent once you agree, and sets each agent's timer and cap with you.
+**The CEO:** reads your answers and proposes a team, hires each member once you agree, and sets each one's timer and cap with you.
 
-> 💡 Hire one agent for the job that takes most of your week. Add the next once that one runs well.
+> 💡 Hire one member for the job that takes most of your week. Add the next once that one runs well.
 
 ## 🛠️ Setup
 
-You answer two questions. The CEO and every agent you hire read them before each run.
+You answer two questions. The CEO and everyone you hire read them before each job.
 
 - **What does your agency do, and for whom?** One sentence, with the buyer in it: "We write grant applications for small arts charities."
 - **What do you sell, and for about how much?** Your main offer and its rough price. Use your real price. The team quotes only what you write here.

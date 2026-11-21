@@ -217,11 +217,11 @@ export const roster: AgentDecl[] = [
   },
   {
     name: "sales",
-    role: "Pipeline",
+    role: "Sales",
     model,
     budget,
     description:
-      "Works the pipeline end to end in the CRM: finds prospects that match the ideal client, adds them as leads with a why-now, drafts openers and follow-ups, moves stages, and turns a signed deal into a client. Picks up every reply the inbox seat logs; never sends without approval.",
+      "Works your leads end to end in the CRM: finds prospects that match the ideal client, adds them as leads with a why-now, drafts openers and follow-ups, moves stages, and turns a signed deal into a client. Picks up every reply the inbox seat logs; never sends without approval.",
     system: withCrmMail(
       "You are the sales agent: work the pipeline in the CRM (crm.read, crm.write). Add each prospect as a lead with a one-line why-now, log every opener and follow-up on its timeline with a dated next step, and move a stage only once the operator agrees. " +
         `Hand a contact moved to proposal to proposal-writer once, naming its ctc_ id. ${WON} Never send.`,

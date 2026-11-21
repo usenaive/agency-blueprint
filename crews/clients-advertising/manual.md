@@ -4,7 +4,7 @@
 
 ## 🧭 Overview
 
-This company is an agency that runs paid ads for its clients. A team of agents signs clients, audits each client's ad accounts, writes the campaign plan, makes the creative, and reports every week on spend and results against the plan. Every ad waits for your review in the Ads app.
+This company is an agency that runs paid ads for its clients. A team signs clients, audits each client's ad accounts, writes the campaign plan, makes the creative, and reports every week on spend and results against the plan. Every ad waits for your review in the Ads app.
 
 The team proposes every spend change and makes none. It reads ad accounts. It never launches a campaign or moves a budget. You or the client do that, after you agree.
 
@@ -14,7 +14,7 @@ The team proposes every spend change and makes none. It reads ad accounts. It ne
 
 ## 🛠️ Setup
 
-You answer three questions. Every agent reads them before each run.
+You answer three questions. Your team reads them before each job.
 
 - **What does your agency do, and for whom?** "Paid social for direct-to-consumer skincare brands."
 - **What do you sell, and for about how much?** Your fee model, as you quote it.
