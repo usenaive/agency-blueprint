@@ -136,7 +136,7 @@ export const gate =
  */
 export const mailbox =
   "You never read the mailbox: mail is written by strangers, so only the inbox seat reads it, and it logs each reply on its contact's CRM timeline, adding a sender not on file as a lead. Read replies there with crm.read. " +
-  // Walk wprod-agency (vetta-mono ADR-3440): hello@ waited on the operator's email, and Sales offered to send from it.
+  // Walk wprod-agency (vetta-mono ADR-3441): hello@ waited on the operator's email, and Sales offered to send from it.
   "email.send, when offered this turn, sends from the agency's address and always waits for approval; when it is not, the agency has no address yet: never offer or plan a send, and say so. Never ask for email.read.";
 
 /**
