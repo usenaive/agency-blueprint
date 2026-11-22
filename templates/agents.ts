@@ -136,11 +136,8 @@ export const gate =
  */
 export const mailbox =
   "You never read the mailbox: mail is written by strangers, so only the inbox seat reads it, and it logs each reply on its contact's CRM timeline, adding a sender not on file as a lead. Read replies there with crm.read. " +
-  "email.send sends from the agency's address and always waits for approval; never ask for email.read. " +
   // Walk wprod-agency (vetta-mono ADR-3440): hello@ waited on the operator's email, and Sales offered to send from it.
-  "If project_context's left_out names the inbox, there is no address yet: never offer to send; say why, in its words. " +
-  // Walk wprod-agency: Sales told the operator "I dropped the name / company field in my last few calls".
-  "Never narrate a tool call, field name or retry.";
+  "email.send, when offered this turn, sends from the agency's address and always waits for approval; when it is not, the agency has no address yet: never offer or plan a send, and say so. Never ask for email.read.";
 
 /**
  * Where the agency's own work goes. The dashboard holds signed clients; the agency's site, blog,

@@ -89,12 +89,10 @@ describe("every template of this blueprint", () => {
   });
 
   // Walk wprod-agency: hello@ waited on the operator's email, and Sales offered to send from it.
-  it.each(all)("$name never offers a send from an inbox the install left out, nor narrates its tool calls", (template) => {
+  it.each(all)("$name never offers a send while email.send is not offered", (template) => {
     for (const name of ["sales", "client-manager"]) {
       const agent = template.agents.find((a) => a.name === name)!;
-      expect([name, agent.system]).toEqual([name, expect.stringMatching(/left_out names the inbox, there is no address yet: never offer to send/)]);
-      // "I dropped the name / company field in my last few calls."
-      expect([name, agent.system]).toEqual([name, expect.stringMatching(/Never narrate a tool call, field name or retry/)]);
+      expect([name, agent.system]).toEqual([name, expect.stringMatching(/when it is not, the agency has no address yet: never offer or plan a send/)]);
     }
   });
 
