@@ -88,6 +88,16 @@ describe("every template of this blueprint", () => {
     expect(template.questions.filter((q) => q.optional).map((q) => q.key)).toEqual(["network"]);
   });
 
+  // Walk wprod-agency: hello@ waited on the operator's email, and Sales offered to send from it.
+  it.each(all)("$name never offers a send from an inbox the install left out, nor narrates its tool calls", (template) => {
+    for (const name of ["sales", "client-manager"]) {
+      const agent = template.agents.find((a) => a.name === name)!;
+      expect([name, agent.system]).toEqual([name, expect.stringMatching(/left_out names the inbox, there is no address yet: never offer to send/)]);
+      // "I dropped the name / company field in my last few calls."
+      expect([name, agent.system]).toEqual([name, expect.stringMatching(/Never narrate a tool call, field name or retry/)]);
+    }
+  });
+
   it.each(all)("$name drafts a personal note to each person the operator knows, and invents none", (template) => {
     const sales = template.agents.find((a) => a.name === "sales")!;
     const intake = sales.intake?.message ?? "";
