@@ -77,9 +77,11 @@ describe("every crew", () => {
   });
 
   it.each(WITH_CREW)("%s seeds no lead-finding card: new business is the agency's", async (blueprint) => {
-    // The Client team's one first task (NEW-317) meets the clients the company already has, on its lead.
+    // The Client team's one first task (NEW-317) meets the clients the company already has, on its lead; a
+    // specialist team's starts on the first client its setup names (ADR-3482 in usenaive/vetta-mono).
     const tasks = (await configOf(blueprint)).tasks;
-    expect(tasks.map((task) => [task.key, task.assignee])).toEqual(blueprint === "clients" ? [["meet-your-clients", LEADS[blueprint]!.lead]] : []);
+    expect(tasks.map((task) => [task.key, task.assignee])).toEqual([[blueprint === "clients" ? "meet-your-clients" : "first-client", LEADS[blueprint]!.lead]]);
+    if (blueprint !== "clients") return;
     for (const task of tasks) expect(task.body).toMatch(/crm\.read stage won.*ask_operator.*find no leads yourself/);
     // Review 1119 (ab#85): a re-apply of a long-running Client team books no kickoff for clients it already works with.
     for (const task of tasks) expect(task.body).toMatch(/only if its timeline has no line yet \(new to the team\).*books nothing/);
@@ -265,7 +267,19 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     expect(config.mini_apps?.map((app) => app.slug)).toEqual(["crm", "calendar", "ads", "seo-geo"]);
     expect(config.mini_apps).toEqual(base.mini_apps);
     expect(config.questions.map((one) => one.key).slice(0, 2)).toEqual(["about", "offer"]);
-    expect(config.questions).toHaveLength(3);
+    expect(config.questions).toHaveLength(4);
+  });
+
+  /**
+   * ADR-3486 (usenaive/vetta-mono): the team starts at hire on the first client setup names. One last question under
+   * the reserved key `first_client`, skippable, and one card on the lead under the reserved task key `first-client`,
+   * which the platform seeds only when it reads a client in the answer.
+   */
+  it("asks its first client, skippably, and starts the lead on them in a chat of their own", async () => {
+    const config = await configOf(blueprint);
+    expect(config.questions.slice(3).map((one) => [one.key, one.type, one.optional])).toEqual([["first_client", "text", true]]);
+    expect(config.tasks.map((task) => [task.key, task.assignee])).toEqual([["first-client", leadOf(blueprint)]]);
+    expect(config.tasks[0]!.body).toMatch(/first_client in project_context.*crm\.read stage won.*chat of its own.*client its ctc_ id.*the one review/);
   });
 
   it("runs its schedules across clients: the pass works for no client and starts each client's work in a chat of its own (§66)", async () => {
@@ -468,7 +482,7 @@ describe("the specialisms' own rules", () => {
     }
     expect((await seat("clients-seo-geo", "Audit runner")).system).toContain("A number you did not read yourself, from the client's account or a page, is a number you may not report");
     expect((await lead("clients-seo-geo")).system).toContain("Each piece also shows in the SEO & GEO app: compile it all the same, and never change its stage.");
-    expect((await configOf("clients-seo-geo")).questions.map((one) => one.key)).toEqual(["about", "offer", "competitors"]);
+    expect((await configOf("clients-seo-geo")).questions.map((one) => one.key)).toEqual(["about", "offer", "competitors", "first_client"]);
   });
 
   // Owner, 2026-11-17: the Product design studio template became this team; its four seats are its lead and three makers.
@@ -487,7 +501,7 @@ describe("the specialisms' own rules", () => {
     for (const agent of [designer, engineer, visualizer]) expect(agent.skills).toContain("naive/product-design");
     expect((await lead("clients-product-design")).system).toContain("a brief that names sizes in millimetres is a part, for Engineer");
     expect((await lead("clients-product-design")).system).toContain("never call it not completed and never brief Product designer for another mesh because of a still");
-    expect((await configOf("clients-product-design")).questions.map((one) => one.key)).toEqual(["about", "offer", "buildable"]);
+    expect((await configOf("clients-product-design")).questions.map((one) => one.key)).toEqual(["about", "offer", "buildable", "first_client"]);
   });
 
   // NEW-170: asked to SQL-inject and brute-force a client's staging site, the team offered to do it once authorised.

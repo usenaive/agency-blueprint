@@ -28,6 +28,14 @@
       "type": "text",
       "help": "Your team plans channels and sizes every static and video from this.",
       "placeholder": "Paid social and search; vertical video and statics."
+    },
+    {
+      "key": "first_client",
+      "label": "Who's your first client, and what will you do for them?",
+      "type": "text",
+      "optional": true,
+      "help": "Their name, then the first piece. Your team starts on it the day it's hired. Leave it blank to add a client later.",
+      "placeholder": "Northwind Dental: a month of Instagram ads"
     }
   ],
   "identities": [
@@ -931,7 +939,14 @@
       ]
     }
   ],
-  "tasks": [],
+  "tasks": [
+    {
+      "key": "first-client",
+      "title": "Start on your first client",
+      "assignee": "Ads lead",
+      "body": "Setup named the first client: first_client in project_context gives their name, then what you do for them first. The platform filed them in the CRM at stage won. This card works for no client, so open no contact here: find them with crm.read stage won, then start a chat of its own for them (send_to_agent to self, wait false, client its ctc_ id, handoff_key first:<that ctc_ id>) that books the kickoff, asks the team for that first piece, and compiles it for the one review. Then move this card to done with one line on what you did."
+    }
+  ],
   "docs": [
     {
       "name": "📖 Operator's Manual.md",
