@@ -348,7 +348,7 @@ it ("Recruiting lead", "SEO & GEO lead", "Client lead", …) and its specialists
 the team and no inbox: outside mail reaches the agency's sales, never a seat that reads client files. A specialist works one
 client per chat, saves each piece as a file tagged `client:<ctc_ id>` and `kind:<kind>` (SEO &
 GEO pieces also `seo`, so they show in the SEO & GEO app), and hands it to the team's lead,
-which puts each job in front of you once, in one review. No team declares a name the agency or
+which puts each job in front of you once, in one review. The Advertising and Recruiting teams run on autopilot instead: their leads send the work to the client and tell you what went, and ask you only about money (the Advertising team's campaign plan with its monthly budget, and any spend change; the Recruiting team's paid posts and fees). No team declares a name the agency or
 another team declares, so a company adds any of them beside the agency with no name prefix. No seat makes up an identity or
 deceives a real person or company.
 

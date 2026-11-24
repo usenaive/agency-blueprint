@@ -4,11 +4,11 @@
 
 ## 🧭 Overview
 
-This company is an agency that runs paid ads for its clients. A team of agents signs clients, audits each client's ad accounts, writes the campaign plan, makes the creative, and reports every week on spend and results against the plan. Every ad waits for your review in the Ads app.
+This company is an agency that runs paid ads for its clients. A team of agents signs clients, audits each client's ad accounts, writes the campaign plan, makes the creative, and reports every week on spend and results against the plan. It runs on its own and stops for you only on money: each client's campaign plan and monthly budget, and any spend change.
 
 The team proposes every spend change and makes none. It reads ad accounts. It never launches a campaign or moves a budget. You or the client do that, after you agree.
 
-**You:** say what you sell, to whom, and which ad platforms and formats you run. Approve emails, plans and every ad. Make the spend changes the plan proposes.
+**You:** say what you sell, to whom, and which ad platforms and formats you run. Approve each client's campaign plan and monthly budget, and any spend change. Make the spend changes yourself, and switch campaigns live.
 
 **The team:** plans each client's week every Monday, audits, plans, writes, designs and edits video for each client, and reports each client's week with the one decision needed.
 
@@ -31,12 +31,12 @@ On day one:
 ## 🤝 Agent team configuration
 
 - **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the ads lead.
-- **Ads lead.** It runs each client: kickoff, calls, weekly update and renewal. It asks before any email goes out.
+- **Ads lead.** It runs each client: kickoff, calls, weekly update and renewal. It asks you once per campaign, to approve the plan and its monthly budget, then sends the work to the client and tells you what went.
 - **Media planner** audits each client's ad accounts, read only, and writes the campaign plan the creative is made for: audience, offer, budget split and what to test.
 - **Creative director** writes each client's creative brief and three campaign concepts from the client's goals, brand and past ads.
-- **Copywriter** writes headlines, body copy and scripts for each concept, for each placement. Each copy set lands in the Ads app for review.
-- **Designer** makes the static ads for each concept in every size the brief names. Each lands in the Ads app for review.
-- **Video producer** makes short video ads from the scripts, with voice-over and music. Every render waits for your yes, because renders cost the most.
+- **Copywriter** writes headlines, body copy and scripts for each concept, for each placement. Each copy set lands in the Ads app.
+- **Designer** makes the static ads for each concept in every size the brief names. Each lands in the Ads app.
+- **Video producer** makes short video ads from the scripts, with voice-over and music. Renders run without asking; its budget caps what they cost.
 - **Performance analyst** reports each week on each client's spend, results and cost against the plan, and names the one decision needed.
 
 ## 🗓️ Scheduling & automation
@@ -46,15 +46,15 @@ On day one:
 Client work runs when a card asks for it. For a new campaign:
 
 1. The media planner audits the accounts and writes the plan.
-2. The creative director writes the brief and three concepts.
-3. You pick one concept.
+2. You approve the plan and its monthly budget. Nothing is made before this.
+3. The creative director writes the brief and three concepts.
 4. The copywriter writes the copy. The designer and the video producer make the ads.
-5. You review every ad in the Ads app.
-6. You or the client launch it.
+5. The ads lead sends the work to the client and tells you what went.
+6. You or the client switch it live. A budget increase asks you first.
 
 The team does only the pieces the card asks for. Ask for a plan alone and no creative is made. Ask for copy alone and no pictures or videos are made; the copy still waits in the Ads app.
 
-The ads lead compiles the written pieces, such as the plan, the brief and the copy, into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The ads themselves are approved in the Ads app only, not asked twice. Copy is in both: in that file, for the client, and in the Ads app, where its stage says whether it may run.
+The ads lead compiles the written pieces, such as the plan, the brief and the copy, into one file and sends it to the client. The CEO tells you in your chat what went. The ads themselves stay in the Ads app, where you switch them live. Copy is in both: in that file, for the client, and in the Ads app, where its stage says whether it may run.
 
 Once a campaign is live, ask the CEO to add a weekly timer for the performance analyst.
 
@@ -64,12 +64,12 @@ Once a campaign is live, ask the CEO to add a weekly timer for the performance a
 
 - [ ] Kickoff: goals in one number they track, monthly budget, brand rules, and who approves ads.
 - [ ] Read access to their ad accounts and analytics.
-- [ ] Approve the plan before any creative is made.
+- [ ] Approve the plan and its monthly budget before any creative is made.
 
 **Every day**
 
-- [ ] Review ads in the Ads app. Approve, edit or hold with one line on why.
-- [ ] Approve or edit emails.
+- [ ] Look over what went to clients. Before you switch an ad live, hold any that is off, with one line on why.
+- [ ] Answer any spend change the team asks about.
 
 **Every week, per live client**
 
@@ -104,5 +104,5 @@ Don't grow by taking clients outside your vertical. A new vertical means new rul
 - **Ads get rejected by the platform.** Read the reason. Ask the copywriter to fix the claim or the wording, and add the rule to the brief.
 - **Every concept looks the same.** The brief is thin. Add the client's best past ads and one competitor ad they admire.
 - **Results dropped this week.** Ask the analyst what changed: spend, audience, creative or season. Change one thing.
-- **A video render is too costly.** Hold it. Ask for a static version of the concept first, and render video only for the winner.
+- **A video render is too costly.** Lower the video producer's budget. Ask for a static version of the concept first, and render video only for the winner.
 - **The client wants the team to change budgets.** Explain the rule: the team proposes and you or the client change. It keeps every spend move with a person.
