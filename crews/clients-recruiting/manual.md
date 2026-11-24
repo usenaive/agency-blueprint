@@ -6,9 +6,9 @@
 
 This company is a recruiting agency. A team of agents signs clients who are hiring, turns each open role into a brief, finds people who already do that work, scores them the same way for everyone and drafts the first message to each. A CRM holds every client and lead. A calendar holds every call.
 
-Nothing reaches a candidate without your yes. Every email to a client, a lead or a candidate waits for your approval.
+The team runs on its own. Outreach goes to candidates and shortlists go to clients without waiting for you, and the recruiting lead tells you what went. Only what costs money, such as a paid job post or a fee, waits for your yes.
 
-**You:** say what you recruit for, where, and how you charge. Approve every message and every shortlist that goes to a client. Run the interviews and close the hire.
+**You:** say what you recruit for, where, and how you charge. Approve anything that costs money. Run the interviews and close the hire.
 
 **The team:** plans each client's week every Monday, and writes role briefs, sources, screens and drafts outreach for each open role.
 
@@ -24,17 +24,17 @@ On day one:
 
 - [ ] Connect your email domain, so the team writes from your address.
 - [ ] Add each client you already have and their open roles to the CRM.
-- [ ] Read the first role brief before any sourcing starts. Correct it.
+- [ ] Read the first role brief when it lands. Correct it.
 
 > ⚠️ Judge people on the work the role needs, never on age, gender, race, religion, disability or any other protected trait. The screener scores only against the brief. Keep your own notes to the same rule.
 
 ## 🤝 Agent team configuration
 
 - **New business is your agency's.** Its sales finds and signs clients for every team, and hands each one to the recruiting lead.
-- **Recruiting lead** runs each client: the kickoff, the weekly update on each role and the renewal. It drafts and asks before it sends.
+- **Recruiting lead** runs each client: the kickoff, the weekly update on each role and the renewal. It sends the team's work to clients and candidates, and asks you only before anything that costs money.
 - **Sourcer** turns each open role into a brief, then finds people who already do that work. It records where it found each person.
 - **Screener** scores each shortlist against the brief, the same way for everyone, and writes the interview kit: the questions and what a strong answer sounds like.
-- **Outreach writer** drafts a first message and two follow-ups for each person the screener put forward. Each one is personal to the person's work. Each waits for your yes.
+- **Outreach writer** drafts a first message and two follow-ups for each person the screener put forward. Each one is personal to the person's work. The recruiting lead sends them.
 
 ## 🗓️ Scheduling & automation
 
@@ -43,12 +43,12 @@ On day one:
 Role work runs when a card asks for it. For each open role:
 
 1. You or the recruiting lead open a card: the role, the client and the deadline.
-2. The sourcer writes the brief. You approve it.
+2. The sourcer writes the brief.
 3. The sourcer finds people and files the list.
 4. The screener scores them and files the shortlist and the interview kit.
-5. The outreach writer drafts messages for the people you approve.
+5. The outreach writer drafts messages for the people the screener put forward, and the recruiting lead sends them.
 
-The recruiting lead compiles the finished brief, shortlist, kit and sequence into one file for the client. It waits in Needs you, and the CEO tells you in your chat. Nothing reaches the client until you approve it. The team does only the steps the card asks for.
+The recruiting lead compiles the finished brief, shortlist, kit and sequence into one file for the client. The recruiting lead sends it to the client, and the CEO tells you in your chat what went. The team does only the steps the card asks for.
 
 Each timer and each task has a cap. A run that would cost more stops instead.
 
@@ -57,13 +57,13 @@ Each timer and each task has a cap. A run that would cost more stops instead.
 **For every new role**
 
 - [ ] Kickoff with the client: must-haves, nice-to-haves, salary range, location and the interview steps.
-- [ ] Approve the brief before sourcing.
-- [ ] Review the shortlist. Remove anyone you wouldn't put in front of the client, and say why.
-- [ ] Approve each outreach message.
+- [ ] Read the brief when it lands, and correct it if it is off.
+- [ ] Read the shortlist that went to the client. Tell the team about anyone you wouldn't have put forward, and why.
+- [ ] Approve any paid job post or fee.
 
 **Every day**
 
-- [ ] Open the approval queue. Read each message as the candidate would.
+- [ ] Read what went out as the candidate would. Tell the team what to change.
 - [ ] Reply to candidates who answered. Book the calls you want.
 
 **Every Monday**

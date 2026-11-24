@@ -38,6 +38,12 @@ const LEADS: Record<string, { title: string; lead: string }> = {
   "clients-seo-geo": { title: "SEO & GEO team", lead: "SEO & GEO lead" },
 };
 const leadOf = (blueprint: string) => LEADS[blueprint]!.lead;
+/**
+ * Owner, 2026-11-23: these teams run on autopilot. The person approves money only: the Advertising team's
+ * campaign plan with its monthly budget, and any spend change; the Recruiting team's paid posts and fees.
+ * Every other piece goes to the client (and outreach to candidates) with no review.
+ */
+const AUTOPILOT = new Set(["clients-advertising", "clients-recruiting"]);
 const WITH_CREW = CREWS.filter((name) => name !== "clients-blank");
 
 const dir = (blueprint: string) => fileURLToPath(new URL(`./${blueprint}/`, import.meta.url));
@@ -132,7 +138,8 @@ describe("every crew", () => {
       // The prompt says what the toolset does: opening a public page runs without a card.
       expect([agent.name, agent.system]).not.toEqual([agent.name, expect.stringMatching(/web_fetch[^.]*asks/)]);
       if (tools["email.send"]) expect([agent.name, tools["email.send"].permission]).toEqual([agent.name, "ask"]);
-      if (tools["generate_video"]) expect([agent.name, tools["generate_video"].permission]).toEqual([agent.name, "ask"]);
+      // Autopilot teams render without a yes; their budget caps the cost.
+      if (tools["generate_video"]) expect([agent.name, tools["generate_video"].permission]).toEqual([agent.name, AUTOPILOT.has(blueprint) ? "allow" : "ask"]);
     }
   });
 
@@ -155,7 +162,7 @@ it.each(WITH_CREW)("%s lead re-reads the cards each wake, has no saved piece red
   expect(system).toContain("read all of this client's cards again on the board each time you wake, with board_read and no card_id, never from memory or an earlier message");
   expect(system).toContain("A piece a teammate saved is never made again: when you cannot see its card or file, find_files with the tag client:<the client's ctc_ id> finds it");
   expect(system).toContain("ask no teammate to redo it.");
-  expect(system).toContain("so save the file, ask the review below, and only then move the card to done");
+  expect(system).toContain(AUTOPILOT.has(blueprint) ? "so save the file, send it as below, and only then move the card to done" : "so save the file, ask the review below, and only then move the card to done");
 });
 
 // QA r11 NEW-388: the Ads lead, with no shell, wrote merge.py and merge.sh until it ran out of steps.
@@ -295,11 +302,45 @@ describe.each(SPECIALISMS)("the %s crew", (blueprint, specialists) => {
     // QA r6: a Sourcer carded by the CEO handed its file to the CEO, and a Client manager compiled into its card's note.
     for (const name of specialists) expect((await seat(blueprint, name)).system).toContain(`Hand finished work to ${leadOf(blueprint)}, never to the CEO, even when the CEO made your card`);
     const manager = (await lead(blueprint)).system;
+    if (AUTOPILOT.has(blueprint)) {
+      expect(manager).toContain("Every piece a teammate hands you is yours to send to the client, whoever asked for it, the CEO included.");
+      expect(manager).toContain("A card that asks you to compile is this same job: its deliverable is a saved file sent as below, never the card's note");
+      return;
+    }
     expect(manager).toContain("Every piece a teammate hands you is yours to put in front of the person, whoever asked for it, the CEO included.");
     expect(manager).toMatch(/A card that asks you to compile is this same job: its (deliverable|report) is a saved file and the review below, never the card's note/);
   });
 
-  it("puts each deliverable in front of the person once", async () => {
+  it.runIf(AUTOPILOT.has(blueprint))("sends each deliverable to the client once, and asks the person about money only", async () => {
+    const manager = (await lead(blueprint)).system!;
+    expect(manager).not.toContain("Approve before it goes out");
+    expect(manager).not.toContain("once the person approves");
+    expect(manager).toContain("Compile and send once per client job. A teammate's message wakes you each time, but compile only when every piece the request asked for is done");
+    expect(manager).toMatch(/while any piece's card is not done, compile nothing and announce nothing\. If a piece's card is blocked, tell the CEO/);
+    expect(manager).toContain("goes into that same file: add it with write, save it again with publish_file under the same title and tags, show it in that client's chat, and send it again the same way");
+    expect(manager).toContain('A job of one piece needs no compiling: that piece is the deliverable, and it is still sent as below, so "nothing to compile" never ends a job.');
+    expect(manager).toMatch(/tell the CEO with send_to_agent, wait false, in a message whose first line is "Sent <what it is> to <client name>"/);
+    expect(manager).toContain("One send per client job, and then you stop: no review of your own work, no edit, no search for a tool, no other message to the CEO.");
+    expect(manager).toContain("Use ask_operator only for a fact only the person has, never to confirm or approve work.");
+    const toCeo = [...manager.matchAll(/your instruction to the CEO: "(Tell the person[^"]*)"/g)].map((one) => one[1]!);
+    expect(toCeo.length).toBe(blueprint === "clients-advertising" ? 3 : 1);
+    for (const line of toCeo) expect(line).toMatch(/^Tell the person [^.!?\n]*; this is to you, CEO, not words for the chat\.$/);
+    expect(manager).not.toMatch(/[^:] "?Tell the person/);
+    for (const agent of await seats(blueprint)) expect([agent.name, agent.system]).not.toEqual([agent.name, expect.stringMatching(/a person approves|your yes|waits for a yes|Needs you\.", and whose last[^.]*with the file/)]);
+    if (blueprint === "clients-advertising") {
+      // The one review: the campaign plan with its monthly budget, before any creative; and every spend change.
+      expect(manager).toMatch(/When Media planner hands you a campaign plan.*call ask_operator once.*Approve the plan and budget before the creative is made\./s);
+      expect(manager).toContain("Ask no teammate for creative for a client whose timeline records no approved plan and budget.");
+      expect(manager).toContain("A budget above the approved one, a new paid channel, or switching a paid campaign live is the person's to approve: ask_operator once with the change and its amount, and never make it yourself.");
+      expect((await seat(blueprint, "Media planner")).handoffs).not.toContain("Creative director");
+      expect((await seat(blueprint, "Creative director")).system).toContain("make nothing until the client's timeline records the person's approval of its campaign plan and monthly budget");
+    } else {
+      expect(manager).toContain("The person approves only what costs money: a paid job board post, a fee or any other spend. Ask that with ask_operator once");
+      for (const name of ["Sourcer", "Screener", "Outreach writer"]) expect((await seat(blueprint, name)).system).toContain("You contact no candidate yourself: every message is a draft Recruiting lead sends.");
+    }
+  });
+
+  it.skipIf(AUTOPILOT.has(blueprint))("puts each deliverable in front of the person once", async () => {
     const manager = await lead(blueprint);
     expect(manager.system).toMatch(/call ask_operator once.*Approve before it goes out.*One ask per client job/s);
     expect(manager.system).toMatch(/tell the CEO with send_to_agent, wait false, in a message whose first line is "Your <what it is> for <client name> is ready"/);
@@ -404,16 +445,17 @@ describe("the specialisms' own rules", () => {
       expect(agent.system).toMatch(/tags: ad, campaign:<.*stage:review.*format:9x16.*ad:</);
       for (const tool of ["generate_image", "view_image", "fetch_file"]) expect(permission(agent, tool)).toBe("allow");
     }
-    expect(permission(await seat("clients-advertising", "Video producer"), "generate_video")).toBe("ask");
+    // Owner, 2026-11-23: renders run without a yes; the seat's budget caps them (AUTOPILOT).
+    expect(permission(await seat("clients-advertising", "Video producer"), "generate_video")).toBe("allow");
     // Copy is an ad too: the Copywriter's copy sets wait in the Ads app's Review, and are still compiled for the client.
     expect((await seat("clients-advertising", "Copywriter")).system).toMatch(/Ads app's tags: ad, campaign:<.*>, stage:review.*never change its stage/);
     // NEW-68: a headline change stalled for want of an in-place edit; a new version keyed to the old ad takes its place.
     expect((await seat("clients-advertising", "Copywriter")).system).toContain("plus ad:<its ad: tag's key, else its fil_ id>; the Ads app shows that version in the old one's place, back in Review.");
     expect((await lead("clients-advertising")).system).toContain("Copy is a written piece: compile it, though it also waits in the Ads app.");
-    // An ad's approval is the Ads app's Review: the lead compiles the written pieces and never asks about an ad again.
-    expect((await lead("clients-advertising")).system).toContain("never ask about an ad again and never change its stage");
+    // An ad goes live from the Ads app, by a person: the lead compiles the written pieces and never asks about an ad.
+    expect((await lead("clients-advertising")).system).toContain("never ask about an ad and never change its stage");
     // NEW-244: a CEO card said "save the package tagged `ad`", so the compiled package read as an ad and no review reached Needs you.
-    expect((await lead("clients-advertising")).system).toContain("and no ad or stage: tag, whatever a card asks: the compiled file is not an ad, so its review is the ask_operator below, in Needs you.");
+    expect((await lead("clients-advertising")).system).toContain("and no ad or stage: tag, whatever a card asks: the compiled file is not an ad, and it goes to the client as below.");
     for (const agent of await seats("clients-advertising")) {
       const ads = Object.keys(agent.tools!.configs).filter((tool) => /^(metaads|googleads)\./.test(tool));
       for (const tool of ads) expect(tool).toMatch(/\.(get|list|read|search)_/);
